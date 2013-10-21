@@ -1,4 +1,4 @@
-# System Programming
+# System Programming Project
 
 This is a school project for the [System Programming][jch-ens] class at Paris
 Diderot University.
