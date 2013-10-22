@@ -861,3 +861,9 @@ language C, URL: http://www.open-std.org/JTC1/SC22/WG14/
 Kernel CodingStyle, by greg@kroah.com at OLS 2002:
 http://www.kroah.com/linux/talks/ols_2002_kernel_codingstyle_talk/html/
 
+------------------------------------------------------------------------------
+
+        Dazibao extensions
+
+- Indentation use 8 spaces, not one 8-spaces wide tab
+- We use braces EVERY TIME, even when there's only one statement in an `if`
