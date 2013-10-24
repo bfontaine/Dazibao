@@ -5,7 +5,7 @@ EXEC=
 all: $(EXEC)
 
 %.o: %.c
-        $(CC) -o $@ -c $< $(CFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean :
-        rm -rf *.o $(EXEC)
+	rm -rf *.o $(EXEC)
