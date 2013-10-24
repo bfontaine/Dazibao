@@ -8,4 +8,4 @@ all: $(EXEC)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean :
-	rm -rf *.o $(EXEC)
+	rm -rf *.o $(EXEC) *~
