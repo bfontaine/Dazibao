@@ -74,12 +74,6 @@ int read_tlv(struct dazibao* d, struct tlv* buf, int offset) {
 
 int next_tlv(struct dazibao* d, struct tlv* buf) {
 
-	/*
-	  TODO:
-	  - skip PadN tlv
-	  - check EOF ?
-	  - return offset ?
-	*/
 	int size_read;
 	char tlv_type;
 	off_t courant;
@@ -88,7 +82,7 @@ int next_tlv(struct dazibao* d, struct tlv* buf) {
 		ERROR("lseek", -1);
 	}
 
-	if((size_read =  read(d->fd, tlv_type, TYPE_SIZE)) < 0) {
+	if((size_read = read(d->fd, tlv_type, TYPE_SIZE)) < 0) {
 		ERROR("next_tlv read type", -1);
 	}else if (size_read = 0 ){
 		return EOD;
@@ -98,7 +92,7 @@ int next_tlv(struct dazibao* d, struct tlv* buf) {
 		buf->type = TLV_PAD1; 
 
 	}else{
-	        d->type = tlv_type;
+	        buf->type = tlv_type;
 	        if(read(d->fd, buf->length , LENGTH_SIZE ) < LENGTH_SIZE){
 		        ERRROR("next_tlv read length",-1);
 	        }
