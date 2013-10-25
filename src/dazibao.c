@@ -72,7 +72,12 @@ int next_tlv(struct dazibao* d, struct tlv* buf) {
 }
 
 int tlv_at(struct dazibao* d, struct tlv* buf, int offset) {
-	return 0;
+
+	if(lseek(d->fd, offset, SEEK_SET) == -1) {
+		ERROR("lseek", -1);
+	}
+
+	return next_tlv(d, buf);
 }
 
 int add_tlv(struct dazibao* d, struct tlv* buf) {
