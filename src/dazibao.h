@@ -21,6 +21,8 @@
 		return (i);			\
 	}
 
+#define HEADER_SIZE 4
+
 typedef char value_t;
 
 struct tlv {
