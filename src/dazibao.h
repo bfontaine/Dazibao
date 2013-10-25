@@ -28,9 +28,8 @@
 		ERROR((msg), (i));		\
 	}
 
-
-#define FILE_HEADER_SIZE 4
-#define HEADER_SIZE 4
+#define DAZIBAO_HEADER_SIZE 4
+#define TLV_HEADER_SIZE 4
 #define TYPE_SIZE 1
 #define EOD 0;
 #define MAGIC_NUMBER 53

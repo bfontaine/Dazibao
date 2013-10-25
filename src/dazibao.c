@@ -3,7 +3,7 @@
 int open_dazibao(struct dazibao* d, char* path, int flags) {
 
 	int fd, lock;
-	char header[FILE_HEADER_SIZE];
+	char header[DAZIBAO_HEADER_SIZE];
 
 	fd = open(path, flags);
 	if(fd == -1) { /* open failed */
@@ -23,7 +23,7 @@ int open_dazibao(struct dazibao* d, char* path, int flags) {
 		CLOSE_AND_ERROR(fd, "flock", -1);
 	}
 	
-	if(read(fd, header, FILE_HEADER_SIZE) < FILE_HEADER_SIZE) {
+	if(read(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
 		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
 	}
 	
@@ -80,7 +80,7 @@ int next_tlv(struct dazibao* d, struct tlv* buf) {
 	  - check EOF ?
 	  - return offset ?
 	*/
-
+	
 	if(read(d->fd, &(buf->type), HEADER_SIZE) < HEADER_SIZE) {
 		ERROR("read", -1);
 	}
