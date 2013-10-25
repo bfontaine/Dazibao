@@ -16,6 +16,10 @@
 		exit(EXIT_FAILURE);			\
 	}
 
+#define ERROR(str, i) {				\
+		perror((str));			\
+		return (i);			\
+	}
 
 typedef char value_t;
 
