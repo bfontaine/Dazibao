@@ -9,4 +9,6 @@
 #define TLV_COMPOUND 5
 #define TLV_DATED    6
 
+#define SIZEOF_TLV(t) (4+t.length)
+
 #endif
