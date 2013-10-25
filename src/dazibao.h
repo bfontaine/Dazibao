@@ -1,5 +1,5 @@
-#ifndef _DAZIBAO_H
-#define _DAZIBAO_H 1
+#ifndef DAZIBAO_H
+#define DAZIBAO_H
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,7 +9,6 @@
 #include <sys/file.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "tlvs.h"
 
 
 #define PANIC(str) {					\
@@ -32,6 +31,8 @@
 
 #define FILE_HEADER_SIZE 4
 #define HEADER_SIZE 4
+#define TYPE_SIZE 1
+#define EOD 0;
 #define MAGIC_NUMBER 53
 
 typedef char value_t;
@@ -71,12 +72,6 @@ int add_tlv(struct dazibao* d, struct tlv* buf);
 /*  */
 int rm_tlv(struct dazibao* d, int offset);
 
-/*
- * Compact a Dazibao file. The file must have been opened in read/write mode,
- * and the Dazibao is NOT closed by the function.
- * The function returns the number of bytes saved by the compacting operation,
- * or -1 if an error occured.
- */
-int compact_dazibao(struct dazibao*);
-
-#endif /* _DAZIBAO_H */
+/*  */
+int compact_dazibao(struct dazibao* d);
+#endif /* DAZIBAO_H */
