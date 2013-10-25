@@ -48,13 +48,19 @@ struct dazibao {
 };
 
 /*
-  open $(path) file with $(flag) flag
-  apply flock according to $(flag)
-  fill $(d)
+ * open $(path) file with $(flags) flags
+ * apply flock according to $(flags)
+ * check if $(path) is valid dazibao
+ * fill $(d)
+ * returns 0 on success
  */
 int open_dazibao(struct dazibao* d, char* path, int flags);
 
-/*  */
+/*
+ * release lock on file held by $(d)
+ * close this file
+ * returns 0 on success
+ */
 int close_dazibao(struct dazibao* d);
 
 /*  */
