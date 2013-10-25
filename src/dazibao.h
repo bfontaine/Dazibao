@@ -21,7 +21,17 @@
 		return (i);			\
 	}
 
+#define CLOSE_AND_ERROR(fd, msg, i) {		\
+		if(close((fd)) == -1) {		\
+			PANIC("close:");	\
+		}				\
+		ERROR((msg), (i));		\
+	}
+
+
+#define FILE_HEADER_SIZE 4
 #define HEADER_SIZE 4
+#define MAGIC_NUMBER 53
 
 typedef char value_t;
 

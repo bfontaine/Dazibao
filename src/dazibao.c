@@ -3,6 +3,8 @@
 int open_dazibao(struct dazibao* d, char* path, int flags) {
 
 	int fd, lock;
+	char header[FILE_HEADER_SIZE];
+
 	fd = open(path, flags);
 	if(fd == -1) { /* open failed */
 		ERROR("open", -1);
@@ -18,12 +20,18 @@ int open_dazibao(struct dazibao* d, char* path, int flags) {
 	}
 	
 	if(flock(fd, lock) == -1) {
-		if(close(fd) == -1) {
-			PANIC("close:");
-		}
-		ERROR("flock", -1);
+		CLOSE_AND_ERROR(fd, "flock", -1);
 	}
 	
+	if(read(fd, header, FILE_HEADER_SIZE) < FILE_HEADER_SIZE) {
+		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+	}
+	
+	if(header[0] != MAGIC_NUMBER || header[1] != 0) {
+		/* calling perror makes no sens here... */
+		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+	}
+
 	d->fd = fd;
 	
 	return 0;
@@ -65,6 +73,14 @@ int read_tlv(struct dazibao* d, struct tlv* buf, int offset) {
 }
 
 int next_tlv(struct dazibao* d, struct tlv* buf) {
+
+	/*
+	  TODO:
+	  - skip PadN tlv
+	  - check EOF ?
+	  - return offset ?
+	*/
+
 	if(read(d->fd, &(buf->type), HEADER_SIZE) < HEADER_SIZE) {
 		ERROR("read", -1);
 	}
