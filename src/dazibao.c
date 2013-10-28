@@ -51,7 +51,7 @@ int close_dazibao(struct dazibao* d) {
 	return 0;
 }
 
-int read_tlv(struct dazibao* d, struct tlv* buf, int offset) {
+int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
