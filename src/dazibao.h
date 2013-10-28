@@ -32,7 +32,7 @@
 	}
 
 #define DAZIBAO_HEADER_SIZE 4
-#define EOD 0;
+#define EOD 0
 #define MAGIC_NUMBER 53
 
 
@@ -85,7 +85,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf);
 int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 
 /*  */
-int add_tlv(struct dazibao* d, const struct tlv* buf);
+int add_tlv(struct dazibao* d, const struct tlv* src);
 
 /*  */
 int rm_tlv(struct dazibao* d, const off_t offset);
