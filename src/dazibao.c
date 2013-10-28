@@ -163,10 +163,11 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
                 return 0;
         }
 
+        /* TODO transfer bit src->length field*/
         char length[3];
-        length[0] = src->length - (src->length << 8) - (src->length << 16);
-        length[1] = (src->length >> 8);
-        length[2] = src->length;
+        length[0] ;
+        length[1] ;
+        length[2] ;
         if (write(d->fd, src->length, SIZEOF_TLV_LENGTH) != SIZEOF_TLV_LENGTH){
                 ERROR("add_tlv write length",-1);
         }
