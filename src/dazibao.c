@@ -138,6 +138,53 @@ int add_tlv(struct dazibao* d, const struct tlv* buf) {
 }
 
 int rm_tlv(struct dazibao* d, const off_t offset) {
+
+	/*
+	 * FIXME: compact with previous pad if exists
+	 */
+
+	off_t off_stop, off_init;
+
+	struct tlv buf;
+
+	off_init = lseek(d->fd, 0, SEEK_CUR);
+
+	if (off_init < -1) {
+		ERROR("lseek", -1);
+	}
+
+	/* look for the first tlv which is not a pad */
+	while ((off_stop = tlv_at(d, &buf, off_stop)) > 0) {
+		if (buf.type != TLV_PAD1 && buf.type != TLV_PADN) {
+			break;
+		}
+	}
+	
+	if (!off_stop) { /* end of file reached */
+		ftruncate(d->fd, offset);
+		return 0;
+	}
+
+	if (off_stop == -1) { /* next_tlv returned error */
+		return -1;
+	}
+	
+	int len = off_stop - offset - SIZEOF_TLV_HEADER;
+
+	if (lseek(d->fd, offset, SEEK_SET) < -1) {
+		ERROR("lseek", -1);
+	}
+	
+	if ((buf.type == TLV_PAD1
+		&& write(d->fd, TLV_PAD1, 1) < 1)
+		|| write(d->fd, &buf, len)) {
+			ERROR("write", -1);
+		}
+
+	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+		perror("lseek");
+	}
+
 	return 0;
 }
 
