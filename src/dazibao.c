@@ -165,7 +165,7 @@ int compact_dazibao(struct dazibao* d) {
 
                 len = SIZEOF_TLV(tlv_buf);
 
-                if (tlv_buf.type == PAD1 || tlv_buf.type == PADN) {
+                if (tlv_buf.type == TLV_PAD1 || tlv_buf.type == TLV_PADN) {
                         reading += len;
                         continue;
                 }
