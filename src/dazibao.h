@@ -67,7 +67,11 @@ int close_dazibao(struct dazibao* d);
 /*  */
 int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset);
 
-/*  */
+/* 
+ * read from $(d) using $(offset)
+ * fill $(buf)
+ * return offset of read tlv 
+ */
 int next_tlv(struct dazibao* d, struct tlv* buf);
 
 /*  */
