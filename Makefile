@@ -4,7 +4,7 @@
 CC=gcc
 SRC=src
 CFLAGS=-Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
-UTILS=$(SRC)/dazibao.h $(SRC)/tlvs.h $(SRC)/utils.h
+UTILS=$(SRC)/dazibao.h $(SRC)/tlv.h $(SRC)/utils.h
 TARGET=dazibao
 
 CPPCHECK=cppcheck \
