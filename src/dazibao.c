@@ -147,8 +147,7 @@ int compact_dazibao(struct dazibao* d) {
               writing  = DAZIBAO_HEADER_SIZE;
 
         int saved   = 0,
-            readlen,
-            len;
+            readlen;
 
         char buff[BUFFLEN];
 
@@ -163,7 +162,7 @@ int compact_dazibao(struct dazibao* d) {
 
         while(tlv_at(d, &tlv_buf, reading) > 0) {
 
-                len = SIZEOF_TLV(tlv_buf);
+                int len = SIZEOF_TLV(tlv_buf);
 
                 if (tlv_buf.type == TLV_PAD1 || tlv_buf.type == TLV_PADN) {
                         reading += len;
