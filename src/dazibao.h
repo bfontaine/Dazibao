@@ -72,7 +72,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset);
  * fill $(buf)
  * return offset of read tlv 
  */
-int next_tlv(struct dazibao* d, struct tlv* buf);
+off_t next_tlv(struct dazibao* d, struct tlv* buf);
 
 /*  */
 int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset);
