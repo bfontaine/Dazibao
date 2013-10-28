@@ -7,6 +7,10 @@ CFLAGS=-Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
 UTILS=$(SRC)/dazibao.h $(SRC)/tlv.h $(SRC)/utils.h
 TARGET=dazibao
 
+ifdef NO_UNUSED
+CFLAGS+= -Wno-unused-parameter
+endif
+
 CPPCHECK=cppcheck \
 	--enable=warning,style \
 	--language=c -q
