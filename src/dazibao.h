@@ -55,7 +55,7 @@ struct dazibao {
  * fill $(d)
  * returns 0 on success
  */
-int open_dazibao(struct dazibao* d, char* path, int flags);
+int open_dazibao(struct dazibao* d, const char* path, const int flags);
 
 /*
  * release lock on file held by $(d)
@@ -65,7 +65,7 @@ int open_dazibao(struct dazibao* d, char* path, int flags);
 int close_dazibao(struct dazibao* d);
 
 /*  */
-int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset);
+int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
 
 /* 
  * read from $(d)
@@ -82,13 +82,13 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf);
  * return 0 on success
  * return -1 on error
  */
-int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset);
+int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 
 /*  */
-int add_tlv(struct dazibao* d, struct tlv* buf);
+int add_tlv(struct dazibao* d, const struct tlv* buf);
 
 /*  */
-int rm_tlv(struct dazibao* d, off_t offset);
+int rm_tlv(struct dazibao* d, const off_t offset);
 
 /*
  * Compact a Dazibao file. The file must have been opened in read/write mode,

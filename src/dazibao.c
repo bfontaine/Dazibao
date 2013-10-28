@@ -1,6 +1,6 @@
 #include "dazibao.h"
 
-int open_dazibao(struct dazibao* d, char* path, int flags) {
+int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 
 	int fd, lock;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -50,7 +50,7 @@ int close_dazibao(struct dazibao* d) {
 	return 0;
 }
 
-int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset) {
+int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -101,7 +101,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	return current;
 }
 
-int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset) {
+int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 
 	off_t current;
 	
@@ -129,11 +129,11 @@ int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset) {
 	return 0;
 }
 
-int add_tlv(struct dazibao* d, struct tlv* buf) {
+int add_tlv(struct dazibao* d, const struct tlv* buf) {
 	return 0;
 }
 
-int rm_tlv(struct dazibao* d, off_t offset) {
+int rm_tlv(struct dazibao* d, const off_t offset) {
 	return 0;
 }
 
