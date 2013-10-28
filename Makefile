@@ -23,4 +23,4 @@ clean:
 	rm -f $(TARGET) *.o *~
 
 check:
-	$(CPPCHECK) $(SRC)
+	$(CPPCHECK) -I$(SRC) $(SRC)
