@@ -17,22 +17,22 @@ int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 	} else {
 		CLOSE_AND_ERROR(fd, "bad flags", -1);
 	}
-	
+
 	if (flock(fd, lock) == -1) {
 		CLOSE_AND_ERROR(fd, "flock", -1);
 	}
-	
+
 	if (read(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
 		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
 	}
-	
+
 	if (header[0] != MAGIC_NUMBER || header[1] != 0) {
 		/* calling perror makes no sens here... */
 		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
 	}
 
 	d->fd = fd;
-	
+
 	return 0;
 }
 
@@ -88,31 +88,31 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		return EOD;
 	}
 
-	buf->type = tlv_type; 
-	
+	buf->type = tlv_type;
+
 	if (tlv_type != TLV_PAD1) {
-	        if (read(d->fd, &tlv_length, SIZEOF_TLV_LENGTH ) 
+	        if (read(d->fd, &tlv_length, SIZEOF_TLV_LENGTH )
                                 < SIZEOF_TLV_LENGTH) {
 		        ERROR("next_tlv read length", -1);
-	        }		
-                buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8) +
-                              tlv_length[2]; 
+	        }
+                buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
+                                + tlv_length[2];
                 if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
                         ERROR("next_tlv lseek next_tlv", -1);
                 }
         }
-	
+
 	return current;
 }
 
 int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 
 	off_t current;
-	
+
 	if ((current = lseek(d->fd, 0, SEEK_CUR)) == -1) {
 		ERROR("lseek", -1);
 	}
-	
+
 	if (lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
@@ -122,7 +122,7 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 		if (lseek(d->fd, current, SEEK_SET) == -1) {
 			ERROR("lseek", -1);
 		}
-	
+
 		return -1;
 	}
 
@@ -159,7 +159,7 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 			break;
 		}
 	}
-	
+
 	if (!off_stop) { /* end of file reached */
 		ftruncate(d->fd, offset);
 		return 0;
@@ -168,18 +168,19 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 	if (off_stop == -1) { /* next_tlv returned error */
 		return -1;
 	}
-	
+
 	int len = off_stop - offset - SIZEOF_TLV_HEADER;
 
 	if (lseek(d->fd, offset, SEEK_SET) < -1) {
 		ERROR("lseek", -1);
 	}
-	
+
 	if ((buf.type == TLV_PAD1
-		&& write(d->fd, TLV_PAD1, 1) < 1)
-		|| write(d->fd, &buf, len)) {
-			ERROR("write", -1);
-		}
+                && write(d->fd, TLV_PAD1, SIZEOF_TLV_TYPE) < SIZEOF_TLV_TYPE)
+                || write(d->fd, &buf, len)) {
+
+                ERROR("write", -1);
+        }
 
 	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
 		perror("lseek");
@@ -194,24 +195,24 @@ int compact_dazibao(struct dazibao* d) {
 #define BUFFLEN 128
 
         struct tlv tlv_buf;
-        off_t reading  = DAZIBAO_HEADER_SIZE,
-              writing  = DAZIBAO_HEADER_SIZE;
+        off_t reading = DAZIBAO_HEADER_SIZE,
+              writing = DAZIBAO_HEADER_SIZE;
 
-        int saved   = 0,
+        int saved = 0,
             readlen;
 
         char buff[BUFFLEN];
 
         if (d == NULL) {
                 return saved;
-        } 
+        }
 
 
         if (lseek(d->fd, reading, SEEK_SET) < 0) {
                 return -1;
         }
 
-        while(tlv_at(d, &tlv_buf, reading) > 0) {
+        while (tlv_at(d, &tlv_buf, reading) > 0) {
 
                 int len = SIZEOF_TLV(tlv_buf);
 
