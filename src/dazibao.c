@@ -82,7 +82,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		ERROR("lseek", -1);
 	}
 
-	if((size_read = read(d->fd, &tlv_type, TLV_TYPE_SIZE)) < 0) {
+	if((size_read = read(d->fd, &tlv_type, SIZEOF_TLV_TYPE)) < 0) {
 		ERROR("next_tlv read type", -1);
 	} else if(!size_read) {
 		return EOD;
@@ -91,7 +91,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type; 
 	
 	if(tlv_type != TLV_PAD1) {
-	        if(read(d->fd, &(buf->length), TLV_LENGTH_SIZE ) < TLV_LENGTH_SIZE) {
+	        if(read(d->fd, &(buf->length), SIZEOF_TLV_LENGTH ) < SIZEOF_TLV_LENGTH) {
 		        ERROR("next_tlv read length", -1);
 	        }		
                 if(lseek(d->fd, buf->length, SEEK_CUR) == -1) {
@@ -140,6 +140,7 @@ int rm_tlv(struct dazibao* d, off_t offset) {
 
 int compact_dazibao(struct dazibao* d) {
 
+/* FIXME: should not define locally */
 #define BUFFLEN 128
 
         struct tlv tlv_buf;

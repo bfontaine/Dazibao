@@ -32,11 +32,9 @@
 	}
 
 #define DAZIBAO_HEADER_SIZE 4
-#define TLV_HEADER_SIZE 4
-#define TLV_LENGTH_SIZE 3
-#define TLV_TYPE_SIZE 1
 #define EOD 0;
 #define MAGIC_NUMBER 53
+
 
 typedef char value_t;
 
