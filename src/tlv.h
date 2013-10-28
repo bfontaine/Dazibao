@@ -14,4 +14,6 @@
 #define SIZEOF_TLV_HEADER 4
 #define SIZEOF_TLV(t) (SIZEOF_TLV_TYPE+((t).type==TLV_PAD1?0:SIZEOF_TLV_LENGTH+(t).length))
 
+#define TLV_IS_EMPTY_PAD(t) ((t) == TLV_PAD1 || (t) == TLV_PADN)
+
 #endif
