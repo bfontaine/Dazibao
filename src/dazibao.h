@@ -70,13 +70,20 @@ int close_dazibao(struct dazibao* d);
 int read_tlv(struct dazibao* d, struct tlv* buf, off_t offset);
 
 /* 
- * read from $(d) using $(offset)
+ * read from $(d)
  * fill $(buf)
- * return offset of read tlv 
+ * return offset of read tlv
+ * return 0 if EOF reached
+ * return -1 on error
  */
 off_t next_tlv(struct dazibao* d, struct tlv* buf);
 
-/*  */
+/* 
+ * use next_tlv to fill $(buf) using $(offseet)
+ * but does not change current offset in $(d)
+ * return 0 on success
+ * return -1 on error
+ */
 int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset);
 
 /*  */

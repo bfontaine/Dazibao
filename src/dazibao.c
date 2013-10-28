@@ -102,20 +102,39 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	return current;
 }
 
-int tlv_at(struct dazibao* d, struct tlv* buf, int offset) {
+int tlv_at(struct dazibao* d, struct tlv* buf, off_t offset) {
 
+	off_t current;
+	
+	if((current = lseek(d->fd, 0, SEEK_CUR)) == -1) {
+		ERROR("lseek", -1);
+	}
+	
 	if(lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
-	return next_tlv(d, buf);
+	if(next_tlv(d, buf) <= 0) {
+
+		if(lseek(d->fd, current, SEEK_SET) == -1) {
+			ERROR("lseek", -1);
+		}
+	
+		return -1;
+	}
+
+	if(lseek(d->fd, current, SEEK_SET) == -1) {
+		ERROR("lseek", -1);
+	}
+
+	return 0;
 }
 
 int add_tlv(struct dazibao* d, struct tlv* buf) {
 	return 0;
 }
 
-int rm_tlv(struct dazibao* d, offset_t offset) {
+int rm_tlv(struct dazibao* d, off_t offset) {
 	return 0;
 }
 
