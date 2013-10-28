@@ -82,7 +82,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		ERROR("lseek", -1);
 	}
 
-	if((size_read = read(d->fd, tlv_type, TYPE_SIZE)) < 0) {
+	if((size_read = read(d->fd, &tlv_type, TLV_TYPE_SIZE)) < 0) {
 		ERROR("next_tlv read type", -1);
 	} else if(!size_read) {
 		return EOD;
@@ -91,11 +91,9 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type; 
 	
 	if(tlv_type != TLV_PAD1) {
-	        buf->type = tlv_type;
-	        if(read(d->fd, buf->length , LENGTH_SIZE ) < LENGTH_SIZE) {
-		        ERRROR("next_tlv read length", -1);
-	        }
-		
+	        if(read(d->fd, &(buf->length), TLV_LENGTH_SIZE ) < TLV_LENGTH_SIZE) {
+		        ERROR("next_tlv read length", -1);
+	        }		
                 if(lseek(d->fd, buf->length, SEEK_CUR) == -1) {
                         ERROR("next_tlv lseek next_tlv", -1);
                 }

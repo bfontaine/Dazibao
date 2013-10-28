@@ -9,6 +9,7 @@
 #include <sys/file.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tlvs.h"
 #include "utils.h"
 
@@ -32,7 +33,8 @@
 
 #define DAZIBAO_HEADER_SIZE 4
 #define TLV_HEADER_SIZE 4
-#define TYPE_SIZE 1
+#define TLV_LENGTH_SIZE 3
+#define TLV_TYPE_SIZE 1
 #define EOD 0;
 #define MAGIC_NUMBER 53
 
