@@ -9,7 +9,7 @@ TARGET=dazibao
 
 CPPCHECK=cppcheck \
 	--enable=warning,style \
-	--language=c
+	--language=c -q
 
 .DEFAULT: all
 .PHONY: clean
