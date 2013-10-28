@@ -7,7 +7,9 @@ CFLAGS=-Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
 UTILS=$(SRC)/dazibao.h $(SRC)/tlvs.h $(SRC)/utils.h
 TARGET=dazibao
 
-CPPCHECK=cppcheck
+CPPCHECK=cppcheck \
+	--enable=warning,style \
+	--language=c
 
 .DEFAULT: all
 .PHONY: clean
