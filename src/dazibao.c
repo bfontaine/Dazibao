@@ -81,10 +81,35 @@ int next_tlv(struct dazibao* d, struct tlv* buf) {
 	  - return offset ?
 	*/
 	
-	if(read(d->fd, &(buf->type), HEADER_SIZE) < HEADER_SIZE) {
-		ERROR("read", -1);
+	int size_read;
+	char tlv_type;
+	off_t current;
+
+	if((current = lseek(d->fd, 0, SEEK_CUR) == -1)) {
+		ERROR("lseek", -1);
 	}
-	return 0;
+
+	if((size_read = read(d->fd, tlv_type, TYPE_SIZE)) < 0) {
+		ERROR("next_tlv read type", -1);
+	} else if(size_read = 0 ) {
+		return EOD;
+	}
+	
+	if(tlv_type == TLV_PAD1) {
+		buf->type = TLV_PAD1; 
+
+	} else {
+	        buf->type = tlv_type;
+	        if(read(d->fd, buf->length , LENGTH_SIZE ) < LENGTH_SIZE) {
+		        ERRROR("next_tlv read length",-1);
+	        }
+
+                if(lseek(d->fd, buf->length, SEEK_CUR) -1) {
+                        ERROR("next_tlv lseek next_tlv",-1);
+                }
+        }
+
+	return current;
 }
 
 int tlv_at(struct dazibao* d, struct tlv* buf, int offset) {
@@ -100,10 +125,76 @@ int add_tlv(struct dazibao* d, struct tlv* buf) {
 	return 0;
 }
 
-int rm_tlv(struct dazibao* d, int offset) {
+int rm_tlv(struct dazibao* d, offset_t offset) {
 	return 0;
 }
 
 int compact_dazibao(struct dazibao* d) {
-	return 0;
+
+#define BUFFLEN 128
+
+        struct tlv tlv_buf;
+        off_t reading  = DAZIBAO_HEADER_SIZE,
+              writing  = DAZIBAO_HEADER_SIZE;
+
+        int saved   = 0,
+            readlen,
+            len;
+
+        char buff[BUFFLEN];
+
+        if (d == NULL) {
+                return saved;
+        } 
+
+
+        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+                return -1;
+        }
+
+        while(tlv_at(d, &tlv_buf, reading) > 0) {
+
+                len = SIZEOF_TLV(tlv_buf);
+
+                if (tlv_buf.type == PAD1 || tlv_buf.type == PADN) {
+                        reading += len;
+                        continue;
+                }
+
+                if (reading == writing) {
+                        reading += len;
+                        writing += len;
+                        continue;
+                }
+
+                saved += len;
+                while (len > 0) {
+
+                        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+                                return -1;
+                        }
+
+                        readlen = read(d->fd, buff, MIN(len, BUFFLEN));
+                        if (readlen < 0) {
+                                return -1;
+                        }
+
+                        if (lseek(d->fd, writing, SEEK_SET) < 0) {
+                                return -1;
+                        }
+                        if (write(d->fd, buff, readlen) < 0) {
+                                return -1;
+                        }
+
+                        reading += readlen;
+                        writing += readlen;
+                        len     -= readlen;
+                }
+        }
+
+        ftruncate(d->fd, reading);
+
+	return saved;
+
+#undef BUFFLEN
 }

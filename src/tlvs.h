@@ -9,6 +9,9 @@
 #define TLV_COMPOUND 5
 #define TLV_DATED    6
 
-#define SIZEOF_TLV(t) (4+t.length)
+#define SIZEOF_TLV_TYPE 1
+#define SIZEOF_TLV_LENGTH 3
+#define SIZEOF_TLV_HEADER 4
+#define SIZEOF_TLV(t) (SIZEOF_TLV_TYPE+((t).type==TLV_PAD1?0:SIZEOF_TLV_LENGTH+(t).length))
 
 #endif
