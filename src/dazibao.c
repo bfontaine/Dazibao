@@ -15,8 +15,7 @@ int open_dazibao(struct dazibao* d, char* path, int flags) {
 	} else if(flags & O_RDONLY) {
 		lock = LOCK_SH;
 	} else {
-		fprintf(stderr, "open_dazibao: bad flags\n");
-		exit(EXIT_FAILURE);
+		CLOSE_AND_ERROR(fd, "bad flags", -1);
 	}
 	
 	if(flock(fd, lock) == -1) {
