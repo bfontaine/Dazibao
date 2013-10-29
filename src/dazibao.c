@@ -262,6 +262,8 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 		}
 		goto OUT;
 	}
+
+	/* FIXME: handle length > TLV_MAX_LENGTH */
 	
 	/* writing a padn */
 	buf.type = TLV_PADN;
