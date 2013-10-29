@@ -12,7 +12,9 @@
 #define TLV_SIZEOF_TYPE 1
 #define TLV_SIZEOF_LENGTH 3
 #define TLV_SIZEOF_HEADER 4
-#define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+((t).type==TLV_PAD1?0:TLV_SIZEOF_LENGTH+(t).length))
+#define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+((t).type==TLV_PAD1 \
+                                        ? 0                \
+                                        : TLV_SIZEOF_LENGTH+(t).length))
 
 #define TLV_IS_EMPTY_PAD(t) ((t) == TLV_PAD1 || (t) == TLV_PADN)
 

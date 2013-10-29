@@ -13,28 +13,9 @@
 #include "tlv.h"
 #include "utils.h"
 
-
-#define PANIC(str) {					\
-		perror((str));				\
-		exit(EXIT_FAILURE);			\
-	}
-
-#define ERROR(str, i) {				\
-		perror((str));			\
-		return (i);			\
-	}
-
-#define CLOSE_AND_ERROR(fd, msg, i) {		\
-		if(close((fd)) == -1) {		\
-			PANIC("close:");	\
-		}				\
-		ERROR((msg), (i));		\
-	}
-
 #define DAZIBAO_HEADER_SIZE 4
 #define EOD 0;
 #define MAGIC_NUMBER 53
-
 
 typedef char value_t;
 
