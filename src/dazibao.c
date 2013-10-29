@@ -27,7 +27,7 @@ int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 	}
 
 	if (header[0] != MAGIC_NUMBER || header[1] != 0) {
-		/* calling perror makes no sens here... */
+		/* FIXME: calling perror makes no sens here... */
 		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
 	}
 
@@ -137,57 +137,129 @@ int add_tlv(struct dazibao* d, const struct tlv* buf) {
 	return 0;
 }
 
-int rm_tlv(struct dazibao* d, const off_t offset) {
-
-	/*
-	 * FIXME: compact with previous pad if exists
-	 */
-
-	off_t off_stop, off_init;
-
+off_t pad_serie_start (struct dazibao* d, const off_t offset) {
+	off_t off_start, off_init, off_tmp;
 	struct tlv buf;
 
+	/* save current position in dazibao */
 	off_init = lseek(d->fd, 0, SEEK_CUR);
 
 	if (off_init < -1) {
 		ERROR("lseek", -1);
 	}
 
+	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) < 0) {
+		ERROR("lseek", -1);
+	}
+
+	off_start = -1;
+	
+	while ((off_tmp = next_tlv(d, &buf)) > 0) {
+		if(off_tmp == offset) {
+			/* tlv to rm reached */
+			if (off_start == -1) {
+				off_start = offset;
+			}
+			break;
+		} else if (buf.type == TLV_PAD1
+			|| buf.type == TLV_PADN) {
+			/* pad reached */
+			if (off_start == -1) {
+				off_start = off_tmp;
+			}
+		} else {
+			/* tlv which is not a pad */
+			off_start = -1;
+		}
+	}
+
+	if (!off_tmp) { /* end of file reached */
+		/* FIXME: should not call perror */
+		ERROR("no tlv here", -1);
+	}
+
+	/* restore initial offset */
+	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+		perror("lseek");
+	}
+
+	return off_start;
+
+}
+
+off_t pad_serie_end(struct dazibao* d, const off_t offset) {
+	off_t off_stop, off_init;
+	struct tlv buf;
+
+	/* save current position in dazibao */
+	off_init = lseek(d->fd, 0, SEEK_CUR);
+
+	if (off_init < -1) {
+		ERROR("lseek", -1);
+	}
+
+
+	if(lseek(d->fd, offset, SEEK_SET) < -1) {
+		ERROR("lseek", -1);
+	}
+
+	off_stop = offset;
+
 	/* look for the first tlv which is not a pad */
-	while ((off_stop = tlv_at(d, &buf, off_stop)) > 0) {
+	while ((off_stop = next_tlv(d, &buf)) > 0) {
 		if (buf.type != TLV_PAD1 && buf.type != TLV_PADN) {
+			/* tlv found */
 			break;
 		}
 	}
 
-	if (!off_stop) { /* end of file reached */
-		ftruncate(d->fd, offset);
+	/* restore initial offset */
+	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+		perror("lseek");
+	}
+
+	return off_stop;
+}
+
+
+int rm_tlv(struct dazibao* d, const off_t offset) {
+
+	off_t off_start, off_end, off_init;
+	struct tlv buf;
+
+	/* save current position in dazibao */
+	off_init = lseek(d->fd, 0, SEEK_CUR);
+
+	if (off_init < -1) {
+		ERROR("lseek", -1);
+	}
+
+	off_start = pad_serie_start(d, offset);
+
+	off_end = pad_serie_end(d, offset);
+
+	if (!off_end) { /* end of file reached */
+		ftruncate(d->fd, off_start);
 		return 0;
 	}
 
-	if (off_stop == -1) { /* next_tlv returned error */
-		return -1;
-	}
-
-	int len = off_stop - offset - SIZEOF_TLV_HEADER;
-
+	int len = off_end - off_start - SIZEOF_TLV_HEADER;
 
 	/* reach space to erase */
-	if (lseek(d->fd, offset, SEEK_SET) < -1) {
+	if (lseek(d->fd, off_start, SEEK_SET) < -1) {
 		ERROR("lseek", -1);
 	}
 	
 	if (len < 0) {	/* not enough space to contain padn, use pad1 */
 		int i;
-		for(i = 0; i < off_stop - offset; i++) {
-			if(write(d->fd, &TLV_PAD1, SIZEOF_TLV_TYPE)
+		for(i = 0; i < off_end - off_start; i++) {
+			if(write(d->fd, TLV_PAD1, SIZEOF_TLV_TYPE)
 				< SIZEOF_TLV_TYPE) {
 				ERROR("write", -1);
 			}
 		}
 		goto OUT;
 	}
-	
 	
 	/* writing a padn */
 	buf.type = TLV_PADN;

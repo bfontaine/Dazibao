@@ -87,7 +87,20 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 /*  */
 int add_tlv(struct dazibao* d, const struct tlv* buf);
 
-/*  */
+/*
+ * return offset of the begining of the serie of pad
+ * just before $(offset)
+ * if there is none, $(offset) is returned
+ */
+off_t pad_serie_start (struct dazibao* d, const off_t offset);
+
+/*
+ * return offset the next tlv after $(offset)
+ * which is NOT a pad
+ * if there is none, $(offset) is returned
+ */
+off_t pad_serie_end(struct dazibao* d, const off_t offset);
+
 int rm_tlv(struct dazibao* d, const off_t offset);
 
 /*
