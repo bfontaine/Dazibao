@@ -8,6 +8,7 @@ int main(int argc, char **argv) {
         struct dazibao d;
         struct tlv t;
         off_t off;
+        int len;
 
         if (argc < 2) {
                 printf("Usage:\n\t%s <dazibao>\n", argv[0]);
@@ -18,7 +19,9 @@ int main(int argc, char **argv) {
 
         while ((off = next_tlv(&d, &t)) != EOD) {
 
-                printf("TLV- %1d | %8d | ...\n", t.type, t.length);
+                len = t.type == TLV_PAD1 ? 0 : t.length;
+
+                printf("[%4llx] TLV %3d | %8d | ...\n", off, t.type, len);
 
         }
 
