@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
 
                 len = t.type == TLV_PAD1 ? 0 : t.length;
 
-                printf("[%4llx] TLV %3d | %8d | ...\n", off, t.type, len);
+                printf("[%4d] TLV %3d | %8d | ...\n", (int)off, t.type, len);
 
         }
 
