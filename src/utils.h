@@ -22,6 +22,8 @@
                 ERROR((msg), (i));          \
         }
 
+#define GET_OFFSET(fd) (lseek(fd, 0, SEEK_CUR))
 
+#define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_CUR)==(o))
 
 #endif

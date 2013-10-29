@@ -84,6 +84,11 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset);
 
 int rm_tlv(struct dazibao* d, const off_t offset);
 
+/* Empty a part of a dazibao, starting at 'start', and of length 'length'.
+ * The part is filled with padN's and pad1's.
+ */
+int empty_dazibao(struct dazibao *d, off_t start, off_t length);
+
 /*
  * Compact a Dazibao file. The file must have been opened in read/write mode,
  * and the Dazibao is NOT closed by the function. Also, the dazibao offset is
