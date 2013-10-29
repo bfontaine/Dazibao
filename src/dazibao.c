@@ -171,17 +171,33 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 
 	int len = off_stop - offset - SIZEOF_TLV_HEADER;
 
+
+	/* reach space to erase */
 	if (lseek(d->fd, offset, SEEK_SET) < -1) {
 		ERROR("lseek", -1);
 	}
-
-	if ((buf.type == TLV_PAD1
-                && write(d->fd, TLV_PAD1, SIZEOF_TLV_TYPE) < SIZEOF_TLV_TYPE)
-                || write(d->fd, &buf, len)) {
-
+	
+	if (len < 0) {	/* not enough space to contain padn, use pad1 */
+		int i;
+		for(i = 0; i < off_stop - offset; i++) {
+			if(write(d->fd, &TLV_PAD1, SIZEOF_TLV_TYPE)
+				< SIZEOF_TLV_TYPE) {
+				ERROR("write", -1);
+			}
+		}
+		goto OUT;
+	}
+	
+	
+	/* writing a padn */
+	buf.type = TLV_PADN;
+	buf.length = len;
+	
+	if (write(d->fd, &buf, SIZEOF_TLV_HEADER)) {
                 ERROR("write", -1);
         }
 
+OUT:
 	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
 		perror("lseek");
 	}
