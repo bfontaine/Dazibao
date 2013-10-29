@@ -226,61 +226,17 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 
 int rm_tlv(struct dazibao* d, const off_t offset) {
 
-	off_t off_start, off_end, off_init;
-	struct tlv buf;
-
-	/* save current position in dazibao */
-	off_init = lseek(d->fd, 0, SEEK_CUR);
-
-	if (off_init < -1) {
-		ERROR("lseek", -1);
-	}
+	off_t off_start, off_end;
 
 	off_start = pad_serie_start(d, offset);
+	off_end   = pad_serie_end(d, offset);
 
-	off_end = pad_serie_end(d, offset);
-
-	if (!off_end) { /* end of file reached */
+	if (off_end == EOD) { /* end of file reached */
 		ftruncate(d->fd, off_start);
 		return 0;
 	}
 
-	int len = off_end - off_start - TLV_SIZEOF_HEADER;
-
-	/* reach space to erase */
-	if (lseek(d->fd, off_start, SEEK_SET) < -1) {
-		ERROR("lseek", -1);
-	}
-	
-	if (len < 0) {
-		/* not enough space to contain padn, use pad1s */
-		/* FIXME: could write in one call */
-		int i;
-		for(i = 0; i < off_end - off_start; i++) {
-			if(write(d->fd, TLV_PAD1, TLV_SIZEOF_TYPE)
-				< TLV_SIZEOF_TYPE) {
-				ERROR("write", -1);
-			}
-		}
-		goto OUT;
-	}
-
-	/* FIXME: handle length > TLV_MAX_SIZE */
-	
-	/* writing a padn */
-	buf.type = TLV_PADN;
-	buf.length = len;
-	
-	if (write(d->fd, &buf, TLV_SIZEOF_HEADER)) {
-                ERROR("write", -1);
-        }
-
-OUT:
-	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
-		perror("lseek");
-	}
-
-	return 0;
+        return empty_dazibao(d, off_start, off_end - off_start);
 }
 
 int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
@@ -295,7 +251,8 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
 
         if (zeroes == NULL) {
                 perror("calloc");
-                return -1;
+                status = -1;
+                goto OUT;
         }
 
         if (original < 1) {
@@ -313,7 +270,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        if (lseek(d->fd, start, SEEK_SET) != start) {
+        if (!SET_OFFSET(d->fd, start)) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
@@ -340,6 +297,9 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 length -= tlv_len;
         }
 
+        /* We don't have enough room to store a padN, so we fill it with
+         * pad1's
+         */
         if (length > 0) {
                for (int i=0; i<length; i++) {
                        pad1s[i] = TLV_PAD1;
