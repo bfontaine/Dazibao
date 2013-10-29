@@ -146,11 +146,11 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	/* save current position in dazibao */
 	off_init = lseek(d->fd, 0, SEEK_CUR);
 
-	if (off_init < -1) {
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) < 0) {
+	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -181,7 +181,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
 		perror("lseek");
 	}
 
@@ -196,12 +196,12 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	/* save current position in dazibao */
 	off_init = lseek(d->fd, 0, SEEK_CUR);
 
-	if (off_init < -1) {
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
 
-	if(lseek(d->fd, offset, SEEK_SET) < -1) {
+	if(lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -216,7 +216,7 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
 		perror("lseek");
 	}
 
@@ -337,7 +337,7 @@ int compact_dazibao(struct dazibao* d) {
         }
 
 
-        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+        if (lseek(d->fd, reading, SEEK_SET) == -1) {
                 return -1;
         }
 
@@ -359,7 +359,7 @@ int compact_dazibao(struct dazibao* d) {
                 saved += len;
                 while (len > 0) {
 
-                        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+                        if (lseek(d->fd, reading, SEEK_SET) == -1) {
                                 return -1;
                         }
 
@@ -368,7 +368,7 @@ int compact_dazibao(struct dazibao* d) {
                                 return -1;
                         }
 
-                        if (lseek(d->fd, writing, SEEK_SET) < 0) {
+                        if (lseek(d->fd, writing, SEEK_SET) == -1) {
                                 return -1;
                         }
                         if (write(d->fd, buff, readlen) < 0) {
