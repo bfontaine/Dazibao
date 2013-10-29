@@ -20,6 +20,9 @@ CPPCHECK=cppcheck \
 
 all: $(TARGET)
 
+dazidump: dump.o dazibao.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 %.o: $(SRC)/%.c $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
