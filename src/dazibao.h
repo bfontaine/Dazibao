@@ -14,7 +14,7 @@
 #include "utils.h"
 
 #define DAZIBAO_HEADER_SIZE 4
-#define EOD 0;
+#define EOD 0
 #define MAGIC_NUMBER 53
 
 typedef char value_t;
