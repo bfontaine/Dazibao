@@ -12,9 +12,9 @@ int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 		ERROR("open", -1);
 	}
 
-	if ((flags & O_WRONLY) == O_WRONLY) {
+	if (flags == O_WRONLY) {
 		lock = LOCK_EX;
-	} else if ((flags & O_RDONLY) == O_RDONLY) {
+	} else if (flags == O_RDONLY || flags == O_RDWR) {
 		lock = LOCK_SH;
 	} else {
 		CLOSE_AND_ERROR(fd, "bad flags", -1);
