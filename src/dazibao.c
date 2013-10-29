@@ -1,5 +1,7 @@
 #include "dazibao.h"
 
+#define BUFFLEN 128
+
 int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 
 	int fd, lock;
@@ -263,7 +265,7 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 		goto OUT;
 	}
 
-	/* FIXME: handle length > TLV_MAX_LENGTH */
+	/* FIXME: handle length > TLV_MAX_SIZE */
 	
 	/* writing a padn */
 	buf.type = TLV_PADN;
@@ -281,10 +283,85 @@ OUT:
 	return 0;
 }
 
-int compact_dazibao(struct dazibao* d) {
+int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
+        off_t original = GET_OFFSET(d->fd);
 
-/* FIXME: should not define locally */
-#define BUFFLEN 128
+        struct tlv buff;
+
+        int status = 0;
+
+        char pad1s[TLV_SIZEOF_HEADER-1];
+        char *zeroes = (char*)calloc(BUFFLEN, sizeof(char));
+
+        if (zeroes == NULL) {
+                perror("calloc");
+                return -1;
+        }
+
+        if (original < 1) {
+                perror("lseek");
+                status = -1;
+                goto OUT;
+        }
+
+        if (d == NULL || start < DAZIBAO_HEADER_SIZE || length < 0) {
+                status = -1;
+                goto OUT;
+        }
+
+        if (length == 0) {
+                goto OUT;
+        }
+
+        if (lseek(d->fd, start, SEEK_SET) != start) {
+                perror("lseek");
+                status = -1;
+                goto OUT;
+        }
+
+        while(length > TLV_SIZEOF_HEADER - 1) {
+                off_t tlv_len = MIN(length, TLV_MAX_SIZE);
+                int val_len   = tlv_len - TLV_SIZEOF_HEADER;
+
+                buff.type   = TLV_PADN;
+                buff.length = val_len;
+                if (write(d->fd, &buff, TLV_SIZEOF_HEADER) < 0) {
+                        perror("write");
+                }
+
+                while (val_len > 0) {
+                        int l = MIN(val_len, BUFFLEN);
+                        if (write(d->fd, zeroes, l) < 0) {
+                                perror("write");
+                        }
+                        val_len -= l;
+                }
+
+                length -= tlv_len;
+        }
+
+        if (length > 0) {
+               for (int i=0; i<length; i++) {
+                       pad1s[i] = TLV_PAD1;
+               }
+               if (write(d->fd, pad1s, length) < 0) {
+                       perror("write");
+               }
+        }
+
+
+        if (!SET_OFFSET(d->fd, original)) {
+                perror("lseek");
+                status = -1;
+                goto OUT;
+        }
+
+OUT:
+        free(zeroes);
+        return status;
+}
+
+int compact_dazibao(struct dazibao* d) {
 
         struct tlv tlv_buf;
         off_t reading = DAZIBAO_HEADER_SIZE,
@@ -348,5 +425,6 @@ int compact_dazibao(struct dazibao* d) {
 
 	return saved;
 
-#undef BUFFLEN
 }
+
+#undef BUFFLEN
