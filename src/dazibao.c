@@ -250,7 +250,9 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 	
-	if (len < 0) {	/* not enough space to contain padn, use pad1 */
+	if (len < 0) {
+		/* not enough space to contain padn, use pad1s */
+		/* FIXME: could write in one call */
 		int i;
 		for(i = 0; i < off_end - off_start; i++) {
 			if(write(d->fd, TLV_PAD1, SIZEOF_TLV_TYPE)
