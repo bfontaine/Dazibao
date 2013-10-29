@@ -75,14 +75,14 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 
 	int size_read;
 	char tlv_type;
-        char tlv_length[SIZEOF_TLV_LENGTH];
+        char tlv_length[TLV_SIZEOF_LENGTH];
 	off_t current;
 
 	if ((current = lseek(d->fd, 0, SEEK_CUR)) == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if ((size_read = read(d->fd, &tlv_type, SIZEOF_TLV_TYPE)) < 0) {
+	if ((size_read = read(d->fd, &tlv_type, TLV_SIZEOF_TYPE)) < 0) {
 		ERROR("next_tlv read type", -1);
 	} else if (!size_read) {
 		return EOD;
@@ -91,8 +91,8 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type;
 
 	if (tlv_type != TLV_PAD1) {
-	        if (read(d->fd, &tlv_length, SIZEOF_TLV_LENGTH )
-                                < SIZEOF_TLV_LENGTH) {
+	        if (read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH )
+                                < TLV_SIZEOF_LENGTH) {
 		        ERROR("next_tlv read length", -1);
 	        }
                 buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
@@ -243,7 +243,7 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 		return 0;
 	}
 
-	int len = off_end - off_start - SIZEOF_TLV_HEADER;
+	int len = off_end - off_start - TLV_SIZEOF_HEADER;
 
 	/* reach space to erase */
 	if (lseek(d->fd, off_start, SEEK_SET) < -1) {
@@ -255,8 +255,8 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 		/* FIXME: could write in one call */
 		int i;
 		for(i = 0; i < off_end - off_start; i++) {
-			if(write(d->fd, TLV_PAD1, SIZEOF_TLV_TYPE)
-				< SIZEOF_TLV_TYPE) {
+			if(write(d->fd, TLV_PAD1, TLV_SIZEOF_TYPE)
+				< TLV_SIZEOF_TYPE) {
 				ERROR("write", -1);
 			}
 		}
@@ -267,7 +267,7 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 	buf.type = TLV_PADN;
 	buf.length = len;
 	
-	if (write(d->fd, &buf, SIZEOF_TLV_HEADER)) {
+	if (write(d->fd, &buf, TLV_SIZEOF_HEADER)) {
                 ERROR("write", -1);
         }
 
@@ -304,7 +304,7 @@ int compact_dazibao(struct dazibao* d) {
 
         while (tlv_at(d, &tlv_buf, reading) > 0) {
 
-                int len = SIZEOF_TLV(tlv_buf);
+                int len = TLV_SIZEOF(tlv_buf);
 
                 if (TLV_IS_EMPTY_PAD(tlv_buf.type)) {
                         reading += len;
