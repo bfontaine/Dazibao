@@ -66,7 +66,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf);
 int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 
 /*  */
-int add_tlv(struct dazibao* d, const struct tlv* buf);
+int add_tlv(struct dazibao* d, const struct tlv* src);
 
 /*
  * return offset of the begining of the serie of pad

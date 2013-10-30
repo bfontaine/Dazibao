@@ -124,7 +124,6 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 		if (lseek(d->fd, current, SEEK_SET) == -1) {
 			ERROR("lseek", -1);
 		}
-
 		return -1;
 	}
 
@@ -135,7 +134,43 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 	return 0;
 }
 
-int add_tlv(struct dazibao* d, const struct tlv* buf) {
+int add_tlv(struct dazibao* d, const struct tlv* src) {
+        off_t current;
+        off_t previous = -1;
+
+        size_t sizeof_tlv;
+        struct tlv buff;
+
+        while ((current = next_tlv(d, &buff)) != EOD){
+               if ((buff.type == TLV_PAD1) || (buff.type == TLV_PADN)){
+                        if (previous > 0){
+                                continue;
+                        } else {
+                                previous = current;
+                        }
+                } else {
+                        previous = -1;
+                }
+        }
+        
+        if (previous > 0){
+                current = previous;
+        }
+
+        sizeof_tlv = TLV_SIZEOF(*src);
+
+        if (src->type == TLV_PAD1){
+                sizeof_tlv = TLV_SIZEOF_TYPE; 
+        }
+
+        if (write(d->fd, &src, sizeof_tlv) != TLV_SIZEOF(*src)){
+                ERROR("add_tlv write tlv",-1);      
+        }
+
+        if (ftruncate(d->fd, (current + sizeof_tlv)) < 0 ){
+                ERROR("add_tlv ftruncate dazibao",-1);
+        }
+
 	return 0;
 }
 
@@ -150,7 +185,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) < 0) {
+	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -337,7 +372,7 @@ int compact_dazibao(struct dazibao* d) {
         }
 
 
-        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+        if (lseek(d->fd, reading, SEEK_SET) == -1) {
                 return -1;
         }
 
@@ -359,7 +394,7 @@ int compact_dazibao(struct dazibao* d) {
                 saved += len;
                 while (len > 0) {
 
-                        if (lseek(d->fd, reading, SEEK_SET) < 0) {
+                        if (lseek(d->fd, reading, SEEK_SET) == -1) {
                                 return -1;
                         }
 
@@ -368,7 +403,7 @@ int compact_dazibao(struct dazibao* d) {
                                 return -1;
                         }
 
-                        if (lseek(d->fd, writing, SEEK_SET) < 0) {
+                        if (lseek(d->fd, writing, SEEK_SET) == -1) {
                                 return -1;
                         }
                         if (write(d->fd, buff, readlen) < 0) {
