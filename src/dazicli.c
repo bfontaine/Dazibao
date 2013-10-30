@@ -50,9 +50,6 @@ int add(struct dazibao *daz_buf) {
 
 	tlv_buf.length = atoi(input);
 	
-
-	
-
 	tlv_buf.value = malloc(sizeof(*tlv_buf.value) * tlv_buf.length);
 
 	if (!tlv_buf.value) {
@@ -77,9 +74,6 @@ int main(int argc, char **argv) {
 	struct dazibao daz_buf;
 	struct tlv tlv_buf;
 	char input[BUFFSIZE];
-	int len;
-	off_t cur_off, tmp_off;
-
 
         if (argc < 2) {
                 printf("Usage:\n\t%s <dazibao>\n", argv[0]);
