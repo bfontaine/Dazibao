@@ -146,7 +146,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	/* save current position in dazibao */
 	off_init = lseek(d->fd, 0, SEEK_CUR);
 
-	if (off_init < -1) {
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -181,7 +181,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
 		perror("lseek");
 	}
 
@@ -196,12 +196,12 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	/* save current position in dazibao */
 	off_init = lseek(d->fd, 0, SEEK_CUR);
 
-	if (off_init < -1) {
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
 
-	if(lseek(d->fd, offset, SEEK_SET) < -1) {
+	if(lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -216,7 +216,7 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) < -1) {
+	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
 		perror("lseek");
 	}
 
@@ -255,7 +255,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        if (original < 1) {
+        if (original == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
@@ -270,7 +270,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        if (!SET_OFFSET(d->fd, start)) {
+        if (SET_OFFSET(d->fd, start) == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
@@ -310,7 +310,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
         }
 
 
-        if (!SET_OFFSET(d->fd, original)) {
+        if (SET_OFFSET(d->fd, original) == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
