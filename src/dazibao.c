@@ -93,10 +93,14 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type;
 
 	if (tlv_type != TLV_PAD1) {
-	        if (read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH )
-                                < TLV_SIZEOF_LENGTH) {
-		        ERROR("next_tlv read length", -1);
+		size_read = read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH);
+	        if (size_read < TLV_SIZEOF_LENGTH) {
+			printf("read %d, expected %d\n", size_read,(int)TLV_SIZEOF_LENGTH);
+			return -1;
 	        }
+		if (size_read == -1) {
+		        ERROR("next_tlv read length", -1);
+		}
                 buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
                                 + tlv_length[2];
                 if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
