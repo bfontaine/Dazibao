@@ -200,12 +200,12 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-
 	if(lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
-	off_stop = offset;
+	/* skip current tlv */
+	off_stop = next_tlv(d, &buf);
 
 	/* look for the first tlv which is not a pad */
 	while ((off_stop = next_tlv(d, &buf)) > 0) {
