@@ -3,3 +3,5 @@
 *.swp
 *.o
 a.out
+# executables
+dazidump

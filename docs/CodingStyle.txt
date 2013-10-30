@@ -867,3 +867,4 @@ http://www.kroah.com/linux/talks/ols_2002_kernel_codingstyle_talk/html/
 
 - Indentation use 8 spaces, not one 8-spaces wide tab
 - We use braces EVERY TIME, even when there's only one statement in an `if`
+- Includes are lexically sorted

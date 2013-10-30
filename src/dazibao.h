@@ -1,40 +1,21 @@
 #ifndef _DAZIBAO_H
 #define _DAZIBAO_H 1
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <errno.h>
-#include <sys/file.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "tlv.h"
 #include "utils.h"
-
-
-#define PANIC(str) {					\
-		perror((str));				\
-		exit(EXIT_FAILURE);			\
-	}
-
-#define ERROR(str, i) {				\
-		perror((str));			\
-		return (i);			\
-	}
-
-#define CLOSE_AND_ERROR(fd, msg, i) {		\
-		if(close((fd)) == -1) {		\
-			PANIC("close:");	\
-		}				\
-		ERROR((msg), (i));		\
-	}
 
 #define DAZIBAO_HEADER_SIZE 4
 #define EOD 0
 #define MAGIC_NUMBER 53
-
 
 typedef char value_t;
 
@@ -87,8 +68,26 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 /*  */
 int add_tlv(struct dazibao* d, const struct tlv* src);
 
-/*  */
+/*
+ * return offset of the begining of the serie of pad
+ * just before $(offset)
+ * if there is none, $(offset) is returned
+ */
+off_t pad_serie_start (struct dazibao* d, const off_t offset);
+
+/*
+ * return offset the next tlv after $(offset)
+ * which is NOT a pad
+ * if there is none, $(offset) is returned
+ */
+off_t pad_serie_end(struct dazibao* d, const off_t offset);
+
 int rm_tlv(struct dazibao* d, const off_t offset);
+
+/* Empty a part of a dazibao, starting at 'start', and of length 'length'.
+ * The part is filled with padN's and pad1's.
+ */
+int empty_dazibao(struct dazibao *d, off_t start, off_t length);
 
 /*
  * Compact a Dazibao file. The file must have been opened in read/write mode,
