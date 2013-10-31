@@ -140,7 +140,6 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 
         size_t sizeof_tlv;
         struct tlv buff;
-
         while ((current = next_tlv(d, &buff)) != EOD){
                if ((buff.type == TLV_PAD1) || (buff.type == TLV_PADN)){
                         if (previous > 0){
@@ -151,8 +150,10 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
                 } else {
                         previous = -1;
                 }
+
         }
         
+        current = lseek(d->fd,0,SEEK_END); 
         if (previous > 0){
                 current = previous;
         }
