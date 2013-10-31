@@ -2,6 +2,39 @@
 
 #define BUFFLEN 128
 
+
+int create_dazibao(struct dazibao* daz_buf, const char* path) {
+
+	int fd;
+	char header[DAZIBAO_HEADER_SIZE];
+
+	if (access(path, F_OK) != -1) {
+		printf("creat_dazibao error: file %s already exists\n", path);
+		return -1;
+	}
+
+	fd = create(path);
+
+	if (fd == -1) {
+		ERROR("open", -1);
+	}
+
+	if (flock(fd, LOCK_SH) == -1) {
+		CLOSE_AND_ERROR(fd, "flock", -1);
+	}
+
+	header[0] = MAGIC_NUMBER;
+	header[1] = 0;
+
+	if (write(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
+		ERROR("write", -1);
+	}
+
+	daz_buf->fd = fd;
+
+	return 0;
+}
+
 int open_dazibao(struct dazibao* d, const char* path, const int flags) {
 
 	int fd, lock;

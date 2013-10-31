@@ -29,6 +29,15 @@ struct dazibao {
 	int fd;
 };
 
+
+/*
+ * if $(path) exist, then return error -1
+ * else, create a file $(path)
+ * and fill $(daz_buf)
+ * return 0 on success
+ */
+int create_dazibao(struct dazibao *daz_buf, const char *path);
+
 /*
  * open $(path) file with $(flags) flags
  * apply flock according to $(flags)
