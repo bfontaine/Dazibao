@@ -17,14 +17,6 @@
 #define EOD 0
 #define MAGIC_NUMBER 53
 
-typedef char value_t;
-
-struct tlv {
-	unsigned char type;
-	unsigned int length:24;
-	value_t *value;
-};
-
 struct dazibao {
 	int fd;
 };
@@ -88,7 +80,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset);
 /*
  * return offset the next tlv after $(offset)
  * which is NOT a pad, skipping tlv at $(offset)
- * or EOD
+ * if there is none, $(offset) is returned
  */
 off_t pad_serie_end(struct dazibao* d, const off_t offset);
 

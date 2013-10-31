@@ -3,7 +3,7 @@
 
 CC=gcc
 SRC=src
-CFLAGS=-Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
 UTILS=$(SRC)/dazibao.h $(SRC)/tlv.h $(SRC)/utils.h
 TARGET=dazibao
 
@@ -20,7 +20,7 @@ CPPCHECK=cppcheck \
 
 all: $(TARGET)
 
-$(TARGET): main.o dazibao.o
+$(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(UTILS)

@@ -89,8 +89,9 @@ int main(int argc, char **argv) {
 			close_dazibao(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
-		
+
 	} else {
+
 
 	}
 
