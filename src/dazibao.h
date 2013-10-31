@@ -87,7 +87,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset);
 
 /*
  * return offset the next tlv after $(offset)
- * which is NOT a pad
+ * which is NOT a pad, skipping tlv at $(offset)
  * if there is none, $(offset) is returned
  */
 off_t pad_serie_end(struct dazibao* d, const off_t offset);

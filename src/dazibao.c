@@ -126,10 +126,14 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type;
 
 	if (tlv_type != TLV_PAD1) {
-	        if (read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH )
-                                < TLV_SIZEOF_LENGTH) {
-		        ERROR("next_tlv read length", -1);
+		size_read = read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH);
+	        if (size_read < TLV_SIZEOF_LENGTH) {
+			printf("read %d, expected %d\n", size_read,(int)TLV_SIZEOF_LENGTH);
+			return -1;
 	        }
+		if (size_read == -1) {
+		        ERROR("next_tlv read length", -1);
+		}
                 buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
                                 + tlv_length[2];
                 if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
@@ -269,12 +273,12 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-
 	if(lseek(d->fd, offset, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
-	off_stop = offset;
+	/* skip current tlv */
+	off_stop = next_tlv(d, &buf);
 
 	/* look for the first tlv which is not a pad */
 	while ((off_stop = next_tlv(d, &buf)) > 0) {
@@ -324,7 +328,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        if (original < 1) {
+        if (original == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
@@ -339,7 +343,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        if (!SET_OFFSET(d->fd, start)) {
+        if (SET_OFFSET(d->fd, start) == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
@@ -379,7 +383,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
         }
 
 
-        if (!SET_OFFSET(d->fd, original)) {
+        if (SET_OFFSET(d->fd, original) == -1) {
                 perror("lseek");
                 status = -1;
                 goto OUT;
