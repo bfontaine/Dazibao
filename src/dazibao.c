@@ -475,7 +475,7 @@ int compact_dazibao(struct dazibao* d) {
 }
 
 
-int dump(struct dazibao *daz_buf) {
+int dump_dazibao(struct dazibao *daz_buf) {
 
 	struct tlv tlv_buf;
         tlv_buf.value = (char*)NULL;

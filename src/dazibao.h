@@ -104,6 +104,6 @@ int compact_dazibao(struct dazibao*);
 /*
  * print tlvs contained in $(daz_buf) on standard output
  */
-int dump(struct dazibao *daz_buf);
+int dump_dazibao(struct dazibao *daz_buf);
 
 #endif /* _DAZIBAO_H */

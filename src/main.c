@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		if (dump(&daz_buf)) {
+		if (dump_dazibao(&daz_buf)) {
 			printf("dump failed\n");
 			close_dazibao(&daz_buf);
 			exit(EXIT_FAILURE);
