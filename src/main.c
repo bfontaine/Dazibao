@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 		char *buff = NULL;
 		int read_size;
 
-		while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) < 0) {
+		while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
 			buff_size += read_size;
 			if(buff_size > TLV_MAX_VALUE_SIZE) {
 				printf("tlv too large\n");
