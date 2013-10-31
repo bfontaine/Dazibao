@@ -62,7 +62,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
  * read from $(d)
  * fill $(buf)
  * return offset of read tlv
- * return 0 if EOF reached
+ * return EOD if EOF reached
  * return -1 on error
  */
 off_t next_tlv(struct dazibao* d, struct tlv* buf);
@@ -88,7 +88,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset);
 /*
  * return offset the next tlv after $(offset)
  * which is NOT a pad, skipping tlv at $(offset)
- * if there is none, $(offset) is returned
+ * or EOD
  */
 off_t pad_serie_end(struct dazibao* d, const off_t offset);
 
