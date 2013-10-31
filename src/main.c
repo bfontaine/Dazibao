@@ -1,5 +1,4 @@
 #include "dazibao.h"
-#include "dump.h"
 
 #define BUFFSIZE 512
 int main(int argc, char **argv) {
