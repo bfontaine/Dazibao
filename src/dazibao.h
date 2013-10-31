@@ -29,9 +29,19 @@ struct dazibao {
 	int fd;
 };
 
+
+/*
+ * if $(path) exist, then return error -1
+ * else, create a file $(path)
+ * and fill $(daz_buf)
+ * return 0 on success
+ */
+int create_dazibao(struct dazibao *daz_buf, const char *path);
+
 /*
  * open $(path) file with $(flags) flags
  * apply flock according to $(flags)
+ * see 'man 2 open' for more details on flags
  * check if $(path) is valid dazibao
  * fill $(d)
  * returns 0 on success
@@ -66,7 +76,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf);
 int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 
 /*  */
-int add_tlv(struct dazibao* d, const struct tlv* buf);
+int add_tlv(struct dazibao* d, const struct tlv* src);
 
 /*
  * return offset of the begining of the serie of pad
@@ -77,7 +87,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset);
 
 /*
  * return offset the next tlv after $(offset)
- * which is NOT a pad
+ * which is NOT a pad, skipping tlv at $(offset)
  * if there is none, $(offset) is returned
  */
 off_t pad_serie_end(struct dazibao* d, const off_t offset);
@@ -97,5 +107,11 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length);
  * or -1 if an error occured.
  */
 int compact_dazibao(struct dazibao*);
+
+
+/*
+ * print tlvs contained in $(daz_buf) on standard output
+ */
+int dump(struct dazibao *daz_buf);
 
 #endif /* _DAZIBAO_H */
