@@ -499,9 +499,9 @@ int dump(struct dazibao *daz_buf) {
                 }
                 tlv_buf.value[tlv_buf.length] = '\0';
 
-                wprintf(L"[%4d] TLV %3d | %8d | <%-10s>\n",
+                wprintf(L"[%4d] TLV %3d | %8d | <%-.10s>\n",
                                 (int)off, tlv_buf.type, len,
-                                (wchar_t*)tlv_buf.value); // XXX
+                                (wchar_t*)tlv_buf.value);
                 // TODO check width of wchar_t with gcc
 
                 /* There may be some possible perf improvements here,
