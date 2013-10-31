@@ -61,6 +61,23 @@ int main(int argc, char **argv) {
 		free(buff);
 	} else if (!strcmp(cmd, "rm")) {
 
+		if (argc < 4) {
+			printf("expected offset\n");
+			exit(EXIT_FAILURE);
+		}
+
+		if (open_dazibao(&daz_buf, daz, O_RDWR)) {
+			exit(EXIT_FAILURE);
+		}
+
+		off_t off = (off_t)atoi(argv[3]);
+
+		if (rm_tlv(&daz_buf, off)) {
+			printf("rm failed\n");
+			close_dazibao(&daz_buf);
+			exit(EXIT_FAILURE);
+		}
+
 	} else if (!strcmp(cmd, "dump")) {
 
 		if (open_dazibao(&daz_buf, daz, O_RDONLY)) {
