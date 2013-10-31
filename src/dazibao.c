@@ -281,10 +281,18 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	off_stop = next_tlv(d, &buf);
 
 	/* look for the first tlv which is not a pad */
-	while ((off_stop = next_tlv(d, &buf)) > 0) {
+	while (off_stop != EOD
+		&& (off_stop = next_tlv(d, &buf)) > 0) {
 		if (buf.type != TLV_PAD1 && buf.type != TLV_PADN) {
 			/* tlv found */
 			break;
+		}
+	}
+
+	if (off_stop == EOD) {
+		off_stop = lseek(d->fd, 0, SEEK_END);
+		if (off_stop < 0) {
+			ERROR("lseek", -1);
 		}
 	}
 
@@ -292,6 +300,8 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
 		perror("lseek");
 	}
+
+	printf("off_stop is %d\n", (int)off_stop);
 
 	return off_stop;
 }
