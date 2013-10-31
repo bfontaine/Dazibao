@@ -1,4 +1,5 @@
 #include "dazibao.h"
+#include <locale.h>
 
 #define BUFFSIZE 512
 int main(int argc, char **argv) {
@@ -6,6 +7,9 @@ int main(int argc, char **argv) {
         struct dazibao daz_buf;
 	char *daz, *cmd;
 
+        if (setlocale(LC_ALL, "") == NULL) {
+                perror("setlocale");
+        }
 
         if (argc < 3) {
                 printf("Usage:\n\t%s <dazibao> <cmd>\n", argv[0]);
