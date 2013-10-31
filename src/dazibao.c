@@ -1,4 +1,5 @@
 #include "dazibao.h"
+#include <wchar.h>
 
 #define BUFFLEN 128
 
@@ -90,11 +91,14 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
 	/* probably some issues to fix with large tlv */
 
 	/* problem if buf->value was not init with malloc */
-	if (!realloc(buf->value, sizeof(*(buf->value)) * buf->length)) {
-		ERROR("malloc", -1);
+	//buf->value = realloc(buf->value, sizeof(*(buf->value)) * buf->length);
+
+	if (!buf->value) {
+                return -1;
+		//ERROR("realloc", -1);
 	}
 
-	if (lseek(d->fd, offset, SEEK_SET) == -1) {
+	if (lseek(d->fd, offset + TLV_SIZEOF_HEADER, SEEK_SET) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -465,6 +469,8 @@ int dump(struct dazibao *daz_buf) {
 
 	struct tlv tlv_buf;
 
+        tlv_buf.value = (char*)NULL;
+
         off_t off;
         int len;
 
@@ -472,13 +478,34 @@ int dump(struct dazibao *daz_buf) {
 
                 len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
 
-                printf("[%4d] TLV %3d | %8d | ...\n", (int)off, tlv_buf.type, len);
+                if (tlv_buf.type != TLV_TEXT) {
+                        printf("[%4d] TLV %3d | %8d | ...\n",
+                                        (int)off, tlv_buf.type, len);
+                        continue;
+                }
+
+                // TODO check for return values
+                tlv_buf.value = (char*)malloc(sizeof(char)*(tlv_buf.length+1));
+                if (read_tlv(daz_buf, &tlv_buf, off) < 0) {
+                        ERROR("read_tlv", -1);
+                }
+                tlv_buf.value[tlv_buf.length] = '\0';
+
+                wprintf(L"[%4d] TLV %3d | %8d | <%-10s>\n",
+                                (int)off, tlv_buf.type, len,
+                                (wchar_t*)tlv_buf.value); // XXX
+                // TODO check width of wchar_t with gcc
+
+                /* There may be some possible perf improvements here,
+                 * we don't need to free then re-malloc if we read
+                 * multiple text TLVs with roughly the same text
+                 * length. So we could use malloc once, realloc a few
+                 * times if needed, then free.
+                 */
+                free(tlv_buf.value);
+                tlv_buf.value = NULL;
 
         }
-
-	if (off != EOD) {
-		return -1;
-	}
 
         return 0;
 }

@@ -23,6 +23,15 @@
 #define TLV_MAX_VALUE_SIZE ((1<<((TLV_SIZEOF_LENGTH)*8))-1)
 #define TLV_MAX_SIZE ((TLV_SIZEOF_HEADER)+(TLV_MAX_VALUE_SIZE))
 
+typedef char value_t;
+
+struct tlv {
+	unsigned char type;
+	unsigned int length:24;
+	value_t *value;
+};
+
+
 /* Copy at most 'len' wide-characters into 'dest' from the value of tlv 't',
  * and return the number of wide-characters effectively copied. 'dest' is
  * NULL-terminated, and the NULL byte is not included in 'len', so allocate
@@ -30,5 +39,4 @@
  * The function returns -1 if an error occured or 'dest' and/or 't' are NULL.
  */
 size_t tlv_read_text(wchar_t *dest, const struct tlv *t, size_t len);
-
 #endif

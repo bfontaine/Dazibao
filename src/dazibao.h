@@ -17,14 +17,6 @@
 #define EOD 0
 #define MAGIC_NUMBER 53
 
-typedef char value_t;
-
-struct tlv {
-	unsigned char type;
-	unsigned int length:24;
-	value_t *value;
-};
-
 struct dazibao {
 	int fd;
 };
