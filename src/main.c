@@ -27,25 +27,31 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		char type = (char)atoi(argv[3]);
+		unsigned char type = (unsigned char)atoi(argv[3]);
 		char reader[BUFFSIZE];
-		int buff_size = 0;
+		unsigned int buff_size = 0;
 		char *buff = NULL;
 		int read_size;
 
 		while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
+
 			buff_size += read_size;
+
 			if(buff_size > TLV_MAX_VALUE_SIZE) {
 				printf("tlv too large\n");
 				exit(EXIT_FAILURE);
 			}
-			if(!realloc(buff, sizeof(*buff) * buff_size)) {
+
+			buff = realloc(buff, sizeof(*buff) * buff_size);
+
+			if(!buff) {
 				perror("realloc");
 				exit(EXIT_FAILURE);
 			}
+
 			memcpy(buff + (buff_size - read_size), reader, read_size);
 		}
-		
+
 		struct tlv tlv_buf = {type, buff_size, buff};
 
 		if (add_tlv(&daz_buf, &tlv_buf) == -1) {
@@ -66,10 +72,8 @@ int main(int argc, char **argv) {
 			close_dazibao(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
-
 		
 	} else {
-
 
 	}
 
