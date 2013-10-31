@@ -422,4 +422,27 @@ int compact_dazibao(struct dazibao* d) {
 
 }
 
+
+int dump(struct dazibao *daz_buf) {
+
+	struct tlv tlv_buf;
+
+        off_t off;
+        int len;
+
+        while ((off = next_tlv(daz_buf, &tlv_buf)) != EOD) {
+
+                len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
+
+                printf("[%4d] TLV %3d | %8d | ...\n", (int)off, tlv_buf.type, len);
+
+        }
+
+	if (off != EOD) {
+		return -1;
+	}
+
+        return 0;
+}
+
 #undef BUFFLEN

@@ -22,8 +22,6 @@ all: $(TARGET)
 
 $(TARGET): main.o dazibao.o
 	$(CC) $(CFLAGS) -o $@ $^
-dazidump: dump.o dazibao.o
-	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<

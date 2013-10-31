@@ -32,6 +32,7 @@ struct dazibao {
 /*
  * open $(path) file with $(flags) flags
  * apply flock according to $(flags)
+ * see 'man 2 open' for more details on flags
  * check if $(path) is valid dazibao
  * fill $(d)
  * returns 0 on success
@@ -97,5 +98,11 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length);
  * or -1 if an error occured.
  */
 int compact_dazibao(struct dazibao*);
+
+
+/*
+ * print tlvs contained in $(daz_buf) on standard output
+ */
+int dump(struct dazibao *daz_buf);
 
 #endif /* _DAZIBAO_H */

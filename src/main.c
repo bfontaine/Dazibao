@@ -1,4 +1,6 @@
 #include "dazibao.h"
+#include "dump.h"
+
 #define BUFFSIZE 512
 int main(int argc, char **argv) {
 
@@ -15,15 +17,17 @@ int main(int argc, char **argv) {
 	cmd = argv[2];
 
 
-        if (open_dazibao(&daz_buf, daz, O_RDWR)) {
-		exit(EXIT_FAILURE);
-	}
-
 	if (!strcmp(cmd, "add")) {
+
 		if (argc < 4) {
 			printf("expected type\n");
 			exit(EXIT_FAILURE);
 		}
+
+		if (open_dazibao(&daz_buf, daz, O_RDWR)) {
+			exit(EXIT_FAILURE);
+		}
+
 		char type = (char)atoi(argv[3]);
 		char reader[BUFFSIZE];
 		int buff_size = 0;
@@ -54,6 +58,17 @@ int main(int argc, char **argv) {
 
 	} else if (!strcmp(cmd, "dump")) {
 
+		if (open_dazibao(&daz_buf, daz, O_RDONLY)) {
+			exit(EXIT_FAILURE);
+		}
+
+		if (dump(&daz_buf)) {
+			printf("dump failed\n");
+			close_dazibao(&daz_buf);
+			exit(EXIT_FAILURE);
+		}
+
+		
 	} else {
 
 
