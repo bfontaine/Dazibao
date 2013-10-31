@@ -480,11 +480,10 @@ int dump(struct dazibao *daz_buf) {
 	struct tlv tlv_buf;
         tlv_buf.value = (char*)NULL;
         off_t off;
-        int len;
 
         while ((off = next_tlv(daz_buf, &tlv_buf)) != EOD) {
 
-                len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
+                int len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
 
                 if (tlv_buf.type != TLV_TEXT) {
                         printf("[%4d] TLV %3d | %8d | ...\n",
