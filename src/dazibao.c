@@ -326,8 +326,6 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 		perror("lseek");
 	}
 
-	printf("off_stop is %d\n", (int)off_stop);
-
 	return off_stop;
 }
 
