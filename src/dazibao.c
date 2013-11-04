@@ -205,9 +205,15 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 
         }
         
-        current = lseek(d->fd,0,SEEK_END); 
         if (previous > 0){
-                current = previous;
+                current = SET_OFFSET(d->fd, previous);
+	        if (current < 0) {
+		        perror("add_tlv lseek previous");
+	        }
+        } else {
+                if ((current = lseek(d->fd,0,SEEK_END)) < 0) {
+		        perror("add_tlv lseek seek_end");
+        	}
         }
 
         sizeof_tlv = TLV_SIZEOF(*src);
