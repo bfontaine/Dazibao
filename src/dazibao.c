@@ -216,7 +216,7 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
                 sizeof_tlv = TLV_SIZEOF_TYPE; 
         }
 
-        if (write(d->fd, &src, sizeof_tlv) != TLV_SIZEOF(*src)){
+        if (write(d->fd, src, sizeof_tlv) != TLV_SIZEOF(*src)){
                 ERROR("add_tlv write tlv",-1);      
         }
 
