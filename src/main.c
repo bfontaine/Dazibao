@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
 	char *daz, *cmd;
 
         if (setlocale(LC_ALL, "") == NULL) {
-                perror("setlocale");
+                PERROR("setlocale");
         }
 
         if (argc < 3) {
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 			buff = realloc(buff, sizeof(*buff) * buff_size);
 
 			if(!buff) {
-				perror("realloc");
+				PERROR("realloc");
 				exit(EXIT_FAILURE);
 			}
 
