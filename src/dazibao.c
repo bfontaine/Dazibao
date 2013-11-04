@@ -123,7 +123,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 
 	if ((size_read = read(d->fd, &tlv_type, TLV_SIZEOF_TYPE)) < 0) {
 		ERROR("next_tlv read type", -1);
-	} else if (!size_read) {
+	} else if (size_read == 0) {
 		return EOD;
 	}
 
