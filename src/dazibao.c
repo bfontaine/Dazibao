@@ -14,7 +14,7 @@ int create_dazibao(struct dazibao* daz_buf, const char* path) {
 		return -1;
 	}
 
-	fd = creat(path, 644);
+	fd = creat(path, 0644);
 
 	if (fd == -1) {
 		ERROR("open", -1);
