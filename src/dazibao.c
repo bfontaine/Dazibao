@@ -1,5 +1,6 @@
 #include "dazibao.h"
 #include <wchar.h>
+#include <arpa/inet.h>
 
 #define BUFFLEN 128
 
@@ -140,7 +141,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		}
                 buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
                                 + tlv_length[2];
-                if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
+		if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
                         ERROR("next_tlv lseek next_tlv", -1);
                 }
         }
@@ -176,10 +177,7 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 }
 
 int add_tlv(struct dazibao* d, const struct tlv* src) {
-        off_t current, off_init;
-        off_t previous = -1;
-        size_t sizeof_tlv;
-        struct tlv buff;
+	off_t pad_off, eof_off, off_init;
 
 	/* save current position in dazibao */
 	off_init = GET_OFFSET(d->fd);
@@ -188,49 +186,32 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 		ERROR("add_tlv lseek off_init", -1);
 	}
 
-	if (SET_OFFSET(d->fd, DAZIBAO_HEADER_SIZE) < 0) {
-		ERROR("add_tlv lseek dazibao_header", -1);
+	eof_off = lseek(d->fd, 0, SEEK_END);
+	if (eof_off == 0) {
+		ERROR(NULL, -1);
 	}
 
-        while ((current = next_tlv(d, &buff)) != EOD){
-               if ((buff.type == TLV_PAD1) || (buff.type == TLV_PADN)){
-                        if (previous > 0){
-                                continue;
-                        } else {
-                                previous = current;
-                        }
-                } else {
-                        previous = -1;
-                }
+	pad_off = pad_serie_start (d, eof_off);
 
-        }
-        
-        if (previous > 0){
-                current = SET_OFFSET(d->fd, previous);
-	        if (current < 0) {
-		        PERROR("add_tlv lseek previous");
-	        }
-        } else {
-                if ((current = lseek(d->fd,0,SEEK_END)) < 0) {
-		        PERROR("add_tlv lseek seek_end");
-        	}
-        }
-
-        sizeof_tlv = TLV_SIZEOF(*src);
-
-        if (src->type == TLV_PAD1){
-                sizeof_tlv = TLV_SIZEOF_TYPE; 
-        }
+	if (SET_OFFSET(d->fd, pad_off) == 1) {
+		ERROR("SET_OFFSET", -1);
+	}
 
         if (write(d->fd, src, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE){
                 ERROR("add_tlv write tlv_type",-1);      
         }
+
+        if (src->type == TLV_PAD1){
+		goto OUT;
+        }
+
 
         union {
                 char t[3];
                 int i:24;
         } len;
         len.i = src->length;
+
 
         if (write(d->fd, len.t, TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
                 ERROR("add_tlv write tlv_length",-1);      
@@ -240,7 +221,8 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
                 ERROR("add_tlv write tlv_value",-1);      
         }
 
-        if (ftruncate(d->fd, (current + sizeof_tlv)) < 0 ){
+OUT:
+        if (ftruncate(d->fd, (pad_off + TLV_SIZEOF(*src))) < 0 ){
                 ERROR("add_tlv ftruncate dazibao",-1);
         }
 
