@@ -26,4 +26,10 @@
 
 #define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_SET))
 
+#ifdef DEBUG
+#define PDEBUG(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define PDEBUG(fmt, ...) 0
+#endif
+
 #endif

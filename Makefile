@@ -11,6 +11,10 @@ ifdef NO_UNUSED
 CFLAGS+= -Wno-unused-parameter
 endif
 
+ifdef DEBUG
+CFLAGS+= -DDEBUG=1
+endif
+
 CPPCHECK=cppcheck \
 	--enable=warning,style \
 	--language=c -q
