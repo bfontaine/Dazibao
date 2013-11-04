@@ -98,7 +98,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
 		//ERROR("realloc", -1);
 	}
 
-	if (lseek(d->fd, offset + TLV_SIZEOF_HEADER, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -117,7 +117,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
         char tlv_length[TLV_SIZEOF_LENGTH];
 	off_t current;
 
-	if ((current = lseek(d->fd, 0, SEEK_CUR)) == -1) {
+	if ((current = GET_OFFSET(d->fd)) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -152,7 +152,7 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 
 	off_t current;
 
-	if ((current = lseek(d->fd, 0, SEEK_CUR)) == -1) {
+	if ((current = GET_OFFSET(d->fd)) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -221,13 +221,13 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	struct tlv buf;
 
 	/* save current position in dazibao */
-	off_init = lseek(d->fd, 0, SEEK_CUR);
+	off_init = GET_OFFSET(d->fd);
 
 	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, DAZIBAO_HEADER_SIZE) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -258,7 +258,7 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, off_init) == -1) {
 		perror("lseek");
 	}
 
@@ -271,13 +271,13 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	struct tlv buf;
 
 	/* save current position in dazibao */
-	off_init = lseek(d->fd, 0, SEEK_CUR);
+	off_init = GET_OFFSET(d->fd);
 
 	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if(lseek(d->fd, offset, SEEK_SET) == -1) {
+	if(SET_OFFSET(d->fd, offset) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -301,7 +301,7 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	}
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, off_init) == -1) {
 		perror("lseek");
 	}
 
@@ -424,7 +424,7 @@ int compact_dazibao(struct dazibao* d) {
         }
 
 
-        if (lseek(d->fd, reading, SEEK_SET) == -1) {
+        if (SET_OFFSET(d->fd, reading) == -1) {
                 return -1;
         }
 
@@ -446,7 +446,7 @@ int compact_dazibao(struct dazibao* d) {
                 saved += len;
                 while (len > 0) {
 
-                        if (lseek(d->fd, reading, SEEK_SET) == -1) {
+                        if (SET_OFFSET(d->fd, reading) == -1) {
                                 return -1;
                         }
 
@@ -455,7 +455,7 @@ int compact_dazibao(struct dazibao* d) {
                                 return -1;
                         }
 
-                        if (lseek(d->fd, writing, SEEK_SET) == -1) {
+                        if (SET_OFFSET(d->fd, writing) == -1) {
                                 return -1;
                         }
                         if (write(d->fd, buff, readlen) < 0) {
