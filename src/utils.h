@@ -10,14 +10,15 @@
                 exit(EXIT_FAILURE);         \
         }
 
-#define ERROR(str, i) {                     \
-                perror((str));              \
-                return (i);                 \
+#define ERROR(str, i) {							\
+		fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
+                perror((str));						\
+                return (i);						\
         }
 
 #define CLOSE_AND_ERROR(fd, msg, i) {       \
                 if(close((fd)) == -1) {     \
-                        PANIC("close:");    \
+                        PANIC("close");    \
                 }                           \
                 ERROR((msg), (i));          \
         }
