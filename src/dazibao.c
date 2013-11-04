@@ -104,7 +104,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
 
 
 	if (read(d->fd, buf->value, buf->length) < buf->length) {
-		ERROR("read", -1);
+	//	ERROR("read", -1);
 	}
 
 	return 0;
@@ -222,8 +222,22 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
                 sizeof_tlv = TLV_SIZEOF_TYPE; 
         }
 
-        if (write(d->fd, src, sizeof_tlv) != TLV_SIZEOF(*src)){
-                ERROR("add_tlv write tlv",-1);      
+        if (write(d->fd, src, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE){
+                ERROR("add_tlv write tlv_type",-1);      
+        }
+
+        union {
+                char t[3];
+                int i:24;
+        } len;
+        len.i = src->length;
+
+        if (write(d->fd, len.t, TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
+                ERROR("add_tlv write tlv_length",-1);      
+        }
+
+        if (write(d->fd, src->value, src->length) != src->length){
+                ERROR("add_tlv write tlv_value",-1);      
         }
 
         if (ftruncate(d->fd, (current + sizeof_tlv)) < 0 ){
