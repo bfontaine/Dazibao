@@ -255,14 +255,10 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 
 	off_start = -1;
 	
-	while ((off_tmp = next_tlv(d, &buf)) > 0) {
-		if(off_tmp == offset) {
-			/* tlv to rm reached */
-			if (off_start == -1) {
-				off_start = offset;
-			}
-			break;
-		} else if (buf.type == TLV_PAD1
+	while ((off_tmp = next_tlv(d, &buf)) != -1
+		&& off_tmp != EOD
+		&& off_tmp < offset) {
+		if (buf.type == TLV_PAD1
 			|| buf.type == TLV_PADN) {
 			/* pad reached */
 			if (off_start == -1) {
@@ -274,9 +270,12 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 		}
 	}
 
-	if (!off_tmp) { /* end of file reached */
-		/* FIXME: should not call perror */
-		ERROR("no tlv here", -1);
+	if (off_tmp == -1) {
+		ERROR("", -1);
+	}
+
+	if(off_start == -1) {
+		off_start = offset;
 	}
 
 	/* restore initial offset */
