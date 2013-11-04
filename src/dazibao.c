@@ -208,11 +208,11 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
         if (previous > 0){
                 current = SET_OFFSET(d->fd, previous);
 	        if (current < 0) {
-		        perror("add_tlv lseek previous");
+		        PERROR("add_tlv lseek previous");
 	        }
         } else {
                 if ((current = lseek(d->fd,0,SEEK_END)) < 0) {
-		        perror("add_tlv lseek seek_end");
+		        PERROR("add_tlv lseek seek_end");
         	}
         }
 
@@ -246,7 +246,7 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 
 	/* restore initial offset */
 	if (SET_OFFSET(d->fd, off_init) < 0) {
-		perror("add_tlv lseek restore off_init");
+		PERROR("add_tlv lseek restore off_init");
 	}
 
 	return 0;
@@ -269,14 +269,10 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 
 	off_start = -1;
 	
-	while ((off_tmp = next_tlv(d, &buf)) > 0) {
-		if(off_tmp == offset) {
-			/* tlv to rm reached */
-			if (off_start == -1) {
-				off_start = offset;
-			}
-			break;
-		} else if (buf.type == TLV_PAD1
+	while ((off_tmp = next_tlv(d, &buf)) != -1
+		&& off_tmp != EOD
+		&& off_tmp < offset) {
+		if (buf.type == TLV_PAD1
 			|| buf.type == TLV_PADN) {
 			/* pad reached */
 			if (off_start == -1) {
@@ -288,14 +284,17 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 		}
 	}
 
-	if (!off_tmp) { /* end of file reached */
-		/* FIXME: should not call perror */
-		ERROR("no tlv here", -1);
+	if (off_tmp == -1) {
+		ERROR("", -1);
+	}
+
+	if(off_start == -1) {
+		off_start = offset;
 	}
 
 	/* restore initial offset */
 	if (SET_OFFSET(d->fd, off_init) == -1) {
-		perror("lseek");
+		PERROR("lseek");
 	}
 
 	return off_start;
@@ -338,10 +337,8 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 
 	/* restore initial offset */
 	if (SET_OFFSET(d->fd, off_init) == -1) {
-		perror("lseek");
+		PERROR("lseek");
 	}
-
-	printf("off_stop is %d\n", (int)off_stop);
 
 	return off_stop;
 }
@@ -373,13 +370,13 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
         char *zeroes = (char*)calloc(BUFFLEN, sizeof(char));
 
         if (zeroes == NULL) {
-                perror("calloc");
+                PERROR("calloc");
                 status = -1;
                 goto OUT;
         }
 
         if (original == -1) {
-                perror("lseek");
+                PERROR("lseek");
                 status = -1;
                 goto OUT;
         }
@@ -394,7 +391,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
         }
 
         if (SET_OFFSET(d->fd, start) == -1) {
-                perror("lseek");
+                PERROR("lseek");
                 status = -1;
                 goto OUT;
         }
@@ -406,13 +403,13 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 buff.type   = TLV_PADN;
                 buff.length = val_len;
                 if (write(d->fd, &buff, TLV_SIZEOF_HEADER) < 0) {
-                        perror("write");
+                        PERROR("write");
                 }
 
                 while (val_len > 0) {
                         int l = MIN(val_len, BUFFLEN);
                         if (write(d->fd, zeroes, l) < 0) {
-                                perror("write");
+                                PERROR("write");
                         }
                         val_len -= l;
                 }
@@ -428,13 +425,13 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                        pad1s[i] = TLV_PAD1;
                }
                if (write(d->fd, pad1s, length) < 0) {
-                       perror("write");
+                       PERROR("write");
                }
         }
 
 
         if (SET_OFFSET(d->fd, original) == -1) {
-                perror("lseek");
+                PERROR("lseek");
                 status = -1;
                 goto OUT;
         }
