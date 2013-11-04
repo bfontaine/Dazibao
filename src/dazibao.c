@@ -156,19 +156,19 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	if (lseek(d->fd, offset, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, offset) == -1) {
 		ERROR("lseek", -1);
 	}
 
 	if (next_tlv(d, buf) <= 0) {
 
-		if (lseek(d->fd, current, SEEK_SET) == -1) {
+		if (SET_OFFSET(d->fd, current) == -1) {
 			ERROR("lseek", -1);
 		}
 		return -1;
 	}
 
-	if (lseek(d->fd, current, SEEK_SET) == -1) {
+	if (SET_OFFSET(d->fd, current) == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -182,13 +182,13 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
         struct tlv buff;
 
 	/* save current position in dazibao */
-	off_init = lseek(d->fd, 0, SEEK_CUR);
+	off_init = GET_OFFSET(d->fd);
 
-	if ((off_init = lseek(d->fd, 0, SEEK_CUR)) < 0) {
+	if (off_init < 0) {
 		ERROR("add_tlv lseek off_init", -1);
 	}
 
-	if (lseek(d->fd, DAZIBAO_HEADER_SIZE, SEEK_SET) < 0) {
+	if (SET_OFFSET(d->fd, DAZIBAO_HEADER_SIZE) < 0) {
 		ERROR("add_tlv lseek dazibao_header", -1);
 	}
 
@@ -225,7 +225,7 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
         }
 
 	/* restore initial offset */
-	if (lseek(d->fd, off_init, SEEK_SET) < 0) {
+	if (SET_OFFSET(d->fd, off_init) < 0) {
 		perror("add_tlv lseek restore off_init");
 	}
 
