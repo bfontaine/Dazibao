@@ -94,8 +94,14 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
+	}  else if (!strcmp(cmd, "create")) {
+		
+		if (create_dazibao(&daz_buf, daz)) {
+			printf("error during dazibao creation\n");
+			exit(EXIT_FAILURE);
+		}
+		
 	} else {
-
 
 	}
 
