@@ -21,6 +21,8 @@ struct dazibao {
 	int fd;
 };
 
+void htod(long n, tlv_len *len);
+long dtoh(const tlv_len len);
 
 /*
  * if $(path) exist, then return error -1

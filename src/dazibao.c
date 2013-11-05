@@ -4,6 +4,19 @@
 
 #define BUFFLEN 128
 
+void htod(long n, tlv_len *len) {
+	union {
+		long i;
+		char c[4];
+	} tmp;
+	tmp.i = htonl(n);
+	memcpy(len, &tmp.c[1], 3);
+}
+
+long dtoh(const tlv_len len) {
+	return (len[0] << 16) + (len[1] << 8) + len[2];
+}
+
 
 int create_dazibao(struct dazibao* daz_buf, const char* path) {
 
@@ -104,7 +117,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
 	}
 
 
-	if (read(d->fd, buf->value, buf->length) < buf->length) {
+	if (read(d->fd, buf->value, dtoh(buf->len)) < dtoh(buf->len)) {
 	//	ERROR("read", -1);
 	}
 
@@ -115,7 +128,9 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 
 	int size_read;
 	char tlv_type;
-        char tlv_length[TLV_SIZEOF_LENGTH];
+
+
+	/*        char tlv_length[TLV_SIZEOF_LENGTH];*/
 	off_t current;
 
 	if ((current = GET_OFFSET(d->fd)) == -1) {
@@ -131,7 +146,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 	buf->type = tlv_type;
 
 	if (tlv_type != TLV_PAD1) {
-		size_read = read(d->fd, &tlv_length, TLV_SIZEOF_LENGTH);
+		size_read = read(d->fd, &buf->len, TLV_SIZEOF_LENGTH);
 	        if (size_read < TLV_SIZEOF_LENGTH) {
 			printf("read %d, expected %d\n", size_read,(int)TLV_SIZEOF_LENGTH);
 			return -1;
@@ -139,10 +154,15 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		if (size_read == -1) {
 		        ERROR("next_tlv read length", -1);
 		}
-                buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
+
+/*
+                buf->length = 
+
+ (tlv_length[0] << 16) + (tlv_length[1] << 8)
                                 + tlv_length[2];
+*/
 /*		printf("buf->length is %u", buf->length);*/
-		if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
+		if (lseek(d->fd, dtoh(buf->len), SEEK_CUR) == -1) {
                         ERROR("next_tlv lseek next_tlv", -1);
                 }
         }
@@ -216,19 +236,22 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 	 * assuming that sizeof(int) is 4, this following hack is correct
 	 * assuming it is not, it is not...
 	 */
+/*
 	union {
 		unsigned int i;
 		unsigned char c[4];
 	} tmp;
-
+*/
 	/* convert to big endian */
+	/*
 	tmp.i = htonl(src->length);
+	*/
 
-        if (write(d->fd, &tmp.c[1], TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
+        if (write(d->fd, src->len, TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
                 ERROR("add_tlv write tlv_length",-1);      
         }
 
-        if (write(d->fd, src->value, src->length) != src->length){
+        if (write(d->fd, src->value, dtoh(src->len)) != dtoh(src->len)){
                 ERROR("add_tlv write tlv_value",-1);      
         }
 
@@ -355,6 +378,7 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 	}
 
 	if (off_end == off_eof) { /* end of file reached */
+		printf("TRUNCATE THE MOTHERFUCKER\n");
 		ftruncate(d->fd, off_start);
 		return 0;
 	}
@@ -404,7 +428,12 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 int val_len   = tlv_len - TLV_SIZEOF_HEADER;
 
                 buff.type   = TLV_PADN;
-                buff.length = val_len;
+		htod(val_len, &buff.len);
+/*                buff.len = val_len;*/
+		printf("%d %d %d %d\n", buff.type, buff.len[0], buff.len[1], buff.len[2]);
+
+		printf("offset is %d\n", (int)GET_OFFSET(d->fd));
+		/* OK */
                 if (write(d->fd, &buff, TLV_SIZEOF_HEADER) < 0) {
                         PERROR("write");
                 }
@@ -432,6 +461,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                }
         }
 
+	printf("leaving: offset is %d\n", (int)GET_OFFSET(d->fd));
 
         if (SET_OFFSET(d->fd, original) == -1) {
                 PERROR("lseek");
@@ -518,26 +548,34 @@ int dump_dazibao(struct dazibao *daz_buf) {
         off_t off;
 
         while ((off = next_tlv(daz_buf, &tlv_buf)) != EOD) {
+                int len = tlv_buf.type == TLV_PAD1 ? 0 : dtoh(tlv_buf.len);
+		printf("[%4d] TLV %3d | %8d | ...\n",
+			(int)off, tlv_buf.type, len);
 
-                int len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
-
+/*
                 if (tlv_buf.type != TLV_TEXT) {
                         printf("[%4d] TLV %3d | %8d | ...\n",
                                         (int)off, tlv_buf.type, len);
                         continue;
                 }
-
+*/
                 // TODO check for return values
-                tlv_buf.value = (char*)malloc(sizeof(char)*(tlv_buf.length+1));
+/*
+                tlv_buf.value = (char*)malloc(sizeof(char)*(dtoh(tlv_buf.len)+1));
                 if (read_tlv(daz_buf, &tlv_buf, off) < 0) {
                         ERROR("read_tlv", -1);
                 }
-                tlv_buf.value[tlv_buf.length] = '\0';
+                tlv_buf.value[dtoh(tlv_buf.len)] = '\0';
+		printf("[%4d] TLV %3d | %8d | ...\n",
+			(int)off, tlv_buf.type, len);
+
+
 
                 wprintf(L"[%4d] TLV %3d | %8d | <%-.10s>\n",
                                 (int)off, tlv_buf.type, len,
                                 (wchar_t*)tlv_buf.value);
-                // TODO check width of wchar_t with gcc
+*/
+		// TODO check width of wchar_t with gcc
 
                 /* There may be some possible perf improvements here,
                  * we don't need to free then re-malloc if we read
@@ -547,7 +585,6 @@ int dump_dazibao(struct dazibao *daz_buf) {
                  */
                 free(tlv_buf.value);
                 tlv_buf.value = NULL;
-
         }
 
         return 0;

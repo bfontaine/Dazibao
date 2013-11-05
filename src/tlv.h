@@ -16,7 +16,7 @@
 #define TLV_SIZEOF_HEADER 4
 #define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+((t).type==TLV_PAD1 \
                                         ? 0                \
-                                        : TLV_SIZEOF_LENGTH+(t).length))
+								: TLV_SIZEOF_LENGTH+dtoh((t).len)))
 
 #define TLV_IS_EMPTY_PAD(t) ((t) == TLV_PAD1 || (t) == TLV_PADN)
 
@@ -25,9 +25,11 @@
 
 typedef char value_t;
 
+typedef char tlv_len[3];
+
 struct tlv {
 	unsigned char type;
-	unsigned int length:24;
+	tlv_len len;
 	value_t *value;
 };
 

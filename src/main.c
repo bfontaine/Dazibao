@@ -56,7 +56,13 @@ int main(int argc, char **argv) {
 			memcpy(buff + (buff_size - read_size), reader, read_size);
 		}
 
-		struct tlv tlv_buf = {type, buff_size, buff};
+		tlv_len len;
+		htod(buff_size, &len);
+
+		struct tlv tlv_buf;
+		tlv_buf.type = type;
+		memcpy(tlv_buf.len, len, 3);
+		tlv_buf.value = buff;
 
 		if (add_tlv(&daz_buf, &tlv_buf) == -1) {
 			printf("failed adding your tlv\n");
