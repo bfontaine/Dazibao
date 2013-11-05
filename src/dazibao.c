@@ -141,6 +141,7 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf) {
 		}
                 buf->length = (tlv_length[0] << 16) + (tlv_length[1] << 8)
                                 + tlv_length[2];
+/*		printf("buf->length is %u", buf->length);*/
 		if (lseek(d->fd, buf->length, SEEK_CUR) == -1) {
                         ERROR("next_tlv lseek next_tlv", -1);
                 }
@@ -206,14 +207,24 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
         }
 
 
-        union {
-                char t[3];
-                int i:24;
-        } len;
-        len.i = src->length;
+	/* FIXME: write it better */
+	/* 
+	 * the problem is that if we do not use a union with char[4]/int
+	 * then the less significant byte will be skipped
+	 * (on little endian machine, at least)
+	 * whereas we have to skip the most significant one
+	 * assuming that sizeof(int) is 4, this following hack is correct
+	 * assuming it is not, it is not...
+	 */
+	union {
+		unsigned int i;
+		unsigned char c[4];
+	} tmp;
 
+	/* convert to big endian */
+	tmp.i = htonl(src->length);
 
-        if (write(d->fd, len.t, TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
+        if (write(d->fd, &tmp.c[1], TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
                 ERROR("add_tlv write tlv_length",-1);      
         }
 
