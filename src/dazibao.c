@@ -413,11 +413,7 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
 
                 buff.type   = TLV_PADN;
 		htod(val_len, &buff.len);
-/*                buff.len = val_len;*/
-		printf("%d %d %d %d\n", buff.type, buff.len[0], buff.len[1], buff.len[2]);
 
-		printf("offset is %d\n", (int)GET_OFFSET(d->fd));
-		/* OK */
                 if (write(d->fd, &buff, TLV_SIZEOF_HEADER) < 0) {
                         PERROR("write");
                 }
@@ -444,8 +440,6 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                        PERROR("write");
                }
         }
-
-	printf("leaving: offset is %d\n", (int)GET_OFFSET(d->fd));
 
         if (SET_OFFSET(d->fd, original) == -1) {
                 PERROR("lseek");
