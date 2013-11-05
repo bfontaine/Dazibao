@@ -333,18 +333,28 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 		PERROR("lseek");
 	}
 
+	printf("off_stop is %d\n", (int)off_stop);
+
 	return off_stop;
 }
 
 
 int rm_tlv(struct dazibao* d, const off_t offset) {
 
-	off_t off_start, off_end;
+	/* FIXME: save and restore offset */
+
+	off_t off_start, off_end, off_eof;
 
 	off_start = pad_serie_start(d, offset);
 	off_end   = pad_serie_end(d, offset);
 
-	if (off_end == EOD) { /* end of file reached */
+	off_eof = lseek(d->fd, 0, SEEK_END);
+
+	if (off_eof == -1) {
+		ERROR(NULL, -1);
+	}
+
+	if (off_end == off_eof) { /* end of file reached */
 		ftruncate(d->fd, off_start);
 		return 0;
 	}
