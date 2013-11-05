@@ -207,57 +207,41 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 		ERROR("add_tlv lseek off_init", -1);
 	}
 
+	/* find offset of pad serie leading to EOF */
+
 	eof_off = lseek(d->fd, 0, SEEK_END);
+
 	if (eof_off == 0) {
 		ERROR(NULL, -1);
 	}
 
 	pad_off = pad_serie_start (d, eof_off);
 
-	if (SET_OFFSET(d->fd, pad_off) == 1) {
+	if (pad_off != eof_off && SET_OFFSET(d->fd, pad_off) == -1) {
 		ERROR("SET_OFFSET", -1);
 	}
 
-        if (write(d->fd, src, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE){
-                ERROR("add_tlv write tlv_type",-1);      
-        }
-
-        if (src->type == TLV_PAD1){
+	/* write tlv */
+	if (src->type == TLV_PAD1) {
+		if (write(d->fd, src, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE) {
+			ERROR("write", -1);      
+		}
 		goto OUT;
+	}
+	
+	if (write(d->fd, src, TLV_SIZEOF_HEADER) != TLV_SIZEOF_HEADER) {
+                ERROR("write", -1);      
         }
-
-
-	/* FIXME: write it better */
-	/* 
-	 * the problem is that if we do not use a union with char[4]/int
-	 * then the less significant byte will be skipped
-	 * (on little endian machine, at least)
-	 * whereas we have to skip the most significant one
-	 * assuming that sizeof(int) is 4, this following hack is correct
-	 * assuming it is not, it is not...
-	 */
-/*
-	union {
-		unsigned int i;
-		unsigned char c[4];
-	} tmp;
-*/
-	/* convert to big endian */
-	/*
-	tmp.i = htonl(src->length);
-	*/
-
-        if (write(d->fd, src->len, TLV_SIZEOF_LENGTH) != TLV_SIZEOF_LENGTH){
-                ERROR("add_tlv write tlv_length",-1);      
-        }
-
+	
         if (write(d->fd, src->value, dtoh(src->len)) != dtoh(src->len)){
-                ERROR("add_tlv write tlv_value",-1);      
+                ERROR("write", -1);      
         }
 
 OUT:
-        if (ftruncate(d->fd, (pad_off + TLV_SIZEOF(*src))) < 0 ){
-                ERROR("add_tlv ftruncate dazibao",-1);
+	/* truncate if needed */
+        if (eof_off > pad_off + TLV_SIZEOF(*src)
+		&& ftruncate(d->fd, (pad_off + TLV_SIZEOF(*src))) < 0 ) {
+                ERROR("ftruncate", -1);
         }
 
 	/* restore initial offset */
