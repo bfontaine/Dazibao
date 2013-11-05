@@ -11,14 +11,14 @@ int create_dazibao(struct dazibao* daz_buf, const char* path) {
 	char header[DAZIBAO_HEADER_SIZE];
 
 	if (access(path, F_OK) != -1) {
-		printf("creat_dazibao error: file %s already exists\n", path);
+		fprintf(stderr, "create_dazibao error: file %s already exists\n", path);
 		return -1;
 	}
 
 	fd = creat(path, 0644);
 
 	if (fd == -1) {
-		ERROR("open", -1);
+		ERROR("creat", -1);
 	}
 
 	if (flock(fd, LOCK_SH) == -1) {
