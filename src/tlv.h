@@ -13,7 +13,7 @@
 
 #define TLV_SIZEOF_TYPE 1
 #define TLV_SIZEOF_LENGTH 3
-#define TLV_SIZEOF_HEADER 4
+#define TLV_SIZEOF_HEADER (TLV_SIZEOF_TYPE + TLV_SIZEOF_LENGTH)
 #define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+((t).type==TLV_PAD1 \
                                         ? 0                \
 								: TLV_SIZEOF_LENGTH+dtoh((t).len)))
