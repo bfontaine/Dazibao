@@ -4,7 +4,7 @@
 
 #define BUFFLEN 128
 
-void htod(long n, tlv_len *len) {
+void htod(long n, char *len) {
 	union {
 		long i;
 		char c[4];
@@ -13,12 +13,35 @@ void htod(long n, tlv_len *len) {
 	memcpy(len, &tmp.c[1], 3);
 }
 
-long dtoh(const tlv_len len) {
+long dtoh( char *len) {
 	return (len[0] << 16) + (len[1] << 8) + len[2];
 }
 
+int get_type(char *tlv) {
+	return tlv[0];
+}
 
-int create_dazibao(struct dazibao* daz_buf, const char* path) {
+void set_type(char *tlv, char t) {
+	tlv[0] = t;
+}
+
+void set_length(char *tlv, long n) {
+	htod(n, get_length_ptr(tlv));
+}
+
+char *get_length_ptr(char *tlv) {
+	return (tlv + TLV_SIZEOF_TYPE);
+}
+
+long get_length(char *tlv) {
+	return dtoh(get_length_ptr(tlv));
+}
+
+char *get_value_ptr(char *tlv) {
+	return tlv + TLV_SIZEOF_HEADER;
+}
+
+int create_dazibao(struct dazibao* daz_buf,  char* path) {
 
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -50,7 +73,7 @@ int create_dazibao(struct dazibao* daz_buf, const char* path) {
 	return 0;
 }
 
-int open_dazibao(struct dazibao* d, const char* path, const int flags) {
+int open_dazibao(struct dazibao* d,  char* path,  int flags) {
 
 	int fd, lock;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -100,81 +123,72 @@ int close_dazibao(struct dazibao* d) {
 	return 0;
 }
 
-int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset) {
+int read_tlv(struct dazibao* d, char *tlv,  off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
 	/* problem if buf->value was not init with malloc */
 	//buf->value = realloc(buf->value, sizeof(*(buf->value)) * buf->length);
 
-	if (!buf->value) {
-                return -1;
-		//ERROR("realloc", -1);
-	}
-
 	if (SET_OFFSET(d->fd, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
 	}
 
+	int len = dtoh(get_length_ptr(tlv));
 
-	if (read(d->fd, buf->value, dtoh(buf->len)) < dtoh(buf->len)) {
-	//	ERROR("read", -1);
+	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
+
+	if (read(d->fd, get_value_ptr(tlv), len) < len) {
+		ERROR("read", -1);
 	}
 
 	return 0;
 }
 
-off_t next_tlv(struct dazibao* d, struct tlv* buf) {
+off_t next_tlv(struct dazibao* d, char *tlv) {
+
+	/*
+	 * PRECONDITION:
+	 * tlv have to be (at least) TLV_SIZEOF_HEADER long
+	 */
 
 	int size_read;
-	char tlv_type;
+	off_t off_init;
 
-
-	/*        char tlv_length[TLV_SIZEOF_LENGTH];*/
-	off_t current;
-
-	if ((current = GET_OFFSET(d->fd)) == -1) {
+	off_init = GET_OFFSET(d->fd);
+	
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if ((size_read = read(d->fd, &tlv_type, TLV_SIZEOF_TYPE)) < 0) {
-		ERROR("next_tlv read type", -1);
-	} else if (size_read == 0) {
+	/* try to read regular header (TLV_SIZEOF_HEADER) */
+	size_read = read(d->fd, tlv, TLV_SIZEOF_HEADER);
+	if (size_read == 0) {
 		return EOD;
-	}
-
-	buf->type = tlv_type;
-
-	if (tlv_type != TLV_PAD1) {
-		size_read = read(d->fd, &buf->len, TLV_SIZEOF_LENGTH);
-	        if (size_read < TLV_SIZEOF_LENGTH) {
-			printf("read %d, expected %d\n", size_read,(int)TLV_SIZEOF_LENGTH);
-			return -1;
-	        }
-		if (size_read == -1) {
-		        ERROR("next_tlv read length", -1);
+	} else if (size_read < 0) {
+		ERROR(NULL, -1);
+	} else if (size_read < TLV_SIZEOF_TYPE) {
+		ERROR(NULL, -1);
+	} else if (get_type(tlv) == TLV_PAD1) {
+		/* we read too far, because TLV_PAD1 is only 1 byte sized */
+		if (SET_OFFSET(d->fd, (off_init + TLV_SIZEOF_TYPE)) == -1) {
+			ERROR(NULL, -1);
 		}
-
-/*
-                buf->length = 
-
- (tlv_length[0] << 16) + (tlv_length[1] << 8)
-                                + tlv_length[2];
-*/
-/*		printf("buf->length is %u", buf->length);*/
-		if (lseek(d->fd, dtoh(buf->len), SEEK_CUR) == -1) {
-                        ERROR("next_tlv lseek next_tlv", -1);
-                }
-        }
-
-	return current;
+	} else if (size_read < TLV_SIZEOF_HEADER) {
+		/* TODO: loop waiting for read effectively read all tlv */
+	} else {
+		if (SET_OFFSET(d->fd, (off_init + TLV_SIZEOF_HEADER + get_length(tlv))) == -1) {
+			ERROR(NULL, -1);
+		}
+	}
+	return off_init;
 }
 
-int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
+int tlv_at(struct dazibao* d, char *tlv,  off_t offset) {
 
-	off_t current;
-
-	if ((current = GET_OFFSET(d->fd)) == -1) {
+	off_t off_init;
+	off_init = GET_OFFSET(d->fd);
+	if (off_init == -1) {
 		ERROR("lseek", -1);
 	}
 
@@ -182,22 +196,54 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	if (next_tlv(d, buf) <= 0) {
-
-		if (SET_OFFSET(d->fd, current) == -1) {
+	if (next_tlv(d, tlv) <= 0) {
+		if (SET_OFFSET(d->fd, off_init) == -1) {
 			ERROR("lseek", -1);
 		}
 		return -1;
 	}
 
-	if (SET_OFFSET(d->fd, current) == -1) {
+	if (SET_OFFSET(d->fd, off_init) == -1) {
 		ERROR("lseek", -1);
 	}
 
 	return 0;
 }
 
-int add_tlv(struct dazibao* d, const struct tlv* src) {
+int write_tlv_at(struct dazibao *d, char *tlv, off_t offset) {
+
+	off_t off_init;
+	
+	off_init = GET_OFFSET(d->fd);
+	if (off_init == -1) {
+		ERROR("lseek", -1);
+	}
+
+	if (SET_OFFSET(d->fd, offset) == -1) {
+		ERROR("lseek", -1);
+	}
+
+	if (get_type(tlv) == TLV_PAD1) {
+		if (write(d->fd, tlv, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE) {
+			ERROR("write", -1);      
+		}
+		return 0;
+	}
+	
+	int size = TLV_SIZEOF_HEADER + dtoh(get_length_ptr(tlv));
+
+	if (write(d->fd, tlv, size) != size) {
+                ERROR("write", -1);      
+        }
+
+	if (SET_OFFSET(d->fd, off_init) == -1) {
+		ERROR("lseek", -1);
+	}
+	return 0;
+}
+
+
+int add_tlv(struct dazibao* d,  char *tlv) {
 	off_t pad_off, eof_off, off_init;
 
 	/* save current position in dazibao */
@@ -221,26 +267,14 @@ int add_tlv(struct dazibao* d, const struct tlv* src) {
 		ERROR("SET_OFFSET", -1);
 	}
 
-	/* write tlv */
-	if (src->type == TLV_PAD1) {
-		if (write(d->fd, src, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE) {
-			ERROR("write", -1);      
-		}
-		goto OUT;
+	/* write */
+	if (write_tlv_at(d, tlv, pad_off) < 0) {
+		ERROR(NULL, -1);
 	}
-	
-	if (write(d->fd, src, TLV_SIZEOF_HEADER) != TLV_SIZEOF_HEADER) {
-                ERROR("write", -1);      
-        }
-	
-        if (write(d->fd, src->value, dtoh(src->len)) != dtoh(src->len)){
-                ERROR("write", -1);      
-        }
 
-OUT:
 	/* truncate if needed */
-        if (eof_off > pad_off + TLV_SIZEOF(*src)
-		&& ftruncate(d->fd, (pad_off + TLV_SIZEOF(*src))) < 0 ) {
+        if (eof_off > pad_off + TLV_SIZEOF(tlv)
+		&& ftruncate(d->fd, (pad_off + TLV_SIZEOF(tlv))) < 0 ) {
                 ERROR("ftruncate", -1);
         }
 
@@ -252,9 +286,10 @@ OUT:
 	return 0;
 }
 
-off_t pad_serie_start (struct dazibao* d, const off_t offset) {
+off_t pad_serie_start (struct dazibao* d,  off_t offset) {
 	off_t off_start, off_init, off_tmp;
-	struct tlv buf;
+
+	char buf[TLV_SIZEOF_HEADER];
 
 	/* save current position in dazibao */
 	off_init = GET_OFFSET(d->fd);
@@ -269,11 +304,11 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 
 	off_start = -1;
 	
-	while ((off_tmp = next_tlv(d, &buf)) != -1
+	while ((off_tmp = next_tlv(d, buf)) != -1
 		&& off_tmp != EOD
 		&& off_tmp < offset) {
-		if (buf.type == TLV_PAD1
-			|| buf.type == TLV_PADN) {
+		if (get_type(buf) == TLV_PAD1
+			|| get_type(buf) == TLV_PADN) {
 			/* pad reached */
 			if (off_start == -1) {
 				off_start = off_tmp;
@@ -301,9 +336,9 @@ off_t pad_serie_start (struct dazibao* d, const off_t offset) {
 
 }
 
-off_t pad_serie_end(struct dazibao* d, const off_t offset) {
+off_t pad_serie_end(struct dazibao* d,  off_t offset) {
 	off_t off_stop, off_init;
-	struct tlv buf;
+	char buf[TLV_SIZEOF_HEADER];
 
 	/* save current position in dazibao */
 	off_init = GET_OFFSET(d->fd);
@@ -317,12 +352,12 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 	}
 
 	/* skip current tlv */
-	off_stop = next_tlv(d, &buf);
+	off_stop = next_tlv(d, buf);
 
 	/* look for the first tlv which is not a pad */
 	while (off_stop != EOD
-		&& (off_stop = next_tlv(d, &buf)) > 0) {
-		if (buf.type != TLV_PAD1 && buf.type != TLV_PADN) {
+		&& (off_stop = next_tlv(d, buf)) > 0) {
+		if (get_type(buf) != TLV_PAD1 && get_type(buf) != TLV_PADN) {
 			/* tlv found */
 			break;
 		}
@@ -346,7 +381,7 @@ off_t pad_serie_end(struct dazibao* d, const off_t offset) {
 }
 
 
-int rm_tlv(struct dazibao* d, const off_t offset) {
+int rm_tlv(struct dazibao* d,  off_t offset) {
 
 	/* FIXME: save and restore offset */
 
@@ -371,16 +406,19 @@ int rm_tlv(struct dazibao* d, const off_t offset) {
 }
 
 int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
+
+	/*
+	 * FIXME:
+	 * DO IT RIGTH
+	 */
+
+
         off_t original = GET_OFFSET(d->fd);
-
-        struct tlv buff;
-
+        char *buff = calloc(length, sizeof(*buff));
         int status = 0;
-
         char pad1s[TLV_SIZEOF_HEADER-1];
-        char *zeroes = (char*)calloc(BUFFLEN, sizeof(char));
 
-        if (zeroes == NULL) {
+        if (buff == NULL) {
                 PERROR("calloc");
                 status = -1;
                 goto OUT;
@@ -407,32 +445,23 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        while(length > TLV_SIZEOF_HEADER - 1) {
-                off_t tlv_len = MIN(length, TLV_MAX_SIZE);
-                int val_len   = tlv_len - TLV_SIZEOF_HEADER;
+	if (length > TLV_SIZEOF_HEADER) {
+		/* set type */
+		set_type(buff, TLV_PADN);
+		/* set length */
+		htod(length - TLV_SIZEOF_HEADER, get_length_ptr(buff));
 
-                buff.type   = TLV_PADN;
-		htod(val_len, &buff.len);
+		if(write_tlv_at(d, buff, start) == 1) {
+			ERROR(NULL, -1);
+		}
 
-                if (write(d->fd, &buff, TLV_SIZEOF_HEADER) < 0) {
-                        PERROR("write");
-                }
+	}
 
-                while (val_len > 0) {
-                        int l = MIN(val_len, BUFFLEN);
-                        if (write(d->fd, zeroes, l) < 0) {
-                                PERROR("write");
-                        }
-                        val_len -= l;
-                }
-
-                length -= tlv_len;
-        }
 
         /* We don't have enough room to store a padN, so we fill it with
          * pad1's
          */
-        if (length > 0) {
+        else if (length > 0) {
                for (int i=0; i<length; i++) {
                        pad1s[i] = TLV_PAD1;
                }
@@ -448,10 +477,11 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length) {
         }
 
 OUT:
-        free(zeroes);
+        free(buff);
         return status;
 }
 
+/*
 int compact_dazibao(struct dazibao* d) {
 
         struct tlv tlv_buf;
@@ -517,54 +547,20 @@ int compact_dazibao(struct dazibao* d) {
 	return saved;
 
 }
-
+*/
 
 int dump_dazibao(struct dazibao *daz_buf) {
 
-	struct tlv tlv_buf;
-        tlv_buf.value = (char*)NULL;
+	char *tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
-
-        while ((off = next_tlv(daz_buf, &tlv_buf)) != EOD) {
-                int len = tlv_buf.type == TLV_PAD1 ? 0 : dtoh(tlv_buf.len);
+	
+        while ((off = next_tlv(daz_buf, tlv)) != EOD) {
+                int len = get_type(tlv) == TLV_PAD1 ? 0 : get_length(tlv);
 		printf("[%4d] TLV %3d | %8d | ...\n",
-			(int)off, tlv_buf.type, len);
+			(int)off, get_type(tlv), len);
 
-/*
-                if (tlv_buf.type != TLV_TEXT) {
-                        printf("[%4d] TLV %3d | %8d | ...\n",
-                                        (int)off, tlv_buf.type, len);
-                        continue;
-                }
-*/
-                // TODO check for return values
-/*
-                tlv_buf.value = (char*)malloc(sizeof(char)*(dtoh(tlv_buf.len)+1));
-                if (read_tlv(daz_buf, &tlv_buf, off) < 0) {
-                        ERROR("read_tlv", -1);
-                }
-                tlv_buf.value[dtoh(tlv_buf.len)] = '\0';
-		printf("[%4d] TLV %3d | %8d | ...\n",
-			(int)off, tlv_buf.type, len);
-
-
-
-                wprintf(L"[%4d] TLV %3d | %8d | <%-.10s>\n",
-                                (int)off, tlv_buf.type, len,
-                                (wchar_t*)tlv_buf.value);
-*/
-		// TODO check width of wchar_t with gcc
-
-                /* There may be some possible perf improvements here,
-                 * we don't need to free then re-malloc if we read
-                 * multiple text TLVs with roughly the same text
-                 * length. So we could use malloc once, realloc a few
-                 * times if needed, then free.
-                 */
-                free(tlv_buf.value);
-                tlv_buf.value = NULL;
         }
-
+	free(tlv);
         return 0;
 }
 

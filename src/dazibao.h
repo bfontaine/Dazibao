@@ -21,8 +21,20 @@ struct dazibao {
 	int fd;
 };
 
-void htod(long n, tlv_len *len);
-long dtoh(const tlv_len len);
+void htod(long n, char *tlv);
+long dtoh( char *tlv);
+
+int get_type(char *tlv);
+
+void set_type(char *tlv, char t);
+
+void set_length(char *tlv, long n);
+
+char *get_length_ptr(char *tlv);
+
+long get_length(char *tlv);
+
+char *get_value_ptr(char *tlv);
 
 /*
  * if $(path) exist, then return error -1
@@ -30,7 +42,7 @@ long dtoh(const tlv_len len);
  * and fill $(daz_buf)
  * return 0 on success
  */
-int create_dazibao(struct dazibao *daz_buf, const char *path);
+int create_dazibao(struct dazibao *daz_buf,  char *path);
 
 /*
  * open $(path) file with $(flags) flags
@@ -40,7 +52,7 @@ int create_dazibao(struct dazibao *daz_buf, const char *path);
  * fill $(d)
  * returns 0 on success
  */
-int open_dazibao(struct dazibao* d, const char* path, const int flags);
+int open_dazibao(struct dazibao* d,  char* path,  int flags);
 
 /*
  * release lock on file held by $(d)
@@ -50,7 +62,7 @@ int open_dazibao(struct dazibao* d, const char* path, const int flags);
 int close_dazibao(struct dazibao* d);
 
 /*  */
-int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
+int read_tlv(struct dazibao* d, char *tlv,  off_t offset);
 
 /* 
  * read from $(d)
@@ -59,7 +71,7 @@ int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
  * return EOD if EOF reached
  * return -1 on error
  */
-off_t next_tlv(struct dazibao* d, struct tlv* buf);
+off_t next_tlv(struct dazibao* d, char *tlv);
 
 /* 
  * use next_tlv to fill $(buf) using $(offseet)
@@ -67,26 +79,26 @@ off_t next_tlv(struct dazibao* d, struct tlv* buf);
  * return 0 on success
  * return -1 on error
  */
-int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
+int tlv_at(struct dazibao* d, char *tlv,  off_t offset);
 
 /*  */
-int add_tlv(struct dazibao* d, const struct tlv* src);
+int add_tlv(struct dazibao* d, char *tlv);
 
 /*
  * return offset of the begining of the serie of pad
  * just before $(offset)
  * if there is none, $(offset) is returned
  */
-off_t pad_serie_start (struct dazibao* d, const off_t offset);
+off_t pad_serie_start (struct dazibao* d,  off_t offset);
 
 /*
  * return offset the next tlv after $(offset)
  * which is NOT a pad, skipping tlv at $(offset)
  * if there is none, EOF offset is returned
  */
-off_t pad_serie_end(struct dazibao* d, const off_t offset);
+off_t pad_serie_end(struct dazibao* d,  off_t offset);
 
-int rm_tlv(struct dazibao* d, const off_t offset);
+int rm_tlv(struct dazibao* d,  off_t offset);
 
 /* Empty a part of a dazibao, starting at 'start', and of length 'length'.
  * The part is filled with padN's and pad1's.
