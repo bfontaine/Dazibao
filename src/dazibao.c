@@ -527,17 +527,28 @@ int dump_dazibao(struct dazibao *daz_buf) {
                         continue;
                 }
 
-                // TODO check for return values
                 tlv_buf.value = (char*)malloc(sizeof(char)*(tlv_buf.length+1));
+
+                if (tlv_buf.value == NULL) {
+                        ERROR("malloc", -1);
+                }
+
                 if (read_tlv(daz_buf, &tlv_buf, off) < 0) {
                         ERROR("read_tlv", -1);
                 }
                 tlv_buf.value[tlv_buf.length] = '\0';
 
+                // These calls to fflush are here to avoid issues with usage
+                // of both wprintf and printf
+                if (fflush(stdout) == EOF) {
+                        perror("fflush");
+                }
                 wprintf(L"[%4d] TLV %3d | %8d | <%-.10s>\n",
                                 (int)off, tlv_buf.type, len,
                                 (wchar_t*)tlv_buf.value);
-                // TODO check width of wchar_t with gcc
+                if (fflush(stdout) == EOF) {
+                        perror("fflush");
+                }
 
                 /* There may be some possible perf improvements here,
                  * we don't need to free then re-malloc if we read
