@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 		free(tlv);
 		free(buff);
 	} else if (!strcmp(cmd, "rm")) {
-/*
+
 		if (argc < 4) {
 			printf("expected offset\n");
 			exit(EXIT_FAILURE);
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 			close_dazibao(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
-*/
+
 	} else if (!strcmp(cmd, "dump")) {
 
 		if (open_dazibao(&daz_buf, daz, O_RDONLY)) {

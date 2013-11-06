@@ -21,18 +21,19 @@ struct dazibao {
 	int fd;
 };
 
-void htod(long n, char *tlv);
-long dtoh( char *tlv);
+void htod(unsigned int n, char *tlv);
+
+unsigned int dtoh(char *len);
 
 int get_type(char *tlv);
 
 void set_type(char *tlv, char t);
 
-void set_length(char *tlv, long n);
+void set_length(char *tlv, unsigned int n);
 
 char *get_length_ptr(char *tlv);
 
-long get_length(char *tlv);
+unsigned int get_length(char *tlv);
 
 char *get_value_ptr(char *tlv);
 

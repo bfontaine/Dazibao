@@ -6,7 +6,7 @@
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
 #define PANIC(str) {                        \
-                perror((str));              \
+                PERROR((str));              \
                 exit(EXIT_FAILURE);         \
         }
 
