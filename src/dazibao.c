@@ -185,7 +185,7 @@ int write_tlv_at(daz_t *d, char *tlv, off_t offset) {
 	/* write */
 	int to_write = TLV_SIZEOF(tlv);
 	if (write(*d, tlv, to_write) != to_write) {
-		ERROR("write", -1);      
+		ERROR("write", -1);
 	}
 
         RESTORE_OFFSET(*d);
@@ -515,7 +515,7 @@ int dump_dazibao(daz_t *daz_buf) {
 	
         while ((off = next_tlv(daz_buf, tlv)) != EOD) {
                 int len = get_type(tlv) == TLV_PAD1 ? 0 : get_length(tlv);
-		printf("[%4d] TLV %3d | %8u | ...\n",
+		printf("[%4d] TLV %3d | %8d | ...\n",
 			(int)off, get_type(tlv), len);
 
         }
