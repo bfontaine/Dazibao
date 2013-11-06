@@ -3,6 +3,7 @@
 *.swp
 *.o
 a.out
+/tmp
 # executables
 dazidump
 dazibao
