@@ -21,6 +21,20 @@ struct dazibao {
 	int fd;
 };
 
+void htod(long n, char *tlv);
+long dtoh( char *tlv);
+
+int get_type(char *tlv);
+
+void set_type(char *tlv, char t);
+
+void set_length(char *tlv, long n);
+
+char *get_length_ptr(char *tlv);
+
+long get_length(char *tlv);
+
+char *get_value_ptr(char *tlv);
 
 /*
  * Create a new dazibao in a file given by 'path', and fill 'daz_buf'
@@ -28,13 +42,13 @@ struct dazibao {
  * and return an error status instead.
  * Returns 0 on success and -1 on error.
  */
-int create_dazibao(struct dazibao *daz_buf, const char *path);
+int create_dazibao(struct dazibao *daz_buf,  char *path);
 
 /*
  * Open a dazibao. 'flags' flags are passed to the open(2) call used to open
  * the file. Returns 0 on success, -1 on error.
  */
-int open_dazibao(struct dazibao* d, const char* path, const int flags);
+int open_dazibao(struct dazibao* d,  char* path,  int flags);
 
 /*
  * Close a dazibao. Returns 0 on success.
@@ -45,21 +59,21 @@ int close_dazibao(struct dazibao* d);
  * Fill all the fields of 'buf' with the TLV located at 'offset' offset in the
  * dazibao 'd'. The function returns 0 on success and -1 on error.
  */
-int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
+int read_tlv(struct dazibao* d, char *tlv,  off_t offset);
 
 /*
  * Fill the type and length attributes of 'buf' with the TLV located at the
  * current offset in the dazibao 'd'. The function returns the offset of this
  * TLV on success, EOD if the end of file has been reached, and -1 on error.
  */
-off_t next_tlv(struct dazibao* d, struct tlv* buf);
+off_t next_tlv(struct dazibao* d, char *tlv);
 
 /*
  * Fill the type and length attributes of 'buf' with the TLV located at offset
  * 'offset' in the dazibao. The current offset is not modified.
  * The function returns 0 on success and -1 on error.
  */
-int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
+int tlv_at(struct dazibao* d, char *tlv,  off_t offset);
 
 /*
  * Add a TLV at the end of a dazibao. If the dazibao ends with a sequence
@@ -67,26 +81,26 @@ int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
  * and the file is truncated if the TLV is smaller than the total size of the
  * sequence.
  */
-int add_tlv(struct dazibao* d, const struct tlv* src);
+int add_tlv(struct dazibao* d, char *tlv);
 
 /*
  * Return the offset of the first pad1/padN of a possibly empty sequence of
  * pad1/padN's before 'offset'. If the sequence is empty, the given offset
  * is returned.
  */
-off_t pad_serie_start(struct dazibao* d, const off_t offset);
+off_t pad_serie_start (struct dazibao* d,  off_t offset);
 
 /*
  * Return the offset of the next TLV after 'offset' which is not a pad1
  * nor padN. If there is none, the end of file offset is returned.
  * See also 'pad_serie_start'.
  */
-off_t pad_serie_end(struct dazibao* d, const off_t offset);
+off_t pad_serie_end(struct dazibao* d,  off_t offset);
 
 /*
  * Remove the TLV at 'offset' from a dazibao.
  */
-int rm_tlv(struct dazibao* d, const off_t offset);
+int rm_tlv(struct dazibao* d,  off_t offset);
 
 /*
  * Empty a part of a dazibao, starting at 'start', and of length 'length'.  The

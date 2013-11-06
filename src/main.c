@@ -56,15 +56,21 @@ int main(int argc, char **argv) {
 			memcpy(buff + (buff_size - read_size), reader, read_size);
 		}
 
-		struct tlv tlv_buf = {type, buff_size, buff};
 
-		if (add_tlv(&daz_buf, &tlv_buf) == -1) {
+		char *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+		set_type(tlv, type);
+		set_length(tlv, buff_size);
+
+		memcpy(get_value_ptr(tlv), buff, buff_size);
+
+		if (add_tlv(&daz_buf, tlv) == -1) {
 			printf("failed adding your tlv\n");
 		}
 
+		free(tlv);
 		free(buff);
 	} else if (!strcmp(cmd, "rm")) {
-
+/*
 		if (argc < 4) {
 			printf("expected offset\n");
 			exit(EXIT_FAILURE);
@@ -81,7 +87,7 @@ int main(int argc, char **argv) {
 			close_dazibao(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
-
+*/
 	} else if (!strcmp(cmd, "dump")) {
 
 		if (open_dazibao(&daz_buf, daz, O_RDONLY)) {
