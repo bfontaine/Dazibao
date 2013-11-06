@@ -26,38 +26,41 @@ typedef int daz_t;
  * and return an error status instead.
  * Returns 0 on success and -1 on error.
  */
-int create_dazibao(daz_t *daz_buf,  char *path);
+int dz_create(daz_t *daz_buf,  char *path);
 
 /*
  * Open a dazibao. 'flags' flags are passed to the open(2) call used to open
  * the file. Returns 0 on success, -1 on error.
  */
-int open_dazibao(daz_t* d,  char* path,  int flags);
+int dz_open(daz_t* d,  char* path,  int flags);
 
 /*
  * Close a dazibao. Returns 0 on success.
  */
-int close_dazibao(daz_t* d);
+int dz_close(daz_t* d);
 
 /*
  * Fill all the fields of 'buf' with the TLV located at 'offset' offset in the
  * dazibao 'd'. The function returns 0 on success and -1 on error.
  */
-int read_tlv(daz_t* d, char *tlv,  off_t offset);
+int dz_read_tlv(daz_t* d, char *tlv, off_t offset);
 
 /*
  * Fill the type and length attributes of 'buf' with the TLV located at the
  * current offset in the dazibao 'd'. The function returns the offset of this
  * TLV on success, EOD if the end of file has been reached, and -1 on error.
  */
-off_t next_tlv(daz_t* d, char *tlv);
+off_t dz_next_tlv(daz_t* d, char *tlv);
 
 /*
  * Fill the type and length attributes of 'buf' with the TLV located at offset
  * 'offset' in the dazibao. The current offset is not modified.
  * The function returns 0 on success and -1 on error.
  */
-int tlv_at(daz_t* d, char *tlv,  off_t offset);
+int dz_tlv_at(daz_t* d, char *tlv, off_t offset);
+
+/* TODO: doc */
+int dz_write_tlv_at(daz_t *d, char *tlv, off_t offset);
 
 /*
  * Add a TLV at the end of a dazibao. If the dazibao ends with a sequence
@@ -65,32 +68,33 @@ int tlv_at(daz_t* d, char *tlv,  off_t offset);
  * and the file is truncated if the TLV is smaller than the total size of the
  * sequence.
  */
-int add_tlv(daz_t* d, char *tlv);
+int dz_add_tlv(daz_t* d, char *tlv);
 
 /*
  * Return the offset of the first pad1/padN of a possibly empty sequence of
  * pad1/padN's before 'offset'. If the sequence is empty, the given offset
  * is returned.
+ * See also 'dz_pad_serie_end'.
  */
-off_t pad_serie_start (daz_t* d,  off_t offset);
+off_t dz_pad_serie_start(daz_t* d, off_t offset);
 
 /*
  * Return the offset of the next TLV after 'offset' which is not a pad1
  * nor padN. If there is none, the end of file offset is returned.
- * See also 'pad_serie_start'.
+ * See also 'dz_pad_serie_start'.
  */
-off_t pad_serie_end(daz_t* d,  off_t offset);
+off_t dz_pad_serie_end(daz_t* d, off_t offset);
 
 /*
  * Remove the TLV at 'offset' from a dazibao.
  */
-int rm_tlv(daz_t* d,  off_t offset);
+int dz_rm_tlv(daz_t* d, off_t offset);
 
 /*
  * Empty a part of a dazibao, starting at 'start', and of length 'length'.  The
  * part is filled with padN's and pad1's.
  */
-int empty_dazibao(daz_t *d, off_t start, off_t length);
+int dz_do_empty(daz_t *d, off_t start, off_t length);
 
 /*
  * Compact a Dazibao file. The file must have been opened in read/write mode,
@@ -99,12 +103,12 @@ int empty_dazibao(daz_t *d, off_t start, off_t length);
  * The function returns the number of bytes saved by the compacting operation,
  * or -1 if an error occured.
  */
-int compact_dazibao(daz_t *d);
+int dz_compact(daz_t *d);
 
 
 /*
  * print tlvs contained in 'daz_buf' on standard output
  */
-int dump_dazibao(daz_t *daz_buf);
+int dz_dump(daz_t *daz_buf);
 
 #endif /* _DAZIBAO_H */

@@ -2,13 +2,13 @@
 
 #define BUFFLEN 128
 
-int create_dazibao(daz_t* daz_buf,  char* path) {
+int dz_create(daz_t* daz_buf, char* path) {
 
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
 
 	if (access(path, F_OK) != -1) {
-		fprintf(stderr, "create_dazibao error: file %s already exists\n", path);
+		fprintf(stderr, "dz_create error: file %s already exists\n", path);
 		return -1;
 	}
 
@@ -34,7 +34,7 @@ int create_dazibao(daz_t* daz_buf,  char* path) {
 	return 0;
 }
 
-int open_dazibao(daz_t* d,  char* path,  int flags) {
+int dz_open(daz_t* d, char* path, int flags) {
 
 	int fd, lock;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -70,7 +70,7 @@ int open_dazibao(daz_t* d,  char* path,  int flags) {
 	return 0;
 }
 
-int close_dazibao(daz_t* d) {
+int dz_close(daz_t* d) {
 
 	if (flock(*d, LOCK_UN) == -1) {
 		PANIC("flock:");
@@ -92,18 +92,18 @@ int read_tlv(daz_t* d, char *tlv,  off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	int len = dtoh(get_length_ptr(tlv));
+	int len = dtoh(tlv_get_length_ptr(tlv));
 
 	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
 
-	if (read(*d, get_value_ptr(tlv), len) < len) {
+	if (read(*d, tlv_get_value_ptr(tlv), len) < len) {
 		ERROR("read", -1);
 	}
 
 	return 0;
 }
 
-off_t next_tlv(daz_t* d, char *tlv) {
+off_t dz_next_tlv(daz_t* d, char *tlv) {
 
 	/*
 	 * PRECONDITION:
@@ -129,7 +129,7 @@ off_t next_tlv(daz_t* d, char *tlv) {
 		ERROR(NULL, -1);
 	} else if (size_read < TLV_SIZEOF_TYPE) {
 		ERROR(NULL, -1);
-	} else if (get_type(tlv) == TLV_PAD1) {
+	} else if (tlv_get_type(tlv) == TLV_PAD1) {
 		/* we read too far, because TLV_PAD1 is only 1 byte sized */
 		if (SET_OFFSET(*d, (off_init + TLV_SIZEOF_TYPE)) == -1) {
 			ERROR(NULL, -1);
@@ -140,7 +140,7 @@ off_t next_tlv(daz_t* d, char *tlv) {
                 // FIXME use TLV_SIZEOF_*
 		if (SET_OFFSET(*d, (off_init
                                         + TLV_SIZEOF_HEADER
-                                        + get_length(tlv))) == -1) {
+                                        + tlv_get_length(tlv))) == -1) {
 			ERROR(NULL, -1);
 		}
 	}
@@ -148,33 +148,24 @@ off_t next_tlv(daz_t* d, char *tlv) {
 	return off_init;
 }
 
-int tlv_at(daz_t* d, char *tlv,  off_t offset) {
+int dz_tlv_at(daz_t* d, char *tlv,  off_t offset) {
 
-	off_t off_init;
-	off_init = GET_OFFSET(*d);
-	if (off_init == -1) {
-		ERROR("lseek", -1);
-	}
+        SAVE_OFFSET(*d);
 
 	if (SET_OFFSET(*d, offset) == -1) {
 		ERROR("lseek", -1);
 	}
 
-	if (next_tlv(d, tlv) <= 0) {
-		if (SET_OFFSET(*d, off_init) == -1) {
-			ERROR("lseek", -1);
-		}
+	if (dz_next_tlv(d, tlv) <= 0) {
+                RESTORE_OFFSET(*d);
 		return -1;
 	}
 
-	if (SET_OFFSET(*d, off_init) == -1) {
-		ERROR("lseek", -1);
-	}
-
+        RESTORE_OFFSET(*d);
 	return 0;
 }
 
-int write_tlv_at(daz_t *d, char *tlv, off_t offset) {
+int dz_write_tlv_at(daz_t *d, char *tlv, off_t offset) {
 
         SAVE_OFFSET(*d);
 
@@ -193,7 +184,7 @@ int write_tlv_at(daz_t *d, char *tlv, off_t offset) {
 }
 
 
-int add_tlv(daz_t* d,  char *tlv) {
+int dz_add_tlv(daz_t* d,  char *tlv) {
 	off_t pad_off, eof_off;
 
         SAVE_OFFSET(*d);
@@ -206,7 +197,7 @@ int add_tlv(daz_t* d,  char *tlv) {
 	}
 
 	/* find offset of pad serie leading to EOF */
-	pad_off = pad_serie_start (d, eof_off);
+	pad_off = dz_pad_serie_start(d, eof_off);
 
 	/* set new position if needed (already is EOF offset) */
 	if (pad_off != eof_off && SET_OFFSET(*d, pad_off) == -1) {
@@ -214,7 +205,7 @@ int add_tlv(daz_t* d,  char *tlv) {
 	}
 
 	/* write */
-	if (write_tlv_at(d, tlv, pad_off) < 0) {
+	if (dz_write_tlv_at(d, tlv, pad_off) < 0) {
 		ERROR(NULL, -1);
 	}
 
@@ -229,7 +220,7 @@ int add_tlv(daz_t* d,  char *tlv) {
 	return 0;
 }
 
-off_t pad_serie_start (daz_t* d,  off_t offset) {
+off_t dz_pad_serie_start(daz_t* d, off_t offset) {
 	off_t off_start, off_tmp;
 
 	char buf[TLV_SIZEOF_HEADER];
@@ -242,11 +233,11 @@ off_t pad_serie_start (daz_t* d,  off_t offset) {
 
 	off_start = -1;
 	
-	while ((off_tmp = next_tlv(d, buf)) != -1
+	while ((off_tmp = dz_next_tlv(d, buf)) != -1
 		&& off_tmp != EOD
 		&& off_tmp < offset) {
-		if (get_type(buf) == TLV_PAD1
-			|| get_type(buf) == TLV_PADN) {
+		if (tlv_get_type(buf) == TLV_PAD1
+			|| tlv_get_type(buf) == TLV_PADN) {
 			/* pad reached */
 			if (off_start == -1) {
 				off_start = off_tmp;
@@ -271,7 +262,7 @@ off_t pad_serie_start (daz_t* d,  off_t offset) {
 
 }
 
-off_t pad_serie_end(daz_t* d,  off_t offset) {
+off_t dz_pad_serie_end(daz_t* d, off_t offset) {
 	off_t off_stop;
 	char buf[TLV_SIZEOF_HEADER];
 
@@ -282,12 +273,12 @@ off_t pad_serie_end(daz_t* d,  off_t offset) {
 	}
 
 	/* skip current tlv */
-	off_stop = next_tlv(d, buf);
+	off_stop = dz_next_tlv(d, buf);
 
 	/* look for the first tlv which is not a pad */
 	while (off_stop != EOD
-		&& (off_stop = next_tlv(d, buf)) > 0) {
-		if (get_type(buf) != TLV_PAD1 && get_type(buf) != TLV_PADN) {
+		&& (off_stop = dz_next_tlv(d, buf)) > 0) {
+		if (tlv_get_type(buf) != TLV_PAD1 && tlv_get_type(buf) != TLV_PADN) {
 			/* tlv found */
 			break;
 		}
@@ -305,31 +296,36 @@ off_t pad_serie_end(daz_t* d,  off_t offset) {
 }
 
 
-int rm_tlv(daz_t* d,  off_t offset) {
-
-	/* FIXME: save and restore offset */
+int dz_rm_tlv(daz_t* d, off_t offset) {
 
 	off_t off_start, off_end, off_eof;
+        int status;
 
-	off_start = pad_serie_start(d, offset);
-	off_end   = pad_serie_end(d, offset);
+        SAVE_OFFSET(*d);
+
+	off_start = dz_pad_serie_start(d, offset);
+	off_end   = dz_pad_serie_end(d, offset);
 
 	off_eof = lseek(*d, 0, SEEK_END);
 
 	if (off_eof == -1) {
+                RESTORE_OFFSET(*d);
 		ERROR(NULL, -1);
 	}
 
 	if (off_end == off_eof) { /* end of file reached */
 		printf("TRUNCATE THE MOTHERFUCKER\n");
 		ftruncate(*d, off_start);
+                RESTORE_OFFSET(*d);
 		return 0;
 	}
 
-        return empty_dazibao(d, off_start, off_end - off_start);
+        status = dz_do_empty(d, off_start, off_end - off_start);
+        RESTORE_OFFSET(*d);
+        return status;
 }
 
-int empty_dazibao(daz_t *d, off_t start, off_t length) {
+int dz_do_empty(daz_t *d, off_t start, off_t length) {
 
 	/*
 	 * FIXME:
@@ -363,11 +359,11 @@ int empty_dazibao(daz_t *d, off_t start, off_t length) {
 
 	if (length > TLV_SIZEOF_HEADER) {
 		/* set type */
-		set_type(buff, TLV_PADN);
+		tlv_set_type(buff, TLV_PADN);
 		/* set length */
-		htod(length - TLV_SIZEOF_HEADER, get_length_ptr(buff));
+		htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
 
-		if(write_tlv_at(d, buff, start) == 1) {
+		if(dz_write_tlv_at(d, buff, start) == 1) {
 			ERROR(NULL, -1);
 		}
 
@@ -394,7 +390,7 @@ OUT:
 }
 
 /*
-int compact_dazibao(daz_t* d) {
+int dz_compact(daz_t* d) {
 
         struct tlv tlv_buf;
         off_t reading = DAZIBAO_HEADER_SIZE,
@@ -461,7 +457,7 @@ int compact_dazibao(daz_t* d) {
 }
 */
 
-int dump_dazibao(daz_t *daz_buf) {
+int dz_dump(daz_t *daz_buf) {
 
 	char *tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
@@ -469,8 +465,9 @@ int dump_dazibao(daz_t *daz_buf) {
         SAVE_OFFSET(*daz_buf);
 
 #if 0
+        // TODO
 
-        while ((off = next_tlv(daz_buf, &tlv_buf)) != EOD) {
+        while ((off = dz_next_tlv(daz_buf, &tlv_buf)) != EOD) {
 
                 int len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
 
@@ -513,10 +510,11 @@ int dump_dazibao(daz_t *daz_buf) {
                 tlv_buf.value = NULL;
 #endif
 	
-        while ((off = next_tlv(daz_buf, tlv)) != EOD) {
-                int len = get_type(tlv) == TLV_PAD1 ? 0 : get_length(tlv);
+        while ((off = dz_next_tlv(daz_buf, tlv)) != EOD) {
+                int len;
+                len = tlv_get_type(tlv) == TLV_PAD1 ? 0 : tlv_get_length(tlv);
 		printf("[%4d] TLV %3d | %8d | ...\n",
-			(int)off, get_type(tlv), len);
+			(int)off, tlv_get_type(tlv), len);
 
         }
 

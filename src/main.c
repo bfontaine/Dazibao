@@ -27,10 +27,11 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		if (open_dazibao(&daz_buf, daz, O_RDWR)) {
+		if (dz_open(&daz_buf, daz, O_RDWR)) {
 			exit(EXIT_FAILURE);
 		}
 
+                // TODO use strtol to handle conversion errors
 		unsigned char type = (unsigned char)atoi(argv[3]);
 		char reader[BUFFSIZE];
 		unsigned int buff_size = 0;
@@ -58,12 +59,12 @@ int main(int argc, char **argv) {
 
 
 		char *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-		set_type(tlv, type);
-		set_length(tlv, buff_size);
+		tlv_set_type(tlv, type);
+		tlv_set_length(tlv, buff_size);
 
-		memcpy(get_value_ptr(tlv), buff, buff_size);
+		memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
 
-		if (add_tlv(&daz_buf, tlv) == -1) {
+		if (dz_add_tlv(&daz_buf, tlv) == -1) {
 			printf("failed adding your tlv\n");
 		}
 
@@ -76,33 +77,33 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		if (open_dazibao(&daz_buf, daz, O_RDWR)) {
+		if (dz_open(&daz_buf, daz, O_RDWR)) {
 			exit(EXIT_FAILURE);
 		}
 
 		off_t off = (off_t)atoi(argv[3]);
 
-		if (rm_tlv(&daz_buf, off)) {
+		if (dz_rm_tlv(&daz_buf, off)) {
 			printf("rm failed\n");
-			close_dazibao(&daz_buf);
+			dz_close(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
 
 	} else if (!strcmp(cmd, "dump")) {
 
-		if (open_dazibao(&daz_buf, daz, O_RDONLY)) {
+		if (dz_open(&daz_buf, daz, O_RDONLY)) {
 			exit(EXIT_FAILURE);
 		}
 
-		if (dump_dazibao(&daz_buf)) {
+		if (dz_dump(&daz_buf)) {
 			printf("dump failed\n");
-			close_dazibao(&daz_buf);
+			dz_close(&daz_buf);
 			exit(EXIT_FAILURE);
 		}
 
 	}  else if (!strcmp(cmd, "create")) {
 		
-		if (create_dazibao(&daz_buf, daz)) {
+		if (dz_create(&daz_buf, daz)) {
 			printf("error during dazibao creation\n");
 			exit(EXIT_FAILURE);
 		}
@@ -111,8 +112,8 @@ int main(int argc, char **argv) {
 
 	}
 
-	/* FIXME: error handling */
-	close_dazibao(&daz_buf);
+	// FIXME: check for error
+	dz_close(&daz_buf);
 
         exit(EXIT_SUCCESS);
 }
