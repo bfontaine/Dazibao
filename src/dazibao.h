@@ -23,71 +23,74 @@ struct dazibao {
 
 
 /*
- * if $(path) exist, then return error -1
- * else, create a file $(path)
- * and fill $(daz_buf)
- * return 0 on success
+ * Create a new dazibao in a file given by 'path', and fill 'daz_buf'
+ * accordingly. If a file already exist, the function doesn't override it
+ * and return an error status instead.
+ * Returns 0 on success and -1 on error.
  */
 int create_dazibao(struct dazibao *daz_buf, const char *path);
 
 /*
- * open $(path) file with $(flags) flags
- * apply flock according to $(flags)
- * see 'man 2 open' for more details on flags
- * check if $(path) is valid dazibao
- * fill $(d)
- * returns 0 on success
+ * Open a dazibao. 'flags' flags are passed to the open(2) call used to open
+ * the file. Returns 0 on success, -1 on error.
  */
 int open_dazibao(struct dazibao* d, const char* path, const int flags);
 
 /*
- * release lock on file held by $(d)
- * close this file
- * returns 0 on success
+ * Close a dazibao. Returns 0 on success.
  */
 int close_dazibao(struct dazibao* d);
 
-/*  */
+/*
+ * Fill all the fields of 'buf' with the TLV located at 'offset' offset in the
+ * dazibao 'd'. The function returns 0 on success and -1 on error.
+ */
 int read_tlv(struct dazibao* d, struct tlv* buf, const off_t offset);
 
-/* 
- * read from $(d)
- * fill $(buf)
- * return offset of read tlv
- * return EOD if EOF reached
- * return -1 on error
+/*
+ * Fill the type and length attributes of 'buf' with the TLV located at the
+ * current offset in the dazibao 'd'. The function returns the offset of this
+ * TLV on success, EOD if the end of file has been reached, and -1 on error.
  */
 off_t next_tlv(struct dazibao* d, struct tlv* buf);
 
-/* 
- * use next_tlv to fill $(buf) using $(offseet)
- * but does not change current offset in $(d)
- * return 0 on success
- * return -1 on error
+/*
+ * Fill the type and length attributes of 'buf' with the TLV located at offset
+ * 'offset' in the dazibao. The current offset is not modified.
+ * The function returns 0 on success and -1 on error.
  */
 int tlv_at(struct dazibao* d, struct tlv* buf, const off_t offset);
 
-/*  */
+/*
+ * Add a TLV at the end of a dazibao. If the dazibao ends with a sequence
+ * of pad1/padN's, the TLV 'src' overrides the beginning of the sequence,
+ * and the file is truncated if the TLV is smaller than the total size of the
+ * sequence.
+ */
 int add_tlv(struct dazibao* d, const struct tlv* src);
 
 /*
- * return offset of the begining of the serie of pad
- * just before $(offset)
- * if there is none, $(offset) is returned
+ * Return the offset of the first pad1/padN of a possibly empty sequence of
+ * pad1/padN's before 'offset'. If the sequence is empty, the given offset
+ * is returned.
  */
-off_t pad_serie_start (struct dazibao* d, const off_t offset);
+off_t pad_serie_start(struct dazibao* d, const off_t offset);
 
 /*
- * return offset the next tlv after $(offset)
- * which is NOT a pad, skipping tlv at $(offset)
- * if there is none, EOF offset is returned
+ * Return the offset of the next TLV after 'offset' which is not a pad1
+ * nor padN. If there is none, the end of file offset is returned.
+ * See also 'pad_serie_start'.
  */
 off_t pad_serie_end(struct dazibao* d, const off_t offset);
 
+/*
+ * Remove the TLV at 'offset' from a dazibao.
+ */
 int rm_tlv(struct dazibao* d, const off_t offset);
 
-/* Empty a part of a dazibao, starting at 'start', and of length 'length'.
- * The part is filled with padN's and pad1's.
+/*
+ * Empty a part of a dazibao, starting at 'start', and of length 'length'.  The
+ * part is filled with padN's and pad1's.
  */
 int empty_dazibao(struct dazibao *d, off_t start, off_t length);
 
@@ -98,11 +101,11 @@ int empty_dazibao(struct dazibao *d, off_t start, off_t length);
  * The function returns the number of bytes saved by the compacting operation,
  * or -1 if an error occured.
  */
-int compact_dazibao(struct dazibao*);
+int compact_dazibao(struct dazibao *d);
 
 
 /*
- * print tlvs contained in $(daz_buf) on standard output
+ * print tlvs contained in 'daz_buf' on standard output
  */
 int dump_dazibao(struct dazibao *daz_buf);
 
