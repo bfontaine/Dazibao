@@ -4,7 +4,7 @@
 #define BUFFSIZE 512
 int main(int argc, char **argv) {
 
-        struct dazibao daz_buf;
+	daz_t daz_buf;
 	char *daz, *cmd;
 
         if (setlocale(LC_ALL, "") == NULL) {

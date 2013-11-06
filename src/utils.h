@@ -37,11 +37,11 @@
  **/
 #define SAVE_OFFSET(d)                                          \
                 off_t __s;                                      \
-                __s = lseek((d).fd, 0, SEEK_CUR);               \
+                __s = lseek((d), 0, SEEK_CUR);               \
                 if (__s < 0) { perror("[save offset] lseek"); } \
 
 #define RESTORE_OFFSET(d)                                 \
-                if (lseek((d).fd, __s, SEEK_SET) < 0) {   \
+                if (lseek((d), __s, SEEK_SET) < 0) {   \
                         perror("[restore offset] lseek"); \
                 }                                         \
 
