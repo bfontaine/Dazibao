@@ -35,5 +35,5 @@ clean:
 
 check:
 	@echo "Check for 80+ chars lines..."
-	@egrep -n '.{80,}' src/* | cut -f1,2 -d:
+	@egrep -n '.{80,}' src/*.{c,h} | cut -f1,2 -d:
 	$(CPPCHECK) -I$(SRC) $(SRC)
