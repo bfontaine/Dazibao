@@ -2,7 +2,7 @@
 
 #define BUFFLEN 128
 
-int dz_create(daz_t* daz_buf, char* path) {
+int dz_create(dz_t* daz_buf, char* path) {
 
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -34,7 +34,7 @@ int dz_create(daz_t* daz_buf, char* path) {
 	return 0;
 }
 
-int dz_open(daz_t* d, char* path, int flags) {
+int dz_open(dz_t* d, char* path, int flags) {
 
 	int fd, lock;
 	char header[DAZIBAO_HEADER_SIZE];
@@ -70,7 +70,7 @@ int dz_open(daz_t* d, char* path, int flags) {
 	return 0;
 }
 
-int dz_close(daz_t* d) {
+int dz_close(dz_t* d) {
 
 	if (flock(*d, LOCK_UN) == -1) {
 		PANIC("flock:");
@@ -84,7 +84,7 @@ int dz_close(daz_t* d) {
 	return 0;
 }
 
-int read_tlv(daz_t* d, char *tlv,  off_t offset) {
+int read_tlv(dz_t* d, char *tlv,  off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -103,7 +103,7 @@ int read_tlv(daz_t* d, char *tlv,  off_t offset) {
 	return 0;
 }
 
-off_t dz_next_tlv(daz_t* d, char *tlv) {
+off_t dz_next_tlv(dz_t* d, char *tlv) {
 
 	/*
 	 * PRECONDITION:
@@ -148,7 +148,7 @@ off_t dz_next_tlv(daz_t* d, char *tlv) {
 	return off_init;
 }
 
-int dz_tlv_at(daz_t* d, char *tlv,  off_t offset) {
+int dz_tlv_at(dz_t* d, char *tlv,  off_t offset) {
 
         SAVE_OFFSET(*d);
 
@@ -165,7 +165,7 @@ int dz_tlv_at(daz_t* d, char *tlv,  off_t offset) {
 	return 0;
 }
 
-int dz_write_tlv_at(daz_t *d, char *tlv, off_t offset) {
+int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset) {
 
         SAVE_OFFSET(*d);
 
@@ -184,7 +184,7 @@ int dz_write_tlv_at(daz_t *d, char *tlv, off_t offset) {
 }
 
 
-int dz_add_tlv(daz_t* d,  char *tlv) {
+int dz_add_tlv(dz_t* d,  char *tlv) {
 	off_t pad_off, eof_off;
 
         SAVE_OFFSET(*d);
@@ -220,7 +220,7 @@ int dz_add_tlv(daz_t* d,  char *tlv) {
 	return 0;
 }
 
-off_t dz_pad_serie_start(daz_t* d, off_t offset) {
+off_t dz_pad_serie_start(dz_t* d, off_t offset) {
 	off_t off_start, off_tmp;
 
 	char buf[TLV_SIZEOF_HEADER];
@@ -262,7 +262,7 @@ off_t dz_pad_serie_start(daz_t* d, off_t offset) {
 
 }
 
-off_t dz_pad_serie_end(daz_t* d, off_t offset) {
+off_t dz_pad_serie_end(dz_t* d, off_t offset) {
 	off_t off_stop;
 	char buf[TLV_SIZEOF_HEADER];
 
@@ -296,7 +296,7 @@ off_t dz_pad_serie_end(daz_t* d, off_t offset) {
 }
 
 
-int dz_rm_tlv(daz_t* d, off_t offset) {
+int dz_rm_tlv(dz_t* d, off_t offset) {
 
 	off_t off_start, off_end, off_eof;
         int status;
@@ -325,7 +325,7 @@ int dz_rm_tlv(daz_t* d, off_t offset) {
         return status;
 }
 
-int dz_do_empty(daz_t *d, off_t start, off_t length) {
+int dz_do_empty(dz_t *d, off_t start, off_t length) {
 
 	/*
 	 * FIXME:
@@ -390,7 +390,7 @@ OUT:
 }
 
 /*
-int dz_compact(daz_t* d) {
+int dz_compact(dz_t* d) {
 
         struct tlv tlv_buf;
         off_t reading = DAZIBAO_HEADER_SIZE,
@@ -457,7 +457,7 @@ int dz_compact(daz_t* d) {
 }
 */
 
-int dz_dump(daz_t *daz_buf) {
+int dz_dump(dz_t *daz_buf) {
 
 	char *tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
