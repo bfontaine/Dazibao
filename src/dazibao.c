@@ -4,17 +4,18 @@
 
 #define BUFFLEN 128
 
-void htod(long n, char *len) {
+void htod(unsigned int n, char *len) {
 	union {
-		long i;
-		char c[4];
+		unsigned int i;
+		unsigned char c[4];
 	} tmp;
 	tmp.i = htonl(n);
 	memcpy(len, &tmp.c[1], 3);
 }
 
-long dtoh( char *len) {
-	return (len[0] << 16) + (len[1] << 8) + len[2];
+unsigned int dtoh(char *len) {
+	unsigned char *tmp = (unsigned char *)len;
+	return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
 
 int get_type(char *tlv) {
@@ -25,7 +26,7 @@ void set_type(char *tlv, char t) {
 	tlv[0] = t;
 }
 
-void set_length(char *tlv, long n) {
+void set_length(char *tlv, unsigned int n) {
 	htod(n, get_length_ptr(tlv));
 }
 
@@ -33,7 +34,7 @@ char *get_length_ptr(char *tlv) {
 	return (tlv + TLV_SIZEOF_TYPE);
 }
 
-long get_length(char *tlv) {
+unsigned int get_length(char *tlv) {
 	return dtoh(get_length_ptr(tlv));
 }
 
@@ -181,6 +182,7 @@ off_t next_tlv(struct dazibao* d, char *tlv) {
 			ERROR(NULL, -1);
 		}
 	}
+
 	return off_init;
 }
 
@@ -556,10 +558,11 @@ int dump_dazibao(struct dazibao *daz_buf) {
 	
         while ((off = next_tlv(daz_buf, tlv)) != EOD) {
                 int len = get_type(tlv) == TLV_PAD1 ? 0 : get_length(tlv);
-		printf("[%4d] TLV %3d | %8d | ...\n",
+		printf("[%4d] TLV %3d | %8u | ...\n",
 			(int)off, get_type(tlv), len);
 
         }
+
 	free(tlv);
         return 0;
 }
