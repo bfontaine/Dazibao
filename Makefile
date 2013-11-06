@@ -22,7 +22,7 @@ CPPCHECK=cppcheck \
 .DEFAULT: all
 .PHONY: clean
 
-all: $(TARGET)
+all: check $(TARGET)
 
 $(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -34,6 +34,16 @@ clean:
 	rm -f $(TARGET) *.o *~
 
 check:
-	@echo "Check for 80+ chars lines..."
-	@egrep -n '.{80,}' src/*.{c,h} | cut -f1,2 -d:
+	@T=$$(mktemp); \
+	 egrep -n --include=.*\.[ch]$$ '.{80,}' src/* >$$T; \
+	 if [ "$$?" -eq "0" ]; then \
+		 echo '!! There are 80+ chars lines:'; \
+		 cat $$T | cut -f1,2 -d:; \
+	 fi; \
+	 egrep -n --include=.*\.[ch]$$ ' +$$' src/* >$$T; \
+	 if [ "$$?" -eq "0" ]; then \
+		 echo '!! There are trailing spaces:'; \
+		 cat $$T | cut -f1,2 -d:; \
+	 fi; \
+	 rm -f $TT;
 	$(CPPCHECK) -I$(SRC) $(SRC)
