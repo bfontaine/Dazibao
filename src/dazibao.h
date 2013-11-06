@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -20,22 +21,6 @@
 struct dazibao {
 	int fd;
 };
-
-void htod(unsigned int n, char *tlv);
-
-unsigned int dtoh(char *len);
-
-int get_type(char *tlv);
-
-void set_type(char *tlv, char t);
-
-void set_length(char *tlv, unsigned int n);
-
-char *get_length_ptr(char *tlv);
-
-unsigned int get_length(char *tlv);
-
-char *get_value_ptr(char *tlv);
 
 /*
  * Create a new dazibao in a file given by 'path', and fill 'daz_buf'
