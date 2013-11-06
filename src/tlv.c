@@ -14,26 +14,26 @@ unsigned int dtoh(char *len) {
 	return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
 
-int tlv_get_type(char *tlv) {
+int tlv_get_type(tlv_t tlv) {
 	return tlv[0];
 }
 
-void tlv_set_type(char *tlv, char t) {
+void tlv_set_type(tlv_t tlv, char t) {
 	tlv[0] = t;
 }
 
-void tlv_set_length(char *tlv, unsigned int n) {
+void tlv_set_length(tlv_t tlv, unsigned int n) {
 	htod(n, tlv_get_length_ptr(tlv));
 }
 
-char *tlv_get_length_ptr(char *tlv) {
+char *tlv_get_length_ptr(tlv_t tlv) {
 	return (tlv + TLV_SIZEOF_TYPE);
 }
 
-unsigned int tlv_get_length(char *tlv) {
+unsigned int tlv_get_length(tlv_t tlv) {
 	return dtoh(tlv_get_length_ptr(tlv));
 }
 
-char *tlv_get_value_ptr(char *tlv) {
+char *tlv_get_value_ptr(tlv_t tlv) {
 	return tlv + TLV_SIZEOF_HEADER;
 }

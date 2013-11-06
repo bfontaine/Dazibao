@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 		}
 
 
-		char *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+		tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
 		tlv_set_type(tlv, type);
 		tlv_set_length(tlv, buff_size);
 
