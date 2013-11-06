@@ -128,9 +128,6 @@ int read_tlv(struct dazibao* d, char *tlv,  off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
-	/* problem if buf->value was not init with malloc */
-	//buf->value = realloc(buf->value, sizeof(*(buf->value)) * buf->length);
-
 	if (SET_OFFSET(d->fd, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
 	}
@@ -165,8 +162,10 @@ off_t next_tlv(struct dazibao* d, char *tlv) {
 	/* try to read regular header (TLV_SIZEOF_HEADER) */
 	size_read = read(d->fd, tlv, TLV_SIZEOF_HEADER);
 	if (size_read == 0) {
+		/* reached end of file */
 		return EOD;
 	} else if (size_read < 0) {
+		/* read error */
 		ERROR(NULL, -1);
 	} else if (size_read < TLV_SIZEOF_TYPE) {
 		ERROR(NULL, -1);
@@ -176,7 +175,7 @@ off_t next_tlv(struct dazibao* d, char *tlv) {
 			ERROR(NULL, -1);
 		}
 	} else if (size_read < TLV_SIZEOF_HEADER) {
-		/* TODO: loop waiting for read effectively read all tlv */
+		/* TODO: loop waiting for read effectively read a whole tlv */
 	} else {
 		if (SET_OFFSET(d->fd, (off_init + TLV_SIZEOF_HEADER + get_length(tlv))) == -1) {
 			ERROR(NULL, -1);
@@ -215,7 +214,7 @@ int tlv_at(struct dazibao* d, char *tlv,  off_t offset) {
 int write_tlv_at(struct dazibao *d, char *tlv, off_t offset) {
 
 	off_t off_init;
-	
+	/* save offset */
 	off_init = GET_OFFSET(d->fd);
 	if (off_init == -1) {
 		ERROR("lseek", -1);
@@ -225,19 +224,13 @@ int write_tlv_at(struct dazibao *d, char *tlv, off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	if (get_type(tlv) == TLV_PAD1) {
-		if (write(d->fd, tlv, TLV_SIZEOF_TYPE) != TLV_SIZEOF_TYPE) {
-			ERROR("write", -1);      
-		}
-		return 0;
+	/* write */
+	int to_write = TLV_SIZEOF(tlv);
+	if (write(d->fd, tlv, to_write) != to_write) {
+		ERROR("write", -1);      
 	}
-	
-	int size = TLV_SIZEOF_HEADER + dtoh(get_length_ptr(tlv));
 
-	if (write(d->fd, tlv, size) != size) {
-                ERROR("write", -1);      
-        }
-
+	/* restore initial offset */
 	if (SET_OFFSET(d->fd, off_init) == -1) {
 		ERROR("lseek", -1);
 	}
@@ -255,16 +248,17 @@ int add_tlv(struct dazibao* d,  char *tlv) {
 		ERROR("add_tlv lseek off_init", -1);
 	}
 
-	/* find offset of pad serie leading to EOF */
-
+	/* find EOF offset */
 	eof_off = lseek(d->fd, 0, SEEK_END);
 
 	if (eof_off == 0) {
 		ERROR(NULL, -1);
 	}
 
+	/* find offset of pad serie leading to EOF */
 	pad_off = pad_serie_start (d, eof_off);
 
+	/* set new position if needed (already is EOF offset) */
 	if (pad_off != eof_off && SET_OFFSET(d->fd, pad_off) == -1) {
 		ERROR("SET_OFFSET", -1);
 	}
