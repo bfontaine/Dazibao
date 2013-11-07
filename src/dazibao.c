@@ -137,10 +137,7 @@ off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
 	} else if (size_read < TLV_SIZEOF_HEADER) {
 		/* TODO: loop waiting for read effectively read a whole tlv */
 	} else {
-                // FIXME use TLV_SIZEOF_*
-		if (SET_OFFSET(*d, (off_init
-                                        + TLV_SIZEOF_HEADER
-                                        + tlv_get_length(tlv))) == -1) {
+		if (SET_OFFSET(*d, (off_init + TLV_SIZEOF(tlv))) == -1) {
 			ERROR(NULL, -1);
 		}
 	}
