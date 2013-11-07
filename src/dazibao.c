@@ -456,11 +456,22 @@ int dz_compact(dz_t* d) {
 
 }
 */
-int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
+int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent){
 
 	char *tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
-
+        char *ind;
+        if (indent > 0){
+                ind = malloc(sizeof(char)*indent+1);
+                int i;
+                for(i = 0; i < indent; i++) {
+                        ind[i] = '\t';
+                }
+                ind[indent]='\0';
+        }else {
+                ind = malloc(sizeof(char)*1);
+                ind[0]='\0';
+        }
 #if 0
         // TODO
 
@@ -509,7 +520,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
 	
         while (((off = dz_next_tlv(daz_buf, tlv)) != end )
                         && (off != EOD)) {
-
+                printf("%s",ind);
                 int type, len;
                 type = tlv_get_type(tlv);
                 len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
@@ -522,7 +533,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
                                 if (dz_dump_compound(daz_buf,current,
-                                        (depth-1))){
+                                        (depth-1), (indent+1))){
                                         ERROR(NULL,-1);
                                 }
                                 SET_OFFSET(*daz_buf, current);
@@ -538,7 +549,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
                                 TLV_SIZEOF_DATE);
                                 if (dz_dump_compound(daz_buf,current,
-                                        (depth-1))){
+                                        (depth-1), (indent+1))){
                                         ERROR(NULL,-1);
                                 }
                                 SET_OFFSET(*daz_buf, current);
@@ -554,13 +565,15 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
                 }
 
         }
-
+        if (indent < 0 ){
+                free(ind);
+        }
 	free(tlv);
         return 0;
 }
 
 int dz_dump(dz_t *daz_buf) {
-        return dz_dump_compound(daz_buf, EOD, 0);
+        return dz_dump_compound(daz_buf, EOD, 0,0);
 }
 
 #undef BUFFLEN

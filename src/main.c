@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
                         if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)){
                                 int dep = atoi(depth);
                                 // option dump compound with limited depht
-		                if (dz_dump_compound(&daz_buf, EOD, dep)) {
+		                if (dz_dump_compound(&daz_buf, EOD, dep,0)) {
 			                printf("dump_compound failed\n");
 			                dz_close(&daz_buf);
 			                exit(EXIT_FAILURE);
