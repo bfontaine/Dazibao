@@ -107,7 +107,7 @@ off_t dz_pad_serie_end(dz_t* d, off_t offset);
 
 /**
  * Erase a tlv. If tlv is surrounded by pad1/padN, they will be concatened.
- * If it leaves pad1/padN at the end of dazibao, it will be truncated  
+ * If it leaves pad1/padN at the end of dazibao, it will be truncated
  * @param d dazibao where is tlv to remove
  * @param offset offset of the tlv to remove
  */

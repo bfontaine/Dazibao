@@ -101,7 +101,8 @@ int tlv_write(tlv_t tlv, int fd);
 
 /**
  * Read a tlv value.
- * Offset of {fd} when returning is set after the value read on succes, and unspecified on error.
+ * Offset of {fd} when returning is set after the value read on succes, and
+ * unspecified on error.
  * @param tlv tlv to write
  * @param fd file descriptor where value is read
  * @return 0 on success
