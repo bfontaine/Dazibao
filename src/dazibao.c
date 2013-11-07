@@ -84,7 +84,7 @@ int dz_close(dz_t* d) {
 	return 0;
 }
 
-int read_tlv(dz_t* d, char *tlv,  off_t offset) {
+int read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -103,7 +103,7 @@ int read_tlv(dz_t* d, char *tlv,  off_t offset) {
 	return 0;
 }
 
-off_t dz_next_tlv(dz_t* d, char *tlv) {
+off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
 
 	/*
 	 * PRECONDITION:
@@ -148,7 +148,7 @@ off_t dz_next_tlv(dz_t* d, char *tlv) {
 	return off_init;
 }
 
-int dz_tlv_at(dz_t* d, char *tlv,  off_t offset) {
+int dz_tlv_at(dz_t* d, tlv_t tlv,  off_t offset) {
 
         SAVE_OFFSET(*d);
 
@@ -165,7 +165,7 @@ int dz_tlv_at(dz_t* d, char *tlv,  off_t offset) {
 	return 0;
 }
 
-int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset) {
+int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
 
         SAVE_OFFSET(*d);
 
@@ -173,10 +173,8 @@ int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	/* write */
-	int to_write = TLV_SIZEOF(tlv);
-	if (write(*d, tlv, to_write) != to_write) {
-		ERROR("write", -1);
+	if (tlv_write(tlv, *d) == -1) {
+		ERROR("tlv_write", -1);
 	}
 
         RESTORE_OFFSET(*d);
@@ -184,7 +182,7 @@ int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset) {
 }
 
 
-int dz_add_tlv(dz_t* d,  char *tlv) {
+int dz_add_tlv(dz_t* d,  tlv_t tlv) {
 	off_t pad_off, eof_off;
 
         SAVE_OFFSET(*d);
@@ -459,7 +457,7 @@ int dz_compact(dz_t* d) {
 
 int dz_dump(dz_t *daz_buf) {
 
-	char *tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
+	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
 
         SAVE_OFFSET(*daz_buf);

@@ -37,3 +37,13 @@ unsigned int tlv_get_length(tlv_t tlv) {
 char *tlv_get_value_ptr(tlv_t tlv) {
 	return tlv + TLV_SIZEOF_HEADER;
 }
+
+
+int tlv_write(tlv_t tlv, int fd) {
+	/* write */
+	unsigned int to_write = TLV_SIZEOF(tlv);
+	if (write(fd, tlv, to_write) != to_write) {
+		ERROR("write", -1);
+	}
+	return 0;
+}

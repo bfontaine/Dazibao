@@ -3,6 +3,10 @@
 
 #include <arpa/inet.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include "utils.h"
+
 
 #define TLV_PAD1     0
 #define TLV_PADN     1
@@ -43,5 +47,7 @@ tlv_t tlv_get_length_ptr(tlv_t tlv);
 unsigned int tlv_get_length(tlv_t tlv);
 
 tlv_t tlv_get_value_ptr(tlv_t tlv);
+
+int tlv_write(tlv_t tlv, int fd);
 
 #endif
