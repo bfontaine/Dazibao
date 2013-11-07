@@ -50,4 +50,6 @@ tlv_t tlv_get_value_ptr(tlv_t tlv);
 
 int tlv_write(tlv_t tlv, int fd);
 
+int tlv_read(tlv_t tlv, int fd);
+
 #endif

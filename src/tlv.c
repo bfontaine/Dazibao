@@ -47,3 +47,15 @@ int tlv_write(tlv_t tlv, int fd) {
 	}
 	return 0;
 }
+
+int tlv_read(tlv_t tlv, int fd) {
+
+	int len = tlv_get_length(tlv);
+	
+	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
+	
+	if (read(fd, tlv_get_value_ptr(tlv), len) < len) {
+		ERROR("read", -1);
+	}
+	return 0;
+}

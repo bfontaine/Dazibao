@@ -84,7 +84,7 @@ int dz_close(dz_t* d) {
 	return 0;
 }
 
-int read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
+int dz_read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -92,15 +92,8 @@ int read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
 		ERROR("lseek", -1);
 	}
 
-	int len = dtoh(tlv_get_length_ptr(tlv));
 
-	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
-
-	if (read(*d, tlv_get_value_ptr(tlv), len) < len) {
-		ERROR("read", -1);
-	}
-
-	return 0;
+	return tlv_read(tlv, *d);
 }
 
 off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
@@ -478,8 +471,8 @@ int dz_dump(dz_t *daz_buf) {
                         ERROR("malloc", -1);
                 }
 
-                if (read_tlv(daz_buf, &tlv_buf, off) < 0) {
-                        ERROR("read_tlv", -1);
+                if (dz_read_tlv(daz_buf, &tlv_buf, off) < 0) {
+                        ERROR("dz_read_tlv", -1);
                 }
                 tlv_buf.value[tlv_buf.length] = '\0';
 
