@@ -34,7 +34,7 @@ clean:
 	rm -f $(TARGET) *.o *~
 
 check:
-	@T=$$(mktemp); \
+	@T=$$(mktemp dzbXXX); \
 	 egrep -n --include=.*\.[ch]$$ '.{80,}' src/* >$$T; \
 	 if [ "$$?" -eq "0" ]; then \
 		 echo '!! There are 80+ chars lines:'; \
@@ -45,5 +45,5 @@ check:
 		 echo '!! There are trailing spaces:'; \
 		 cat $$T | cut -f1,2 -d:; \
 	 fi; \
-	 rm -f $TT;
+	 rm -f $$T;
 	$(CPPCHECK) -I$(SRC) $(SRC)
