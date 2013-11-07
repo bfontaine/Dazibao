@@ -507,7 +507,9 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
                 tlv_buf.value = NULL;
 #endif
 	
-        while ((off = dz_next_tlv(daz_buf, tlv)) != end) {
+        while (((off = dz_next_tlv(daz_buf, tlv)) != end )
+                        && (off != EOD)) {
+
                 int type, len;
                 type = tlv_get_type(tlv);
                 len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
@@ -515,22 +517,23 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
 			(int)off, tlv_get_type(tlv), len);
 
                 if (type == TLV_COMPOUND ){
+                        printf("COMPOUND \n");
                         if (depth > 0){
-                                printf("COMPOUND \n");
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
                                 if (dz_dump_compound(daz_buf,current,
                                         (depth-1))){
                                         ERROR(NULL,-1);
                                 }
+                                SET_OFFSET(*daz_buf, current);
                                 continue;
                         }
                 } else if (type == TLV_DATED){
+                        printf("DATE\n");
                         if (depth > 0){
                                 /* TODO
                                 function to print date
                                 */
-                                printf("DATE\n");
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
                                 TLV_SIZEOF_DATE);
@@ -538,11 +541,18 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth){
                                         (depth-1))){
                                         ERROR(NULL,-1);
                                 }
-                                continue;
+                                SET_OFFSET(*daz_buf, current);
                         }
-                } else {
+                } else if (type == TLV_PNG){
+                        printf("PNG\n");
+                } else if (type == TLV_JPEG){
+                        printf("JPEG\n");
+                } else if (type == TLV_TEXT){
+                        printf("TEXTE\n");
+                 } else {
                         printf("...\n");
                 }
+
         }
 
 	free(tlv);
