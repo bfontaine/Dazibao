@@ -7,15 +7,10 @@ int dz_create(dz_t* daz_buf, char* path) {
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
 
-	if (access(path, F_OK) != -1) {
-		fprintf(stderr, "dz_create error: file %s already exists\n", path);
-		return -1;
-	}
-
-	fd = creat(path, 0644);
+	fd = open(path, O_CREAT | O_EXCL ,0644);
 
 	if (fd == -1) {
-		ERROR("creat", -1);
+		ERROR("open", -1);
 	}
 
 	if (flock(fd, LOCK_SH) == -1) {
