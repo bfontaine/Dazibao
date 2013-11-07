@@ -94,12 +94,35 @@ int main(int argc, char **argv) {
 		if (dz_open(&daz_buf, daz, O_RDONLY)) {
 			exit(EXIT_FAILURE);
 		}
-
-		if (dz_dump(&daz_buf)) {
-			printf("dump failed\n");
-			dz_close(&daz_buf);
+                
+                if ( argc < 4 ){
+		        if (dz_dump(&daz_buf)) {
+			        printf("dump failed\n");
+			        dz_close(&daz_buf);
+			        exit(EXIT_FAILURE);
+		        }
+                } else if (argc > 5){
+			printf("expected type\n");
 			exit(EXIT_FAILURE);
-		}
+                } else{
+                        char *cmd_dump, *depth;
+                        cmd_dump = argv[3];
+                        depth = argv[4];
+
+                        if (!strcmp(cmd_dump, "--depth")){
+                                int dep = atoi(depth);        
+                                // option dump compound with limited depht
+		                if (dz_dump(&daz_buf,depth, dep)) {
+			                printf("dump failed\n");
+			                dz_close(&daz_buf);
+			                exit(EXIT_FAILURE);
+		                }
+
+                        } else {
+			        printf("expected type\n");
+			        exit(EXIT_FAILURE);
+                        }
+                }
 
 	}  else if (!strcmp(cmd, "create")) {
 		
