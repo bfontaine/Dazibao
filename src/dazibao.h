@@ -55,7 +55,7 @@ int dz_close(dz_t* d);
  * @return 0 on success
  * @return -1 on error
  */
-int dz_read_tlv(dz_t* d, char *tlv, off_t offset);
+int dz_read_tlv(dz_t* d, tlv_t tlv, off_t offset);
 
 /**
  * Fill tlv with type and length information
@@ -65,7 +65,7 @@ int dz_read_tlv(dz_t* d, char *tlv, off_t offset);
  * @return EOD if end of file reached
  * @return -1 on error
  */
-off_t dz_next_tlv(dz_t* d, char *tlv);
+off_t dz_next_tlv(dz_t* d, tlv_t tlv);
 
 /**
  * Fill tlv with type and length information
@@ -75,10 +75,10 @@ off_t dz_next_tlv(dz_t* d, char *tlv);
  * @return 0 on success
  * @return -1 on error
  */
-int dz_tlv_at(dz_t* d, char *tlv, off_t offset);
+int dz_tlv_at(dz_t* d, tlv_t tlv, off_t offset);
 
 /* TODO: doc */
-int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset);
+int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
 
 /**
  * Add a TLV at the end of a dazibao. If the dazibao ends with a sequence
@@ -88,7 +88,7 @@ int dz_write_tlv_at(dz_t *d, char *tlv, off_t offset);
  * @param d dazibao receiving new tlv
  * @param tlv to add
  */
-int dz_add_tlv(dz_t* d, char *tlv);
+int dz_add_tlv(dz_t* d, tlv_t tlv);
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
