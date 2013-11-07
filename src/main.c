@@ -94,7 +94,6 @@ int main(int argc, char **argv) {
 		if (dz_open(&daz_buf, daz, O_RDONLY)) {
 			exit(EXIT_FAILURE);
 		}
-                
                 if ( argc < 4 ){
 		        if (dz_dump(&daz_buf)) {
 			        printf("dump failed\n");
@@ -108,12 +107,13 @@ int main(int argc, char **argv) {
                         char *cmd_dump, *depth;
                         cmd_dump = argv[3];
                         depth = argv[4];
+                        int dep = atoi(depth);
 
-                        if (!strcmp(cmd_dump, "--depth")){
-                                int dep = atoi(depth);        
+                        if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)){
+                                int dep = atoi(depth);
                                 // option dump compound with limited depht
-		                if (dz_dump(&daz_buf,depth, dep)) {
-			                printf("dump failed\n");
+		                if (dz_dump_depth(&daz_buf, dep)) {
+			                printf("dump_compound failed\n");
 			                dz_close(&daz_buf);
 			                exit(EXIT_FAILURE);
 		                }
