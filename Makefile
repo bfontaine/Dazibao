@@ -45,5 +45,10 @@ check:
 		 echo '!! There are trailing spaces:'; \
 		 cat $$T | cut -f1,2 -d:; \
 	 fi; \
+	 egrep -n --include=.*\.[ch]$$ '//' src/* >$$T; \
+	 if [ "$$?" -eq "0" ]; then \
+	 	 echo '!! There are C99-style comments:'; \
+		 cat $$T | cut -f1,2 -d:; \
+	 fi; \
 	 rm -f $$T;
 	$(CPPCHECK) -I$(SRC) $(SRC)
