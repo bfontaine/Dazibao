@@ -53,7 +53,11 @@ int tlv_read(tlv_t tlv, int fd) {
 	int len = tlv_get_length(tlv);
 	
 	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
-	
+
+	if (tlv == NULL) {
+		ERROR("realloc", -1);
+	}
+
 	if (read(fd, tlv_get_value_ptr(tlv), len) < len) {
 		ERROR("read", -1);
 	}
