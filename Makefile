@@ -20,7 +20,7 @@ CPPCHECK=cppcheck \
 	--language=c -q
 
 .DEFAULT: all
-.PHONY: clean
+.PHONY: clean cleantmp check
 
 all: check $(TARGET)
 
@@ -30,10 +30,13 @@ $(TARGET): main.o dazibao.o tlv.o
 %.o: $(SRC)/%.c $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-clean:
-	rm -f $(TARGET) *.o *~
+cleantmp:
+	rm -f *~ */*~
 
-check:
+clean: cleantmp
+	rm -f $(TARGET) *.o
+
+check: cleantmp
 	@T=$$(mktemp dzbXXX); \
 	 egrep -n --include=.*\.[ch]$$ '.{80,}' src/* >$$T; \
 	 if [ "$$?" -eq "0" ]; then \
