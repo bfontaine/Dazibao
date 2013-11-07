@@ -135,24 +135,24 @@ off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
 
 int dz_tlv_at(dz_t* d, tlv_t tlv,  off_t offset) {
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	if (SET_OFFSET(*d, offset) == -1) {
 		ERROR("lseek", -1);
 	}
 
 	if (dz_next_tlv(d, tlv) <= 0) {
-//                RESTORE_OFFSET(*d);
+                /* RESTORE_OFFSET(*d); */
 		return -1;
 	}
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 	return 0;
 }
 
 int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	if (SET_OFFSET(*d, offset) == -1) {
 		ERROR("lseek", -1);
@@ -162,7 +162,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
 		ERROR("tlv_write", -1);
 	}
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 	return 0;
 }
 
@@ -170,7 +170,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
 int dz_add_tlv(dz_t* d,  tlv_t tlv) {
 	off_t pad_off, eof_off;
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	/* find EOF offset */
 	eof_off = lseek(*d, 0, SEEK_END);
@@ -198,7 +198,7 @@ int dz_add_tlv(dz_t* d,  tlv_t tlv) {
                 ERROR("ftruncate", -1);
         }
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 
 	return 0;
 }
@@ -208,7 +208,7 @@ off_t dz_pad_serie_start(dz_t* d, off_t offset) {
 
 	char buf[TLV_SIZEOF_HEADER];
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	if (SET_OFFSET(*d, DAZIBAO_HEADER_SIZE) == -1) {
 		ERROR("lseek", -1);
@@ -239,7 +239,7 @@ off_t dz_pad_serie_start(dz_t* d, off_t offset) {
 		off_start = offset;
 	}
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 
 	return off_start;
 
@@ -249,7 +249,7 @@ off_t dz_pad_serie_end(dz_t* d, off_t offset) {
 	off_t off_stop;
 	char buf[TLV_SIZEOF_HEADER];
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	if(SET_OFFSET(*d, offset) == -1) {
 		ERROR("lseek", -1);
@@ -274,7 +274,7 @@ off_t dz_pad_serie_end(dz_t* d, off_t offset) {
 		}
 	}
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 	return off_stop;
 }
 
@@ -284,7 +284,7 @@ int dz_rm_tlv(dz_t* d, off_t offset) {
 	off_t off_start, off_end, off_eof;
         int status;
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
 	off_start = dz_pad_serie_start(d, offset);
 	off_end   = dz_pad_serie_end(d, offset);
@@ -292,18 +292,18 @@ int dz_rm_tlv(dz_t* d, off_t offset) {
 	off_eof = lseek(*d, 0, SEEK_END);
 
 	if (off_eof == -1) {
-//                RESTORE_OFFSET(*d);
+                /* RESTORE_OFFSET(*d); */
 		ERROR(NULL, -1);
 	}
 
 	if (off_end == off_eof) { /* end of file reached */
 		ftruncate(*d, off_start);
-//                RESTORE_OFFSET(*d);
+                /* RESTORE_OFFSET(*d); */
 		return 0;
 	}
 
         status = dz_do_empty(d, off_start, off_end - off_start);
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
         return status;
 }
 
@@ -322,7 +322,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 ERROR("calloc", -1);
         }
 
-//        SAVE_OFFSET(*d);
+        /* SAVE_OFFSET(*d); */
 
         if (d == NULL || start < DAZIBAO_HEADER_SIZE || length < 0) {
                 status = -1;
@@ -364,7 +364,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                }
         }
 
-//        RESTORE_OFFSET(*d);
+        /* RESTORE_OFFSET(*d); */
 
 OUT:
         free(buff);
@@ -444,10 +444,10 @@ int dz_dump(dz_t *daz_buf) {
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
 
-//        SAVE_OFFSET(*daz_buf);
+        /* SAVE_OFFSET(*daz_buf); */
 
 #if 0
-        // TODO
+        /* TODO */
 
         while ((off = dz_next_tlv(daz_buf, &tlv_buf)) != EOD) {
 
@@ -470,8 +470,8 @@ int dz_dump(dz_t *daz_buf) {
                 }
                 tlv_buf.value[tlv_buf.length] = '\0';
 
-                // These calls to fflush are here to avoid issues with usage
-                // of both wprintf and printf
+                /* These calls to fflush are here to avoid issues with usage
+                   of both wprintf and printf */
                 if (fflush(stdout) == EOF) {
                         perror("fflush");
                 }
@@ -502,7 +502,7 @@ int dz_dump(dz_t *daz_buf) {
 
 	free(tlv);
 
-//        RESTORE_OFFSET(*daz_buf);
+        /* RESTORE_OFFSET(*daz_buf); */
 
         return 0;
 }

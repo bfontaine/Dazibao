@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-                // TODO use strtol to handle conversion errors
+                /* TODO use strtol to handle conversion errors */
 		unsigned char type = (unsigned char)atoi(argv[3]);
 		char reader[BUFFSIZE];
 		unsigned int buff_size = 0;
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
 	}
 
-	// FIXME: check for error
+	/* FIXME: check for error */
 	dz_close(&daz_buf);
 
         exit(EXIT_SUCCESS);
