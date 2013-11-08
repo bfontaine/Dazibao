@@ -110,4 +110,21 @@ int tlv_write(tlv_t tlv, int fd);
  */
 int tlv_read(tlv_t tlv, int fd);
 
+/**
+ * Write a whole tlv in a file
+ * @param tlv tlv to write
+ * @param fd file descriptor where you want to dump
+ * @return same as write(2)
+ */
+int dump_tlv(tlv_t tlv, int fd);
+
+
+/**
+ * Write the value of a tlv in a file
+ * @param tlv tlv containing the value
+ * @param fd file descriptor where you want to dump
+ * @return same as write(2)
+ */
+int dump_tlv_value(tlv_t tlv, int fd);
+
 #endif

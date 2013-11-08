@@ -63,3 +63,12 @@ int tlv_read(tlv_t tlv, int fd) {
 	}
 	return 0;
 }
+
+
+int dump_tlv(tlv_t tlv, int fd) {
+	return write(fd, tlv, TLV_SIZEOF(tlv));
+}
+
+int dump_tlv_value(tlv_t tlv, int fd) {
+	return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+}
