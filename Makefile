@@ -58,21 +58,5 @@ clean: cleantmp
 	rm -f $(TARGET) *.o $(SRC)/*.o $(WEBSRC)/*.o
 
 check: cleantmp
-	@T=$$(mktemp dzbXXX); \
-	 egrep -In --include=.*\.[ch]$$ '.{80,}' $(SRC)/* $(SRC)/*/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-		 echo '!! There are 80+ chars lines:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 egrep -In --include=.*\.[ch]$$ ' +$$' $(SRC)/* $(SRC)/*/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-		 echo '!! There are trailing spaces:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 egrep -In --include=.*\.[ch]$$ '//' $(SRC)/* $(SRC)/*/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-	 	 echo '!! There are C99-style comments:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 rm -f $$T;
-	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
+	./utils/stylecheck.sh
+	$(CPPCHECK) -I$(SRC) $(SRC)
