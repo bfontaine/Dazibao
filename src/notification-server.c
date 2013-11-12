@@ -1,18 +1,11 @@
 #include "notification-server.h"
 
-void notify(int signum) {
-	/* 
-	 * TODO:
-	 * - make variables needed by sighandler global ?
-	 */
-}
 
-void nsa(int n, char **file) {
+int nsa(int n, char **file) {
 	
 	/*
 	 * TODO:
 	 * - the way we check changes could probably be improved
-	 * - do multiple files in on function ?
 	 */
 
 	struct stat st;
@@ -23,13 +16,13 @@ void nsa(int n, char **file) {
 
 	if (mtime == NULL) {
 		PERROR("malloc");
-		return;
+		goto OUT;
 	}
 
 	for (i = 0; i < n; i++) {
 		if (stat(file[i], &st) == -1) {
 			PERROR("stat");
-			return;
+			goto OUT;
 		}
 		mtime[i] = st.st_mtime;
 	}
@@ -43,16 +36,18 @@ void nsa(int n, char **file) {
 				continue;
 			}
 			if (st.st_mtime != mtime[i]) {
-				/* send signal */
+				/* send signal to group, providing index i */
 				mtime[i] = st.st_mtime;
 			}
 		}
 	}
 
+	OUT:
 	free(mtime);
+	return -1;
 }
 
-int set_up_server() {
+int set_up_server(void) {
 	int server;
 	struct sockaddr_un saddr;
 
@@ -93,7 +88,7 @@ int accept_client(int server) {
 	client = accept(server, (struct sockaddr*)&caddr, &len);
 
 	if (client == -1) {
-		PERROR("accept");
+		ERROR("accept", -1);
 	} 
 	
 	pid = fork();
@@ -115,24 +110,41 @@ int main(int argc, char **argv) {
 
 	/* 
 	 * TODO:
-	 * - parse args and verify dazibao provided
 	 * - fork to watch dazibao (before "accept loop")
 	 * - define signal handler to notify children when the file changed
 	 * - wait for child before leaving ?
 	 */
 
 	int server;
+	int nbclient = 0;
+	int pid;
 
 	if (argc < 2) {
-                printf("Usage:\n\t%s <dazibao>\n", argv[0]);
+                printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n", argv[0]);
                 exit(EXIT_FAILURE);
 	}
-
-	if (set_up_server(&server) == -1) {
+	server = set_up_server();
+	if (server == -1) {
 		ERROR("set_up_server", -1);
 	}
 
+	pid = fork();
+	
+	if (pid == -1) {
+		
+	} else if (pid == 0) {
+		if(nsa(argc - 1, &argv[1]) == -1) {
+			ERROR("nsa", -1);
+		}
+	}
+
 	while (1) {
+		if (accept_client(server) > 0) {
+			nbclient++;
+		} else {
+			PERROR("accept_client");
+			continue;
+		}
 	}
 
 	return 0;

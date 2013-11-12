@@ -18,7 +18,7 @@
  * @return file descriptor (positive integer) of server on success
  * @return -1 on error
  */
-int set_up_server();
+int set_up_server(void);
 
 /**
  * Establish connection with client, and create a new process to handle notifications
@@ -28,5 +28,9 @@ int set_up_server();
  */
 int accept_client(int server);
 
+/**
+ * @return -1 on error
+ */
+int nsa(int nb, char **file);
 
 int main(int argc, char **argv);
