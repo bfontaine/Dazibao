@@ -37,21 +37,5 @@ clean: cleantmp
 	rm -f $(TARGET) *.o
 
 check: cleantmp
-	@T=$$(mktemp dzbXXX); \
-	 egrep -n --include=.*\.[ch]$$ '.{80,}' src/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-		 echo '!! There are 80+ chars lines:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 egrep -n --include=.*\.[ch]$$ ' +$$' src/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-		 echo '!! There are trailing spaces:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 egrep -n --include=.*\.[ch]$$ '//' src/* >$$T; \
-	 if [ "$$?" -eq "0" ]; then \
-	 	 echo '!! There are C99-style comments:'; \
-		 cat $$T | cut -f1,2 -d:; \
-	 fi; \
-	 rm -f $$T;
+	./utils/stylecheck.sh
 	$(CPPCHECK) -I$(SRC) $(SRC)
