@@ -5,8 +5,13 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #include "utils.h"
+
+#define NSA_WAIT_TIME 30
 
 /**
  * Set up the server

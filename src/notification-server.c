@@ -1,5 +1,57 @@
 #include "notification-server.h"
 
+void notify(int signum) {
+	/* 
+	 * TODO:
+	 * - make variables needed by sighandler global ?
+	 */
+}
+
+void nsa(int n, char **file) {
+	
+	/*
+	 * TODO:
+	 * - the way we check changes could probably be improved
+	 * - do multiple files in on function ?
+	 */
+
+	struct stat st;
+	time_t *mtime;
+	int i;
+
+	mtime = malloc(n * sizeof(*mtime));
+
+	if (mtime == NULL) {
+		PERROR("malloc");
+		return;
+	}
+
+	for (i = 0; i < n; i++) {
+		if (stat(file[i], &st) == -1) {
+			PERROR("stat");
+			return;
+		}
+		mtime[i] = st.st_mtime;
+	}
+
+	while (1) {
+		sleep(NSA_WAIT_TIME);
+
+		for (i = 0; i < n; i++) {
+			if (stat(file[i], &st) == -1) {
+				PERROR("stat");
+				continue;
+			}
+			if (st.st_mtime != mtime[i]) {
+				/* send signal */
+				mtime[i] = st.st_mtime;
+			}
+		}
+	}
+
+	free(mtime);
+}
+
 int set_up_server() {
 	int server;
 	struct sockaddr_un saddr;
@@ -43,7 +95,6 @@ int accept_client(int server) {
 	if (client == -1) {
 		PERROR("accept");
 	} 
-	
 	
 	pid = fork();
 	if (pid < 0){
