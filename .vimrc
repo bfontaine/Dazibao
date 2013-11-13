@@ -8,3 +8,4 @@ set expandtab
 
 " max 80 chars
 set tw=80
+set cc=80
