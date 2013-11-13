@@ -55,4 +55,6 @@
 #define PDEBUG(fmt, ...) 0
 #endif
 
+#define NFREE(p) { free(p);(p) = NULL; }
+
 #endif
