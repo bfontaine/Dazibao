@@ -9,6 +9,7 @@ UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h
 TARGET=dazibao
 SERVER=notification-server
+CLIENT=notification-client
 WSERVER=daziweb
 
 # FIXME check how to merge these two 'ifndef'
@@ -47,6 +48,9 @@ $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(CLIENT): notification-stupide.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
