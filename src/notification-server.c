@@ -1,50 +1,103 @@
 #include "notification-server.h"
 
+int *pids;
+char **filename;
+int *shm;
+int nbdaz;
+int sock;
+
+/**
+ * TODO:
+ * - queue signals
+ */
+
+void notify(int sigrtmin, siginfo_t *info, void *unused_ptr) {
+	int i;
+	for (i = 0; i < nbdaz; i++) {
+		if (shm[i] == info->si_pid) {
+			break;
+		}
+	}
+	if (i < nbdaz) {
+		int len = strlen(filename[i]) + 2;
+		char *str = malloc(sizeof(*str) * len);
+		str[0] = 'C';
+		memcpy(&str[1], filename[i], len - 2);
+		str[len - 1] = '\n';
+		if (write(sock, str, len) < (strlen(filename[i]) + 2)) {
+		}
+	} else {
+		printf("Received signal from unknown process\n");
+	}
+}
+
+int watch_file(char *path) {
+	
+	/**
+	 * TODO:
+	 * - adjust check interval
+	 */
+
+	struct stat st;
+	time_t mtime;
+	int pid = fork();
+
+	if (pid < -1) {
+		ERROR("fork", -1);
+		
+	} else if (pid == 0) {
+
+		/* watchers ignore signals USER1 */
+		struct sigaction action;
+		action.sa_flags = SA_RESTART;
+		action.sa_handler = SIG_IGN;
+		
+		if(sigaction(SIGUSR1, &action, NULL) == -1) {
+			ERROR("sigaction", -1);
+		}
+
+		if (stat(path, &st) == -1) {
+			PERROR("stat");
+		}
+
+		mtime = st.st_mtime;
+	
+		while (1) {
+			sleep(NSA_WAIT_TIME);
+			if (stat(path, &st) == -1) {
+				PERROR("stat");
+				continue;
+			}
+			if (st.st_mtime != mtime) {
+				if (kill(0, SIGUSR1) == -1) {
+					PERROR("kill");
+					continue;
+				}
+				mtime = st.st_mtime;
+			}
+		}
+	} else {
+		return pid;
+	}
+}
+
 
 int nsa(int n, char **file) {
 	
 	/*
 	 * TODO:
+	 * - use inotify on linux systems
 	 * - the way we check changes could probably be improved
 	 */
-
-	struct stat st;
-	time_t *mtime;
 	int i;
-
-	mtime = malloc(n * sizeof(*mtime));
-
-	if (mtime == NULL) {
-		PERROR("malloc");
-		goto OUT;
-	}
-
+	int nb = 0;
 	for (i = 0; i < n; i++) {
-		if (stat(file[i], &st) == -1) {
-			PERROR("stat");
-			goto OUT;
-		}
-		mtime[i] = st.st_mtime;
-	}
-
-	while (1) {
-		sleep(NSA_WAIT_TIME);
-
-		for (i = 0; i < n; i++) {
-			if (stat(file[i], &st) == -1) {
-				PERROR("stat");
-				continue;
-			}
-			if (st.st_mtime != mtime[i]) {
-				/* send signal to group, providing index i */
-				mtime[i] = st.st_mtime;
-			}
+		shm[i] = watch_file(file[i]);
+		if (shm[i] != -1) {
+			nb++;
 		}
 	}
-
-	OUT:
-	free(mtime);
-	return -1;
+	return nb;
 }
 
 int set_up_server(void) {
@@ -88,18 +141,32 @@ int accept_client(int server) {
 	client = accept(server, (struct sockaddr*)&caddr, &len);
 
 	if (client == -1) {
+		if (errno == EINTR) {
+			/* manual restart */
+			return accept_client(server);
+		}
 		ERROR("accept", -1);
 	} 
 	
+	printf("*** New client connected ***\n");
+
 	pid = fork();
 	if (pid < 0){
 		ERROR("fork", -1);
 	} else if (pid == 0) {
-		/*
-		 * TODO:
-		 * - set signal handler
-		 * - wait for notification
-		 */
+		sock = client;
+		/* set handler for SIGUSR1 */
+		struct sigaction action;
+		action.sa_flags = action.sa_flags | SA_SIGINFO;
+		action.sa_sigaction = notify;
+		sigfillset(&action.sa_mask);
+		if(sigaction(SIGUSR1, &action, NULL) == -1) {
+			/* TODO: delete client */
+			ERROR("sigaction", -1);
+		}
+		while (1) {
+			pause();
+		}
 		return 0;
 	} else {
 		return pid;
@@ -110,34 +177,45 @@ int main(int argc, char **argv) {
 
 	/* 
 	 * TODO:
-	 * - fork to watch dazibao (before "accept loop")
 	 * - define signal handler to notify children when the file changed
 	 * - wait for child before leaving ?
 	 */
 
 	int server;
 	int nbclient = 0;
-	int pid;
 
 	if (argc < 2) {
                 printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n", argv[0]);
                 exit(EXIT_FAILURE);
 	}
+
+	nbdaz = argc - 1;
+
+	filename = &argv[1];
+
+	shm = malloc(sizeof(*shm) * nbdaz);	
+
 	server = set_up_server();
 	if (server == -1) {
 		ERROR("set_up_server", -1);
 	}
 
-	pid = fork();
+	/* ignore signal used by notifier */
+	struct sigaction action;
+	action.sa_flags = SA_RESTART;
+	action.sa_handler = SIG_IGN;
 	
-	if (pid == -1) {
-		
-	} else if (pid == 0) {
-		if(nsa(argc - 1, &argv[1]) == -1) {
-			ERROR("nsa", -1);
-		}
+	if(sigaction(SIGUSR1, &action, NULL) == -1) {
+		ERROR("sigaction", -1);
 	}
 
+	printf("launching nsa\n");
+	if(nsa(argc - 1, &argv[1]) == -1) {
+		ERROR("nsa", -1);
+	} else {
+		
+	}
+	
 	while (1) {
 		if (accept_client(server) > 0) {
 			nbclient++;
@@ -146,6 +224,8 @@ int main(int argc, char **argv) {
 			continue;
 		}
 	}
+
+	free(shm);
 
 	return 0;
 }

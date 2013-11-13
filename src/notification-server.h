@@ -10,8 +10,28 @@
 
 
 #include "utils.h"
+#include <signal.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
-#define NSA_WAIT_TIME 30
+#define NSA_WAIT_TIME 10
+
+#define MKEY 987654321
+
+/**
+ * Signal handler.
+ * Write on client socket when SIGUSR1 is received.
+ */
+void notify(int sigrtmin, siginfo_t *info, void *unused_ptr);
+
+/**
+ * Create a new process to check file changes.
+ * @param path path of file to check
+ * @return pid of new process, in father process.
+ * @return never return in child process.
+ * @return -1 on error.
+ */
+int watch_file(char *path);
 
 /**
  * Set up the server
@@ -32,5 +52,3 @@ int accept_client(int server);
  * @return -1 on error
  */
 int nsa(int nb, char **file);
-
-int main(int argc, char **argv);
