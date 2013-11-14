@@ -27,7 +27,16 @@ char *next_header(int sock, int *eoh);
 
 /**
  * **NOTE** this function is currently a draft.
+ *
+ * Parse an HTTP request read from the socket 'sock', and use fill the other
+ * arguments with the important things:
+ * - mth: the method used (as defined in http.h)
+ * - path: the requested path
+ * - body: the request body
+ * - len: the length of the request body
+ *
+ * As always, the function returns 0 on success or -1 if an error occured.
  **/
-void parse_request(int sock);
+int parse_request(int sock, int *mth, char **path, char **body, int *len);
 
 #endif

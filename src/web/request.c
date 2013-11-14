@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string.h>
-#include "web/request.h"
+#include "request.h"
+#include "http.h"
+#include "webutils.h"
 #include "utils.h"
 
 char is_crlf(char *s, int c, int len) {
@@ -110,7 +113,109 @@ RETURN_LINE:
         return line;
 }
 
-void parse_request(int sock) {
-        /* TODO */
+int parse_request(int sock, int *mth, char **path, char **body, int *len) {
+        char *line = NULL,
+             *mth_str;
+
+        int eoh = 0,
+            readlen,
+            body_len;
+
+        if (*path != NULL) {
+                NFREE(*path);
+        }
+
+        line = next_header(sock, &eoh);
+        if (line == NULL || eoh) {
+                WLOG("Cannot get the first header line (eoh=%d)", eoh);
+                return -1;
+        }
+
+        mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
+        if (mth_str == NULL) {
+                perror("malloc");
+                return -1;
+        }
+
+        *path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
+        if (*path == NULL) {
+                perror("malloc");
+                NFREE(mth_str);
+                return -1;
+        }
+
+        if (sscanf(line, "%16s %128s HTTP/1%*s", mth_str, *path) < 2) {
+                perror("sscanf");
+                NFREE(mth_str);
+                goto MALFORMED;
+        }
+
+        *mth = http_mth(mth_str);
+        NFREE(mth_str);
+
+        /* body length */
+        *len = -1;
+        while ((line = next_header(sock, &eoh)) != NULL) {
+                if (eoh) {
+                        goto MALFORMED;
+                }
+
+                if (strlen(line) < HTTP_HEADER_CL_LEN) {
+                        continue;
+                }
+
+                if (strncasecmp(line,
+                                HTTP_HEADER_CL, HTTP_HEADER_CL_LEN) == 0) {
+
+                        if (sscanf(line, HTTP_HEADER_CL " %24d", len) < 1) {
+                                perror("sscanf");
+                                goto MALFORMED;
+                        }
+
+                        if (*len < 0) {
+                               goto MALFORMED; 
+                        }
+                        break;
+                }
+
+                NFREE(line);
+        }
+        if (*len == -1) {
+                goto MALFORMED;
+        }
+        while (!eoh) {
+                line = next_header(sock, &eoh);
+
+                if (line == NULL) {
+                        goto MALFORMED;
+                }
+        }
+
+        /* request body */
+        *body = (char*)malloc(sizeof(char)*(*len));
+        if (*body == NULL) {
+                goto MALFORMED;
+        }
+
+        memcpy(body, line, eoh);
+
+        readlen = 0;
+        body_len = eoh;
+        while (body_len < *len
+                && (readlen = recv(sock, (*body)+body_len,
+                                        (*len)-body_len, 0)) > 0) {
+                body_len += readlen;
+        }
+        if (body_len < *len) {
+                NFREE(*body);
+                goto MALFORMED;
+        }
+
+        return 0;
+
+MALFORMED:
+        NFREE(*path);
+        NFREE(line);
+        return -1;
 }
 

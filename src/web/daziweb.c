@@ -1,4 +1,3 @@
-#include "daziweb.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,22 +7,29 @@
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>
+#include "daziweb.h"
+#include "webutils.h"
 
 int listening_sock;
 
 void clean_close(int s) {
         /* to avoid unused parameter warning: */ s++;
-        close(listening_sock);
+        if (close(listening_sock) == -1) {
+            perror("close");
+        }
+        exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[]) {
         int port, status,
-            d, i, eoh;
+            mth, body_len;
+        char *path = NULL;
+        char *body = NULL;
+
+        /* FIXME 'a' is not an understandable name */
         struct sockaddr_in a,
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
-        char buff[BUFFLEN];
-        char *line = NULL;
         struct sigaction sig;
 
         sig.sa_handler = clean_close;
@@ -38,9 +44,11 @@ int main(int argc, char *argv[]) {
 
         if (argc < 2) {
                 port = DEFAULT_PORT;
+                WLOG("Using default port");
         } else {
                 port = strtol(argv[1], NULL, 10);
                 if (port == LONG_MIN || port == LONG_MAX) {
+                        WLOG("trouble parsing the port, using default");
                         port = DEFAULT_PORT;
                 }
         }
@@ -66,7 +74,7 @@ int main(int argc, char *argv[]) {
         if (status == -1) {
                 perror("bind");
                 close(listening_sock);
-                exit(EXIT_FAILURE);    
+                exit(EXIT_FAILURE);
         }
 
         if (listen(listening_sock, MAX_QUEUE) == -1) {
@@ -75,33 +83,41 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
         }
 
-        printf("Listening on port %d...\n", port);
-        puts("Press ^C to interrupt.");
+        WLOG("Listening on port %d...", port);
+        WLOG("Press ^C to interrupt.");
 
         while (1) {
+                int d;
+
                 if ((d = accept(listening_sock,
                                 (struct sockaddr *)&addr, &len)) == -1) {
                         perror("accept");
                         continue;
                 }
+                WLOG("Got a connection.");
 
-                eoh = 0;
-
-                /* <test> */
-                while ((line = next_header(d, &eoh)) != NULL) {
-                        if (!eoh) {
-                                printf("%s\n", line);
-                        }
-                        NFREE(line);
-                        if (eoh) {
-                                printf("-- end of headers --\n");
-                                break;
-                        }
+                if (parse_request(d, &mth, &path, &body, &body_len) < 0) {
+                    /* TODO return error 400 */
+                    WLOG("request parse error");
+                    if (close(d) == -1) {
+                        perror("close");
+                    }
+                    continue;
                 }
-                /* </test> */
 
-                close(d);
+                WLOG("Got method %d, path %s, body lenght %d\n", mth, path, body_len);
+
+                /* TODO respond */
+
+                WLOG("Connection closed.");
+                if (close(d) == -1) {
+                    perror("close");
+                }
         };
-        close(listening_sock);
+
+        WLOG("Closing...");
+        if (close(listening_sock) == -1) {
+            perror("close");
+        }
         exit(EXIT_SUCCESS);
 }
