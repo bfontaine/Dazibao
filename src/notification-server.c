@@ -11,7 +11,8 @@ int sock;
  * - queue signals
  */
 
-void notify(int sigrtmin, siginfo_t *info, void *unused_ptr) {
+void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
+
 	int i;
 	for (i = 0; i < nbdaz; i++) {
 		if (shm[i] == info->si_pid) {
@@ -24,7 +25,8 @@ void notify(int sigrtmin, siginfo_t *info, void *unused_ptr) {
 		str[0] = 'C';
 		memcpy(&str[1], filename[i], len - 2);
 		str[len - 1] = '\n';
-		if (write(sock, str, len) < (strlen(filename[i]) + 2)) {
+		if (write(sock, str, len) < (int)(strlen(filename[i]) + 2)) {
+			PERROR("write");
 		}
 	} else {
 		printf("Received signal from unknown process\n");
@@ -35,17 +37,20 @@ int watch_file(char *path) {
 	
 	/**
 	 * TODO:
-	 * - adjust check interval
+	 * - use inotify on linux systems ?
+	 * - the way we check changes could probably be improved
 	 */
 
-	struct stat st;
-	time_t mtime;
 	int pid = fork();
 
 	if (pid < -1) {
 		ERROR("fork", -1);
 		
 	} else if (pid == 0) {
+
+		struct stat st;
+		time_t mtime;
+		int sleeping_time = WATCH_SLEEP_DEFAULT;
 
 		/* watchers ignore signals USER1 */
 		struct sigaction action;
@@ -63,7 +68,7 @@ int watch_file(char *path) {
 		mtime = st.st_mtime;
 	
 		while (1) {
-			sleep(NSA_WAIT_TIME);
+			sleep(sleeping_time);
 			if (stat(path, &st) == -1) {
 				PERROR("stat");
 				continue;
@@ -74,6 +79,13 @@ int watch_file(char *path) {
 					continue;
 				}
 				mtime = st.st_mtime;
+				sleeping_time =
+					MAX(MIN(sleeping_time / 2, WATCH_SLEEP_DEFAULT),
+						WATCH_SLEEP_MIN);
+					
+			} else {
+				sleeping_time = MIN(sleeping_time * 1.5,
+						WATCH_SLEEP_MAX);
 			}
 		}
 	} else {
@@ -84,11 +96,6 @@ int watch_file(char *path) {
 
 int nsa(int n, char **file) {
 	
-	/*
-	 * TODO:
-	 * - use inotify on linux systems
-	 * - the way we check changes could probably be improved
-	 */
 	int i;
 	int nb = 0;
 	for (i = 0; i < n; i++) {
@@ -133,6 +140,12 @@ int set_up_server(void) {
 }
 
 int accept_client(int server) {
+
+	/**
+	 * TODO:
+	 * - close socket if client leaves
+	 */
+
 	int pid;
 	int client;
 	socklen_t len;
@@ -209,7 +222,6 @@ int main(int argc, char **argv) {
 		ERROR("sigaction", -1);
 	}
 
-	printf("launching nsa\n");
 	if(nsa(argc - 1, &argv[1]) == -1) {
 		ERROR("nsa", -1);
 	} else {
