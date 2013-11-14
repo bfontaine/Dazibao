@@ -20,7 +20,7 @@ char is_crlf(char *s, int c, int len) {
         return s != NULL && c < len-1 && s[c] == CR && s[c+1] == LF;
 }
 
-char *next_header(int sock) { /* FIXME */
+char *next_header(int sock) {
         static char rest[BUFFLEN];
         static int restlen = 0;
 
@@ -36,6 +36,7 @@ char *next_header(int sock) { /* FIXME */
                         return NULL;
                 }
                 len = restlen;
+                restlen = 0;
         } else {
                 len = recv(sock, buff, BUFFLEN, 0);
 
@@ -44,11 +45,11 @@ char *next_header(int sock) { /* FIXME */
                         return NULL;
                 }
                 if (len == 0) {
-                        return strdup("");
+                        return NULL;
                 }
         }
 
-        line = (char*)malloc(sizeof(char)*BUFFLEN+1);
+        line = (char*)malloc(sizeof(char)*len+1);
         i = 0; /* line cursor */
         j = 0; /* buffer cursor */
         in_crlf = 0; /* if in the middle of an CRLF */
@@ -59,7 +60,7 @@ char *next_header(int sock) { /* FIXME */
                              if (buff[j] != LF) {
                                      line[i++] = CR;
                              } else {
-                                     restlen = len-j;
+                                     restlen = len-j-1;
                                      if (memcpy(rest, buff+j,
                                                 restlen) == NULL) {
                                              perror("memcpy");
@@ -71,17 +72,18 @@ char *next_header(int sock) { /* FIXME */
                         }
 
                         if (is_crlf(buff, j, len)) {
-                                restlen = len-j;
-                                if (memcpy(rest, buff+j, restlen) == NULL) {
+                                restlen = len-j-2;
+                                if (memcpy(rest, buff+j+2, restlen) == NULL) {
                                         perror("memcpy");
                                 }
+                                line[i] = '\0';
                                 return line;
                         }
                         if (buff[j] == CR && j+1 == len) {
                                 in_crlf = 1;
-                                break;
+                                break; /* same than 'continue' here */
                         }
-                        line[i++] = buff[j++];
+                        line[i++] = buff[j];
                 }
                 /* at this point we read the whole buffer but haven't
                    encountered a CRLF */
@@ -185,28 +187,12 @@ int main(int argc, char *argv[]) {
                 }
                 /*shutdown(s,SHUT_WR);*/
 
+                /* test */
                 while ((line = next_header(d)) != NULL) {
-                        /* test */
                         printf("%s\n", line);
                         NFREE(line);
                 }
-                /*
-
-                while ((status = recv(d, buff, BUFFLEN, 0)) > 0) {
-                        / * test * /
-                        for (i=0; i<status; i++) {
-                                if (buff[i] == CR
-                                        && i < status-1 && buff[i] == LF) {
-                                        printf("\n");
-                                        continue;
-                                } else {
-                                        printf("%c", buff[i]);
-                                }
-                        }
-                }
-                if (status == -1) {
-                        perror("read");
-                }*/
+                /* /test */
 
                 close(d);
         };
