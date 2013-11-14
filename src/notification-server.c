@@ -12,11 +12,6 @@ static int sock;
 
 void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
-	/**
-	 * FIXME:
-	 * free str
-	 */
-
 	printf("[pid:%d] Received SIGUSR1: %d\n", getpid(), unused_sigint == SIGUSR1);
 
 	int i;
@@ -34,6 +29,7 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 		if (write(sock, str, len) < (int)(strlen(filename[i]) + 2)) {
 			PERROR("write");
 		}
+		free(str);
 	} else {
 		printf("[pid:%d] Received signal from unkown process: %d\n",
 			getpid(), info->si_pid);
