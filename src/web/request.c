@@ -22,6 +22,15 @@ char *next_header(int sock, int *eoh) {
         int len, i, j,
             in_crlf;
 
+        if (sock <= 0) {
+                restlen = 0;
+                return NULL;
+        }
+
+        if (eoh == NULL) {
+                return NULL;
+        }
+
         if (restlen > 0) {
                 if (memcpy(buff, rest, restlen) == NULL) {
                         perror("memcpy");
@@ -118,8 +127,10 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
              *mth_str;
 
         int eoh = 0,
-            readlen,
-            body_len;
+            readlen = 0,
+            body_len = 0;
+
+        *len = 0;
 
         if (*path != NULL) {
                 NFREE(*path);
@@ -128,12 +139,14 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         line = next_header(sock, &eoh);
         if (line == NULL || eoh) {
                 WLOG("Cannot get the first header line (eoh=%d)", eoh);
+                next_header(-1, NULL);
                 return -1;
         }
 
         mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
         if (mth_str == NULL) {
                 perror("malloc");
+                next_header(-1, NULL);
                 return -1;
         }
 
@@ -141,10 +154,13 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         if (*path == NULL) {
                 perror("malloc");
                 NFREE(mth_str);
+                next_header(-1, NULL);
                 return -1;
         }
 
-        if (sscanf(line, "%16s %128s HTTP/1%*s", mth_str, *path) < 2) {
+        /* FIXME works on 'localhost' but not 'localhost/' */
+        if (sscanf(line, "%16s %128s HTTP/%*s", mth_str, *path) < 2) {
+                WLOG("Cannot scan first header line");
                 perror("sscanf");
                 NFREE(mth_str);
                 goto MALFORMED;
@@ -153,10 +169,17 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         *mth = http_mth(mth_str);
         NFREE(mth_str);
 
+        if (*mth != HTTP_M_POST) {
+                /* no request body */
+                next_header(-1, NULL);
+                return 0;
+        }
+
         /* body length */
         *len = -1;
         while ((line = next_header(sock, &eoh)) != NULL) {
                 if (eoh) {
+                        WLOG("Got end of headers without Content-Length");
                         goto MALFORMED;
                 }
 
@@ -168,12 +191,14 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                                 HTTP_HEADER_CL, HTTP_HEADER_CL_LEN) == 0) {
 
                         if (sscanf(line, HTTP_HEADER_CL " %24d", len) < 1) {
+                                WLOG("Cannot parse Content-Length");
                                 perror("sscanf");
                                 goto MALFORMED;
                         }
 
                         if (*len < 0) {
-                               goto MALFORMED; 
+                                WLOG("Got a negative Content-Length");
+                                goto MALFORMED;
                         }
                         break;
                 }
@@ -181,6 +206,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                 NFREE(line);
         }
         if (*len == -1) {
+                WLOG("Didn't got a Content-Length");
                 goto MALFORMED;
         }
         while (!eoh) {
@@ -198,6 +224,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         }
 
         memcpy(body, line, eoh);
+        NFREE(line);
 
         readlen = 0;
         body_len = eoh;
@@ -216,6 +243,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
 MALFORMED:
         NFREE(*path);
         NFREE(line);
+        next_header(-1, NULL);
         return -1;
 }
 

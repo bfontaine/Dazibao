@@ -105,9 +105,10 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                WLOG("Got method %d, path %s, body lenght %d\n", mth, path, body_len);
+                WLOG("Got method %d, path %s, body length %d\n",
+                                mth, path, body_len);
 
-                /* TODO respond */
+                /* TODO respond to the request */
 
                 WLOG("Connection closed.");
                 if (close(d) == -1) {

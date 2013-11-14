@@ -20,8 +20,8 @@
 #define HTTP_MAX_MTH_LENGTH 16
 
 /**
- * Return the code for an HTTP method. It matches methods by their first letter,
- * since the only ones we support are GET and POST.
+ * Return the code for an HTTP method. It matches methods by their first
+ * letter, since the only ones we support are GET and POST.
  **/
 int http_mth(char *s);
 

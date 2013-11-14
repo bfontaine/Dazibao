@@ -59,17 +59,17 @@ clean: cleantmp
 
 check: cleantmp
 	@T=$$(mktemp dzbXXX); \
-	 egrep -n --include=.*\.[ch]$$ '.{80,}' src/* >$$T; \
+	 egrep -In --include=.*\.[ch]$$ '.{80,}' $(SRC)/* $(SRC)/*/* >$$T; \
 	 if [ "$$?" -eq "0" ]; then \
 		 echo '!! There are 80+ chars lines:'; \
 		 cat $$T | cut -f1,2 -d:; \
 	 fi; \
-	 egrep -n --include=.*\.[ch]$$ ' +$$' src/* >$$T; \
+	 egrep -In --include=.*\.[ch]$$ ' +$$' $(SRC)/* $(SRC)/*/* >$$T; \
 	 if [ "$$?" -eq "0" ]; then \
 		 echo '!! There are trailing spaces:'; \
 		 cat $$T | cut -f1,2 -d:; \
 	 fi; \
-	 egrep -n --include=.*\.[ch]$$ '//' src/* >$$T; \
+	 egrep -In --include=.*\.[ch]$$ '//' $(SRC)/* $(SRC)/*/* >$$T; \
 	 if [ "$$?" -eq "0" ]; then \
 	 	 echo '!! There are C99-style comments:'; \
 		 cat $$T | cut -f1,2 -d:; \
