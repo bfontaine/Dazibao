@@ -13,6 +13,13 @@ int sock;
 
 void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
+	/**
+	 * FIXME:
+	 * free str
+	 */
+
+	printf("[pid:%d] Received SIGUSR1: %d\n", getpid(), unused_sigint == SIGUSR1);
+
 	int i;
 	for (i = 0; i < nbdaz; i++) {
 		if (shm[i] == info->si_pid) {
@@ -29,7 +36,8 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 			PERROR("write");
 		}
 	} else {
-		printf("Received signal from unknown process\n");
+		printf("[pid:%d] Received signal from unkown process: %d\n",
+			getpid(), info->si_pid);
 	}
 }
 
@@ -39,6 +47,7 @@ int watch_file(char *path) {
 	 * TODO:
 	 * - use inotify on linux systems ?
 	 * - the way we check changes could probably be improved
+	 * - should parse file to see changes ?
 	 */
 
 	int pid = fork();
@@ -66,14 +75,17 @@ int watch_file(char *path) {
 		}
 
 		mtime = st.st_mtime;
-	
+
+		printf("[pid:%d] Started watching %s\n", getpid(), path);	
 		while (1) {
 			sleep(sleeping_time);
+			printf("[pid:%d] Checking %s\n", getpid(), path);	
 			if (stat(path, &st) == -1) {
 				PERROR("stat");
 				continue;
 			}
 			if (st.st_mtime != mtime) {
+				printf("[pid:%d] %s has changed\n", getpid(), path);	
 				if (kill(0, SIGUSR1) == -1) {
 					PERROR("kill");
 					continue;
@@ -99,6 +111,7 @@ int nsa(int n, char **file) {
 	int i;
 	int nb = 0;
 	for (i = 0; i < n; i++) {
+		printf("[pid:%d] Launching %s watch\n", getpid(), file[i]);	
 		shm[i] = watch_file(file[i]);
 		if (shm[i] != -1) {
 			nb++;
@@ -108,6 +121,7 @@ int nsa(int n, char **file) {
 }
 
 int set_up_server(void) {
+	printf("[pid:%d] Setting up server\n", getpid());	
 	int server;
 	struct sockaddr_un saddr;
 
@@ -160,8 +174,7 @@ int accept_client(int server) {
 		}
 		ERROR("accept", -1);
 	} 
-	
-	printf("*** New client connected ***\n");
+	printf("[pid:%d] *** New client connected ***\n", getpid());	
 
 	pid = fork();
 	if (pid < 0){
@@ -177,11 +190,14 @@ int accept_client(int server) {
 			/* TODO: delete client */
 			ERROR("sigaction", -1);
 		}
+		printf("[pid:%d] Client configured\n", getpid());	
+
 		while (1) {
 			pause();
 		}
 		return 0;
 	} else {
+
 		return pid;
 	}
 }
