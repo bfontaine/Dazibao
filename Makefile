@@ -4,17 +4,25 @@
 CC=gcc
 SRC=src
 CFLAGS=-g -Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
-UTILS=$(SRC)/dazibao.h $(SRC)/tlv.h $(SRC)/utils.h $(SRC)/notification-server.h
+UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 TARGET=dazibao
 SERVER=notification-server
+WEBSRC=$(SRC)/web
 WSERVER=daziweb
 
-ifdef NO_UNUSED
-CFLAGS+= -Wno-unused-parameter
+# FIXME check how to merge these two 'ifndef'
+ifndef UNUSED
+ifndef STRICT
+CFLAGS+= -Wno-unused-parameter -Wno-unused-variable
+endif
 endif
 
 ifdef DEBUG
 CFLAGS+= -DDEBUG=1
+endif
+
+ifdef STRICT
+CFLAGS+= -Werror
 endif
 
 CPPCHECK=cppcheck \
@@ -29,21 +37,23 @@ all: check $(TARGET) $(SERVER)
 $(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(SERVER): notification-server.o
+$(SERVER): $(SERVER).o $(SRC)/notification-server.h
+	$(CC) $(CFLAGS) -o $@ $<
+
+$(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(WSERVER): $(WSERVER).o
-	$(CC) $(CFLAGS) -o $@ $^
+$(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-
-%.o: $(SRC)/%.c $(UTILS)
+%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 cleantmp:
 	rm -f *~ */*~
 
 clean: cleantmp
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) *.o $(SRC)/*.o $(WEBSRC)/*.o
 
 check: cleantmp
 	@T=$$(mktemp dzbXXX); \

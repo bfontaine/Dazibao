@@ -1,10 +1,5 @@
-#ifndef _DAZIWEB_H
-#define _DAZIWEB_H 1
-
-#include "utils.h"
-
-#define DEFAULT_PORT 3437
-#define MAX_QUEUE 64
+#ifndef _REQUEST_H
+#define _REQUEST_H 1
 
 #ifndef BUFFLEN
 #define BUFFLEN 512
@@ -12,11 +7,6 @@
 
 #define CR 13
 #define LF 10
-
-/**
- * Handler for signals used to close the listening socket.
- **/
-void clean_close(int s);
 
 /**
  * Test if the c-th and (c+1)th characters of a string represent an HTTP end of
@@ -34,5 +24,10 @@ char is_crlf(char *s, int c, int len);
  * allocated, so you'll need to free it later.
  **/
 char *next_header(int sock, int *eoh);
+
+/**
+ * **NOTE** this function is currently a draft.
+ **/
+void parse_request(int sock);
 
 #endif
