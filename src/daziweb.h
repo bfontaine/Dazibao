@@ -23,10 +23,9 @@ char is_crlf(char *s, int c, int len);
  * This function is a wrapper around recv to read the beginning of the input on
  * a socket line-by-line. It takes the file descriptor of a socket and return a
  * NULL-terminated string representing the next line in the input. On the end of
- * the input, an empty string is returned. If an error occured, the function
- * returns NULL. It's used to read the headers of an HTTP request.
- * The returned string is dynamically allocated, so you'll need to free it
- * later.
+ * the input, NULL is returned. If an error occured, the function returns NULL
+ * and sets errno. It's used to read the headers of an HTTP request.  The
+ * returned string is dynamically allocated, so you'll need to free it later.
  **/
 char *next_header(int sock);
 
