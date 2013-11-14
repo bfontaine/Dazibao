@@ -1,3 +1,4 @@
+
 # Dazibao Makefile
 #
 
@@ -9,7 +10,7 @@ TARGET=dazibao
 SERVER=notification-server
 CLIENT=notification-client
 
-ifdef NO_UNUSED
+ifndef UNUSED
 CFLAGS+= -Wno-unused-parameter
 endif
 
