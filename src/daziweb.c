@@ -20,7 +20,7 @@ char is_crlf(char *s, int c, int len) {
         return s != NULL && c < len-1 && s[c] == CR && s[c+1] == LF;
 }
 
-char *next_header(int sock) {
+char *next_header(int sock, int *eoh) {
         static char rest[BUFFLEN];
         static int restlen = 0;
 
@@ -57,18 +57,17 @@ char *next_header(int sock) {
         do {
                 for (j=0; j<len; j++) {
                         if (in_crlf) {
-                             if (buff[j] != LF) {
-                                     line[i++] = CR;
-                             } else {
-                                     restlen = len-j-1;
-                                     if (memcpy(rest, buff+j,
-                                                restlen) == NULL) {
-                                             perror("memcpy");
-                                     }
-                                     line[i] = '\0';
-                                     return line;
-                             }
-                             in_crlf = 0;
+                                if (buff[j] != LF) {
+                                        line[i++] = CR;
+                                } else {
+                                        restlen = len-j-1;
+                                        if (memcpy(rest, buff+j,
+                                                        restlen) == NULL) {
+                                                perror("memcpy");
+                                        }
+                                        goto RETURN_LINE;
+                                }
+                                in_crlf = 0;
                         }
 
                         if (is_crlf(buff, j, len)) {
@@ -76,8 +75,7 @@ char *next_header(int sock) {
                                 if (memcpy(rest, buff+j+2, restlen) == NULL) {
                                         perror("memcpy");
                                 }
-                                line[i] = '\0';
-                                return line;
+                                goto RETURN_LINE;
                         }
                         if (buff[j] == CR && j+1 == len) {
                                 in_crlf = 1;
@@ -92,9 +90,8 @@ char *next_header(int sock) {
                         if (len < 0) {
                                 perror("read");
                         }
-                        line[i] = '\0';
                         restlen = 0;
-                        return line;
+                        goto RETURN_LINE;
                 }
 
                 line2 = realloc(line, i+BUFFLEN);
@@ -111,6 +108,17 @@ char *next_header(int sock) {
 
         restlen = 0;
         return NULL;
+
+RETURN_LINE:
+        if (i == 0) {
+                if (memcpy(line, buff, len) == NULL) {
+                        perror("memcpy");
+                }
+                *eoh = len;
+                return line;
+        }
+        line[i] = '\0';
+        return line;
 }
 
 int main(int argc, char *argv[]) {
@@ -184,24 +192,16 @@ int main(int argc, char *argv[]) {
 
                 eoh = 0;
 
-                /**
-                 * FIXME we can't just user next_header to get each header then
-                 * use another function for the body because next_header may
-                 * read more than the headers (i.e. a part of the body). We need
-                 * to return a special value from next_header when all headers
-                 * have been read along with the rest of the content we read.
-                 * Maybe something like get_request which returns a pointer to
-                 * an array of "interesting" headers and one to the request
-                 * body.
-                 **/
-
                 /* <test> */
-                while ((line = next_header(d)) != NULL && !eoh) {
-                        printf("%s\n", line);
-                        if (line[0] == '\0') {
-                                eoh = 1;
+                while ((line = next_header(d, &eoh)) != NULL) {
+                        if (!eoh) {
+                                printf("%s\n", line);
                         }
                         NFREE(line);
+                        if (eoh) {
+                                printf("-- end of headers --\n");
+                                break;
+                        }
                 }
                 /* </test> */
 
