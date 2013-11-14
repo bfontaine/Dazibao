@@ -1,12 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <string.h>
-#include "request.h"
-#include "http.h"
-#include "webutils.h"
+#include "web/request.h"
 #include "utils.h"
 
 char is_crlf(char *s, int c, int len) {
@@ -23,15 +19,6 @@ char *next_header(int sock, int *eoh) {
         int len, i, j,
             in_crlf;
 
-        if (sock <= 0) {
-                restlen = 0;
-                return NULL;
-        }
-
-        if (eoh == NULL) {
-                return NULL;
-        }
-
         if (restlen > 0) {
                 if (memcpy(buff, rest, restlen) == NULL) {
                         perror("memcpy");
@@ -40,10 +27,10 @@ char *next_header(int sock, int *eoh) {
                 len = restlen;
                 restlen = 0;
         } else {
-                len = read(sock, buff, BUFFLEN);
+                len = recv(sock, buff, BUFFLEN, 0);
 
                 if (len < 0) {
-                        perror("read");
+                        perror("recv");
                         return NULL;
                 }
                 if (len == 0) {
@@ -87,7 +74,7 @@ char *next_header(int sock, int *eoh) {
                 }
                 /* at this point we read the whole buffer but haven't
                    encountered a CRLF */
-                len = read(sock, buff, BUFFLEN);
+                len = recv(sock, buff, BUFFLEN, 0);
                 if (len <= 0) {
                         if (len < 0) {
                                 perror("read");
@@ -123,136 +110,7 @@ RETURN_LINE:
         return line;
 }
 
-int parse_request(int sock, int *mth, char **path, char **body, int *len) {
-        char *line = NULL,
-             *mth_str;
-
-        int eoh = 0,
-            readlen = 0,
-            body_len = 0,
-            status = 0;
-
-        *len = 0;
-
-        if (*path != NULL) {
-                NFREE(*path);
-        }
-
-        line = next_header(sock, &eoh);
-        if (line == NULL || eoh) {
-                WLOG("Cannot get the first header line (eoh=%d)", eoh);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
-        if (mth_str == NULL) {
-                perror("malloc");
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        *path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
-        if (*path == NULL) {
-                perror("malloc");
-                NFREE(mth_str);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        if (sscanf(line, "%16s %128s HTTP/%*s", mth_str, *path) < 2) {
-                WLOG("Cannot scan first header line");
-                perror("sscanf");
-                NFREE(mth_str);
-                goto MALFORMED;
-        }
-
-        *mth = http_mth(mth_str);
-        NFREE(mth_str);
-
-        if (*mth == HTTP_M_UNSUPPORTED) {
-            status = HTTP_S_NOTIMPL;
-            goto EOPARSING;
-        }
-
-        if (*mth != HTTP_M_POST) {
-                /* no request body */
-                goto EOPARSING;
-        }
-
-        /* body length */
-        *len = -1;
-        while ((line = next_header(sock, &eoh)) != NULL) {
-                if (eoh) {
-                        WLOG("Got end of headers without Content-Length");
-                        goto MALFORMED;
-                }
-
-                if (strlen(line) < HTTP_HEADER_CL_LEN) {
-                        continue;
-                }
-
-                if (strncasecmp(line,
-                                HTTP_HEADER_CL, HTTP_HEADER_CL_LEN) == 0) {
-
-                        if (sscanf(line, HTTP_HEADER_CL " %24d", len) < 1) {
-                                WLOG("Cannot parse Content-Length");
-                                perror("sscanf");
-                                status = HTTP_S_LENGTHREQD;
-                                goto EOPARSING;
-                        }
-
-                        if (*len < 0) {
-                                WLOG("Got a negative Content-Length");
-                                goto MALFORMED;
-                        }
-                        break;
-                }
-
-                NFREE(line);
-        }
-        if (*len == -1) {
-                WLOG("Didn't got a Content-Length");
-                status = HTTP_S_LENGTHREQD;
-                goto EOPARSING;
-        }
-        while (!eoh) {
-                line = next_header(sock, &eoh);
-
-                if (line == NULL) {
-                        goto MALFORMED;
-                }
-        }
-
-        /* request body */
-        *body = (char*)malloc(sizeof(char)*(*len));
-        if (*body == NULL) {
-                goto MALFORMED;
-        }
-
-        memcpy(body, line, eoh);
-        NFREE(line);
-
-        readlen = 0;
-        body_len = eoh;
-        while (body_len < *len
-                && (readlen = read(sock, (*body)+body_len,
-                                        (*len)-body_len)) > 0) {
-                body_len += readlen;
-        }
-        if (body_len < *len) {
-                NFREE(*body);
-                goto MALFORMED;
-        }
-
-        return 0;
-
-MALFORMED:
-        status = HTTP_S_BADREQ;
-        NFREE(*path);
-EOPARSING:
-        NFREE(line);
-        next_header(-1, NULL);
-        return status;
+void parse_request(int sock) {
+        /* TODO */
 }
 

@@ -43,15 +43,15 @@ $(TARGET): main.o dazibao.o tlv.o
 $(SERVER): $(SERVER).o $(SRC)/notification-server.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+$(CLIENT): notification-client.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 				$(WEBSRC)/routes.o $(WEBSRC)/http.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(CLIENT): notification-client.o
-	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
