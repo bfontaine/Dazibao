@@ -78,7 +78,7 @@ main()
 				msg = calloc(sizeof(*msg), len);
 				strncpy(msg, buf + 1, len -1);
 				
-				execlp("notify-send", "Dazibao changed:", msg, NULL);
+				execlp("notify-send", "notify-send", "Dazibao changed:", msg, NULL);
 				printf("Dazibao changed: ");
 				fwrite(buf, 1, p - buf, stdout);
 				printf("\n");
