@@ -7,16 +7,16 @@
 #include <sys/un.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-
-#include "utils.h"
 #include <signal.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define NSA_WAIT_TIME 10
+#include "utils.h"
 
-#define MKEY 987654321
+#define WATCH_SLEEP_MIN 2
+#define WATCH_SLEEP_DEFAULT 10
+#define WATCH_SLEEP_MAX 60
+
 
 /**
  * Signal handler.
