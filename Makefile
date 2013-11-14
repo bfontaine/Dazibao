@@ -64,4 +64,4 @@ clean: cleantmp
 
 check: cleantmp
 	./utils/stylecheck.sh
-	$(CPPCHECK) -I$(SRC) $(SRC)
+	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
