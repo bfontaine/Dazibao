@@ -1,10 +1,9 @@
 #include "notification-server.h"
 
-int *pids;
-char **filename;
-int *shm;
-int nbdaz;
-int sock;
+static char **filename;
+static int *pids;
+static int nbdaz;
+static int sock;
 
 /**
  * TODO:
@@ -22,7 +21,7 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
 	int i;
 	for (i = 0; i < nbdaz; i++) {
-		if (shm[i] == info->si_pid) {
+		if (pids[i] == info->si_pid) {
 			break;
 		}
 	}
@@ -112,8 +111,8 @@ int nsa(int n, char **file) {
 	int nb = 0;
 	for (i = 0; i < n; i++) {
 		printf("[pid:%d] Launching %s watch\n", getpid(), file[i]);	
-		shm[i] = watch_file(file[i]);
-		if (shm[i] != -1) {
+		pids[i] = watch_file(file[i]);
+		if (pids[i] != -1) {
 			nb++;
 		}
 	}
@@ -222,7 +221,7 @@ int main(int argc, char **argv) {
 
 	filename = &argv[1];
 
-	shm = malloc(sizeof(*shm) * nbdaz);	
+	pids = malloc(sizeof(*pids) * nbdaz);	
 
 	server = set_up_server();
 	if (server == -1) {
@@ -253,7 +252,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	free(shm);
+	free(pids);
 
 	return 0;
 }
