@@ -3,11 +3,12 @@
 
 CC=gcc
 SRC=src
+WEBSRC=$(SRC)/web
 CFLAGS=-g -Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
+WUTILS=$(WEBSRC)/webutils.h
 TARGET=dazibao
 SERVER=notification-server
-WEBSRC=$(SRC)/web
 WSERVER=daziweb
 
 # FIXME check how to merge these two 'ifndef'
@@ -40,7 +41,8 @@ $(TARGET): main.o dazibao.o tlv.o
 $(SERVER): $(SERVER).o $(SRC)/notification-server.h
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o
+$(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
+				$(WEBSRC)/routes.o $(WEBSRC)/http.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
@@ -73,4 +75,4 @@ check: cleantmp
 		 cat $$T | cut -f1,2 -d:; \
 	 fi; \
 	 rm -f $$T;
-	$(CPPCHECK) -I$(SRC) $(SRC)
+	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
