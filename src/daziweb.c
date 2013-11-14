@@ -115,7 +115,7 @@ char *next_header(int sock) {
 
 int main(int argc, char *argv[]) {
         int port, status,
-            d, i;
+            d, i, eoh;
         struct sockaddr_in a,
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
@@ -180,19 +180,30 @@ int main(int argc, char *argv[]) {
                                 (struct sockaddr *)&addr, &len)) == -1) {
                         perror("accept");
                         continue;
-                        /*
-                        close(s);
-                        exit(EXIT_FAILURE);
-                        */
                 }
-                /*shutdown(s,SHUT_WR);*/
 
-                /* test */
-                while ((line = next_header(d)) != NULL) {
+                eoh = 0;
+
+                /**
+                 * FIXME we can't just user next_header to get each header then
+                 * use another function for the body because next_header may
+                 * read more than the headers (i.e. a part of the body). We need
+                 * to return a special value from next_header when all headers
+                 * have been read along with the rest of the content we read.
+                 * Maybe something like get_request which returns a pointer to
+                 * an array of "interesting" headers and one to the request
+                 * body.
+                 **/
+
+                /* <test> */
+                while ((line = next_header(d)) != NULL && !eoh) {
                         printf("%s\n", line);
+                        if (line[0] == '\0') {
+                                eoh = 1;
+                        }
                         NFREE(line);
                 }
-                /* /test */
+                /* </test> */
 
                 close(d);
         };
