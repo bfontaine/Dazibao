@@ -223,6 +223,7 @@ int main(int argc, char **argv) {
 	if (server == -1) {
 		ERROR("set_up_server", -1);
 	}
+	printf("[pid:%d] Server set up\n", getpid());	
 
 	/* ignore signal used by notifier */
 	struct sigaction action;
@@ -232,16 +233,18 @@ int main(int argc, char **argv) {
 	if(sigaction(SIGUSR1, &action, NULL) == -1) {
 		ERROR("sigaction", -1);
 	}
+	printf("[pid:%d] sigaction set\n", getpid());	
 
 	if(nsa(argc - 1, &argv[1]) != argc - 1) {
 		fprintf(stderr, "[pid:%d] Some files could not be watched\n", getpid());
 	} else {
-		
+		printf("[pid:%d] nsa launch has gone well\n", getpid());	
 	}
 	
 	while (1) {
 		if (accept_client(server) > 0) {
 			nbclient++;
+			printf("[pid:%d] Now handles %d clients\n", getpid(), nbclient);	
 		} else {
 			PERROR("accept_client");
 			continue;
