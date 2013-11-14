@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
 		ERROR("sigaction", -1);
 	}
 
-	if(nsa(argc - 1, &argv[1]) == -1) {
-		ERROR("nsa", -1);
+	if(nsa(argc - 1, &argv[1]) != argc - 1) {
+		fprintf(stderr, "[pid:%d] Some files could not be watched\n", getpid());
 	} else {
 		
 	}
