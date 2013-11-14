@@ -25,7 +25,7 @@ CPPCHECK=cppcheck \
 .DEFAULT: all
 .PHONY: clean cleantmp check
 
-all: check $(TARGET) $(SERVER)
+all: check $(TARGET) $(SERVER) $(CLIENT)
 
 $(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -33,7 +33,7 @@ $(TARGET): main.o dazibao.o tlv.o
 $(SERVER): notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(CLIENT): notification-stupide.o
+$(CLIENT): notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(UTILS)
