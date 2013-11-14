@@ -35,7 +35,7 @@ CPPCHECK=cppcheck \
 .DEFAULT: all
 .PHONY: clean cleantmp check
 
-all: check $(TARGET) $(SERVER)
+all: check $(TARGET) $(SERVER) $(CLIENT)
 
 $(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -50,7 +50,7 @@ $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(CLIENT): notification-stupide.o
+$(CLIENT): notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
