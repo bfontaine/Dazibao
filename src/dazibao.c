@@ -438,14 +438,22 @@ int dz_compact(dz_t* d) {
 
 }
 */
-
-int dz_dump(dz_t *daz_buf) {
+int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent){
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
-
-        /* SAVE_OFFSET(*daz_buf); */
-
+        char *ind;
+        if (indent > 0){
+                ind = malloc(sizeof(char)*indent+1);
+                int i;
+                for(i = 0; i < indent; i++) {
+                        ind[i] = '\t';
+                }
+                ind[indent]='\0';
+        }else {
+                ind = malloc(sizeof(char)*1);
+                ind[0]='\0';
+        }
 #if 0
         /* TODO */
 
@@ -492,19 +500,62 @@ int dz_dump(dz_t *daz_buf) {
                 tlv_buf.value = NULL;
 #endif
 	
-        while ((off = dz_next_tlv(daz_buf, tlv)) != EOD) {
-                int len;
-                len = tlv_get_type(tlv) == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-		printf("[%4d] TLV %3d | %8d | ...\n",
+        while (((off = dz_next_tlv(daz_buf, tlv)) != end )
+                        && (off != EOD)) {
+                printf("%s",ind);
+                int type, len;
+                type = tlv_get_type(tlv);
+                len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
+		printf("[%4d] TLV %3d | %8d | ",
 			(int)off, tlv_get_type(tlv), len);
 
+                if (type == TLV_COMPOUND ){
+                        printf("COMPOUND \n");
+                        if (depth > 0){
+                                off_t current = GET_OFFSET(*daz_buf);
+                                SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
+                                if (dz_dump_compound(daz_buf,current,
+                                        (depth-1), (indent+1))){
+                                        ERROR(NULL,-1);
+                                }
+                                SET_OFFSET(*daz_buf, current);
+                                continue;
+                        }
+                } else if (type == TLV_DATED){
+                        printf("DATE\n");
+                        if (depth > 0){
+                                /* TODO
+                                function to print date
+                                */
+                                off_t current = GET_OFFSET(*daz_buf);
+                                SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
+                                TLV_SIZEOF_DATE);
+                                if (dz_dump_compound(daz_buf,current,
+                                        (depth-1), (indent+1))){
+                                        ERROR(NULL,-1);
+                                }
+                                SET_OFFSET(*daz_buf, current);
+                        }
+                } else if (type == TLV_PNG){
+                        printf("PNG\n");
+                } else if (type == TLV_JPEG){
+                        printf("JPEG\n");
+                } else if (type == TLV_TEXT){
+                        printf("TEXTE\n");
+                 } else {
+                        printf("...\n");
+                }
+
         }
-
+        if (indent < 0 ){
+                free(ind);
+        }
 	free(tlv);
-
-        /* RESTORE_OFFSET(*daz_buf); */
-
         return 0;
+}
+
+int dz_dump(dz_t *daz_buf) {
+        return dz_dump_compound(daz_buf, EOD, 0,0);
 }
 
 #undef BUFFLEN

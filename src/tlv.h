@@ -16,6 +16,7 @@
 #define TLV_COMPOUND 5
 #define TLV_DATED    6
 
+#define TLV_SIZEOF_DATE 4
 #define TLV_SIZEOF_TYPE 1
 #define TLV_SIZEOF_LENGTH 3
 #define TLV_SIZEOF_HEADER (TLV_SIZEOF_TYPE + TLV_SIZEOF_LENGTH)
@@ -109,5 +110,22 @@ int tlv_write(tlv_t tlv, int fd);
  * @return -1 on error
  */
 int tlv_read(tlv_t tlv, int fd);
+
+/**
+ * Write a whole tlv in a file
+ * @param tlv tlv to write
+ * @param fd file descriptor where you want to dump
+ * @return same as write(2)
+ */
+int dump_tlv(tlv_t tlv, int fd);
+
+
+/**
+ * Write the value of a tlv in a file
+ * @param tlv tlv containing the value
+ * @param fd file descriptor where you want to dump
+ * @return same as write(2)
+ */
+int dump_tlv_value(tlv_t tlv, int fd);
 
 #endif

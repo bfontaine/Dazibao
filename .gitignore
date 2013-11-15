@@ -5,6 +5,5 @@
 a.out
 /tmp
 # executables
-dazidump
 dazibao
-dazicli
+notification-server

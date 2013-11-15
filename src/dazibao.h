@@ -136,4 +136,10 @@ int dz_compact(dz_t *d);
  */
 int dz_dump(dz_t *daz_buf);
 
+/*
+ * print tlvs contained in 'daz_buf' with option depth
+ * on standard output
+ */
+int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent);
+
 #endif /* _DAZIBAO_H */
