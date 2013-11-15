@@ -53,7 +53,7 @@ int watch_file(char *path) {
 	} else if (pid == 0) {
 
 		struct stat st;
-		time_t mtime;
+		time_t ctime;
 		int sleeping_time = WATCH_SLEEP_DEFAULT;
 
 		/* watchers ignore signals USER1 */
@@ -69,7 +69,7 @@ int watch_file(char *path) {
 			PERROR("stat");
 		}
 
-		mtime = st.st_mtime;
+		ctime = st.st_ctime;
 
 		printf("[pid:%d] Started watching %s\n", getpid(), path);	
 		while (1) {
@@ -79,13 +79,13 @@ int watch_file(char *path) {
 				PERROR("stat");
 				continue;
 			}
-			if (st.st_mtime != mtime) {
+			if (st.st_ctime != ctime) {
 				printf("[pid:%d] %s has changed\n", getpid(), path);	
 				if (kill(0, SIGUSR1) == -1) {
 					PERROR("kill");
 					continue;
 				}
-				mtime = st.st_mtime;
+				ctime = st.st_ctime;
 				sleeping_time =
 					MAX(MIN(sleeping_time / 2, WATCH_SLEEP_DEFAULT),
 						WATCH_SLEEP_MIN);
