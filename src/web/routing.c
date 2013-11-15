@@ -34,6 +34,14 @@ route_handler get_route_handler(char *path) {
     return NULL;
 }
 
+/*
+ * TODO: generic http_response function, something like:
+ *   http_response(int sock, int status, Hs, B)
+ *  where:
+ *      Hs is a possibly empty list of headers to add to the response
+ *      B: is the response body (NULLable)
+ */
+
 int error_response(int sock, int status) {
         const char *phrase = get_http_status_phrase(&status);
         char *response;

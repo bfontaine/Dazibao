@@ -45,7 +45,16 @@ struct http_statut {
 /* custom extentions/limits */
 #define HTTP_MAX_PATH 512
 #define HTTP_MAX_MTH_LENGTH 16
-#define HTTP_MAX_RESP_LENGTH 64
+
+/* Headers */
+struct http_header {
+        char *name;
+        char *value;
+};
+struct http_headers {
+        struct http_header *headers;
+        int size;
+};
 
 /**
  * Return the phrase associated with an HTTP code. If this code is unsupported,
