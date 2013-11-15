@@ -128,7 +128,8 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
 
         int eoh = 0,
             readlen = 0,
-            body_len = 0;
+            body_len = 0,
+            status = 0;
 
         *len = 0;
 
@@ -140,14 +141,14 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         if (line == NULL || eoh) {
                 WLOG("Cannot get the first header line (eoh=%d)", eoh);
                 next_header(-1, NULL);
-                return -1;
+                return HTTP_S_BADREQ;
         }
 
         mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
         if (mth_str == NULL) {
                 perror("malloc");
                 next_header(-1, NULL);
-                return -1;
+                return HTTP_S_BADREQ;
         }
 
         *path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
@@ -155,10 +156,9 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                 perror("malloc");
                 NFREE(mth_str);
                 next_header(-1, NULL);
-                return -1;
+                return HTTP_S_BADREQ;
         }
 
-        /* FIXME works on 'localhost' but not 'localhost/' */
         if (sscanf(line, "%16s %128s HTTP/%*s", mth_str, *path) < 2) {
                 WLOG("Cannot scan first header line");
                 perror("sscanf");
@@ -169,10 +169,14 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         *mth = http_mth(mth_str);
         NFREE(mth_str);
 
+        if (*mth == HTTP_M_UNSUPPORTED) {
+            status = HTTP_S_NOTIMPL;
+            goto EOPARSING;
+        }
+
         if (*mth != HTTP_M_POST) {
                 /* no request body */
-                next_header(-1, NULL);
-                return 0;
+                goto EOPARSING;
         }
 
         /* body length */
@@ -193,7 +197,8 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                         if (sscanf(line, HTTP_HEADER_CL " %24d", len) < 1) {
                                 WLOG("Cannot parse Content-Length");
                                 perror("sscanf");
-                                goto MALFORMED;
+                                status = HTTP_S_LENGTHREQD;
+                                goto EOPARSING;
                         }
 
                         if (*len < 0) {
@@ -207,7 +212,8 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         }
         if (*len == -1) {
                 WLOG("Didn't got a Content-Length");
-                goto MALFORMED;
+                status = HTTP_S_LENGTHREQD;
+                goto EOPARSING;
         }
         while (!eoh) {
                 line = next_header(sock, &eoh);
@@ -241,9 +247,11 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         return 0;
 
 MALFORMED:
+        status = HTTP_S_BADREQ;
         NFREE(*path);
+EOPARSING:
         NFREE(line);
         next_header(-1, NULL);
-        return -1;
+        return status;
 }
 
