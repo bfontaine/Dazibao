@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
                         WLOG("with method %d, path %s, body length %d",
                                 mth, path, body_len);
                         if (error_response(client, status) < 0) {
-                                /* FIXME error response not received by cURL */
                                 WLOG("error_response failed");
                         }
                         if (close(client) == -1) {
