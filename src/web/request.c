@@ -39,10 +39,10 @@ char *next_header(int sock, int *eoh) {
                 len = restlen;
                 restlen = 0;
         } else {
-                len = recv(sock, buff, BUFFLEN, 0);
+                len = read(sock, buff, BUFFLEN);
 
                 if (len < 0) {
-                        perror("recv");
+                        perror("read");
                         return NULL;
                 }
                 if (len == 0) {
@@ -86,7 +86,7 @@ char *next_header(int sock, int *eoh) {
                 }
                 /* at this point we read the whole buffer but haven't
                    encountered a CRLF */
-                len = recv(sock, buff, BUFFLEN, 0);
+                len = read(sock, buff, BUFFLEN);
                 if (len <= 0) {
                         if (len < 0) {
                                 perror("read");
@@ -235,8 +235,8 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         readlen = 0;
         body_len = eoh;
         while (body_len < *len
-                && (readlen = recv(sock, (*body)+body_len,
-                                        (*len)-body_len, 0)) > 0) {
+                && (readlen = read(sock, (*body)+body_len,
+                                        (*len)-body_len)) > 0) {
                 body_len += readlen;
         }
         if (body_len < *len) {
