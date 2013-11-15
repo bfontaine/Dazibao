@@ -43,6 +43,7 @@ int error_response(int sock, int status) {
                 return -1;
         }
 
+        /* 15 = strlen("HTTP/1.0 xxx \r\n") */
         len = 15+strlen(phrase);
         response = (char*)malloc(sizeof(char)*(len+1));
         if (response == NULL) {
@@ -51,14 +52,13 @@ int error_response(int sock, int status) {
 
         WLOG("Sending error response.");
 
-        if (snprintf(response, len, "HTTP/1.0 %d %s\r\n",
+        if (snprintf(response, len+1, "HTTP/1.0 %3d %s\r\n",
                         status, phrase) < len) {
                 WLOG("Error response sprintf failed");
                 perror("sprintf");
                 ret = -1;
 
-                /* FIXME cURL doesn't receive this response */
-        } else if (write(sock, response, strlen(response)) <= 0) {
+        } else if (write(sock, response, len) <= 0) {
                 WLOG("Cannot send an error response (status=%d)", status);
                 perror("send");
                 ret = -1;
