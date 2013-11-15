@@ -9,11 +9,11 @@
 #include <signal.h>
 #include "daziweb.h"
 #include "webutils.h"
+#include "routing.h"
 
-int listening_sock;
+static int listening_sock;
 
-void clean_close(int s) {
-        /* to avoid unused parameter warning: */ s++;
+void clean_close() {
         if (close(listening_sock) == -1) {
             perror("close");
         }
@@ -87,38 +87,44 @@ int main(int argc, char *argv[]) {
         WLOG("Press ^C to interrupt.");
 
         while (1) {
-                int d;
+                int client;
 
-                if ((d = accept(listening_sock,
+                if ((client = accept(listening_sock,
                                 (struct sockaddr *)&addr, &len)) == -1) {
                         perror("accept");
                         continue;
                 }
                 WLOG("Got a connection.");
 
-                if (parse_request(d, &mth, &path, &body, &body_len) < 0) {
-                    /* TODO return error 400 */
-                    WLOG("request parse error");
-                    if (close(d) == -1) {
-                        perror("close");
-                    }
-                    continue;
+                status = parse_request(client, &mth, &path, &body, &body_len);
+                if (status != 0) {
+                        WLOG("request parse error (status=%d)", status);
+                        WLOG("with method %d, path %s, body length %d",
+                                mth, path, body_len);
+                        if (error_response(client, status) < 0) {
+                                /* FIXME error response not received by cURL */
+                                WLOG("error_response failed");
+                        }
+                        if (close(client) == -1) {
+                            perror("close");
+                        }
+                        continue;
                 }
 
-                WLOG("Got method %d, path %s, body length %d\n",
+                WLOG("Got method %d, path %s, body length %d",
                                 mth, path, body_len);
 
                 /* TODO respond to the request */
 
                 WLOG("Connection closed.");
-                if (close(d) == -1) {
-                    perror("close");
+                if (close(client) == -1) {
+                        perror("close");
                 }
         };
 
         WLOG("Closing...");
         if (close(listening_sock) == -1) {
-            perror("close");
+                perror("close");
         }
         exit(EXIT_SUCCESS);
 }

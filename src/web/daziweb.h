@@ -10,6 +10,6 @@
 /**
  * Handler for signals used to close the listening socket.
  **/
-void clean_close(int s);
+void clean_close();
 
 #endif
