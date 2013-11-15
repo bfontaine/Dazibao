@@ -1,17 +1,20 @@
-
 # Dazibao Makefile
 #
 
-CC=gcc
 SRC=src
 WEBSRC=$(SRC)/web
+
+CC=gcc
 CFLAGS=-g -Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
+
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h
+
 TARGET=dazibao
 SERVER=notification-server
 CLIENT=notification-client
 WSERVER=daziweb
+TARGETS=$(TARGET) $(SERVER) $(CLIENT) $(WSERVER)
 
 # FIXME check how to merge these two 'ifndef'
 ifndef UNUSED
@@ -21,7 +24,7 @@ endif
 endif
 
 ifdef DEBUG
-CFLAGS+= -DDEBUG=1
+CFLAGS+= -DDEBUG=1 -g
 endif
 
 ifdef STRICT
@@ -35,7 +38,7 @@ CPPCHECK=cppcheck \
 .DEFAULT: all
 .PHONY: clean cleantmp check
 
-all: check $(TARGET) $(SERVER) $(CLIENT)
+all: check $(TARGETS)
 
 $(TARGET): main.o dazibao.o tlv.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -60,7 +63,10 @@ cleantmp:
 	rm -f *~ */*~
 
 clean: cleantmp
-	rm -f $(TARGET) $(SERVER) $(CLIENT) *.o $(SRC)/*.o $(WEBSRC)/*.o
+	rm -f *.o $(SRC)/*.o $(WEBSRC)/*.o
+
+cleanall: clean
+	rm -f $(TARGETS)
 
 check: cleantmp
 	./utils/stylecheck.sh

@@ -40,7 +40,6 @@ const char *get_http_status_phrase(int *code) {
 }
 
 int http_mth(char *s) {
-        int len = strlen(s);
         if (strcasecmp(s, "GET") == 0) {
                 return HTTP_M_GET;
         }
