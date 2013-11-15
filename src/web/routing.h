@@ -32,4 +32,11 @@ int add_route(char *path_suffix, route_handler route);
  **/
 route_handler get_route_handler(char *path);
 
+/**
+ * Send an HTTP error status ('status', as defined in http.h) in a socket
+ * ('sock'). Returns 0 on success, -1 on error. If the error status is not
+ * defined in http.h, a 400 (bad request) status is sent.
+ **/
+int error_response(int sock, int status);
+
 #endif
