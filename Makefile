@@ -43,7 +43,7 @@ cleantmp:
 	rm -f *~ */*~
 
 clean: cleantmp
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) $(SERVER) $(CLIENT) *.o
 
 check: cleantmp
 	@T=$$(mktemp dzbXXX); \
