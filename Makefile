@@ -60,7 +60,7 @@ cleantmp:
 	rm -f *~ */*~
 
 clean: cleantmp
-	rm -f $(TARGET) *.o $(SRC)/*.o $(WEBSRC)/*.o
+	rm -f $(TARGET) $(SERVER) $(CLIENT) *.o $(SRC)/*.o $(WEBSRC)/*.o
 
 check: cleantmp
 	./utils/stylecheck.sh
