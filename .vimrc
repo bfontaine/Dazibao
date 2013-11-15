@@ -7,4 +7,5 @@ set shiftwidth=8
 set expandtab
 
 " max 80 chars
-set tw=80
+set tw=79
+set cc=80

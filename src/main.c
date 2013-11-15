@@ -1,3 +1,4 @@
+#include "main.h"
 #include "dazibao.h"
 #include <locale.h>
 
