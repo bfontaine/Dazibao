@@ -1,20 +1,52 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include "notification-client.h"
 
-#include "utils.h"
+static char notifier_enabled = 0;
 
-#define BUFFER_SIZE 1024
+static char notifier[] = "/usr/bin/notify-send";
 
-int
-main()
-{
+int check_notifier(void) {
+
+	printf("[pid:%d] Looking for %s\n", getpid(), notifier);
+
+	if (access(notifier, X_OK) == -1) {
+		ERROR("access", 0);
+	}
+	printf("[pid:%d] %s found\n", getpid(), notifier);
+	return 1;
+}
+
+void print_notification(char *title, char *msg) {
+	printf("\t%s\n\t\t%s\n", title, msg);
+	fflush(stdout);
+}
+
+void notify(char *title, char *msg) {
+
+	if (notifier_enabled) {
+
+		int pid;
+		pid = fork();
+
+		if (pid == -1) {
+			PERROR("fork");
+			return;
+		}
+		if (pid == 0) {
+			execlp(notifier, notifier, title, msg, NULL);
+		} else {
+			if (waitpid(pid, NULL, 0) == -1) {
+				PERROR("wait");
+			}
+		}
+	}
+
+	print_notification(title, msg);
+
+}
+
+
+int main() {
+	notifier_enabled = check_notifier();
 	char buf[BUFFER_SIZE];
 	struct sockaddr_un sun;
 	int fd, bufptr, rc;
@@ -63,34 +95,11 @@ main()
 		}
 
 		if(buf[0] == 'C') {
-
-			int pid;
-			int len;
 			char *msg;
-			pid = fork();
-
-			switch (pid) {
-			case -1:
-				ERROR("fork", -1)
-				break;
-			case 0:
-				len = p - buf;
-				msg = calloc(sizeof(*msg), len);
-				strncpy(msg, buf + 1, len -1);
-				
-				execlp("notify-send", "notify-send", "Dazibao changed:", msg, NULL);
-				printf("Dazibao changed: ");
-				fwrite(buf, 1, p - buf, stdout);
-				printf("\n");
-				fflush(stdout);
-				free(msg);
-				break;
-			default:
-				if (waitpid(pid, NULL, 0) == -1) {
-					PERROR("wait");
-				}
-				break;
-			}
+			msg = calloc(sizeof(*msg), p - buf);
+			strncpy(msg, buf + 1, p - buf - 1);
+			notify("Dazibao changed", msg);
+			free(msg);
 		} else {
 			fprintf(stderr, "Unknown notification type %c.\n", buf[0]);
 		}
