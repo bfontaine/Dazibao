@@ -41,6 +41,7 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 	}
 }
 
+
 int watch_file(char *path) {
 	
 	/**
@@ -198,6 +199,17 @@ int accept_client(int server) {
 	}
 }
 
+
+
+void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
+	if (waitpid(info->si_pid, NULL, 0) == -1) {
+		PERROR("waitpid");
+	} else {
+		nbclient--;
+		printf("[pid:%d] Client in activity: %d\n", getpid(), nbclient);	
+	}
+}
+
 int main(int argc, char **argv) {
 
 	/* 
@@ -231,6 +243,14 @@ int main(int argc, char **argv) {
 	action.sa_handler = SIG_IGN;
 	
 	if(sigaction(SIGUSR1, &action, NULL) == -1) {
+		ERROR("sigaction", -1);
+	}
+
+		/* set handler for SIGUSR1 */
+	struct sigaction action2;
+	action2.sa_flags = SA_SIGINFO | SA_RESTART;
+	action2.sa_sigaction = collect_zombie;
+	if(sigaction(SIGCHLD, &action2, NULL) == -1) {
 		ERROR("sigaction", -1);
 	}
 
