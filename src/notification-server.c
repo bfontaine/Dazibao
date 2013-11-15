@@ -4,12 +4,12 @@ static char **filename;
 static int *pids;
 static int nbdaz;
 static int sock;
+static int nbclient = 0;
 
 /**
  * TODO:
  * - queue signals
  */
-
 void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
 	printf("[pid:%d] Received SIGUSR1: %d\n", getpid(), unused_sigint == SIGUSR1);
@@ -27,7 +27,12 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 		memcpy(&str[1], filename[i], len - 2);
 		str[len - 1] = '\n';
 		if (write(sock, str, len) < (int)(strlen(filename[i]) + 2)) {
-			PERROR("write");
+			if (errno == EPIPE) {
+				printf("[pid:%d] Client has disconnected: exiting\n", getpid());
+				exit(EXIT_SUCCESS);
+			} else {
+				PERROR("write");
+			}
 		}
 		free(str);
 	} else {
@@ -150,11 +155,6 @@ int set_up_server(void) {
 
 int accept_client(int server) {
 
-	/**
-	 * TODO:
-	 * - close socket if client leaves
-	 */
-
 	int pid;
 	int client;
 	socklen_t len;
@@ -168,17 +168,18 @@ int accept_client(int server) {
 			return accept_client(server);
 		}
 		ERROR("accept", -1);
-	} 
-	printf("[pid:%d] *** New client connected ***\n", getpid());	
+	}
+	printf("[pid:%d] *** New client connected ***\n", getpid());
 
 	pid = fork();
 	if (pid < 0){
 		ERROR("fork", -1);
 	} else if (pid == 0) {
 		sock = client;
+
 		/* set handler for SIGUSR1 */
 		struct sigaction action;
-		action.sa_flags = action.sa_flags | SA_SIGINFO;
+		action.sa_flags = SA_SIGINFO;
 		action.sa_sigaction = notify;
 		sigfillset(&action.sa_mask);
 		if(sigaction(SIGUSR1, &action, NULL) == -1) {
@@ -206,7 +207,6 @@ int main(int argc, char **argv) {
 	 */
 
 	int server;
-	int nbclient = 0;
 
 	if (argc < 2) {
                 printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n", argv[0]);
@@ -233,6 +233,7 @@ int main(int argc, char **argv) {
 	if(sigaction(SIGUSR1, &action, NULL) == -1) {
 		ERROR("sigaction", -1);
 	}
+
 	printf("[pid:%d] sigaction set\n", getpid());	
 
 	if(nsa(argc - 1, &argv[1]) != argc - 1) {
