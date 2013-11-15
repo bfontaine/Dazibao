@@ -32,12 +32,19 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-                /* TODO use strtol to handle conversion errors */
-		unsigned char type = (unsigned char)atoi(argv[3]);
+                long tmp_type = strtol(argv[3], NULL, 10);
+		unsigned char type;
 		char reader[BUFFSIZE];
 		unsigned int buff_size = 0;
 		char *buff = NULL;
 		int read_size;
+
+                if (tmp_type == LONG_MIN || tmp_type == LONG_MAX) {
+                        printf("unrecognized type\n");
+                        exit(EXIT_FAILURE);
+                }
+
+                type = (unsigned char)tmp_type;
 
 		while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
 
@@ -82,9 +89,14 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-		off_t off = (off_t)atoi(argv[3]);
+		long off = strtol(argv[3], NULL, 10);
 
-		if (dz_rm_tlv(&daz_buf, off)) {
+                if (off == LONG_MIN || off == LONG_MAX) {
+                        printf("wrong offset\n");
+                        exit(EXIT_FAILURE);
+                }
+
+		if (dz_rm_tlv(&daz_buf, (off_t)off)) {
 			printf("rm failed\n");
 			dz_close(&daz_buf);
 			exit(EXIT_FAILURE);
@@ -108,11 +120,20 @@ int main(int argc, char **argv) {
                         char *cmd_dump, *depth;
                         cmd_dump = argv[3];
                         depth = argv[4];
-                        int dep = atoi(depth);
+                        int dep = strtol(depth, NULL, 10);
+
+                        if (dep == LONG_MIN || dep == LONG_MAX) {
+                                printf("wrong depth");
+                                exit(EXIT_FAILURE);
+                        }
 
                         if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)){
-                                int dep = atoi(depth);
-                                // option dump compound with limited depht
+                                int dep = strtol(depth, NULL, 10);
+                                if (dep == LONG_MIN || dep == LONG_MAX) {
+                                        printf("wrong depth");
+                                        exit(EXIT_FAILURE);
+                                }
+                                /* option dump compound with limited depth */
 		                if (dz_dump_compound(&daz_buf, EOD, dep,0)) {
 			                printf("dump_compound failed\n");
 			                dz_close(&daz_buf);

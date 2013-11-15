@@ -42,7 +42,8 @@ int watch_file(char *path);
 int set_up_server(void);
 
 /**
- * Establish connection with client, and create a new process to handle notifications
+ * Establish connection with client, and create a new process to handle
+ * notifications
  * @param server file descriptor of server used
  * @return pid of client on success
  * @return -1 on error

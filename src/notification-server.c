@@ -142,7 +142,7 @@ int set_up_server(void) {
 	if (unlink(saddr.sun_path) == -1 && errno != ENOENT) {
 		ERROR("unlink", -1);
 	}
-    
+
 	if (bind(server, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
 		ERROR("bind", -1);
 	}
@@ -212,7 +212,7 @@ void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
 int main(int argc, char **argv) {
 
-	/* 
+	/*
 	 * TODO:
 	 * - define signal handler to notify children when the file changed
 	 * - wait for child before leaving ?
@@ -221,7 +221,8 @@ int main(int argc, char **argv) {
 	int server;
 
 	if (argc < 2) {
-                printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n", argv[0]);
+                printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n",
+                                argv[0]);
                 exit(EXIT_FAILURE);
 	}
 
