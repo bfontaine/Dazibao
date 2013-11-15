@@ -41,10 +41,10 @@ const char *get_http_status_phrase(int *code) {
 
 int http_mth(char *s) {
         int len = strlen(s);
-        if (strncasecmp(s, "GET", MIN(len, 3)) == 0) {
+        if (strcasecmp(s, "GET") == 0) {
                 return HTTP_M_GET;
         }
-        if (strncasecmp(s, "POST", MIN(len, 4)) == 0) {
+        if (strcasecmp(s, "POST") == 0) {
                 return HTTP_M_POST;
         }
         return HTTP_M_UNSUPPORTED;
