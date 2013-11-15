@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <unistd.h>
 #include "utils.h"
 #include "webutils.h"
 #include "http.h"
@@ -50,14 +49,16 @@ int error_response(int sock, int status) {
                 return -1;
         }
 
-        WLOG("Sending error response, status=%d", status);
+        WLOG("Sending error response.");
 
         if (snprintf(response, len, "HTTP/1.0 %d %s\r\n",
                         status, phrase) < len) {
                 WLOG("Error response sprintf failed");
                 perror("sprintf");
                 ret = -1;
-        } else if (send(sock, response, strlen(response), 0) < 0) {
+
+                /* FIXME cURL doesn't receive this response */
+        } else if (write(sock, response, strlen(response)) <= 0) {
                 WLOG("Cannot send an error response (status=%d)", status);
                 perror("send");
                 ret = -1;
