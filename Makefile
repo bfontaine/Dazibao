@@ -5,7 +5,7 @@ SRC=src
 WEBSRC=$(SRC)/web
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -std=gnu99 -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h
@@ -28,7 +28,9 @@ CFLAGS+= -DDEBUG=1 -g
 endif
 
 ifdef STRICT
-CFLAGS+= -Werror
+# regarding the use of -O2, see:
+# http://www.tldp.org/HOWTO/Secure-Programs-HOWTO/c-cpp.html
+CFLAGS+= -Wstrict-prototypes -Werror -O2
 endif
 
 CPPCHECK=cppcheck \

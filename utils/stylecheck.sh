@@ -14,18 +14,25 @@ function _check() {
     rm -f $T
 }
 
-function _warncheck() {
+function warncheck() {
     _check "$1" "!! There are $2:"
 }
 
-function _warnfncheck() {
+function warnfncheck() {
     _check "$1\\(" "!! Use $2 instead of $1 here:"
 }
 
-_warncheck '.{80,}' '80+ chars lines'
-_warncheck ' +$'    'trailing spaces'
-_warncheck '//'     'C99-style comments'
+warncheck '.{80,}' '80+ chars lines'
+warncheck ' +$'    'trailing spaces'
+warncheck '//'     'C99-style comments'
 
-_warnfncheck 'sprintf'    'snprintf'
-_warnfncheck 'atoi'       'strtol'
+warnfncheck 'sprintf' 'snprintf'
+warnfncheck 'atoi'    'strtol'
 
+# from http://stackoverflow.com/a/167182/735926
+warnfncheck 'strcpy' 'strncpy'
+warnfncheck 'strcat' 'strncat'
+warnfncheck 'gets'   'fgets'
+
+# from http://www.ibm.com/developerworks/library/s-buffer-defend.html
+warnfncheck 'vsprintf' 'vsnprintf'
