@@ -6,7 +6,6 @@ int main(int argc, char **argv) {
 
 	dz_t daz_buf;
 	char *daz, *cmd;
-        int cmdlen;
 
         if (setlocale(LC_ALL, "") == NULL) {
                 PERROR("setlocale");
@@ -19,9 +18,9 @@ int main(int argc, char **argv) {
 
 	daz = argv[1];
 	cmd = argv[2];
-        cmdlen = strlen(cmd);
 
-	if (!strncmp(cmd, "add", MIN(cmdlen, 3))) {
+
+	if (!strcmp(cmd, "add")) {
 
 		if (argc < 4) {
 			printf("expected type\n");
@@ -71,7 +70,7 @@ int main(int argc, char **argv) {
 
 		free(tlv);
 		free(buff);
-	} else if (!strncmp(cmd, "rm", MIN(cmdlen, 2))) {
+	} else if (!strcmp(cmd, "rm")) {
 
 		if (argc < 4) {
 			printf("expected offset\n");
@@ -90,7 +89,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-	} else if (!strncmp(cmd, "dump", MIN(cmdlen, 4))) {
+	} else if (!strcmp(cmd, "dump")) {
 
 		if (dz_open(&daz_buf, daz, O_RDONLY)) {
 			exit(EXIT_FAILURE);
@@ -125,7 +124,7 @@ int main(int argc, char **argv) {
                         }
                 }
 
-	}  else if (!strncmp(cmd, "create", MIN(cmdlen, 6))) {
+	}  else if (!strcmp(cmd, "create")) {
 		
 		if (dz_create(&daz_buf, daz)) {
 			printf("error during dazibao creation\n");
