@@ -26,7 +26,5 @@ _warncheck ' +$'    'trailing spaces'
 _warncheck '//'     'C99-style comments'
 
 _warnfncheck 'sprintf'    'snprintf'
-_warnfncheck 'strcmp'     'strncmp'
-_warnfncheck 'strcasecmp' 'strncasecmp'
 _warnfncheck 'atoi'       'strtol'
 
