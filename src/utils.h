@@ -1,11 +1,13 @@
 #ifndef _UTILS_H
 #define _UTILS_H 1
 
+#include <limits.h>
 #include <stdlib.h>
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
-
 #define MAX(a,b) ((a)>(b)?(a):(b))
+
+#define STRTOL_ERR(n) ((n) == LONG_MIN || (n) == LONG_MAX)
 
 #define PANIC(str) {                        \
                 PERROR((str));              \

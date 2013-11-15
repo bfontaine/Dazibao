@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 		char *buff = NULL;
 		int read_size;
 
-                if (tmp_type == LONG_MIN || tmp_type == LONG_MAX) {
+                if (STRTOL_ERR(tmp_type)) {
                         printf("unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 
 		long off = strtol(argv[3], NULL, 10);
 
-                if (off == LONG_MIN || off == LONG_MAX) {
+                if (STRTOL_ERR(off)) {
                         printf("wrong offset\n");
                         exit(EXIT_FAILURE);
                 }
@@ -122,14 +122,14 @@ int main(int argc, char **argv) {
                         depth = argv[4];
                         int dep = strtol(depth, NULL, 10);
 
-                        if (dep == LONG_MIN || dep == LONG_MAX) {
+                        if (STRTOL_ERR(dep)) {
                                 printf("wrong depth");
                                 exit(EXIT_FAILURE);
                         }
 
                         if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)){
                                 int dep = strtol(depth, NULL, 10);
-                                if (dep == LONG_MIN || dep == LONG_MAX) {
+                                if (STRTOL_ERR(dep)) {
                                         printf("wrong depth");
                                         exit(EXIT_FAILURE);
                                 }
