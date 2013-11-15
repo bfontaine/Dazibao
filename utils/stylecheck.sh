@@ -5,7 +5,8 @@ T=$(mktemp dzbXXX)
 function _check() {
     # usage:
     #   _check <regex> <text>
-    egrep -In --include=*.[ch] "$1" src/* src/web/* > $T
+    grep -EIn "$1" \
+            src/*.c src/*.h src/web/*.c src/web/*.h > $T
     if [ "$?" -eq "0" ]; then
             echo "$2"
             cut -f1,2 -d: < $T
