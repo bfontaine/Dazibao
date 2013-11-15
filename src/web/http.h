@@ -45,6 +45,13 @@ struct http_statut {
 /* custom extentions/limits */
 #define HTTP_MAX_PATH 512
 #define HTTP_MAX_MTH_LENGTH 16
+#define HTTP_MAX_RESP_LENGTH 64
+
+/**
+ * Return the phrase associated with an HTTP code. If this code is unsupported,
+ * the phrase for 400 (bad request) is returned and *code is set to 400.
+ **/
+const char *get_http_status_phrase(int *code);
 
 /* Headers */
 struct http_header {
