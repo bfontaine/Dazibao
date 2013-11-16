@@ -74,6 +74,8 @@ int http_init_headers(struct http_headers *hs) {
 int http_add_header(struct http_headers *hs, char *name, char *value,
                                 int overr) {
         struct http_header *h;
+        int namelen,
+            valuelen;
 
         if (hs == NULL || hs->headers == NULL || hs->size < 0
                         || name == NULL || value == NULL) {
@@ -84,13 +86,16 @@ int http_add_header(struct http_headers *hs, char *name, char *value,
                 return -1;
         }
 
+        namelen = strlen(name);
+        valuelen = strlen(value);
+
         for (int i=0, s=hs->size; i<s; i++) {
                 if (strcasecmp(hs->headers[i]->name, name) == 0) {
                         if (!overr) {
                                 return -2;
                         }
                         if (memcpy(hs->headers[i]->value,
-                                        value, strlen(value)) == NULL) {
+                                        value, valuelen) == NULL) {
                                 perror("memcpy");
                                 return -1;
                         }
@@ -105,13 +110,32 @@ int http_add_header(struct http_headers *hs, char *name, char *value,
                 return -1;
         }
 
-        if (memcpy(h->name, name, strlen(name)) == NULL) {
-                perror("memcpy");
+        h->name = (char *)malloc(sizeof(char)*(namelen+1));
+        if (h->name == NULL) {
+                perror("malloc");
                 NFREE(h);
                 return -1;
         }
-        if (memcpy(h->value, value, strlen(value)) == NULL) {
+
+        h->value = (char *)malloc(sizeof(char)*(valuelen+1));
+        if (h->value == NULL) {
+                perror("malloc");
+                NFREE(h->name);
+                NFREE(h);
+                return -1;
+        }
+        
+        if (memcpy(h->name, name, namelen) == NULL) {
                 perror("memcpy");
+                NFREE(h->name);
+                NFREE(h->value);
+                NFREE(h);
+                return -1;
+        }
+        if (memcpy(h->value, value, valuelen) == NULL) {
+                perror("memcpy");
+                NFREE(h->name);
+                NFREE(h->value);
                 NFREE(h);
                 return -1;
         }

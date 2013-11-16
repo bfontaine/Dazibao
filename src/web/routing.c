@@ -38,10 +38,12 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                         int bodylen) {
         const char *phrase = get_http_status_phrase(&status);
         char *response,
-             *response2;
+             *response2,
+             *str_headers;
         int ret = 0, len,
             nobody = (body == NULL),
-            noheaders = (hs == NULL);
+            noheaders = (hs == NULL),
+            len_headers;
 
         if (sock < 0) {
                 return -1;
@@ -70,6 +72,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         len = 15+strlen(phrase);
         response = (char*)malloc(sizeof(char)*(len+1));
         if (response == NULL) {
+                http_destroy_headers(hs);
                 return -1;
         }
 
@@ -81,28 +84,30 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 ret = -1;
         }
 
-        if (!noheaders) {
-                char *str_headers = http_headers_string(hs);
-                int len_headers = strlen(str_headers);
-                len += len_headers + 2;
-                response2 = realloc(response, len);
-                if (response2 == NULL) {
+        /* -- headers -- */
+        str_headers = http_headers_string(hs);
+        len_headers = strlen(str_headers);
+        len += len_headers + 2;
+        response2 = realloc(response, len);
+        if (response2 == NULL) {
 
-                }
-                response = response2;
-
-                strncat(response, str_headers, len_headers);
-                strncat(response, "\r\n", 2);
-
-                write(sock, response, len);
-
-                NFREE(str_headers);
-                http_destroy_headers(hs);
         }
+        response = response2;
+
+        strncat(response, str_headers, len_headers);
+        strncat(response, "\r\n", 2);
+
+        /* TODO test return value */
+        write(sock, response, len);
+
+        NFREE(str_headers);
+        http_destroy_headers(hs);
+        /* -- /headers -- */
 
         /* TODO send body */
 
         NFREE(response);
+        http_destroy_headers(hs);
         return ret;
 }
 

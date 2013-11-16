@@ -21,7 +21,7 @@ void clean_close() {
 }
 
 int main(int argc, char *argv[]) {
-        int port, status,
+        int port, status = 0,
             mth, body_len;
         char *path = NULL;
         char *body = NULL;
