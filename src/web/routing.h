@@ -1,6 +1,8 @@
 #ifndef _ROUTING_H
 #define _ROUTING_H 1
 
+#include "http.h"
+
 #define MAX_ROUTES 16
 
 /**
@@ -31,6 +33,15 @@ int add_route(char *path_suffix, route_handler route);
  * Return a route handler for a path.
  **/
 route_handler get_route_handler(char *path);
+
+/**
+ * Send an HTTP response on the socket 'sock', with the HTTP status 'status',
+ * as defined in http.h, with the additional headers 'hs' (may be NULL), and
+ * the body 'body' (may be NULL) of length 'bodylen'. Returns 0 on success, -1
+ * on error.
+ **/
+int http_response(int sock, int status, struct http_headers *hs, char *body,
+                        int bodylen);
 
 /**
  * Send an HTTP error status ('status', as defined in http.h) in a socket

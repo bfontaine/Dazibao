@@ -88,6 +88,8 @@ int main(int argc, char *argv[]) {
 
         while (1) {
                 int client;
+                NFREE(path); /* XXX segfault */
+                NFREE(body);
 
                 if ((client = accept(listening_sock,
                                 (struct sockaddr *)&addr, &len)) == -1) {

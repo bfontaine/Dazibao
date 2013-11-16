@@ -13,7 +13,7 @@
  *  Not all statuses are included here, only those we might need to use.
  */
 
-struct http_statut {
+struct http_status {
         int code;
         char *phrase;
 };
@@ -45,12 +45,7 @@ struct http_statut {
 /* custom extentions/limits */
 #define HTTP_MAX_PATH 512
 #define HTTP_MAX_MTH_LENGTH 16
-
-/**
- * Return the phrase associated with an HTTP code. If this code is unsupported,
- * the phrase for 400 (bad request) is returned and *code is set to 400.
- **/
-const char *get_http_status_phrase(int *code);
+#define HTTP_MAX_HEADERS 16
 
 /* Headers */
 struct http_header {
@@ -58,9 +53,45 @@ struct http_header {
         char *value;
 };
 struct http_headers {
-        struct http_header *headers;
+        struct http_header **headers;
         int size;
 };
+
+/**
+ * Initialize a struct http_headers. Return 0 or -1.
+ **/
+int http_init_headers(struct http_headers *hs);
+
+/**
+ * Add an header to a struct http_headers. If 'overr' is set to '0', the
+ * function will not attempt to override an existing header and will instead
+ * return -2 if it already exists. If 'overr' is set to another value, the
+ * function will override an existing header if there's one. It returns 0 on
+ * success, -1 if there was an error.
+ **/
+int http_add_header(struct http_headers *hs, char *name, char *value,
+                        int overr);
+
+/**
+ * Return the size of the string representation of a list of headers, without
+ * \0.
+ **/
+int http_headers_size(struct http_headers *hs);
+
+/**
+ * Return a NULL-terminated string representation of an header.
+ **/
+char *http_header_string(struct http_header *h);
+
+/**
+ * Return a NULL-terminated string representation of a list of headers.
+ **/
+char *http_headers_string(struct http_headers *hs);
+
+/**
+ * Free all the allocated memory for a list of headers. Return 0 or -1.
+ **/
+int http_destroy_headers(struct http_headers *hs);
 
 /**
  * Return the phrase associated with an HTTP code. If this code is unsupported,
