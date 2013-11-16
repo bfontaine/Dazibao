@@ -9,6 +9,7 @@
 #include <signal.h>
 #include "daziweb.h"
 #include "webutils.h"
+#include "request.h"
 #include "routing.h"
 
 static int listening_sock;
@@ -123,8 +124,5 @@ int main(int argc, char *argv[]) {
         };
 
         WLOGINFO("Closing...");
-        if (close(listening_sock) == -1) {
-                perror("close");
-        }
-        exit(EXIT_SUCCESS);
+        clean_close(0);
 }
