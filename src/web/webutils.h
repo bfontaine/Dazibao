@@ -30,4 +30,10 @@ extern int _wlog_level;
 #define WLOGERROR(fmt, ...) _WLOG(WLOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
 #define WLOGFATAL(fmt, ...) _WLOG(WLOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
 
+/**
+ * Wrapper around write(2) to write the whole buffer instead of (sometimes)
+ * only a part of it.
+ **/
+int write_all(int fd, char *buff, int len);
+
 #endif

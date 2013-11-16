@@ -13,7 +13,8 @@
 
 static int listening_sock;
 
-void clean_close() {
+void clean_close(int s) {
+        /* avoid 'unused parameter' warning */ s++;
         if (close(listening_sock) == -1) {
             perror("close");
         }

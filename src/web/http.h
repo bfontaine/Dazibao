@@ -1,6 +1,8 @@
 #ifndef _HTTP_H
 #define _HTTP_H 1
 
+#include "utils.h"
+
 #define HTTP_HEADER_CL "Content-Length:"
 #define HTTP_HEADER_CL_LEN 14
 
@@ -72,6 +74,10 @@ int http_init_headers(struct http_headers *hs);
 int http_add_header(struct http_headers *hs, char *name, char *value,
                         int overr);
 
+/**
+ * Helper for http_headers_size.
+ **/
+int http_header_size(struct http_header *h) WARN_UNUSED;
 /**
  * Return the size of the string representation of a list of headers, without
  * \0.

@@ -124,15 +124,9 @@ int http_add_header(struct http_headers *hs, char *name, char *value,
                 NFREE(h);
                 return -1;
         }
-        
-        if (memcpy(h->name, name, namelen) == NULL) {
-                perror("memcpy");
-                NFREE(h->name);
-                NFREE(h->value);
-                NFREE(h);
-                return -1;
-        }
-        if (memcpy(h->value, value, valuelen) == NULL) {
+
+        if (memcpy(h->name, name, namelen+1) == NULL
+                        || memcpy(h->value, value, valuelen+1) == NULL) {
                 perror("memcpy");
                 NFREE(h->name);
                 NFREE(h->value);
@@ -148,6 +142,9 @@ int http_add_header(struct http_headers *hs, char *name, char *value,
  * but excluding \0.
  */
 int http_header_size(struct http_header *h) {
+        if (h == NULL || h->name == NULL || h->value == NULL) {
+                return -1;
+        }
         /* <name>: <value>\r\n */
         return strlen(h->name) + 2 + strlen(h->value) + 2;
 }
@@ -159,11 +156,14 @@ int http_headers_size(struct http_headers *hs) {
                 return -1;
         }
 
-        for (int i=0, s=hs->size; i<s; i++) {
+        for (int i=0, s=hs->size, hhs; i<s; i++) {
                 if (hs->headers[i] == NULL) {
                         continue;
                 }
-                size += http_header_size(hs->headers[i]);
+                hhs = http_header_size(hs->headers[i]);
+                if (hhs > 0) {
+                        size += hhs;
+                }
         }
 
         /* with \0 */
@@ -172,7 +172,13 @@ int http_headers_size(struct http_headers *hs) {
 
 char *http_header_string(struct http_header *h) {
         int len = http_header_size(h);
-        char *repr = (char*)malloc(sizeof(char)*(len+1));
+        char *repr;
+
+        if (len < 0) {
+                return NULL;
+        }
+        
+        repr = (char*)malloc(sizeof(char)*(len+1));
 
         if (repr == NULL) {
                 perror("malloc");
@@ -183,32 +189,32 @@ char *http_header_string(struct http_header *h) {
         return repr;
 }
 
-char *http_headers_string(struct http_headers *hs) {
+char *http_headers_string(struct http_headers *hs) { /* FIXME memory issues */
         int len = http_headers_size(hs),
-            cursor, l;
+            l, wrote = 0;
         char *repr;
 
         if (len < 0) {
                 return NULL;
         }
 
-        repr = (char*)malloc(sizeof(char)*len);
+        repr = (char*)malloc(sizeof(char)*(len+1));
         if (repr == NULL) {
+                perror("malloc");
                 return NULL;
         }
+        repr[0] = '\0';
 
-        cursor = 0;
         for (int i=0; i<hs->size; i++) {
                 char *s = http_header_string(hs->headers[i]);
                 if (s == NULL) {
                         continue;
                 }
                 l = strlen(s);
-                memcpy(repr+cursor, s, l);
-                cursor += l;
+                strncat(repr, s, l);
                 NFREE(s);
+                wrote += l;
         }
-        repr[cursor] = '\0';
         return repr;
 }
 
