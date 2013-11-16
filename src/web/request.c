@@ -140,7 +140,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
 
         line = next_header(sock, &eoh);
         if (line == NULL || eoh) {
-                WLOG("Cannot get the first header line (eoh=%d)", eoh);
+                WLOGWARN("Cannot get the first header line (eoh=%d)", eoh);
                 next_header(-1, NULL);
                 return HTTP_S_BADREQ;
         }
@@ -161,7 +161,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         }
 
         if (sscanf(line, "%16s %128s HTTP/%*s", mth_str, *path) < 2) {
-                WLOG("Cannot scan first header line");
+                WLOGWARN("Cannot scan first header line");
                 perror("sscanf");
                 NFREE(mth_str);
                 goto MALFORMED;
@@ -184,7 +184,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
         *len = -1;
         while ((line = next_header(sock, &eoh)) != NULL) {
                 if (eoh) {
-                        WLOG("Got end of headers without Content-Length");
+                        WLOGWARN("Got end of headers without Content-Length");
                         goto MALFORMED;
                 }
 
@@ -196,14 +196,14 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                                 HTTP_HEADER_CL, HTTP_HEADER_CL_LEN) == 0) {
 
                         if (sscanf(line, HTTP_HEADER_CL " %24d", len) < 1) {
-                                WLOG("Cannot parse Content-Length");
+                                WLOGWARN("Cannot parse Content-Length");
                                 perror("sscanf");
                                 status = HTTP_S_LENGTHREQD;
                                 goto EOPARSING;
                         }
 
                         if (*len < 0) {
-                                WLOG("Got a negative Content-Length");
+                                WLOGWARN("Got a negative Content-Length");
                                 goto MALFORMED;
                         }
                         break;
@@ -212,7 +212,7 @@ int parse_request(int sock, int *mth, char **path, char **body, int *len) {
                 NFREE(line);
         }
         if (*len == -1) {
-                WLOG("Didn't got a Content-Length");
+                WLOGWARN("Didn't got a Content-Length");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;
         }

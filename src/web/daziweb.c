@@ -44,11 +44,11 @@ int main(int argc, char *argv[]) {
 
         if (argc < 2) {
                 port = DEFAULT_PORT;
-                WLOG("Using default port");
+                WLOGINFO("Using default port");
         } else {
                 port = strtol(argv[1], NULL, 10);
                 if (port == LONG_MIN || port == LONG_MAX) {
-                        WLOG("trouble parsing the port, using default");
+                        WLOGDEBUG("trouble parsing the port, using default");
                         port = DEFAULT_PORT;
                 }
         }
@@ -83,12 +83,12 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
         }
 
-        WLOG("Listening on port %d...", port);
-        WLOG("Press ^C to interrupt.");
+        WLOGINFO("Listening on port %d...", port);
+        WLOGINFO("Press ^C to interrupt.");
 
         while (1) {
                 int client;
-                NFREE(path); /* XXX segfault */
+                NFREE(path);
                 NFREE(body);
 
                 if ((client = accept(listening_sock,
@@ -96,15 +96,15 @@ int main(int argc, char *argv[]) {
                         perror("accept");
                         continue;
                 }
-                WLOG("Got a connection.");
+                WLOGINFO("Got a connection.");
 
                 status = parse_request(client, &mth, &path, &body, &body_len);
                 if (status != 0) {
-                        WLOG("request parse error (status=%d)", status);
-                        WLOG("with method %d, path %s, body length %d",
+                        WLOGWARN("request parse error (status=%d)", status);
+                        WLOGWARN("with method %d, path %s, body length %d",
                                 mth, path, body_len);
                         if (error_response(client, status) < 0) {
-                                WLOG("error_response failed");
+                                WLOGERROR("error_response failed");
                         }
                         if (close(client) == -1) {
                             perror("close");
@@ -112,18 +112,18 @@ int main(int argc, char *argv[]) {
                         continue;
                 }
 
-                WLOG("Got method %d, path %s, body length %d",
-                                mth, path, body_len);
+                WLOGDEBUG("Got method %d, path %s, body length %d",
+                               mth, path, body_len);
 
                 /* TODO respond to the request */
 
-                WLOG("Connection closed.");
+                WLOGINFO("Connection closed.");
                 if (close(client) == -1) {
                         perror("close");
                 }
         };
 
-        WLOG("Closing...");
+        WLOGINFO("Closing...");
         if (close(listening_sock) == -1) {
                 perror("close");
         }

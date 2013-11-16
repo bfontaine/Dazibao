@@ -55,7 +55,7 @@ $(CLIENT): notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
-				$(WEBSRC)/routes.o $(WEBSRC)/http.o
+		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)

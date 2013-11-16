@@ -79,7 +79,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         /* status line (header) */
         if (snprintf(response, len+1, "HTTP/1.0 %3d %s\r\n",
                         status, phrase) < len) {
-                WLOG("response sprintf failed");
+                WLOGERROR("response sprintf failed");
                 perror("sprintf");
                 ret = -1;
         }
