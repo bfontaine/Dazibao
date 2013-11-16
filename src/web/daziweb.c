@@ -27,8 +27,7 @@ int main(int argc, char *argv[]) {
         char *path = NULL;
         char *body = NULL;
 
-        /* FIXME 'a' is not an understandable name */
-        struct sockaddr_in a,
+        struct sockaddr_in bindaddr,
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
@@ -37,7 +36,6 @@ int main(int argc, char *argv[]) {
         sig.sa_sigaction = NULL;
         sig.sa_flags = 0;
         sigemptyset(&sig.sa_mask);
-        sigaddset(&sig.sa_mask, SIGINT);
 
         if (sigaction(SIGINT, &sig, NULL) == -1) {
                 perror("sigaction");
@@ -60,10 +58,10 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
         }
 
-        bzero(&a, sizeof(struct sockaddr_in));
-        a.sin_family = AF_INET;
-        a.sin_port = htons(port);
-        a.sin_addr.s_addr = htonl(INADDR_ANY);
+        bzero(&bindaddr, sizeof(struct sockaddr_in));
+        bindaddr.sin_family = AF_INET;
+        bindaddr.sin_port = htons(port);
+        bindaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
         if (setsockopt(listening_sock, SOL_SOCKET,
                                 SO_REUSEADDR, &status, sizeof(int)) == -1) {
@@ -71,7 +69,7 @@ int main(int argc, char *argv[]) {
         }
 
         status = bind(listening_sock,
-                        (struct sockaddr *)&a, sizeof(struct sockaddr_in));
+                        (struct sockaddr *)&bindaddr, sizeof(bindaddr));
         if (status == -1) {
                 perror("bind");
                 close(listening_sock);

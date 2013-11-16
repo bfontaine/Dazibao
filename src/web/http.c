@@ -177,7 +177,7 @@ char *http_header_string(struct http_header *h) {
         if (len < 0) {
                 return NULL;
         }
-        
+
         repr = (char*)malloc(sizeof(char)*(len+1));
 
         if (repr == NULL) {
@@ -189,9 +189,8 @@ char *http_header_string(struct http_header *h) {
         return repr;
 }
 
-char *http_headers_string(struct http_headers *hs) { /* FIXME memory issues */
-        int len = http_headers_size(hs),
-            l, wrote = 0;
+char *http_headers_string(struct http_headers *hs) {
+        int len = http_headers_size(hs);
         char *repr;
 
         if (len < 0) {
@@ -210,10 +209,8 @@ char *http_headers_string(struct http_headers *hs) { /* FIXME memory issues */
                 if (s == NULL) {
                         continue;
                 }
-                l = strlen(s);
-                strncat(repr, s, l);
+                strncat(repr, s, strlen(s));
                 NFREE(s);
-                wrote += l;
         }
         return repr;
 }
