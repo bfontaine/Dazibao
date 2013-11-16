@@ -297,7 +297,9 @@ int dz_rm_tlv(dz_t* d, off_t offset) {
 	}
 
 	if (off_end == off_eof) { /* end of file reached */
-		ftruncate(*d, off_start);
+		if (ftruncate(*d, off_start) == -1) {
+                        perror("ftruncate");
+                }
                 /* RESTORE_OFFSET(*d); */
 		return 0;
 	}
