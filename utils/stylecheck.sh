@@ -22,9 +22,10 @@ function warnfncheck() {
     _check "$1\\(" "!! Use $2 instead of $1 here:"
 }
 
-warncheck '.{80,}' '80+ chars lines'
-warncheck ' +$'    'trailing spaces'
-warncheck '//'     'C99-style comments'
+warncheck '.{80,}'  '80+ chars lines'
+warncheck ' +$'     'trailing spaces'
+warncheck '//'      'C99-style comments'
+warncheck '^ {4}\w' '4-spaces indentation'
 
 warnfncheck 'sprintf' 'snprintf'
 warnfncheck 'atoi'    'strtol'
