@@ -4,6 +4,9 @@
 SRC=src
 WEBSRC=$(SRC)/web
 
+VALGRIND=valgrind
+VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes
+
 CC=gcc
 CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
@@ -73,3 +76,6 @@ cleanall: clean
 check: cleantmp
 	./utils/stylecheck.sh
 	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
+
+memcheck-%: %
+	$(VALGRIND) $(VALFLAGS) ./$<
