@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         l = _wlog_level;
         loglvlflag = 0;
         dz = -1;
-        while ((c = getopt(argc, argv, "l:p:d:")) != -1) {
+        while ((c = getopt(argc, argv, "l:p:d:v")) != -1) {
                 switch (c) {
                 case 'l':
                         l = strtol(optarg, NULL, 10);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
                         break;
                 case 'v':
                         if (!loglvlflag) {
-                                l += 10;
+                                _wlog_level += 10;
                         }
                         break;
                 case ':':
