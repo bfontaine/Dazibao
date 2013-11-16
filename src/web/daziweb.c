@@ -7,7 +7,9 @@
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>
+#include "dazibao.h"
 #include "daziweb.h"
+#include "utils.h"
 #include "webutils.h"
 #include "request.h"
 #include "routing.h"
@@ -23,8 +25,9 @@ void clean_close(int s) {
 }
 
 int main(int argc, char *argv[]) {
-        int port, status = 0,
-            mth, body_len;
+        int status = 0, c, l, loglvlflag,
+            mth, body_len,
+            port = DEFAULT_PORT;
         char *path = NULL;
         char *body = NULL;
 
@@ -32,6 +35,8 @@ int main(int argc, char *argv[]) {
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
+
+        dz_t dz;
 
         sig.sa_handler = clean_close;
         sig.sa_sigaction = NULL;
@@ -42,14 +47,44 @@ int main(int argc, char *argv[]) {
                 perror("sigaction");
         }
 
-        if (argc < 2) {
-                port = DEFAULT_PORT;
-                WLOGINFO("Using default port");
-        } else {
-                port = strtol(argv[1], NULL, 10);
-                if (port == LONG_MIN || port == LONG_MAX) {
-                        WLOGDEBUG("trouble parsing the port, using default");
-                        port = DEFAULT_PORT;
+        /* -p <port> -l <loglevel> -d <dazibao path>
+         * -v: if -l is not used, increase verbosity */
+        port = DEFAULT_PORT;
+        l = _wlog_level;
+        loglvlflag = 0;
+        dz = -1;
+        while ((c = getopt(argc, argv, "l:p:d:")) != -1) {
+                switch (c) {
+                case 'l':
+                        l = strtol(optarg, NULL, 10);
+                        if (!STRTOL_ERR(l)) {
+                                _wlog_level = l;
+                                loglvlflag = 1;
+                        }
+                        break;
+                case 'p':
+                        port = strtol(optarg, NULL, 10);
+                        if (STRTOL_ERR(port)) {
+                                WLOGWARN("Wrong port: '%s'", optarg);
+                                port = DEFAULT_PORT;
+                        }
+                        break;
+                case 'd':
+                        if (dz == -1 && dz_open(&dz,  optarg,  0) < 0) {
+                                WLOGFATAL("Cannot open '%s'", optarg);
+                                exit(EXIT_FAILURE);
+                        }
+                        break;
+                case 'v':
+                        if (!loglvlflag) {
+                                l += 10;
+                        }
+                        break;
+                case ':':
+                        WLOGFATAL("-%c requires an argument", optopt);
+                        exit(EXIT_FAILURE);
+                case '?':
+                        WLOGWARN("Unrecognized option: '-%c'", optopt);
                 }
         }
 
