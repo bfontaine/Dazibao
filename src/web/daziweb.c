@@ -15,11 +15,15 @@
 #include "routing.h"
 
 static int listening_sock;
+static dz_t dz;
 
 void clean_close(int s) {
         /* avoid 'unused parameter' warning */ s++;
         if (close(listening_sock) == -1) {
             perror("close");
+        }
+        if (dz > 0) {
+                dz_close(&dz);
         }
         exit(EXIT_SUCCESS);
 }
@@ -35,8 +39,6 @@ int main(int argc, char *argv[]) {
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
-
-        dz_t dz;
 
         sig.sa_handler = clean_close;
         sig.sa_sigaction = NULL;
@@ -82,6 +84,9 @@ int main(int argc, char *argv[]) {
                         break;
                 case ':':
                         WLOGFATAL("-%c requires an argument", optopt);
+                        if (dz > 0) {
+                                dz_close(&dz);
+                        }
                         exit(EXIT_FAILURE);
                 case '?':
                         WLOGWARN("Unrecognized option: '-%c'", optopt);
@@ -91,6 +96,9 @@ int main(int argc, char *argv[]) {
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (listening_sock == -1) {
                 perror("socket");
+                if (dz > 0) {
+                        dz_close(&dz);
+                }
                 exit(EXIT_FAILURE);
         }
 
@@ -109,12 +117,18 @@ int main(int argc, char *argv[]) {
         if (status == -1) {
                 perror("bind");
                 close(listening_sock);
+                if (dz > 0) {
+                        dz_close(&dz);
+                }
                 exit(EXIT_FAILURE);
         }
 
         if (listen(listening_sock, MAX_QUEUE) == -1) {
                 perror("listen");
                 close(listening_sock);
+                if (dz > 0) {
+                        dz_close(&dz);
+                }
                 exit(EXIT_FAILURE);
         }
 
