@@ -69,19 +69,19 @@ int dz_close(dz_t* d) {
 
 	if (flock(*d, LOCK_UN) == -1) {
 		PANIC("flock:");
-		/* should it return an error intead ? */
+		/* FIXME should it return an error intead ? */
 	}
 	if (close(*d) == -1) {
 		PANIC("close:");
-		/* should it return an error intead ? */
+		/* FIXME should it return an error intead ? */
 	}
 
 	return 0;
 }
 
-int dz_read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
+int dz_read_tlv(dz_t *d, tlv_t tlv, off_t offset) {
 
-	/* probably some issues to fix with large tlv */
+	/* FIXME probably some issues to fix with large tlv */
 
 	if (SET_OFFSET(*d, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
@@ -94,8 +94,7 @@ int dz_read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
 off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
 
 	/*
-	 * PRECONDITION:
-	 * tlv have to be (at least) TLV_SIZEOF_HEADER long
+	 * FIXME PRECONDITION: tlv have to be (at least) TLV_SIZEOF_HEADER long
 	 */
 
 	int size_read;

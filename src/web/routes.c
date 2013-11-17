@@ -5,6 +5,7 @@
 #include "routing.h"
 #include "dazibao.h"
 #include "http.h"
+#include "html.h"
 
 int route_get_index(dz_t dz, int mth, char *path, char *body, int bodylen,
                         int *status, char **resp, int *resplen) {
@@ -17,10 +18,12 @@ int route_get_index(dz_t dz, int mth, char *path, char *body, int bodylen,
                 WLOGDEBUG("GET /index got a body (len=%d)", bodylen);
         }
 
-        /* TODO parse dazibao and return html repr */
-        *status = HTTP_S_NOTIMPL;
-        *resp = strdup("Not implemented...\r\n");
-        *resplen = strlen(*resp)+1; /* TODO check why +1 is needed here */
+        if (dz2html(dz, resp, resplen) < 0) {
+                WLOGERROR("Error while making dazibao's HTML");
+                return -1;
+        }
+
+        *status = HTTP_S_OK;
 
         return 0;
 }

@@ -72,3 +72,18 @@ int dump_tlv(tlv_t tlv, int fd) {
 int dump_tlv_value(tlv_t tlv, int fd) {
 	return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
+
+const char *tlv_type2str(char tlv_type) {
+        switch (tlv_type) {
+        case TLV_PAD1:  return "pad1";
+        case TLV_PADN:  return "padN";
+        case TLV_TEXT:  return "text";
+        case TLV_PNG:   return "png";
+        case TLV_JPEG:  return "jpeg";
+        case TLV_COMPOUND:
+                        return "compound";
+        case TLV_DATED: return "dated";
+        default:
+                        return "unknown";
+        }
+}

@@ -31,7 +31,6 @@
 
 typedef char* tlv_t;
 
-
 /**
  * Convert {n} in dazibao's endianess
  * and set {tlv}'s length field with the converted value.
@@ -127,5 +126,10 @@ int dump_tlv(tlv_t tlv, int fd);
  * @return same as write(2)
  */
 int dump_tlv_value(tlv_t tlv, int fd);
+
+/**
+ * Return a string representation for a TLV type
+ **/
+const char *tlv_type2str(char tlv_type);
 
 #endif
