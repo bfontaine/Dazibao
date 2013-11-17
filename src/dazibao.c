@@ -379,73 +379,94 @@ OUT:
         return status;
 }
 
-/*
 int dz_compact(dz_t* d) {
 
-        struct tlv tlv_buf;
+        tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t reading = DAZIBAO_HEADER_SIZE,
-              writing = DAZIBAO_HEADER_SIZE;
+              writing = -1;
 
-        int saved = 0,
-            readlen;
+        int status = 0;
 
         char buff[BUFFLEN];
 
         if (d == NULL) {
-                return saved;
+                status = -1;
+                goto OUT;
         }
 
 
         if (SET_OFFSET(*d, reading) == -1) {
-                return -1;
+                status = -1;
+                goto OUT;
         }
 
-        while (tlv_at(d, &tlv_buf, reading) > 0) {
+        while ((reading = dz_next_tlv(d, tlv)) != EOD) {
+                int type = tlv_get_type(tlv);
 
-                int len = TLV_SIZEOF(tlv_buf);
-
-                if (TLV_IS_EMPTY_PAD(tlv_buf.type)) {
-                        reading += len;
-                        continue;
-                }
-
-                if (reading == writing) {
-                        reading += len;
-                        writing += len;
-                        continue;
-                }
-
-                saved += len;
-                while (len > 0) {
-
-                        if (SET_OFFSET(*d, reading) == -1) {
-                                return -1;
+                if ((type == TLV_PAD1) || (type == TLV_PADN)){
+                        if (writing == -1){
+                                writing = reading;
                         }
+                } else{
+                        if (writing != -1){
+                                if (SET_OFFSET(*d, (reading +
+                                    TLV_SIZEOF_HEADER)) == -1){
+                                    PERROR("lseek");
+                                    status = -1;
+                                    goto OUT;
+                                }
 
-                        readlen = read(*d, buff, MIN(len, BUFFLEN));
-                        if (readlen < 0) {
-                                return -1;
-                        }
+                                int len = tlv_get_length(tlv);
+                                tlv_t tlv_tmp;
 
-                        if (SET_OFFSET(*d, writing) == -1) {
-                                return -1;
-                        }
-                        if (write(*d, buff, readlen) < 0) {
-                                return -1;
-                        }
+                                tlv_tmp = realloc(tlv,
+                                sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
 
-                        reading += readlen;
-                        writing += readlen;
-                        len     -= readlen;
+                                if (tlv_tmp == NULL){
+                                    PERROR("realloc");
+                                    status = -1;
+                                    goto OUT;
+                                }
+                                tlv = tlv_tmp;
+
+                                if (read(d, tlv_get_value_ptr(tlv),len) < len){
+                                    PERROR("read");
+                                    status = -1;
+                                    goto OUT;
+                                }
+
+                                writing = GET_OFFSET(*d);
+                                if (writing == -1){
+                                    PERROR("realloc");
+                                    status = -1;
+                                    goto OUT;
+                                }
+
+                                if (dz_write_tlv_at(d, tlv, writing) == -1){
+                                    PERROR("realloc");
+                                    status = -1;
+                                    goto OUT;
+                                }
+
+                                if (SET_OFFSET(*d, (reading +
+                                    TLV_SIZEOF(tlv))) == -1){
+                                    PERROR("realloc");
+                                    status = -1;
+                                    goto OUT;
+                                }
+                        }
                 }
         }
 
-        ftruncate(*d, reading);
+        if (writing != -1){
+            ftruncate(*d, writing);
+        }
 
-	return saved;
-
+OUT:
+        free(tlv);
+        return status;
 }
-*/
+
 int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent) {
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
