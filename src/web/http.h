@@ -11,6 +11,8 @@
 #define HTTP_M_POST 2
 #define HTTP_M_UNSUPPORTED 4
 
+#define HTTP_M_ANY (HTTP_M_GET|HTTP_M_POST)
+
 /* Statuses
  *  Not all statuses are included here, only those we might need to use.
  */

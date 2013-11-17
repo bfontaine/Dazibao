@@ -11,27 +11,126 @@ static route_handler routes_handlers[MAX_ROUTES];
 
 static int routes_cpt = 0;
 
-int add_route(char *path_suffix, route_handler route) {
-    if (routes_cpt >= MAX_ROUTES) {
-        return -1;
-    }
-    routes_paths[routes_cpt] = path_suffix;
-    routes_handlers[routes_cpt] = route;
-    routes_cpt++;
+/*
+ The following two functions use a little trick to match a request on both its
+ path and its method. Paths are stored as NULL-terminated strings in
+ routes_paths, and since a method is defined as a number below 127 in http.h,
+ we replace the first character of the path, which is always a slash ('/') with
+ this number.
+ */
 
-    return 0;
+int add_route(char mth, char *path_suffix, route_handler route) {
+        char *p2;
+
+        if (routes_cpt >= MAX_ROUTES) {
+                return -1;
+        }
+        if (path_suffix[0] != '/' || mth == 0) {
+                return -1;
+        }
+
+        WLOGDEBUG("Route handler for method %d and suffix '%s' added.",
+                        mth, path_suffix);
+
+        p2 = strdup(path_suffix);
+        p2[0] = mth;
+
+        routes_paths[routes_cpt] = p2;
+        routes_handlers[routes_cpt] = route;
+        routes_cpt++;
+
+        return 0;
 }
 
-route_handler get_route_handler(char *path) {
+route_handler get_route_handler(char mth, char *path) {
+        WLOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
 
-    for (int i=0, len; i<routes_cpt; i++) {
-        len = strlen(routes_paths[i]);
-        if (strncmp(path, routes_paths[i], len) == 0) {
-            return routes_handlers[i];
+        for (int i=0, len, pmth, paths_match; i<routes_cpt; i++) {
+                pmth = routes_paths[i][0];
+
+                if ((mth & pmth) != mth) {
+                        continue;
+                }
+
+                routes_paths[i][0] = '/';
+                len = strlen(routes_paths[i]);
+                paths_match = (strncmp(path, routes_paths[i], len) == 0);
+                routes_paths[i][0] = pmth;
+
+                if (paths_match) {
+                        return routes_handlers[i];
+                }
         }
-    }
 
-    return NULL;
+        return NULL;
+}
+
+int destroy_routes(void) {
+        if (routes_cpt == 0) {
+                return 0;
+        }
+
+        for (int i=0; i<routes_cpt; i++) {
+                NFREE(routes_paths[i]);
+        }
+
+        routes_cpt = 0;
+        return 0;
+}
+
+int route_request(int sock, dz_t dz, int mth, char *path, char *body,
+                        int bodylen) {
+        route_handler rh;
+        char *resp = NULL;
+        int resplen = -1,
+            status = -1,
+            rstatus = -1,
+            rst; /* route status */
+
+        if (body == NULL) {
+                bodylen = -1;
+        }
+
+        if (sock < 0) {
+                WLOGERROR("Cannot route a request on negative socket");
+                return -1;
+        }
+
+        if (path == NULL) {
+                WLOGERROR("Got a NULL path");
+                error_response(sock, HTTP_S_BADREQ);
+                return -1;
+        }
+
+        if (mth == HTTP_M_UNSUPPORTED) {
+                error_response(sock, HTTP_S_NOTIMPL);
+                return 0;
+        }
+
+        rh = get_route_handler(mth, path);
+
+        if (rh == NULL) {
+                WLOGWARN("No route found for path '%s'", path);
+                error_response(sock, HTTP_S_NOTFOUND);
+                return 0;
+        }
+
+        if (mth == HTTP_M_POST && bodylen <= 0) {
+                WLOGWARN("Got a POST request with empty body on '%s'", path);
+        }
+
+        rst = (*rh)(dz, mth, path, body, bodylen, &rstatus, &resp, &resplen);
+        if (rst < 0) {
+                WLOGERROR("Route handler error, rst=%d, status=%d",
+                                rst, status);
+                NFREE(resp);
+                return -1;
+        }
+
+        status = http_response(sock, rstatus, NULL, resp, resplen);
+
+        NFREE(resp);
+        return status;
 }
 
 int http_response(int sock, int status, struct http_headers *hs, char *body,
@@ -115,7 +214,8 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         http_destroy_headers(hs);
         /* -- /headers -- */
 
-        /* TODO send body */
+        /* TODO test return value */
+        write_all(sock, body, bodylen);
 
 EORESP:
         NFREE(response);

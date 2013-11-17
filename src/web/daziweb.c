@@ -13,6 +13,7 @@
 #include "webutils.h"
 #include "request.h"
 #include "routing.h"
+#include "routes.h"
 
 static int listening_sock;
 static dz_t dz;
@@ -25,6 +26,7 @@ void clean_close(int s) {
         if (dz > 0) {
                 dz_close(&dz);
         }
+        destroy_routes();
         exit(EXIT_SUCCESS);
 }
 
@@ -135,6 +137,8 @@ int main(int argc, char *argv[]) {
         WLOGINFO("Listening on port %d...", port);
         WLOGINFO("Press ^C to interrupt.");
 
+        register_routes();
+
         while (1) {
                 int client;
                 NFREE(path);
@@ -155,14 +159,21 @@ int main(int argc, char *argv[]) {
                         if (error_response(client, status) < 0) {
                                 WLOGERROR("error_response failed");
                         }
+                        WLOGINFO("Connection closed.");
                         if (close(client) == -1) {
                             perror("close");
                         }
                         continue;
                 }
-
                 WLOGDEBUG("Got method %d, path %s, body length %d",
                                mth, path, body_len);
+                status = route_request(client, dz, mth, path, body, body_len);
+                if (status != 0) {
+                        WLOGWARN("route error, status=%d", status);
+                        if (error_response(client, HTTP_S_NOTFOUND) < 0) {
+                                WLOGERROR("404 error response failed");
+                        }
+                }
 
                 /* TODO respond to the request */
 
