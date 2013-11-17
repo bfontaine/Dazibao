@@ -35,7 +35,7 @@ int dz_open(dz_t* d, char* path, int flags) {
 	char header[DAZIBAO_HEADER_SIZE];
 
 	fd = open(path, flags);
-	if (fd == -1) { /* open failed */
+	if (fd == -1) {
 		ERROR("open", -1);
 	}
 
@@ -56,7 +56,7 @@ int dz_open(dz_t* d, char* path, int flags) {
 	}
 
 	if (header[0] != MAGIC_NUMBER || header[1] != 0) {
-		/* FIXME: calling perror makes no sens here... */
+		/* FIXME: calling perror makes no sense here... */
 		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
 	}
 
@@ -79,7 +79,7 @@ int dz_close(dz_t* d) {
 	return 0;
 }
 
-int dz_read_tlv(dz_t* d, tlv_t tlv,  off_t offset) {
+int dz_read_tlv(dz_t* d, tlv_t tlv, off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -133,7 +133,7 @@ off_t dz_next_tlv(dz_t* d, tlv_t tlv) {
 	return off_init;
 }
 
-int dz_tlv_at(dz_t* d, tlv_t tlv,  off_t offset) {
+int dz_tlv_at(dz_t* d, tlv_t tlv, off_t offset) {
 
         /* SAVE_OFFSET(*d); */
 
@@ -167,7 +167,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
 }
 
 
-int dz_add_tlv(dz_t* d,  tlv_t tlv) {
+int dz_add_tlv(dz_t* d, tlv_t tlv) {
 	off_t pad_off, eof_off;
 
         /* SAVE_OFFSET(*d); */
@@ -440,12 +440,12 @@ int dz_compact(dz_t* d) {
 
 }
 */
-int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent){
+int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent) {
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
         char *ind;
-        if (indent > 0){
+        if (indent > 0) {
                 ind = malloc(sizeof(char)*indent+1);
                 int i;
                 for(i = 0; i < indent; i++) {
@@ -511,21 +511,21 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent){
 		printf("[%4d] TLV %3d | %8d | ",
 			(int)off, tlv_get_type(tlv), len);
 
-                if (type == TLV_COMPOUND ){
+                if (type == TLV_COMPOUND ) {
                         printf("COMPOUND \n");
-                        if (depth > 0){
+                        if (depth > 0) {
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
                                 if (dz_dump_compound(daz_buf,current,
-                                        (depth-1), (indent+1))){
+                                        (depth-1), (indent+1))) {
                                         ERROR(NULL,-1);
                                 }
                                 SET_OFFSET(*daz_buf, current);
                                 continue;
                         }
-                } else if (type == TLV_DATED){
+                } else if (type == TLV_DATED) {
                         printf("DATE\n");
-                        if (depth > 0){
+                        if (depth > 0) {
                                 /* TODO
                                 function to print date
                                 */
@@ -533,23 +533,23 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth ,int indent){
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
                                 TLV_SIZEOF_DATE);
                                 if (dz_dump_compound(daz_buf,current,
-                                        (depth-1), (indent+1))){
+                                                (depth-1), (indent+1))) {
                                         ERROR(NULL,-1);
                                 }
                                 SET_OFFSET(*daz_buf, current);
                         }
-                } else if (type == TLV_PNG){
+                } else if (type == TLV_PNG) {
                         printf("PNG\n");
-                } else if (type == TLV_JPEG){
+                } else if (type == TLV_JPEG) {
                         printf("JPEG\n");
-                } else if (type == TLV_TEXT){
+                } else if (type == TLV_TEXT) {
                         printf("TEXTE\n");
                  } else {
                         printf("...\n");
                 }
 
         }
-        if (indent < 0 ){
+        if (indent < 0 ) {
                 free(ind);
         }
 	free(tlv);
