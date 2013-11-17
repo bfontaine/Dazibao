@@ -341,23 +341,29 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-	if (length > TLV_SIZEOF_HEADER) {
-		/* set type */
-		tlv_set_type(buff, TLV_PADN);
-		/* set length */
-		htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
+    	while (length > TLV_SIZEOF_HEADER) {
+            int tmp = length;
+            if (length > TLV_MAX_SIZE){
+                    length = TLV_MAX_SIZE;
+            }
+	    	/* set type */
+		    tlv_set_type(buff, TLV_PADN);
+    		/* set length */
+	    	htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
 
-		if(dz_write_tlv_at(d, buff, start) == 1) {
-			ERROR(NULL, -1);
-		}
+	    	if(dz_write_tlv_at(d, buff, start) == 1) {
+		    	ERROR(NULL, -1);
+		    }
+            start = start + length;
+            length = tmp - length;
 
-	}
+	    }
 
 
         /* We don't have enough room to store a padN, so we fill it with
          * pad1's
          */
-        else if (length > 0) {
+        if (length > 0) {
                for (int i=0; i<length; i++) {
                        pad1s[i] = TLV_PAD1;
                }
