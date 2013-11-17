@@ -41,7 +41,7 @@ CPPCHECK=cppcheck \
 	--language=c -q
 
 .DEFAULT: all
-.PHONY: clean cleantmp check
+.PHONY: clean cleantmp check checkwhattodo
 
 all: check $(TARGETS)
 
@@ -80,3 +80,11 @@ check: cleantmp
 
 memcheck-%: %
 	$(VALGRIND) $(VALFLAGS) ./$<
+
+checkwhattodo:
+	@d=$(SRC);c="TO";f="FIX";x="X"; \
+	 for s in $${c}DO $${f}ME $${x}XX; do \
+		echo "== $$s =="; \
+		grep -nI -e $$s -- \
+			$$d/*.c $$d/*.h $$d/*/*.c $$d/*/*.h Makefile;\
+	done; true
