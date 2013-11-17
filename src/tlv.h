@@ -1,13 +1,6 @@
 #ifndef _TLVS_H
 #define _TLVS_H 1
 
-#include <arpa/inet.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-#include "utils.h"
-
-
 #define TLV_PAD1     0
 #define TLV_PADN     1
 #define TLV_TEXT     2

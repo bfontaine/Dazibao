@@ -45,7 +45,7 @@ CPPCHECK=cppcheck \
 
 all: check $(TARGETS)
 
-$(TARGET): main.o dazibao.o tlv.o
+$(TARGET): main.o dazibao.o tlv.o utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(SERVER): $(SERVER).o $(SRC)/notification-server.h
@@ -56,7 +56,7 @@ $(CLIENT): notification-client.o
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
-		dazibao.o tlv.o
+		dazibao.o tlv.o utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)

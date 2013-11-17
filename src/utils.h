@@ -68,4 +68,10 @@
 #define WARN_UNUSED
 #endif
 
+/**
+ * Wrapper around realloc(3) which frees the original pointer if the request
+ * fails. See #35.
+ **/
+void *safe_realloc(void *ptr, size_t size);
+
 #endif

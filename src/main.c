@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 				exit(EXIT_FAILURE);
 			}
 
-			buff = realloc(buff, sizeof(*buff) * buff_size);
+			buff = safe_realloc(buff, sizeof(*buff) * buff_size);
 
 			if(!buff) {
 				PERROR("realloc");
