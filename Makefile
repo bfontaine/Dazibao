@@ -45,24 +45,24 @@ CPPCHECK=cppcheck \
 
 all: check $(TARGETS)
 
-$(TARGET): main.o dazibao.o tlv.o utils.o
+$(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(SERVER): $(SERVER).o $(SRC)/notification-server.h
+$(SERVER): $(SRC)/$(SERVER).o $(SRC)/notification-server.h
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(CLIENT): notification-client.o
+$(CLIENT): $(SRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
-		dazibao.o tlv.o utils.o
+		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
+$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 cleantmp:
