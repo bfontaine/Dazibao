@@ -153,9 +153,18 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 		
+	} else if (!strcmp(cmd, "compact")) {
+		if (dz_open(&daz_buf, daz, O_RDWR)) {
+			exit(EXIT_FAILURE);
+		}
+
+                if (dz_compact(&daz_buf)){
+			exit(EXIT_FAILURE);
+                }
+
 	} else {
 
-	}
+        }
 
 	/* FIXME: check for error */
 	dz_close(&daz_buf);

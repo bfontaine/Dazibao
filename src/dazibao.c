@@ -429,20 +429,20 @@ int dz_compact(dz_t* d) {
                                 }
                                 tlv = tlv_tmp;
 
-                                if (read(d, tlv_get_value_ptr(tlv),len) < len){
+                                if (read(*d, tlv_get_value_ptr(tlv),len) < len){
                                     PERROR("read");
+                                    status = -1;
+                                    goto OUT;
+                                }
+
+                                if (dz_write_tlv_at(d, tlv, writing) == -1){
+                                    PERROR("realloc");
                                     status = -1;
                                     goto OUT;
                                 }
 
                                 writing = GET_OFFSET(*d);
                                 if (writing == -1){
-                                    PERROR("realloc");
-                                    status = -1;
-                                    goto OUT;
-                                }
-
-                                if (dz_write_tlv_at(d, tlv, writing) == -1){
                                     PERROR("realloc");
                                     status = -1;
                                     goto OUT;
