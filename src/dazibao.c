@@ -341,7 +341,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-    	while (length > TLV_SIZEOF_HEADER) {
+    	while (length > (TLV_SIZEOF_HEADER+2)) {
             int tmp = length;
             if (length > TLV_MAX_SIZE){
                     length = TLV_MAX_SIZE;
@@ -429,7 +429,8 @@ int dz_compact(dz_t* d) {
                                 }
                                 tlv = tlv_tmp;
 
-                                if (read(*d, tlv_get_value_ptr(tlv),len) < len){
+                                if (read(*d, tlv_get_value_ptr(tlv),len)
+                                        < len){
                                     PERROR("read");
                                     status = -1;
                                     goto OUT;
