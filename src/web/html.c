@@ -9,11 +9,11 @@ int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
                 WLOGERROR("Cannot read TLV at offset %li", off);
                 return -1;
         }
-        
+
         /* TODO */
         *html = strdup("one tlv");
 
-        NFREE(t);
+        free(t);
         return 0;
 }
 
@@ -23,9 +23,9 @@ int dz2html(dz_t dz, char **html) {
         tlv_t t; /* TODO initialize */
 
         *html = NULL; /* TODO add beginning of HTML */
-        
-        while ((tlv_off = dz_next_tlv(&dz, t) > 0)) {
-                if (tlv2html(dz, tlv_off, tlv_html) < 0) {
+
+        while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
+                if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
                         NFREE(t);

@@ -18,11 +18,12 @@ int route_get_index(dz_t dz, int mth, char *path, char *body, int bodylen,
                 WLOGDEBUG("GET /index got a body (len=%d)", bodylen);
         }
 
-        if (dz2html(dz, resp, resplen) < 0) {
+        if (dz2html(dz, resp) < 0) {
                 WLOGERROR("Error while making dazibao's HTML");
                 return -1;
         }
 
+        *resplen = strlen(*resp);
         *status = HTTP_S_OK;
 
         return 0;

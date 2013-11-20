@@ -56,12 +56,8 @@ $(CLIENT): $(SRC)/notification-client.o
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
-<<<<<<< HEAD
 		$(WEBSRC)/html.o \
-		dazibao.o tlv.o
-=======
 		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
->>>>>>> @{-1}
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
