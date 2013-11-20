@@ -1,3 +1,8 @@
+#include <arpa/inet.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+#include "utils.h"
 #include "tlv.h"
 
 void htod(unsigned int n, char *len) {
@@ -52,7 +57,7 @@ int tlv_read(tlv_t tlv, int fd) {
 
 	int len = tlv_get_length(tlv);
 	
-	tlv = realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
+	tlv = safe_realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
 
 	if (tlv == NULL) {
 		ERROR("realloc", -1);

@@ -29,7 +29,7 @@ typedef int dz_t;
  * @return 0 on success
  * @return -1 on error
  */
-int dz_create(dz_t *daz_buf,  char *path);
+int dz_create(dz_t *daz_buf, char *path);
 
 /**
  * Open a dazibao.
@@ -39,7 +39,7 @@ int dz_create(dz_t *daz_buf,  char *path);
  * @return 0 on succes
  * @return -1 on error
  */
-int dz_open(dz_t* d,  char* path,  int flags);
+int dz_open(dz_t *d, char* path, int flags);
 
 /**
  * Close a dazibao

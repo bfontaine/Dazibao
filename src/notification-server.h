@@ -18,6 +18,15 @@
 #define WATCH_SLEEP_DEFAULT 10
 #define WATCH_SLEEP_MAX 60
 
+struct file_watcher {
+	int pid;
+	char *file;
+};
+
+/**
+ * Compare two file_watcher struct
+ */
+int fwcmp (const void*, const void*);
 
 /**
  * Signal handler.
