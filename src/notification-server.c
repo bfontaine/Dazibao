@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
 
 		/* set handler for SIGUSR1 */
 	struct sigaction action2;
-	action2.sa_flags = SA_SIGINFO | SA_RESTART;
+	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
 	action2.sa_sigaction = collect_zombie;
 	if(sigaction(SIGCHLD, &action2, NULL) == -1) {
 		ERROR("sigaction", -1);
