@@ -1,10 +1,28 @@
 #include "notification-server.h"
 
-static char **filename;
-static int *pids;
+static struct file_watcher *watch_list;
 static int nbdaz;
 static int sock;
 static int nbclient = 0;
+
+
+int fwcmp(const void *w1, const void *w2) {
+	return ((struct file_watcher *)w2)->pid - ((struct file_watcher *)w1)->pid;
+}
+
+char *find_file(int pid) {
+	struct file_watcher tmp;
+	tmp.pid = pid;
+	tmp.file = NULL;
+	struct file_watcher *found =
+		bsearch(&tmp, watch_list, nbdaz, sizeof(*watch_list), fwcmp);
+
+	if (found == NULL) {
+		return NULL;
+	}
+
+	return found->file;
+}
 
 /**
  * TODO:
@@ -14,19 +32,15 @@ void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
 	printf("[pid:%d] Received SIGUSR1: %d\n", getpid(), unused_sigint == SIGUSR1);
 
-	int i;
-	for (i = 0; i < nbdaz; i++) {
-		if (pids[i] == info->si_pid) {
-			break;
-		}
-	}
-	if (i < nbdaz) {
-		int len = strlen(filename[i]) + 2;
+	char *file = find_file(info->si_pid);
+
+	if (file != NULL) {
+		int len = strlen(file) + 2;
 		char *str = malloc(sizeof(*str) * len);
 		str[0] = 'C';
-		memcpy(&str[1], filename[i], len - 2);
+		memcpy(&str[1], file, len - 2);
 		str[len - 1] = '\n';
-		if (write(sock, str, len) < (int)(strlen(filename[i]) + 2)) {
+		if (write(sock, str, len) < len) {
 			if (errno == EPIPE) {
 				printf("[pid:%d] Client has disconnected: exiting\n", getpid());
 				exit(EXIT_SUCCESS);
@@ -112,12 +126,17 @@ int nsa(int n, char **file) {
 	int i;
 	int nb = 0;
 	for (i = 0; i < n; i++) {
-		printf("[pid:%d] Launching %s watch\n", getpid(), file[i]);	
-		pids[i] = watch_file(file[i]);
-		if (pids[i] != -1) {
+		printf("[pid:%d] Launching %s watch\n", getpid(), file[i]);
+		struct file_watcher tmp;
+		tmp.pid = watch_file(file[i]);
+		tmp.file = file[i];
+		watch_list[i] = tmp;
+		if (watch_list[i].pid != -1) {
 			nb++;
 		}
 	}
+	qsort(watch_list, n, sizeof(*watch_list), fwcmp);
+
 	return nb;
 }
 
@@ -222,15 +241,13 @@ int main(int argc, char **argv) {
 
 	if (argc < 2) {
                 printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n",
-                                argv[0]);
+			argv[0]);
                 exit(EXIT_FAILURE);
 	}
 
 	nbdaz = argc - 1;
 
-	filename = &argv[1];
-
-	pids = malloc(sizeof(*pids) * nbdaz);	
+	watch_list = malloc(sizeof(*watch_list) * nbdaz);	
 
 	server = set_up_server();
 	if (server == -1) {
@@ -257,7 +274,7 @@ int main(int argc, char **argv) {
 
 	printf("[pid:%d] sigaction set\n", getpid());	
 
-	if(nsa(argc - 1, &argv[1]) != argc - 1) {
+	if(nsa(nbdaz, &argv[1]) != nbdaz) {
 		fprintf(stderr, "[pid:%d] Some files could not be watched\n", getpid());
 	} else {
 		printf("[pid:%d] nsa launch has gone well\n", getpid());	
@@ -272,8 +289,6 @@ int main(int argc, char **argv) {
 			continue;
 		}
 	}
-
-	free(pids);
-
+	free(watch_list);
 	return 0;
 }
