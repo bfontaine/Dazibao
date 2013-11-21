@@ -172,12 +172,20 @@ int set_up_server(char *path) {
 		exit(1);
 	}
 
-	if (access(saddr.sun_path, F_OK) == 0) {
-		if (connect(server, (struct sockaddr*)&saddr, sizeof(saddr)) == -1) {
+	if (bind(server, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
+		if (errno != EADDRINUSE) {
+			ERROR("bind", -1);
+		}
+		if (connect(server, (struct sockaddr*)&saddr,
+				sizeof(saddr)) == -1) {
 			printf("[pid:%d] Removing old socket at \"%s\"\n",
 				getpid(), saddr.sun_path);
 			if (unlink(saddr.sun_path) == -1) {
 				ERROR("unlink", -1);
+			}
+			if (bind(server, (struct sockaddr*)&saddr,
+					sizeof(saddr))  == -1) {
+				ERROR("bind", -1);
 			}
 		} else {
 			if (close(server) == -1) {
@@ -187,11 +195,6 @@ int set_up_server(char *path) {
 				getpid(), saddr.sun_path);
 			return -1;
 		}
-	}
-	
-
-	if (bind(server, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
-		ERROR("bind", -1);
 	}
 
 	if (listen(server, 10) == -1) {
