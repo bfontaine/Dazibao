@@ -275,8 +275,7 @@ int main(int argc, char **argv) {
 	int server;
 
 	if (argc < 2) {
-                printf("Usage:\n\t%s [socket path] <dazibao 1> <dazibao 2> ... <dazibao n>\n",
-			argv[0]);
+                printf("Usage:\n\t%s [OPTION] [FILE]\n", argv[0]);
                 exit(EXIT_FAILURE);
 	}
 
