@@ -48,7 +48,7 @@ int watch_file(char *path);
  * @return file descriptor (positive integer) of server on success
  * @return -1 on error
  */
-int set_up_server(void);
+int set_up_server(char *);
 
 /**
  * Establish connection with client, and create a new process to handle

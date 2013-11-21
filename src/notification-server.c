@@ -148,18 +148,23 @@ int nsa(int n, char **file) {
 	return nb;
 }
 
-int set_up_server(void) {
-	printf("[pid:%d] Setting up server\n", getpid());	
+int set_up_server(char *path) {
+	printf("[pid:%d] Setting up server\n", getpid());
 	int server;
 	struct sockaddr_un saddr;
 
 	/* set up the server adress */	
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sun_family = AF_UNIX;
-	strncpy(saddr.sun_path, getenv("HOME"), 107);
-	strncat(saddr.sun_path, "/", 107);
-	strncat(saddr.sun_path, ".dazibao-notification-socket", 107);
-	
+
+	if (path == NULL) {
+		strncpy(saddr.sun_path, getenv("HOME"), 107);
+		strncat(saddr.sun_path, "/", 107);
+		strncat(saddr.sun_path, ".dazibao-notification-socket", 107);
+	} else {
+		strncpy(saddr.sun_path, path, 107);
+	}
+
 	server = socket(PF_UNIX, SOCK_STREAM, 0);
 	if(server < 0) {
 		perror("socket");
@@ -177,6 +182,8 @@ int set_up_server(void) {
 	if (listen(server, 10) == -1) {
 		ERROR("listen", -1);
 	}
+
+	printf("[pid:%d] Socket created at \"%s\"\n", getpid(), saddr.sun_path);
 
 	return server;
 }
@@ -239,28 +246,47 @@ void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 
 int main(int argc, char **argv) {
 
-	/*
+
+	/**
 	 * TODO:
-	 * - define signal handler to notify children when the file changed
-	 * - wait for child before leaving ?
+	 * - kill children on exit
 	 */
 
+	char *path = NULL;
+	char **files;
 	int server;
 
 	if (argc < 2) {
-                printf("Usage:\n\t%s <dazibao1> <dazibao2> ... <dazibaon>\n",
+                printf("Usage:\n\t%s [socket path] <dazibao 1> <dazibao 2> ... <dazibao n>\n",
 			argv[0]);
                 exit(EXIT_FAILURE);
 	}
 
-	nbdaz = argc - 1;
+	if (argc >= 4) {
+		if (strcmp(argv[1], "--path") == 0) {
+			path = argv[2];
+			files = &argv[3];
+			nbdaz = argc - 3;
+		} else if (strcmp(argv[argc - 2], "--path") == 0) {
+			path = argv[argc - 1];
+			files = &argv[1];
+			nbdaz = argc - 3;
+		}
+	}
+
+	if (path == NULL) {
+		nbdaz = argc - 1;
+		files  = &argv[1];
+	}
 
 	watch_list = malloc(sizeof(*watch_list) * nbdaz);	
 
-	server = set_up_server();
+	server = set_up_server(path);
+
 	if (server == -1) {
 		ERROR("set_up_server", -1);
 	}
+
 	printf("[pid:%d] Server set up\n", getpid());	
 
 	/* ignore signal used by notifier */
@@ -272,7 +298,6 @@ int main(int argc, char **argv) {
 		ERROR("sigaction", -1);
 	}
 
-		/* set handler for SIGUSR1 */
 	struct sigaction action2;
 	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
 	action2.sa_sigaction = collect_zombie;
@@ -282,7 +307,7 @@ int main(int argc, char **argv) {
 
 	printf("[pid:%d] sigaction set\n", getpid());	
 
-	if(nsa(nbdaz, &argv[1]) != nbdaz) {
+	if(nsa(nbdaz, files) != nbdaz) {
 		fprintf(stderr, "[pid:%d] Some files could not be watched\n", getpid());
 	} else {
 		printf("[pid:%d] nsa launch has gone well\n", getpid());	
