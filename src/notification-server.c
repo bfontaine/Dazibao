@@ -166,14 +166,29 @@ int set_up_server(char *path) {
 	}
 
 	server = socket(PF_UNIX, SOCK_STREAM, 0);
+	
 	if(server < 0) {
 		perror("socket");
 		exit(1);
 	}
-	
-	if (unlink(saddr.sun_path) == -1 && errno != ENOENT) {
-		ERROR("unlink", -1);
+
+	if (access(saddr.sun_path, F_OK) == 0) {
+		if (connect(server, (struct sockaddr*)&saddr, sizeof(saddr)) == -1) {
+			printf("[pid:%d] Removing old socket at \"%s\"\n",
+				getpid(), saddr.sun_path);
+			if (unlink(saddr.sun_path) == -1) {
+				ERROR("unlink", -1);
+			}
+		} else {
+			if (close(server) == -1) {
+				ERROR("close", -1);
+			}
+			printf("[pid:%d] Socket at \"%s\" already in use.\n",
+				getpid(), saddr.sun_path);
+			return -1;
+		}
 	}
+	
 
 	if (bind(server, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
 		ERROR("bind", -1);
