@@ -1,5 +1,13 @@
 #include "notification-server.h"
 
+/**
+ * FIXME:
+ * If file watcher fail,
+ * we should remove from list
+ * or reload it and update list.
+ * Easy using mmap
+ */
+
 static struct file_watcher *watch_list;
 static int nbdaz;
 static int sock;
