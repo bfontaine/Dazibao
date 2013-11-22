@@ -19,11 +19,10 @@ CLIENT=notification-client
 WSERVER=daziweb
 TARGETS=$(TARGET) $(SERVER) $(CLIENT) $(WSERVER)
 
-# FIXME check how to merge these two 'ifndef'
 ifndef UNUSED
-ifndef STRICT
+#ifndef STRICT
 CFLAGS+= -Wno-unused-parameter -Wno-unused-variable
-endif
+#endif
 endif
 
 ifdef DEBUG
