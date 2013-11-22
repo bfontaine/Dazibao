@@ -14,7 +14,7 @@ int route_foobar(dz_t dz, int mth, char *path, char *body, int bodylen,
  */
 
 /**
- * Route for /index* paths
+ * Route for /index.* paths
  **/
 int route_index(dz_t dz, int mth, char *path, char *body, int bodylen,
                         int *status, char **resp, int *resplen);

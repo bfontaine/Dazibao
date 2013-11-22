@@ -45,7 +45,7 @@ void notify(char *title, char *msg) {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
 	notifier_enabled = check_notifier();
 	char buf[BUFFER_SIZE];
 	struct sockaddr_un sun;
@@ -53,9 +53,14 @@ int main() {
 
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strncpy(sun.sun_path, getenv("HOME"), 107);
-	strncat(sun.sun_path, "/", 107);
-	strncat(sun.sun_path, ".dazibao-notification-socket", 107);
+
+	if (argc == 1) {
+		strncpy(sun.sun_path, getenv("HOME"), 107);
+		strncat(sun.sun_path, "/", 107);
+		strncat(sun.sun_path, ".dazibao-notification-socket", 107);
+	} else {
+		strncpy(sun.sun_path, argv[1], 107);
+	}
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if(fd < 0) {
@@ -68,6 +73,8 @@ int main() {
 		perror("connect");
 		exit(1);
 	}
+
+	printf("[pid:%d] Connected to %s\n", getpid(), sun.sun_path);
 
 	bufptr = 0;
 	while(1) {

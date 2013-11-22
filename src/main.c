@@ -107,16 +107,16 @@ int main(int argc, char **argv) {
 		if (dz_open(&daz_buf, daz, O_RDONLY)) {
 			exit(EXIT_FAILURE);
 		}
-                if ( argc < 4 ){
+                if ( argc < 4 ) {
 		        if (dz_dump(&daz_buf)) {
 			        printf("dump failed\n");
 			        dz_close(&daz_buf);
 			        exit(EXIT_FAILURE);
 		        }
-                } else if (argc > 5){
+                } else if (argc > 5) {
 			printf("expected type\n");
 			exit(EXIT_FAILURE);
-                } else{
+                } else {
                         char *cmd_dump, *depth;
                         cmd_dump = argv[3];
                         depth = argv[4];
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
                                 exit(EXIT_FAILURE);
                         }
 
-                        if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)){
+                        if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)) {
                                 int dep = strtol(depth, NULL, 10);
                                 if (STRTOL_ERR(dep)) {
                                         printf("wrong depth");
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-                if (dz_compact(&daz_buf)){
+                if (dz_compact(&daz_buf)) {
 			exit(EXIT_FAILURE);
                 }
 
