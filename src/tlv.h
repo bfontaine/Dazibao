@@ -32,7 +32,7 @@ typedef char* tlv_t;
  * @param tlv tlv receiving length
  * @deprecated use tlv_set_length instead
  */
-void htod(unsigned int n, tlv_t tlv);
+void htod(unsigned int n, tlv_t tlv) __attribute__ ((deprecated));
 
 /**
  * Convert an int written in dazibao's endianess to host endianess.
@@ -40,7 +40,7 @@ void htod(unsigned int n, tlv_t tlv);
  * @return value of length
  * @deprecated use get_length
  */
-unsigned int dtoh(char *len);
+unsigned int dtoh(char *len) __attribute__ ((deprecated));
 
 /**
  * @param tlv
