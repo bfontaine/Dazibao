@@ -39,13 +39,13 @@ int dz_create(dz_t *daz_buf, char *path);
  * @return 0 on succes
  * @return -1 on error
  */
-int dz_open(dz_t *d, char* path, int flags);
+int dz_open(dz_t *d, char *path, int flags);
 
 /**
  * Close a dazibao
  * @return 0 on success
  */
-int dz_close(dz_t* d);
+int dz_close(dz_t *d);
 
 /**
  * Fill tlv value
@@ -55,7 +55,7 @@ int dz_close(dz_t* d);
  * @return 0 on success
  * @return -1 on error
  */
-int dz_read_tlv(dz_t* d, tlv_t tlv, off_t offset);
+int dz_read_tlv(dz_t *d, tlv_t tlv, off_t offset);
 
 /**
  * Fill tlv with type and length information
@@ -65,7 +65,7 @@ int dz_read_tlv(dz_t* d, tlv_t tlv, off_t offset);
  * @return EOD if end of file reached
  * @return -1 on error
  */
-off_t dz_next_tlv(dz_t* d, tlv_t tlv);
+off_t dz_next_tlv(dz_t *d, tlv_t tlv);
 
 /**
  * Fill tlv with type and length information
@@ -75,7 +75,7 @@ off_t dz_next_tlv(dz_t* d, tlv_t tlv);
  * @return 0 on success
  * @return -1 on error
  */
-int dz_tlv_at(dz_t* d, tlv_t tlv, off_t offset);
+int dz_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
 
 /* TODO: doc */
 int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
@@ -88,14 +88,14 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
  * @param d dazibao receiving new tlv
  * @param tlv to add
  */
-int dz_add_tlv(dz_t* d, tlv_t tlv);
+int dz_add_tlv(dz_t *d, tlv_t tlv);
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
  * @return offset of the begging of this serie on search succes
  * @return {offset} if search was unsuccessful
  */
-off_t dz_pad_serie_start(dz_t* d, off_t offset);
+off_t dz_pad_serie_start(dz_t *d, off_t offset);
 
 /**
  * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
@@ -103,7 +103,7 @@ off_t dz_pad_serie_start(dz_t* d, off_t offset);
  * @return offset of the end of this serie on search succes
  * @return offset of next tlv after {offset} if search was unsuccessful
  */
-off_t dz_pad_serie_end(dz_t* d, off_t offset);
+off_t dz_pad_serie_end(dz_t *d, off_t offset);
 
 /**
  * Erase a tlv. If tlv is surrounded by pad1/padN, they will be concatened.
@@ -111,7 +111,7 @@ off_t dz_pad_serie_end(dz_t* d, off_t offset);
  * @param d dazibao where is tlv to remove
  * @param offset offset of the tlv to remove
  */
-int dz_rm_tlv(dz_t* d, off_t offset);
+int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
  * Empty a part of a dazibao.The part is filled with padN/pad1

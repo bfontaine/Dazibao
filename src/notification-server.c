@@ -225,7 +225,7 @@ int accept_client(int server) {
 	printf("[pid:%d] *** New client connected ***\n", getpid());
 
 	pid = fork();
-	if (pid < 0){
+	if (pid < 0) {
 		ERROR("fork", -1);
 	} else if (pid == 0) {
 		sock = client;
