@@ -20,8 +20,13 @@ int main(int argc, char **argv) {
 	daz = argv[1];
 	cmd = argv[2];
 
-
 	if (!strcmp(cmd, "add")) {
+                long tmp_type;
+		unsigned char type;
+		char reader[BUFFSIZE],
+                     *buff = NULL;
+		unsigned int buff_size = 0;
+		int read_size;
 
 		if (argc < 4) {
 			printf("expected type\n");
@@ -32,12 +37,7 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
 		}
 
-                long tmp_type = strtol(argv[3], NULL, 10);
-		unsigned char type;
-		char reader[BUFFSIZE];
-		unsigned int buff_size = 0;
-		char *buff = NULL;
-		int read_size;
+                tmp_type = strtol(argv[3], NULL, 10);
 
                 if (STRTOL_ERR(tmp_type)) {
                         printf("unrecognized type\n");
@@ -62,13 +62,15 @@ int main(int argc, char **argv) {
 				exit(EXIT_FAILURE);
 			}
 
-			memcpy(buff + (buff_size - read_size), reader, read_size);
+			memcpy(buff + (buff_size - read_size),
+                                        reader, read_size);
 		}
 
 
-		tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-		tlv_set_type(tlv, type);
-		tlv_set_length(tlv, buff_size);
+		tlv_t tlv = malloc((buff_size
+                                        + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+		tlv_set_type(&tlv, type);
+		tlv_set_length(&tlv, buff_size);
 
 		memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
 
@@ -118,9 +120,10 @@ int main(int argc, char **argv) {
 			exit(EXIT_FAILURE);
                 } else {
                         char *cmd_dump, *depth;
+                        int dep;
                         cmd_dump = argv[3];
                         depth = argv[4];
-                        int dep = strtol(depth, NULL, 10);
+                        dep = strtol(depth, NULL, 10);
 
                         if (STRTOL_ERR(dep)) {
                                 printf("wrong depth");
