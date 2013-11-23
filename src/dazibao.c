@@ -68,18 +68,18 @@ int dz_open(dz_t *d, char *path, int flags) {
 int dz_close(dz_t *d) {
 
 	if (flock(*d, LOCK_UN) == -1) {
-		PANIC("flock:");
-		/* should it return an error intead ? */
+                perror("flock");
+                return -1;
 	}
 	if (close(*d) == -1) {
-		PANIC("close:");
-		/* should it return an error intead ? */
+                perror("close");
+                return -1;
 	}
 
 	return 0;
 }
 
-int dz_read_tlv(dz_t *d, tlv_t tlv, off_t offset) {
+int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 
 	/* probably some issues to fix with large tlv */
 
@@ -91,11 +91,12 @@ int dz_read_tlv(dz_t *d, tlv_t tlv, off_t offset) {
 	return tlv_read(tlv, *d);
 }
 
-off_t dz_next_tlv(dz_t *d, tlv_t tlv) {
+off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 
 	/*
 	 * PRECONDITION:
-	 * tlv have to be (at least) TLV_SIZEOF_HEADER long
+	 * *tlv have to be (at least) TLV_SIZEOF_HEADER long
+         * FIXME test the precondition
 	 */
 
 	int size_read;
@@ -108,7 +109,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t tlv) {
 	}
 
 	/* try to read regular header (TLV_SIZEOF_HEADER) */
-	size_read = read(*d, tlv, TLV_SIZEOF_HEADER);
+	size_read = read(*d, *tlv, TLV_SIZEOF_HEADER);
 	if (size_read == 0) {
 		/* reached end of file */
 		return EOD;
@@ -117,7 +118,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t tlv) {
 		ERROR(NULL, -1);
 	} else if (size_read < TLV_SIZEOF_TYPE) {
 		ERROR(NULL, -1);
-	} else if (tlv_get_type(tlv) == TLV_PAD1) {
+	} else if (tlv_get_type(*tlv) == TLV_PAD1) {
 		/* we read too far, because TLV_PAD1 is only 1 byte sized */
 		if (SET_OFFSET(*d, (off_init + TLV_SIZEOF_TYPE)) == -1) {
 			ERROR(NULL, -1);
@@ -125,7 +126,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t tlv) {
 	} else if (size_read < TLV_SIZEOF_HEADER) {
 		/* TODO: loop waiting for read effectively read a whole tlv */
 	} else {
-		if (SET_OFFSET(*d, (off_init + TLV_SIZEOF(tlv))) == -1) {
+		if (SET_OFFSET(*d, (off_init + TLV_SIZEOF(*tlv))) == -1) {
 			ERROR(NULL, -1);
 		}
 	}
@@ -133,7 +134,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t tlv) {
 	return off_init;
 }
 
-int dz_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
+int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 
         /* SAVE_OFFSET(*d); */
 
@@ -206,17 +207,22 @@ int dz_add_tlv(dz_t *d, tlv_t tlv) {
 off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 	off_t off_start, off_tmp;
 
-	char buf[TLV_SIZEOF_HEADER];
+        tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
+
+        if (buf == NULL) {
+                ERROR("malloc", -1);
+        }
 
         /* SAVE_OFFSET(*d); */
 
 	if (SET_OFFSET(*d, DAZIBAO_HEADER_SIZE) == -1) {
+                free(buf);
 		ERROR("lseek", -1);
 	}
 
 	off_start = -1;
 	
-	while ((off_tmp = dz_next_tlv(d, buf)) != -1
+	while ((off_tmp = dz_next_tlv(d, &buf)) != -1
 		&& off_tmp != EOD
 		&& off_tmp < offset) {
 		if (tlv_get_type(buf) == TLV_PAD1
@@ -232,6 +238,7 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 	}
 
 	if (off_tmp == -1) {
+                free(buf);
 		ERROR("", -1);
 	}
 
@@ -241,27 +248,30 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
         /* RESTORE_OFFSET(*d); */
 
+        free(buf);
 	return off_start;
 
 }
 
 off_t dz_pad_serie_end(dz_t *d, off_t offset) {
 	off_t off_stop;
-	char buf[TLV_SIZEOF_HEADER];
+        tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
 
         /* SAVE_OFFSET(*d); */
 
 	if(SET_OFFSET(*d, offset) == -1) {
+                free(buf);
 		ERROR("lseek", -1);
 	}
 
 	/* skip current tlv */
-	off_stop = dz_next_tlv(d, buf);
+	off_stop = dz_next_tlv(d, &buf);
 
 	/* look for the first tlv which is not a pad */
 	while (off_stop != EOD
-		&& (off_stop = dz_next_tlv(d, buf)) > 0) {
-		if (tlv_get_type(buf) != TLV_PAD1 && tlv_get_type(buf) != TLV_PADN) {
+		&& (off_stop = dz_next_tlv(d, &buf)) > 0) {
+		if (tlv_get_type(buf) != TLV_PAD1
+                                && tlv_get_type(buf) != TLV_PADN) {
 			/* tlv found */
 			break;
 		}
@@ -270,11 +280,13 @@ off_t dz_pad_serie_end(dz_t *d, off_t offset) {
 	if (off_stop == EOD) {
 		off_stop = lseek(*d, 0, SEEK_END);
 		if (off_stop < 0) {
+                        free(buf);
 			ERROR("lseek", -1);
 		}
 	}
 
         /* RESTORE_OFFSET(*d); */
+        free(buf);
 	return off_stop;
 }
 
@@ -316,7 +328,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
 	 * DO IT RIGHT
 	 */
 
-        char *buff = calloc(length, sizeof(*buff));
+        tlv_t buff = (tlv_t)calloc(length, sizeof(char));
         int status = 0;
         char pad1s[TLV_SIZEOF_HEADER-1];
 
@@ -347,7 +359,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                     length = TLV_MAX_SIZE;
                 }
 	    	/* set type */
-                tlv_set_type(buff, TLV_PADN);
+                tlv_set_type(&buff, TLV_PADN);
     		/* set length */
 	    	htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
 
@@ -400,7 +412,7 @@ int dz_compact(dz_t *d) {
                 goto OUT;
         }
 
-        while ((reading = dz_next_tlv(d, tlv)) != EOD) {
+        while ((reading = dz_next_tlv(d, &tlv)) != EOD) {
                 int type = tlv_get_type(tlv);
 
                 if ((type == TLV_PAD1) || (type == TLV_PADN)) {
@@ -484,53 +496,8 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 ind = malloc(sizeof(char)*1);
                 ind[0]='\0';
         }
-#if 0
-        /* TODO */
-
-        while ((off = dz_next_tlv(daz_buf, &tlv_buf)) != EOD) {
-
-                int len = tlv_buf.type == TLV_PAD1 ? 0 : tlv_buf.length;
-
-                if (tlv_buf.type != TLV_TEXT) {
-                        printf("[%4d] TLV %3d | %8d | ...\n",
-                                        (int)off, tlv_buf.type, len);
-                        continue;
-                }
-
-                tlv_buf.value = (char*)malloc(sizeof(char)*(tlv_buf.length+1));
-
-                if (tlv_buf.value == NULL) {
-                        ERROR("malloc", -1);
-                }
-
-                if (dz_read_tlv(daz_buf, &tlv_buf, off) < 0) {
-                        ERROR("dz_read_tlv", -1);
-                }
-                tlv_buf.value[tlv_buf.length] = '\0';
-
-                /* These calls to fflush are here to avoid issues with usage
-                   of both wprintf and printf */
-                if (fflush(stdout) == EOF) {
-                        perror("fflush");
-                }
-                wprintf(L"[%4d] TLV %3d | %8d | <%-.10s>\n",
-                                (int)off, tlv_buf.type, len,
-                                (wchar_t*)tlv_buf.value);
-                if (fflush(stdout) == EOF) {
-                        perror("fflush");
-                }
-
-                /* There may be some possible perf improvements here,
-                 * we don't need to free then re-malloc if we read
-                 * multiple text TLVs with roughly the same text
-                 * length. So we could use malloc once, realloc a few
-                 * times if needed, then free.
-                 */
-                free(tlv_buf.value);
-                tlv_buf.value = NULL;
-#endif
 	
-        while (((off = dz_next_tlv(daz_buf, tlv)) != end )
+        while (((off = dz_next_tlv(daz_buf, &tlv)) != end )
                         && (off != EOD)) {
                 printf("%s",ind);
                 int type, len;

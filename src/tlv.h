@@ -53,14 +53,14 @@ int tlv_get_type(tlv_t tlv);
  * @param tlv tlv whose type has to be set
  * @param t type to set
  */
-void tlv_set_type(tlv_t tlv, char t);
+void tlv_set_type(tlv_t *tlv, char t);
 
 /**
  * Set length of a tlv.
  * @param tlv tlv whose length has to be set
  * @param n length to set
  */
-void tlv_set_length(tlv_t tlv, unsigned int n);
+void tlv_set_length(tlv_t *tlv, unsigned int n);
 
 /**
  * Get the adress of a tlv length.
@@ -95,14 +95,14 @@ int tlv_write(tlv_t tlv, int fd);
 
 /**
  * Read a tlv value.
- * Offset of {fd} when returning is set after the value read on succes, and
+ * Offset of {fd} when returning is set after the value read on success, and
  * unspecified on error.
  * @param tlv tlv to write
- * @param fd file descriptor where value is read
+ * @param fd file descriptor from which value is read
  * @return 0 on success
  * @return -1 on error
  */
-int tlv_read(tlv_t tlv, int fd);
+int tlv_read(tlv_t *tlv, int fd);
 
 /**
  * Write a whole tlv in a file

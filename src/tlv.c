@@ -23,16 +23,16 @@ int tlv_get_type(tlv_t tlv) {
 	return tlv[0];
 }
 
-void tlv_set_type(tlv_t tlv, char t) {
-	tlv[0] = t;
+void tlv_set_type(tlv_t *tlv, char t) {
+	(*tlv)[0] = t;
 }
 
-void tlv_set_length(tlv_t tlv, unsigned int n) {
-	htod(n, tlv_get_length_ptr(tlv));
+void tlv_set_length(tlv_t *tlv, unsigned int n) {
+	htod(n, tlv_get_length_ptr(*tlv));
 }
 
 char *tlv_get_length_ptr(tlv_t tlv) {
-	return (tlv + TLV_SIZEOF_TYPE);
+	return tlv + TLV_SIZEOF_TYPE * sizeof(char);
 }
 
 unsigned int tlv_get_length(tlv_t tlv) {
@@ -40,7 +40,7 @@ unsigned int tlv_get_length(tlv_t tlv) {
 }
 
 char *tlv_get_value_ptr(tlv_t tlv) {
-	return tlv + TLV_SIZEOF_HEADER;
+	return tlv + TLV_SIZEOF_HEADER * sizeof(char);
 }
 
 
@@ -53,17 +53,17 @@ int tlv_write(tlv_t tlv, int fd) {
 	return 0;
 }
 
-int tlv_read(tlv_t tlv, int fd) {
+int tlv_read(tlv_t *tlv, int fd) {
 
-	int len = tlv_get_length(tlv);
+	int len = tlv_get_length(*tlv);
 	
-	tlv = safe_realloc(tlv, sizeof(*tlv) * (TLV_SIZEOF_HEADER + len));
+	*tlv = (tlv_t)safe_realloc(*tlv, sizeof(char) * (TLV_SIZEOF_HEADER + len));
 
-	if (tlv == NULL) {
+	if (*tlv == NULL) {
 		ERROR("realloc", -1);
 	}
 
-	if (read(fd, tlv_get_value_ptr(tlv), len) < len) {
+	if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
 		ERROR("read", -1);
 	}
 	return 0;
