@@ -68,12 +68,12 @@ int dz_open(dz_t *d, char *path, int flags) {
 int dz_close(dz_t *d) {
 
 	if (flock(*d, LOCK_UN) == -1) {
-		PANIC("flock:");
-		/* should it return an error intead ? */
+                perror("flock");
+                return -1;
 	}
 	if (close(*d) == -1) {
-		PANIC("close:");
-		/* should it return an error intead ? */
+                perror("close");
+                return -1;
 	}
 
 	return 0;
