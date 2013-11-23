@@ -5,7 +5,7 @@
 #include "webutils.h"
 
 int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
-        if (dz_read_tlv(&dz, t, off) < 0) {
+        if (dz_read_tlv(&dz, &t, off) < 0) {
                 WLOGERROR("Cannot read TLV at offset %li", off);
                 return -1;
         }
@@ -20,12 +20,12 @@ int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
 int dz2html(dz_t dz, char **html) {
         char **tlv_html = (char**)malloc(sizeof(char*));
         off_t tlv_off;
-        tlv_t t; /* TODO initialize */
+        tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
 
         *html = NULL; /* TODO add beginning of HTML */
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
-                if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
+                if (tlv2html(dz, *t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
                         NFREE(t);
