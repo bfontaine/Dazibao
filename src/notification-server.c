@@ -1,13 +1,5 @@
 #include "notification-server.h"
 
-/**
- * FIXME:
- * If file watcher fail,
- * we should remove from list
- * or reload it and update list.
- * Easy using mmap
- */
-
 static struct file_watcher *watch_list;
 static int nbdaz;
 static int sock;
@@ -37,8 +29,6 @@ char *find_file(int pid) {
  * - queue signals
  */
 void notify(int unused_sigint, siginfo_t *info, void *unused_ptr) {
-
-	printf("[pid:%d] Received SIGUSR1: %d\n", getpid(), unused_sigint == SIGUSR1);
 
 	char *file = find_file(info->si_pid);
 
@@ -251,24 +241,45 @@ int accept_client(int server) {
 	}
 }
 
-
-
 void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
+
 	if (waitpid(info->si_pid, NULL, 0) == -1) {
 		PERROR("waitpid");
 	} else {
-		nbclient--;
-		printf("[pid:%d] Client in activity: %d\n", getpid(), nbclient);	
+		char *file = find_file(info->si_pid);
+		if (file == NULL) {
+			nbclient--;
+			printf("[pid:%d] Client in activity: %d\n",
+				getpid(), nbclient);
+		} else {
+			printf("[pid:%d] %s watching has failed\n",
+				getpid(), file);
+		}
 	}
 }
 
+
+int set_up_server_sigaction() {
+	/* ignore signal used by notifier */
+	struct sigaction action;
+	action.sa_flags = SA_RESTART;
+	action.sa_handler = SIG_IGN;
+	
+	if(sigaction(SIGUSR1, &action, NULL) == -1) {
+		ERROR("sigaction", -1);
+	}
+
+	struct sigaction action2;
+	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
+	action2.sa_sigaction = collect_zombie;
+	if(sigaction(SIGCHLD, &action2, NULL) == -1) {
+		ERROR("sigaction", -1);
+	}
+	return 0;
+}
+
+
 int main(int argc, char **argv) {
-
-
-	/**
-	 * TODO:
-	 * - kill children on exit
-	 */
 
 	char *path = NULL;
 	char **files;
@@ -296,7 +307,12 @@ int main(int argc, char **argv) {
 		files  = &argv[1];
 	}
 
-	watch_list = malloc(sizeof(*watch_list) * nbdaz);	
+	watch_list = mmap(NULL, sizeof(struct file_watcher) * nbdaz,
+		PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+	if (watch_list == MAP_FAILED) {
+		ERROR("mmap", -1);
+	}
 
 	server = set_up_server(path);
 
@@ -306,20 +322,8 @@ int main(int argc, char **argv) {
 
 	printf("[pid:%d] Server set up\n", getpid());	
 
-	/* ignore signal used by notifier */
-	struct sigaction action;
-	action.sa_flags = SA_RESTART;
-	action.sa_handler = SIG_IGN;
-	
-	if(sigaction(SIGUSR1, &action, NULL) == -1) {
-		ERROR("sigaction", -1);
-	}
-
-	struct sigaction action2;
-	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
-	action2.sa_sigaction = collect_zombie;
-	if(sigaction(SIGCHLD, &action2, NULL) == -1) {
-		ERROR("sigaction", -1);
+	if (set_up_server_sigaction() == -1) {
+		ERROR("set_up_server_sigaction", -1);
 	}
 
 	printf("[pid:%d] sigaction set\n", getpid());	
@@ -339,6 +343,11 @@ int main(int argc, char **argv) {
 			continue;
 		}
 	}
-	free(watch_list);
+
+	if (munmap(watch_list, sizeof(struct file_watcher) * nbdaz) != 0) {
+		ERROR("munmap", -1);
+	}
+
+
 	return 0;
 }
