@@ -40,6 +40,7 @@ int tlv_destroy(tlv_t *t) {
         }
         free(*t);
         *t = NULL;
+        free(t);
         return 0;
 }
 

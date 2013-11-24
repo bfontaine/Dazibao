@@ -31,8 +31,7 @@ typedef char* tlv_t;
 int tlv_init(tlv_t *t);
 
 /**
- * Destroy a TLV. This should be called before freeing any TLV to avoid memory
- * leaks.
+ * Destroy a TLV.
  **/
 int tlv_destroy(tlv_t *t);
 
