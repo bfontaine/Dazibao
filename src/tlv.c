@@ -19,6 +19,30 @@ unsigned int dtoh(char *len) {
 	return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
 
+int tlv_init(tlv_t *t) {
+        if (t == NULL) {
+                return -1;
+        }
+
+        *t = (tlv_t)safe_realloc(*t, sizeof(char)*TLV_SIZEOF_HEADER);
+        if (*t == NULL) {
+                return -1;
+        }
+        return 0;
+}
+
+int tlv_destroy(tlv_t *t) {
+        if (t == NULL) {
+                return -1;
+        }
+        if (*t == NULL) {
+                return 0;
+        }
+        free(*t);
+        *t = NULL;
+        return 0;
+}
+
 int tlv_get_type(tlv_t tlv) {
 	return tlv[0];
 }

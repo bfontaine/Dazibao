@@ -25,6 +25,18 @@
 typedef char* tlv_t;
 
 /**
+ * Initialize a TLV. If the TLV was previously initialized/filled, this
+ * function resets its state.
+ **/
+int tlv_init(tlv_t *t);
+
+/**
+ * Destroy a TLV. This should be called before freeing any TLV to avoid memory
+ * leaks.
+ **/
+int tlv_destroy(tlv_t *t);
+
+/**
  * Convert {n} in dazibao's endianess
  * and set {tlv}'s length field with the converted value.
  * @param n length wanted
