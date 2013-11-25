@@ -20,29 +20,48 @@ int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
 int dz2html(dz_t dz, char **html) {
         char **tlv_html = (char**)malloc(sizeof(char*));
         off_t tlv_off;
+        int html_cursor = 0;
         tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
 
-        *html = NULL; /* TODO add beginning of HTML */
+        if (tlv_html == NULL || t == NULL || tlv_init(t) < 0) {
+                WLOGERROR("Cannot initialize TLV");
+                free(t);
+                free(tlv_html);
+                return -1;
+        }
 
+        /* We may be able to optimize memory allocation here */
+        *html = strdup(HTML_DZ_TOP);
+        *html = safe_realloc(*html, strlen(*html)
+                                        + sizeof(char)*(HTML_DZ_BOTTOM_LEN+1));
+        html_cursor += HTML_DZ_TOP_LEN; /* see stpcpy too */
+
+        WLOGDEBUG("dazibao=%d", dz);
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
+#if 0
                 if (tlv2html(dz, *t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
-                        NFREE(t);
+                        /*tlv_destroy(t);*/
                         NFREE(tlv_html);
                         continue;
                 }
 
                 /* TODO: append tlv to current HTML */
 
-                NFREE(t);
+                /*tlv_destroy(t);
+                t = NULL;*/
                 NFREE(tlv_html);
+#endif
         }
         if (tlv_off == -1) {
                 WLOGERROR("got an error when reading dazibao with next_tlv");
         }
 
-        NFREE(t);
+        tlv_destroy(t);
         NFREE(tlv_html);
+
+        strncpy(*html + html_cursor, HTML_DZ_BOTTOM, HTML_DZ_BOTTOM_LEN+1);
+
         return tlv_off == -1 ? -1 : 0;
 }
