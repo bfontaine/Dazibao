@@ -79,6 +79,10 @@ int dz_close(dz_t *d) {
 	return 0;
 }
 
+int dz_reset(dz_t *d) {
+        return SET_OFFSET(*d, DAZIBAO_HEADER_SIZE);
+}
+
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 
 	/* FIXME probably some issues to fix with large tlv */

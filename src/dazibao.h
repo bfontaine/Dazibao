@@ -36,7 +36,7 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param dad_buf dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
- * @return 0 on succes
+ * @return 0 on success
  * @return -1 on error
  */
 int dz_open(dz_t *d, char *path, int flags);
@@ -46,6 +46,11 @@ int dz_open(dz_t *d, char *path, int flags);
  * @return 0 on success
  */
 int dz_close(dz_t *d);
+
+/**
+ * Reset the cursor of a dazibao for further readings.
+ **/
+int dz_reset(dz_t *d);
 
 /**
  * Fill tlv value
