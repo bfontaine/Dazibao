@@ -77,7 +77,9 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
  */
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
 
-/* TODO: doc */
+/**
+ * Write a tlv in a dazibao at a given offset
+ **/
 int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
 
 /**

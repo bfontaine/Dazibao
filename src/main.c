@@ -169,8 +169,10 @@ int main(int argc, char **argv) {
 
         }
 
-	/* FIXME: check for error */
-	dz_close(&daz_buf);
+	if (dz_close(&daz_buf) < 0) {
+                printf("Error while closing the dazibao\n");
+                exit(EXIT_FAILURE);
+        }
 
         exit(EXIT_SUCCESS);
 }
