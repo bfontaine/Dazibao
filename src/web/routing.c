@@ -107,6 +107,10 @@ int route_request(int sock, dz_t dz, int mth, char *path, char *body,
                 return 0;
         }
 
+        if (dz < 0) {
+                WLOGWARN("Routing a request with no dazibao (%d)", dz);
+        }
+
         rh = get_route_handler(mth, path);
 
         if (rh == NULL) {
