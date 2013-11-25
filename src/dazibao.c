@@ -79,6 +79,10 @@ int dz_close(dz_t *d) {
 	return 0;
 }
 
+int dz_reset(dz_t *d) {
+        return SET_OFFSET(*d, DAZIBAO_HEADER_SIZE);
+}
+
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
         int st;
 
@@ -97,10 +101,6 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
-
-	/*
-	 * FIXME PRECONDITION: tlv have to be (at least) TLV_SIZEOF_HEADER long
-	 */
 
 	int size_read;
 	off_t off_init;
