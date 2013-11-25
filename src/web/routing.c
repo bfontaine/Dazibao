@@ -107,6 +107,10 @@ int route_request(int sock, dz_t dz, int mth, char *path, char *body,
                 return 0;
         }
 
+        if (dz < 0) {
+                WLOGWARN("Routing a request with no dazibao (%d)", dz);
+        }
+
         rh = get_route_handler(mth, path);
 
         if (rh == NULL) {
@@ -207,15 +211,17 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         strncat(response, str_headers, len_headers);
         strncat(response, "\r\n", 2);
 
-        /* TODO test return value */
-        write_all(sock, response, len);
+        if (write_all(sock, response, len) < len) {
+            WLOGERROR("Couldn't send all headers (len=%d)", len);
+        }
 
         NFREE(str_headers);
         http_destroy_headers(hs);
         /* -- /headers -- */
 
-        /* TODO test return value */
-        write_all(sock, body, bodylen);
+        if (write_all(sock, body, bodylen) < bodylen) {
+            WLOGERROR("Couldn't send the whole request body (len=%d)", bodylen)
+        }
 
 EORESP:
         NFREE(response);

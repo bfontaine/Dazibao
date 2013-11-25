@@ -95,6 +95,10 @@ int main(int argc, char *argv[]) {
                 }
         }
 
+        if (dz < 0) {
+                WLOGWARN("Starting with no dazibao");
+        }
+
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (listening_sock == -1) {
                 perror("socket");
@@ -181,7 +185,7 @@ int main(int argc, char *argv[]) {
                 if (close(client) == -1) {
                         perror("close");
                 }
-        };
+        }
 
         WLOGINFO("Closing...");
         clean_close(0);

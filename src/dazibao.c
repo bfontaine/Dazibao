@@ -81,7 +81,7 @@ int dz_close(dz_t *d) {
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 
-	/* probably some issues to fix with large tlv */
+	/* FIXME probably some issues to fix with large tlv */
 
 	if (SET_OFFSET(*d, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
