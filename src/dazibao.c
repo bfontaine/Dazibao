@@ -468,7 +468,10 @@ int dz_compact(dz_t *d) {
         }
 
         if (writing != -1) {
-            ftruncate(*d, writing);
+            if (ftruncate(*d, writing) < 0) {
+                    perror("ftruncate");
+                    status = -1;
+            }
         }
 
 OUT:
