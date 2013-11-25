@@ -5,15 +5,15 @@
 #include "webutils.h"
 
 int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
-        if (dz_read_tlv(&dz, &t, off) < 0) {
+  /*      if (dz_read_tlv(&dz, &t, off) < 0) {
                 WLOGERROR("Cannot read TLV at offset %li", off);
                 return -1;
         }
-
+*/
         /* TODO */
-        *html = strdup("one tlv");
+        *html = strdup("<li>one tlv</li>\n");
 
-        free(t);
+        /*free(t);*/
         return 0;
 }
 
@@ -30,6 +30,8 @@ int dz2html(dz_t dz, char **html) {
                 return -1;
         }
 
+        *tlv_html = NULL;
+
         /* We may be able to optimize memory allocation here */
         *html = strdup(HTML_DZ_TOP);
         *html = safe_realloc(*html, strlen(*html)
@@ -38,7 +40,6 @@ int dz2html(dz_t dz, char **html) {
 
         WLOGDEBUG("dazibao=%d", dz);
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
-#if 0
                 if (tlv2html(dz, *t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
@@ -51,8 +52,7 @@ int dz2html(dz_t dz, char **html) {
 
                 /*tlv_destroy(t);
                 t = NULL;*/
-                NFREE(tlv_html);
-#endif
+                NFREE(*tlv_html);
         }
         if (tlv_off == -1) {
                 WLOGERROR("got an error when reading dazibao with next_tlv");

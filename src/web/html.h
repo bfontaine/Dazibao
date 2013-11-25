@@ -14,9 +14,12 @@
                         "<meta name=\"language\" content=\"fr\" />\n" \
                         "<title>Dazibao " HTML_DZ_VERSION "</title>\n" \
                       "</head>\n" \
-                      "<body>\n"
+                      "<body>\n" \
+                        "<ol class=\"tlvs\">"
 
-#define HTML_DZ_BOTTOM "</body>\n</html>"
+#define HTML_DZ_BOTTOM  "</ol>\n" \
+                      "</body>\n" \
+                    "</html>"
 
 /* hoping that it'll be optimized by GCC */
 #define HTML_DZ_TOP_LEN strlen(HTML_DZ_TOP)
