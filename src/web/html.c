@@ -4,16 +4,38 @@
 #include "tlv.h"
 #include "webutils.h"
 
-int tlv2html(dz_t dz, tlv_t t, off_t off, char **html) {
-  /* XXX     if (dz_read_tlv(&dz, &t, off) < 0) {
+#define HTML_TLV_SIZE 128
+
+int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
+        int st;
+        char text_fmt[] = "<li>One TLV of type %.3d, length %.8u</li>\n";
+
+        if (dz_read_tlv(&dz, t, off) < 0) {
                 WLOGERROR("Cannot read TLV at offset %li", off);
                 return -1;
         }
-*/
-        /* TODO */
-        *html = strdup("<li>one tlv</li>\n");
 
-        /*free(t);*/
+        *html = (char*)malloc(sizeof(char)*HTML_TLV_SIZE);
+
+        if (*html == NULL) {
+                WLOGERROR("Cannot malloc enough to generate HTML " \
+                                "for the TLV at %li", off);
+                perror("malloc");
+                return -1;
+        }
+
+        st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
+                        tlv_get_type(*t), tlv_get_length(*t));
+
+        if (st < 2) {
+                WLOGERROR("sprintf of TLV at %lu failed", off);
+                perror("sprintf");
+                return -1;
+        }
+
+        /* TODO generate proper HTML for each TLV type
+        *html = strdup("<li>one tlv</li>\n"); */
+
         return 0;
 }
 
@@ -40,7 +62,7 @@ int dz2html(dz_t dz, char **html) {
         *html = safe_realloc(*html, html_len);
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
-                if (tlv2html(dz, *t, tlv_off, tlv_html) < 0) {
+                if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
                         /*tlv_destroy(t);*/

@@ -27,12 +27,12 @@
 
 
 /**
- * Make an HTML representation of a TLV, NULL-terminated.
+ * Make a NULL-terminated HTML representation of a TLV.
  **/
-int tlv2html(dz_t dz, tlv_t t, off_t off, char **html);
+int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html);
 
 /**
- * Make an HTML representation of a dazibao, NULL-terminated.
+ * Make a NULL-terminated HTML representation of a dazibao.
  **/
 int dz2html(dz_t dz, char **html);
 
