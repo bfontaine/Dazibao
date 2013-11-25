@@ -10,7 +10,10 @@
 int route_get_index(dz_t dz, int mth, char *path, char *body, int bodylen,
                         int *status, char **resp, int *resplen) {
 
-        if (strcmp(path, "/index") != 0 || dz <= 0 || mth != HTTP_M_GET) {
+        if (strcmp(path, "/index.html") != 0 || dz <= 0 || mth != HTTP_M_GET) {
+                WLOGERROR("get_index - got wrong path '%s' and/or wrong " \
+                                "dz=%d and/or wrong method %d.",
+                                path, dz, mth);
                 return -1;
         }
 
@@ -33,7 +36,6 @@ int register_routes(void) {
         int st = 0;
 
         /* Add routes here */
-        st |= add_route(HTTP_M_GET, "/index", route_get_index);
-
+        st |= add_route(HTTP_M_GET, "/index.html", route_get_index);
         return st;
 }
