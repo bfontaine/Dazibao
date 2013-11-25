@@ -80,6 +80,9 @@ int dz_close(dz_t *d) {
 }
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
+        int st;
+
+        SAVE_OFFSET(*d);
 
 	/* FIXME probably some issues to fix with large tlv */
 
@@ -87,8 +90,10 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 		ERROR("lseek", -1);
 	}
 
+	st = tlv_read(tlv, *d);
+        RESTORE_OFFSET(*d);
 
-	return tlv_read(tlv, *d);
+        return st;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
