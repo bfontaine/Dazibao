@@ -24,7 +24,7 @@ int tlv_init(tlv_t *t) {
                 return -1;
         }
 
-        *t = (tlv_t)safe_realloc(*t, sizeof(char)*TLV_SIZEOF_HEADER);
+        *t = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
         if (*t == NULL) {
                 return -1;
         }
@@ -32,10 +32,7 @@ int tlv_init(tlv_t *t) {
 }
 
 int tlv_destroy(tlv_t *t) {
-        if (t == NULL) {
-                return -1;
-        }
-        if (*t == NULL) {
+        if (t == NULL || *t == NULL) {
                 return 0;
         }
         free(*t);
@@ -82,7 +79,8 @@ int tlv_read(tlv_t *tlv, int fd) {
 
 	int len = tlv_get_length(*tlv);
 	
-	*tlv = (tlv_t)safe_realloc(*tlv, sizeof(char) * (TLV_SIZEOF_HEADER + len));
+	*tlv = (tlv_t)safe_realloc(*tlv, sizeof(char)
+                                                * (TLV_SIZEOF_HEADER + len));
 
 	if (*tlv == NULL) {
 		ERROR("realloc", -1);

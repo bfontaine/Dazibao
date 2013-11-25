@@ -25,8 +25,8 @@
 typedef char* tlv_t;
 
 /**
- * Initialize a TLV. If the TLV was previously initialized/filled, this
- * function resets its state.
+ * Initialize a TLV. If the TLV was previously initialized/filled, call
+ * tlv_destroy on it before calling this function.
  **/
 int tlv_init(tlv_t *t);
 
