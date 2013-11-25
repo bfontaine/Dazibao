@@ -517,9 +517,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 } else if (type == TLV_DATED) {
                         printf("DATE\n");
                         if (depth > 0) {
-                                /* TODO
-                                function to print date
-                                */
+                                /* TODO function to print date */
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
                                 TLV_SIZEOF_DATE);
