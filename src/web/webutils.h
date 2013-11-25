@@ -15,7 +15,7 @@ extern int _wlog_level;
 /* Don't use this macro directly */
 #define _WLOG(lvl, s, fmt, ...) { \
         if ((lvl) <= (_wlog_level)) { \
-        printf("[%5s][daziweb:%10s:%15s:%03d] " fmt "\n", \
+        printf("[%5s][%-17s:%20s:%03d] " fmt "\n", \
                         s, __FILE__, __func__, __LINE__, ##__VA_ARGS__); }}
 
 /* Use these instead.
