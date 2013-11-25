@@ -93,14 +93,15 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 
-	/*
-	 * PRECONDITION:
-	 * *tlv have to be (at least) TLV_SIZEOF_HEADER long
-         * FIXME test the precondition
-	 */
-
 	int size_read;
 	off_t off_init;
+
+	/*
+	 * Precondition: *tlv have to be (at least) TLV_SIZEOF_HEADER long
+	 */
+        if (sizeof(*tlv) < TLV_SIZEOF_HEADER) {
+                return -1;
+        }
 
 	off_init = GET_OFFSET(*d);
 	
