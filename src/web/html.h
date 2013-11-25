@@ -15,7 +15,7 @@
                         "<title>Dazibao " HTML_DZ_VERSION "</title>\n" \
                       "</head>\n" \
                       "<body>\n" \
-                        "<ol class=\"tlvs\">"
+                        "<ol class=\"tlvs\">\n"
 
 #define HTML_DZ_BOTTOM  "</ol>\n" \
                       "</body>\n" \
