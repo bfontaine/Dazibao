@@ -324,11 +324,6 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
 int dz_do_empty(dz_t *d, off_t start, off_t length) {
 
-	/*
-	 * FIXME:
-	 * DO IT RIGHT
-	 */
-
         tlv_t buff = (tlv_t)calloc(length, sizeof(char));
         int status = 0;
         char pad1s[TLV_SIZEOF_HEADER-1];
