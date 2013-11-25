@@ -185,6 +185,10 @@ int main(int argc, char *argv[]) {
                 if (close(client) == -1) {
                         perror("close");
                 }
+
+                if (dz_reset(&dz) < 0) {
+                        WLOGWARN("Cannot reset dazibao.");
+                }
         }
 
         WLOGINFO("Closing...");
