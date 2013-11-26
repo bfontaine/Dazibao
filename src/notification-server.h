@@ -27,7 +27,7 @@ struct file_watcher {
 /**
  * Compare two file_watcher struct
  */
-int fwcmp (const void*, const void*);
+int fwcmp(const void*, const void*);
 
 /**
  * Signal handler.

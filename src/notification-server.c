@@ -259,7 +259,7 @@ void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 }
 
 
-int set_up_server_sigaction() {
+int set_up_server_sigaction(void) {
 	/* ignore signal used by notifier */
 	struct sigaction action;
 	action.sa_flags = SA_RESTART;
