@@ -2,6 +2,21 @@
 
 #define BUFFLEN 128
 
+/**
+ * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
+ * @return offset of the begging of this serie on search succes
+ * @return {offset} if search was unsuccessful
+ */
+static off_t dz_pad_serie_start(dz_t *d, off_t offset);
+
+/**
+ * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
+ * starting after the skipped tlv.
+ * @return offset of the end of this serie on search succes
+ * @return offset of next tlv after {offset} if search was unsuccessful
+ */
+static off_t dz_pad_serie_end(dz_t *d, off_t offset);
+
 int dz_create(dz_t *daz_buf, char *path) {
 
 	int fd;
