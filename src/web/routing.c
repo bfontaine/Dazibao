@@ -144,14 +144,14 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
              *response2,
              *str_headers;
         int ret = 0, len,
-            nobody = (body == NULL),
+            no_body = (body == NULL),
             noheaders = (hs == NULL),
             len_headers;
 
         if (sock < 0) {
                 return -1;
         }
-        if (nobody || bodylen < 0) {
+        if (no_body || bodylen < 0) {
                 bodylen = 0;
         }
         if (noheaders) {
@@ -165,7 +165,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
 
         http_add_header(hs, "Allow", "GET,POST", 0);
 
-        if (!nobody) {
+        if (!no_body) {
                 char ct[8];
                 snprintf(ct, 7, "%d", bodylen);
                 http_add_header(hs, "Content-Length", ct, 0);
