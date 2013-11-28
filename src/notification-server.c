@@ -222,11 +222,9 @@ int accept_client(int server) {
 
 		/* set handler for SIGUSR1 */
 		struct sigaction action;
-		action.sa_flags = SA_SIGINFO;
+		action.sa_flags = SA_SIGINFO | SA_NODEFER;
 		action.sa_sigaction = notify;
-		sigfillset(&action.sa_mask);
 		if(sigaction(SIGUSR1, &action, NULL) == -1) {
-			/* TODO: delete client */
 			ERROR("sigaction", -1);
 		}
 		printf("[pid:%d] Client configured\n", getpid());	
