@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 	printf("[pid:%d] Connected to %s\n", getpid(), sun.sun_path);
 	
 	if (receive_notifications(fd) == -1) {
-		PERROR("receive_notifications");
+		fprintf(stderr, "[pid:%d] receive_notifications failed. Exiting with 1.\n", getpid());
 		exit(1);
 	}
 
