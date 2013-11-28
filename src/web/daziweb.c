@@ -32,8 +32,54 @@ void clean_close(int s) {
         exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char *argv[]) {
-        int status = 0, c, l, loglvlflag,
+
+/* -p <port> -l <loglevel> -d <dazibao path>
+ * -v: if -l is not used, increase verbosity */
+int parse_args(int argc, char **argv, int *port) {
+        int l;
+        char c,
+             loglvl_flag = 0;
+
+        dz = -1;
+        while ((c = getopt(argc, argv, "l:p:d:v")) != -1) {
+                switch (c) {
+                case 'l':
+                        l = strtol(optarg, NULL, 10);
+                        if (!STRTOL_ERR(l)) {
+                                _wlog_level = l;
+                                loglvl_flag = 1;
+                        }
+                        break;
+                case 'p':
+                        *port = strtol(optarg, NULL, 10);
+                        if (STRTOL_ERR(*port)) {
+                                WLOGWARN("Wrong port: '%s'", optarg);
+                                *port = DEFAULT_PORT;
+                        }
+                        break;
+                case 'd':
+                        if (dz == -1 && dz_open(&dz,  optarg,  0) < 0) {
+                                WLOGFATAL("Cannot open '%s'", optarg);
+                                return -1;
+                        }
+                        break;
+                case 'v':
+                        if (!loglvl_flag) {
+                                _wlog_level += 10;
+                        }
+                        break;
+                case ':':
+                        WLOGFATAL("-%c requires an argument", optopt);
+                        return -1;
+                case '?':
+                        WLOGWARN("Unrecognized option: '-%c'", optopt);
+                }
+        }
+        return 0;
+}
+
+int main(int argc, char **argv) {
+        int status = 0,
             mth, body_len,
             port = DEFAULT_PORT;
         char *path = NULL;
@@ -49,52 +95,15 @@ int main(int argc, char *argv[]) {
         sig.sa_flags = 0;
         sigemptyset(&sig.sa_mask);
 
-        if (sigaction(SIGINT, &sig, NULL) == -1) {
-                perror("sigaction");
+        if (parse_args(argc, argv, &port) != 0) {
+                if (dz > 0) {
+                        dz_close(&dz);
+                }
+                exit(EXIT_FAILURE);
         }
 
-        /* -p <port> -l <loglevel> -d <dazibao path>
-         * -v: if -l is not used, increase verbosity */
-        port = DEFAULT_PORT;
-        l = _wlog_level;
-        loglvlflag = 0;
-        dz = -1;
-        while ((c = getopt(argc, argv, "l:p:d:v")) != -1) {
-                switch (c) {
-                case 'l':
-                        l = strtol(optarg, NULL, 10);
-                        if (!STRTOL_ERR(l)) {
-                                _wlog_level = l;
-                                loglvlflag = 1;
-                        }
-                        break;
-                case 'p':
-                        port = strtol(optarg, NULL, 10);
-                        if (STRTOL_ERR(port)) {
-                                WLOGWARN("Wrong port: '%s'", optarg);
-                                port = DEFAULT_PORT;
-                        }
-                        break;
-                case 'd':
-                        if (dz == -1 && dz_open(&dz,  optarg,  0) < 0) {
-                                WLOGFATAL("Cannot open '%s'", optarg);
-                                exit(EXIT_FAILURE);
-                        }
-                        break;
-                case 'v':
-                        if (!loglvlflag) {
-                                _wlog_level += 10;
-                        }
-                        break;
-                case ':':
-                        WLOGFATAL("-%c requires an argument", optopt);
-                        if (dz > 0) {
-                                dz_close(&dz);
-                        }
-                        exit(EXIT_FAILURE);
-                case '?':
-                        WLOGWARN("Unrecognized option: '-%c'", optopt);
-                }
+        if (sigaction(SIGINT, &sig, NULL) == -1) {
+                perror("sigaction");
         }
 
         if (dz < 0) {
