@@ -1,4 +1,22 @@
-# report
+# Dazibao - 2013
+
+A project by Baptiste Fontaine, David Galichet and Julien Sagot.
+
+## General notes
+
+### Portability
+
+This project aim at being compatible with any UNIX system, conforming the norm POSIX-???. We did not use Linux specific functions, or provided an alternative if so.
+
+## Dazibao and TLV APIs
+
+We designed these APIs as an object-oriented structure for the purpose of being idependant of the implementation. A programm using the Dazibao (or TLV) API does not have to know about the structure used, and the Dazibao API does not have to know how a TLV actually is represented.
+
+NB: For now, there still is some lack in the API. For instance, we work with file descriptors only, and can not use `mmap`. We planned to add functions to handle allocated memory instead of files.
+
+### Dazibao API
+
+### TLV API
 
 ## Notifications
 
