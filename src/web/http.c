@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "http.h"
 #include "utils.h"
+#include "webutils.h"
 
 static struct http_status http_statuses[] = {
         { HTTP_S_OK            , "OK"                    },
@@ -24,11 +25,56 @@ static struct http_status http_statuses[] = {
         { HTTP_S_ERR           , "Internal Server Error" },
         { HTTP_S_NOTIMPL       , "Not Implemented"       },
         { HTTP_UNSUPP_VER      , "Version Not Supported" }
-}; /* length: 16 */
+};
+static int http_statuses_len =
+                sizeof(http_statuses)/sizeof(struct http_status);
+
+static char *headers_strs[] = {
+        /* HTTP_H_CONTENT_TYPE   0 */
+        "Content-Type",
+        /* HTTP_H_CONTENT_LENGTH 1 */
+        "Content-Length",
+        /* HTTP_H_HOST           2 */
+        "Host",
+        /* HTTP_H_UA             3 */
+        "User-Agent",
+        /* HTTP_H_ALLOW          4 */
+        "Allow",
+        /* HTTP_H_DATE           5 */
+        "Date",
+        /* HTTP_H_SERVER         6 */
+        "Server",
+        /* HTTP_H_POWEREDBY      7 */
+        "X-Powered-By"
+};
+
+int http_header_code_str(char **str, int *code) {
+        int i;
+
+        if ((str == NULL) || (*str == NULL && (code == NULL || *code < 0))) {
+                return -2;
+        }
+        if (*str == NULL) {
+                if (*code >= HTTP_MAX_HEADERS) {
+                        return -1;
+                }
+                *str = strdup(headers_strs[*code]);
+                return 0;
+        }
+
+        for (i=0; i<HTTP_MAX_HEADERS; i++) {
+                if (strcasecmp(headers_strs[i], *str) == 0) {
+                        *code = i;
+                        return 0;
+                }
+        }
+
+        return -1;
+}
 
 const char *get_http_status_phrase(int *code) {
         int badreq_i = -1;
-        for (int i=0; i<16; i++) {
+        for (int i=0; i<http_statuses_len; i++) {
                 if (http_statuses[i].code == *code) {
                         return http_statuses[i].phrase;
                 }
@@ -55,10 +101,7 @@ int http_init_headers(struct http_headers *hs) {
         if (hs == NULL) {
                 return -1;
         }
-        hs->size = 0;
-        hs->headers = (struct http_header**)malloc(
-                                sizeof(struct http_header*)*HTTP_MAX_HEADERS);
-
+        hs->headers = (char**)malloc(sizeof(char*)*HTTP_MAX_HEADERS);
         if (hs->headers == NULL) {
                 perror("malloc");
                 return -1;
@@ -71,82 +114,48 @@ int http_init_headers(struct http_headers *hs) {
         return 0;
 }
 
-int http_add_header(struct http_headers *hs, char *name, char *value,
-                                int overr) {
-        struct http_header *h;
-        int namelen,
-            valuelen;
-
-        if (hs == NULL || hs->headers == NULL || hs->size < 0
-                        || name == NULL || value == NULL) {
+int http_add_header(struct http_headers *hs, int code, char *value,
+                                char overr) {
+        if (hs == NULL || hs->headers == NULL || code < 0
+                        || code > HTTP_MAX_HEADERS || value == NULL) {
                 return -1;
         }
 
-        if (hs->size >= HTTP_MAX_HEADERS) {
-                return -1;
-        }
-
-        namelen = strlen(name);
-        valuelen = strlen(value);
-
-        for (int i=0, s=hs->size; i<s; i++) {
-                if (strcasecmp(hs->headers[i]->name, name) == 0) {
-                        if (!overr) {
-                                return -2;
-                        }
-                        if (memcpy(hs->headers[i]->value,
-                                        value, valuelen) == NULL) {
-                                perror("memcpy");
-                                return -1;
-                        }
-                        return 0;
+        if (hs->headers[code] != NULL) {
+                if (!overr) {
+                        WLOGDEBUG("Cannot override header %d with '%s'",
+                                        code, value);
+                        return -1;
                 }
+                WLOGDEBUG("Overriding header %d (%s) with '%s'",
+                                code, hs->headers[code], value);
+                NFREE(hs->headers[code]);
         }
 
-        h = (struct http_header*)malloc(sizeof(struct http_header));
-
-        if (h == NULL) {
-                perror("malloc");
-                return -1;
-        }
-
-        h->name = (char *)malloc(sizeof(char)*(namelen+1));
-        if (h->name == NULL) {
-                perror("malloc");
-                NFREE(h);
-                return -1;
-        }
-
-        h->value = (char *)malloc(sizeof(char)*(valuelen+1));
-        if (h->value == NULL) {
-                perror("malloc");
-                NFREE(h->name);
-                NFREE(h);
-                return -1;
-        }
-
-        if (memcpy(h->name, name, namelen+1) == NULL
-                        || memcpy(h->value, value, valuelen+1) == NULL) {
-                perror("memcpy");
-                NFREE(h->name);
-                NFREE(h->value);
-                NFREE(h);
-                return -1;
-        }
-
-        hs->headers[hs->size++] = h;
+        hs->headers[code] = strdup(value);
         return 0;
 }
 
 /* return the length of a string representation of this header, including CRLF,
  * but excluding \0.
  */
-int http_header_size(struct http_header *h) {
-        if (h == NULL || h->name == NULL || h->value == NULL) {
+int http_header_size(int code, char *value) {
+        char **name = (char**)malloc(sizeof(char*));
+        int len = 0;
+        if (code < 0 || code > HTTP_MAX_HEADERS ||
+                        value == NULL || name == NULL) {
+                return -1;
+        }
+        *name = NULL;
+        if (http_header_code_str(name, &code) != 0) {
+                free(name);
                 return -1;
         }
         /* <name>: <value>\r\n */
-        return strlen(h->name) + 2 + strlen(h->value) + 2;
+        len = strlen(*name) + 2 + strlen(value) + 2;
+        NFREE(*name);
+        free(name);
+        return len;
 }
 
 int http_headers_size(struct http_headers *hs) {
@@ -156,45 +165,72 @@ int http_headers_size(struct http_headers *hs) {
                 return -1;
         }
 
-        for (int i=0, s=hs->size, hhs; i<s; i++) {
+        for (int i=0, hhs; i<HTTP_MAX_HEADERS; i++) {
                 if (hs->headers[i] == NULL) {
                         continue;
                 }
-                hhs = http_header_size(hs->headers[i]);
+                hhs = http_header_size(i, hs->headers[i]);
                 if (hhs > 0) {
                         size += hhs;
                 }
         }
 
-        /* with \0 */
+        /* without \0 */
         return size;
 }
 
-char *http_header_string(struct http_header *h) {
-        int len = http_header_size(h);
+char *http_header_string(int code, char *value) {
+        char **name = (char**)malloc(sizeof(char*));
         char *repr;
+        int len;
 
-        if (len < 0) {
+        if (name == NULL || code < 0 || code > HTTP_MAX_HEADERS
+                        || value == NULL) {
                 return NULL;
         }
 
+        *name = NULL;
+        if (http_header_code_str(name, &code) != 0) {
+                free(name);
+                return NULL;
+        }
+
+        len = strlen(*name) + 2 + strlen(value) + 2;
         repr = (char*)malloc(sizeof(char)*(len+1));
 
         if (repr == NULL) {
                 perror("malloc");
+                NFREE(*name);
+                free(name);
                 return NULL;
         }
 
-        snprintf(repr, len+1, "%s: %s\r\n", h->name, h->value);
+        snprintf(repr, len+1, "%s: %s\r\n", *name, value);
+        NFREE(*name);
+        free(name);
         return repr;
 }
 
 char *http_headers_string(struct http_headers *hs) {
-        int len = http_headers_size(hs);
-        char *repr;
+        char *reprs[HTTP_MAX_HEADERS],
+             *repr;
+        int lens[HTTP_MAX_HEADERS];
+        int len = 0;
 
-        if (len < 0) {
+        if (hs == NULL || hs->headers == NULL) {
                 return NULL;
+        }
+
+        for (int i=0; i<HTTP_MAX_HEADERS; i++) {
+                if (hs->headers[i] == NULL) {
+                        reprs[i] = NULL;
+                        continue;
+                }
+                reprs[i] = http_header_string(i, hs->headers[i]);
+                if (reprs[i] != NULL) {
+                        lens[i] = strlen(reprs[i]);
+                        len += lens[i];
+                }
         }
 
         repr = (char*)malloc(sizeof(char)*(len+1));
@@ -204,14 +240,14 @@ char *http_headers_string(struct http_headers *hs) {
         }
         repr[0] = '\0';
 
-        for (int i=0; i<hs->size; i++) {
-                char *s = http_header_string(hs->headers[i]);
-                if (s == NULL) {
+        for (int i=0; i<HTTP_MAX_HEADERS; i++) {
+                if (reprs[i] == NULL) {
                         continue;
                 }
-                strncat(repr, s, strlen(s));
-                NFREE(s);
+                strncat(repr, reprs[i], lens[i]);
+                NFREE(reprs[i]);
         }
+
         return repr;
 }
 
@@ -225,9 +261,10 @@ int http_destroy_headers(struct http_headers *hs) {
                 return 0;
         }
 
-        for (int i=0, s=hs->size; i<s; i++) {
-                NFREE(hs->headers[i]->name);
-                NFREE(hs->headers[i]->value);
+        for (int i=0; i<HTTP_MAX_HEADERS; i++) {
+                if (hs->headers[i] == NULL) {
+                        continue;
+                }
                 NFREE(hs->headers[i]);
         }
         NFREE(hs->headers);

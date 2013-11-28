@@ -1,12 +1,21 @@
 #ifndef _REQUEST_H
 #define _REQUEST_H 1
 
+#include "http.h"
+
 #ifndef BUFFLEN
 #define BUFFLEN 512
 #endif
 
 #define CR 13
 #define LF 10
+
+/* A struct describing an HTTP request */
+/* TODO: return this when parsing a request (see also #52) */
+struct http_request {
+    struct http_headers *headers; /* HTTP headers */
+    char **body;
+};
 
 /**
  * Test if the c-th and (c+1)th characters of a string represent an HTTP end of

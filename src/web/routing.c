@@ -141,7 +141,6 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                         int bodylen) {
         const char *phrase = get_http_status_phrase(&status);
         char *response,
-             *response2,
              *str_headers;
         int ret = 0, len,
             no_body = (body == NULL),
@@ -155,7 +154,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 bodylen = 0;
         }
         if (noheaders) {
-                hs = (struct http_headers*)malloc(sizeof(struct http_header));
+                hs = (struct http_headers*)malloc(sizeof(struct http_headers));
                 if (hs == NULL) {
                         perror("malloc");
                         return -1;
@@ -163,12 +162,13 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 http_init_headers(hs);
         }
 
-        http_add_header(hs, "Allow", "GET,POST", 0);
+        /* TODO: add this header only with 405 Method Not Allowed */
+        http_add_header(hs, HTTP_H_ALLOW, "GET,POST", 0);
 
         if (!no_body) {
                 char ct[8];
                 snprintf(ct, 7, "%d", bodylen);
-                http_add_header(hs, "Content-Length", ct, 0);
+                http_add_header(hs, HTTP_H_CONTENT_LENGTH, ct, 0);
         }
 
         /* 15 = strlen("HTTP/1.x xxx ") + strlen("\r\n") */
@@ -197,8 +197,8 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         }
         len_headers = strlen(str_headers);
         len += len_headers + 3;
-        response2 = realloc(response, len);
-        if (response2 == NULL) {
+        response = safe_realloc(response, len);
+        if (response == NULL) {
                 WLOGERROR("Cannot realloc for headers");
                 perror("realloc");
                 NFREE(str_headers);
@@ -206,7 +206,6 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 ret = -1;
                 goto EORESP;
         }
-        response = response2;
 
         strncat(response, str_headers, len_headers);
         strncat(response, "\r\n", 2);
