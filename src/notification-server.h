@@ -13,6 +13,10 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 #include "utils.h"
 
 #define WATCH_SLEEP_MIN 2
