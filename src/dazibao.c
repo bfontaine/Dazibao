@@ -2,6 +2,21 @@
 
 #define BUFFLEN 128
 
+/**
+ * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
+ * @return offset of the begging of this serie on search succes
+ * @return {offset} if search was unsuccessful
+ */
+static off_t dz_pad_serie_start(dz_t *d, off_t offset);
+
+/**
+ * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
+ * starting after the skipped tlv.
+ * @return offset of the end of this serie on search succes
+ * @return offset of next tlv after {offset} if search was unsuccessful
+ */
+static off_t dz_pad_serie_end(dz_t *d, off_t offset);
+
 int dz_create(dz_t *daz_buf, char *path) {
 
 	int fd;
@@ -79,16 +94,25 @@ int dz_close(dz_t *d) {
 	return 0;
 }
 
-int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
+int dz_reset(dz_t *d) {
+        return SET_OFFSET(*d, DAZIBAO_HEADER_SIZE);
+}
 
-	/* probably some issues to fix with large tlv */
+int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
+        int st;
+
+        SAVE_OFFSET(*d);
+
+	/* FIXME probably some issues to fix with large tlv */
 
 	if (SET_OFFSET(*d, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
 	}
 
+	st = tlv_read(tlv, *d);
+        RESTORE_OFFSET(*d);
 
-	return tlv_read(tlv, *d);
+        return st;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
@@ -468,7 +492,10 @@ int dz_compact(dz_t *d) {
         }
 
         if (writing != -1) {
-            ftruncate(*d, writing);
+            if (ftruncate(*d, writing) < 0) {
+                    perror("ftruncate");
+                    status = -1;
+            }
         }
 
 OUT:
@@ -517,9 +544,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 } else if (type == TLV_DATED) {
                         printf("DATE\n");
                         if (depth > 0) {
-                                /* TODO
-                                function to print date
-                                */
+                                /* TODO function to print date */
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
                                 TLV_SIZEOF_DATE);

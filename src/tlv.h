@@ -24,6 +24,16 @@
 
 typedef char* tlv_t;
 
+/**
+ * Initialize a TLV. If the TLV was previously initialized/filled, call
+ * tlv_destroy on it before calling this function.
+ **/
+int tlv_init(tlv_t *t);
+
+/**
+ * Destroy a TLV.
+ **/
+int tlv_destroy(tlv_t *t);
 
 /**
  * Convert {n} in dazibao's endianess
@@ -120,5 +130,10 @@ int dump_tlv(tlv_t tlv, int fd);
  * @return same as write(2)
  */
 int dump_tlv_value(tlv_t tlv, int fd);
+
+/**
+ * Return a string representation for a TLV type
+ **/
+const char *tlv_type2str(char tlv_type);
 
 #endif

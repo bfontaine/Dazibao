@@ -36,7 +36,7 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param dad_buf dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
- * @return 0 on succes
+ * @return 0 on success
  * @return -1 on error
  */
 int dz_open(dz_t *d, char *path, int flags);
@@ -46,6 +46,11 @@ int dz_open(dz_t *d, char *path, int flags);
  * @return 0 on success
  */
 int dz_close(dz_t *d);
+
+/**
+ * Reset the cursor of a dazibao for further readings.
+ **/
+int dz_reset(dz_t *d);
 
 /**
  * Fill tlv value
@@ -91,21 +96,6 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
  * @param tlv to add
  */
 int dz_add_tlv(dz_t *d, tlv_t tlv);
-
-/**
- * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
- * @return offset of the begging of this serie on search succes
- * @return {offset} if search was unsuccessful
- */
-off_t dz_pad_serie_start(dz_t *d, off_t offset);
-
-/**
- * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
- * starting after the skipped tlv.
- * @return offset of the end of this serie on search succes
- * @return offset of next tlv after {offset} if search was unsuccessful
- */
-off_t dz_pad_serie_end(dz_t *d, off_t offset);
 
 /**
  * Erase a tlv. If tlv is surrounded by pad1/padN, they will be concatened.
