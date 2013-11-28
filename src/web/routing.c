@@ -20,22 +20,20 @@ static int routes_cpt = 0;
  */
 
 int add_route(char mth, char *path_suffix, route_handler route) {
-        char *p2;
-
         if (routes_cpt >= MAX_ROUTES) {
                 return -1;
         }
-        if (path_suffix[0] != '/' || mth == 0) {
+        if (path_suffix == NULL || path_suffix[0] != '/' || mth == 0) {
                 return -1;
         }
 
         WLOGDEBUG("Route handler for method %d and suffix '%s' added.",
                         mth, path_suffix);
 
-        p2 = strdup(path_suffix);
-        p2[0] = mth;
+        routes_paths[routes_cpt] = strdup(path_suffix);
+        routes_paths[routes_cpt][0] = mth;
 
-        routes_paths[routes_cpt] = p2;
+
         routes_handlers[routes_cpt] = route;
         routes_cpt++;
 
@@ -66,10 +64,6 @@ route_handler get_route_handler(char mth, char *path) {
 }
 
 int destroy_routes(void) {
-        if (routes_cpt == 0) {
-                return 0;
-        }
-
         for (int i=0; i<routes_cpt; i++) {
                 NFREE(routes_paths[i]);
         }

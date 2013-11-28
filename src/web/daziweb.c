@@ -18,6 +18,8 @@
 static int listening_sock;
 static dz_t dz;
 
+/* FIXME: this function is not called on ^C
+   (I checked with Valgrind, GDB and strace) */
 void clean_close(int s) {
         /* avoid 'unused parameter' warning */ s++;
         if (close(listening_sock) == -1) {
@@ -178,8 +180,6 @@ int main(int argc, char *argv[]) {
                                 WLOGERROR("404 error response failed");
                         }
                 }
-
-                /* TODO respond to the request */
 
                 WLOGINFO("Connection closed.");
                 if (close(client) == -1) {
