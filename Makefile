@@ -8,7 +8,7 @@ VALGRIND=valgrind
 VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
 
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h
