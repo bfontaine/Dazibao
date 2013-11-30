@@ -14,7 +14,7 @@ static int routes_cpt = 0;
 /*
  The following two functions use a little trick to match a request on both its
  path and its method. Paths are stored as NULL-terminated strings in
- routes_paths, and since a method is defined as a number below 127 in http.h,
+ routes_paths, and because a method is defined as a number below 127 in http.h,
  we replace the first character of the path, which is always a slash ('/') with
  this number.
  */
@@ -80,6 +80,8 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
             rstatus = -1,
             rst; /* route status */
 
+        struct http_response *respst;
+
         if (req->body == NULL) {
                 req->body_len = -1;
         }
@@ -117,75 +119,85 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                                 req->path);
         }
 
-        rst = (*rh)(dz, *req, &rstatus, &resp, &resplen);
+        respst = create_http_response();
+        if (respst == NULL) {
+                WLOGERROR("Cannot create a new HTTP response");
+                NFREE(resp);
+                error_response(sock, HTTP_S_ERR);
+                return -1;
+        }
+
+        rst = (*rh)(dz, *req, respst);
         if (rst < 0) {
                 WLOGERROR("Route handler error, rst=%d, status=%d",
                                 rst, status);
+                destroy_http_response(respst);
                 NFREE(resp);
                 return -1;
         }
 
-        status = http_response(sock, rstatus, NULL, resp, resplen);
+        status = http_response(sock, respst);
 
         NFREE(resp);
         return status;
 }
 
-int http_response(int sock, int status, struct http_headers *hs, char *body,
-                        int bodylen) {
-        const char *phrase = get_http_status_phrase(&status);
-        char *response,
-             *str_headers;
+int http_response(int sock, struct http_response *resp) {
+        const char *phrase = get_http_status_phrase(&resp->status);
+        char *str_headers,
+             *response;
         int ret = 0, len,
-            no_body = (body == NULL),
-            noheaders = (hs == NULL),
+            no_body = (resp->body == NULL || *resp->body == NULL),
+            noheaders = (resp->headers == NULL),
             len_headers;
 
         if (sock < 0) {
                 return -1;
         }
-        if (no_body || bodylen < 0) {
-                bodylen = 0;
+        if (no_body || resp->body_len < 0) {
+                resp->body_len = 0;
         }
         if (noheaders) {
-                hs = (struct http_headers*)malloc(sizeof(struct http_headers));
-                if (hs == NULL) {
+                resp->headers = (struct http_headers*)malloc(
+                                        sizeof(struct http_headers));
+                if (resp->headers == NULL) {
                         perror("malloc");
                         return -1;
                 }
-                http_init_headers(hs);
+                http_init_headers(resp->headers);
         }
 
-        /* TODO: add this header only with 405 Method Not Allowed */
-        http_add_header(hs, HTTP_H_ALLOW, "GET,POST", 0);
+        if (resp->status == HTTP_S_NOTALLOWED) {
+                http_add_header(resp->headers, HTTP_H_ALLOW, "GET,POST", 0);
+        }
 
         if (!no_body) {
-                char ct[8];
-                snprintf(ct, 7, "%d", bodylen);
-                http_add_header(hs, HTTP_H_CONTENT_LENGTH, ct, 0);
+                char ct[16];
+                snprintf(ct, 15, "%d", resp->body_len);
+                http_add_header(resp->headers, HTTP_H_CONTENT_LENGTH, ct, 0);
         }
 
         /* 15 = strlen("HTTP/1.x xxx ") + strlen("\r\n") */
         len = 15+strlen(phrase);
         response = (char*)malloc(sizeof(char)*(len+1));
         if (response == NULL) {
-                destroy_http_headers(hs);
-                return -1;
+                perror("malloc");
+                ret = -1;
+                goto EORESP;
         }
 
         /* status line (header) */
         if (snprintf(response, len+1, "HTTP/1.0 %3d %s\r\n",
-                        status, phrase) < len) {
+                        resp->status, phrase) < len) {
                 WLOGERROR("response sprintf failed");
                 perror("sprintf");
                 ret = -1;
         }
 
         /* -- headers -- */
-        str_headers = http_headers_string(hs);
+        str_headers = http_headers_string(resp->headers);
         if (str_headers == NULL) {
                 WLOGERROR("Cannot get headers string");
-                destroy_http_headers(hs);
                 ret = -1;
                 goto EORESP;
         }
@@ -196,7 +208,6 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 WLOGERROR("Cannot realloc for headers");
                 perror("realloc");
                 NFREE(str_headers);
-                destroy_http_headers(hs);
                 ret = -1;
                 goto EORESP;
         }
@@ -209,18 +220,23 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         }
 
         NFREE(str_headers);
-        destroy_http_headers(hs);
         /* -- /headers -- */
 
-        if (write_all(sock, body, bodylen) < bodylen) {
-            WLOGERROR("Couldn't send the whole request body (len=%d)", bodylen)
+        if (write_all(sock, *resp->body, resp->body_len) < resp->body_len) {
+            WLOGERROR("Couldn't send the whole request body (len=%d)",
+                            resp->body_len)
         }
 
 EORESP:
+        destroy_http_response(resp);
+        resp = NULL;
         NFREE(response);
         return ret;
 }
 
 int error_response(int sock, int status) {
-        return http_response(sock, status, NULL, NULL, -1);
+        struct http_response *resp = create_http_response();
+
+        resp->status = status;
+        return http_response(sock, resp);
 }

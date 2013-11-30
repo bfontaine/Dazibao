@@ -37,6 +37,7 @@ struct http_status {
 #define HTTP_S_BADREQ        400
 #define HTTP_S_FORBIDDEN     403
 #define HTTP_S_NOTFOUND      404
+#define HTTP_S_NOTALLOWED    405
 #define HTTP_S_CONFLICT      409
 #define HTTP_S_LENGTHREQD    411
 #define HTTP_S_URITOOLONG    414

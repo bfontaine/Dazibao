@@ -2,6 +2,7 @@
 #define _ROUTING_H 1
 
 #include "request.h"
+#include "response.h"
 #include "dazibao.h"
 #include "http.h"
 
@@ -13,14 +14,9 @@
  * takes the following arguments:
  *  - dz (dz_t): the currently open dazibao
  *  - req (struct http_request): the request
- *  - status (int*): this is a result variable. It should be filled by the
- *    function to represent the status of the response
- *  - resp (char**): this is a result variable. It should be filled with a
- *    pointer to the actual response body
- *  - resplen (int*): this is a result variable. It should be filled with the
- *    length of the response body
+ *  - resp (struct http_response*): the response to send back
  **/
-typedef int (*route_handler)(dz_t, struct http_request, int*, char**, int*);
+typedef int (*route_handler)(dz_t, struct http_request, struct http_response*);
 
 /**
  * Add a new route handler. 'mth' is the method used by the request.
@@ -50,13 +46,10 @@ int route_request(int sock, dz_t dz, struct http_request *req);
 int destroy_routes(void);
 
 /**
- * Send an HTTP response on the socket 'sock', with the HTTP status 'status',
- * as defined in http.h, with the additional headers 'hs' (may be NULL), and
- * the body 'body' (may be NULL) of length 'bodylen'. Returns 0 on success, -1
- * on error.
+ * Send an HTTP response 'resp' on the socket 'sock', and free all memory for
+ * the 'resp' struct. Returns 0 on success, -1 on error.
  **/
-int http_response(int sock, int status, struct http_headers *hs, char *body,
-                        int bodylen);
+int http_response(int sock, struct http_response *resp);
 
 /**
  * Send an HTTP error status ('status', as defined in http.h) in a socket

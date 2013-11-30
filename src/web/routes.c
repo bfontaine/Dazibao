@@ -8,7 +8,7 @@
 #include "html.h"
 
 int route_get_index(dz_t dz, struct http_request req,
-                        int *status, char **resp, int *resplen) {
+                        struct http_response *resp) {
 
         if (strcmp(req.path, "/index.html") != 0 || dz <= 0
                         || req.method != HTTP_M_GET) {
@@ -18,13 +18,13 @@ int route_get_index(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        if (dz2html(dz, resp) < 0) {
+        if (dz2html(dz, resp->body) < 0) {
                 WLOGERROR("Error while making dazibao's HTML");
                 return -1;
         }
 
-        *resplen = strlen(*resp);
-        *status = HTTP_S_OK;
+        resp->body_len = strlen(*(resp->body));
+        resp->status = HTTP_S_OK;
 
         return 0;
 }

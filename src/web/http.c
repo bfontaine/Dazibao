@@ -18,6 +18,7 @@ static struct http_status http_statuses[] = {
         { HTTP_S_BADREQ        , "Bad Request"           },
         { HTTP_S_FORBIDDEN     , "Forbidden"             },
         { HTTP_S_NOTFOUND      , "Not Found"             },
+        { HTTP_S_NOTALLOWED    , "Not Allowed"           },
         { HTTP_S_CONFLICT      , "Conflict"              },
         { HTTP_S_LENGTHREQD    , "Length Required"       },
         { HTTP_S_URITOOLONG    , "Request-URI Too Long"  },
