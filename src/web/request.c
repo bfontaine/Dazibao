@@ -26,16 +26,17 @@ struct http_request *create_http_request(void) {
 }
 
 int reset_http_request(struct http_request *req) {
+        int st;
         if (req == NULL) {
                 return -1;
         }
         req->method = -1;
         NFREE(req->path);
         NFREE(req->body);
-        destroy_http_headers(req->headers);
+        st = destroy_http_headers(req->headers);
         req->headers = NULL;
 
-        return 0;
+        return st;
 }
 
 int destroy_http_request(struct http_request *req) {
