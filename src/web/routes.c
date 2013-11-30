@@ -18,6 +18,9 @@ int route_get_index(dz_t dz, struct http_request req,
                 return -1;
         }
 
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE, \
+                        "Content-Type: text/html; charset=utf-8", 1);
+
         if (dz2html(dz, resp->body) < 0) {
                 WLOGERROR("Error while making dazibao's HTML");
                 return -1;
