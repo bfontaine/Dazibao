@@ -6,6 +6,8 @@
 #define CR 13
 #define LF 10
 
+#define HTTP_VERSION "1.0"
+
 /* Methods */
 #define HTTP_M_GET 1
 #define HTTP_M_POST 2

@@ -175,8 +175,8 @@ int http_response(int sock, struct http_response *resp) {
                 http_add_header(resp->headers, HTTP_H_CONTENT_LENGTH, ct, 0);
         }
 
-        /* 15 = strlen("HTTP/1.x xxx ") + strlen("\r\n") */
-        len = 15+strlen(phrase);
+        /* HTTP/1.x <code> <phrase>\r\n */
+        len = strlen("HTTP/") + strlen(HTTP_VERSION) + 5 + strlen(phrase) + 2;
         response = (char*)malloc(sizeof(char)*(len+1));
         if (response == NULL) {
                 perror("malloc");
@@ -185,7 +185,7 @@ int http_response(int sock, struct http_response *resp) {
         }
 
         /* status line (header) */
-        if (snprintf(response, len+1, "HTTP/1.0 %3d %s\r\n",
+        if (snprintf(response, len+1, "HTTP/" HTTP_VERSION " %3d %s\r\n",
                         resp->status, phrase) < len) {
                 WLOGERROR("response sprintf failed");
                 perror("sprintf");
