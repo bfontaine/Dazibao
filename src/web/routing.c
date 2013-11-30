@@ -75,9 +75,7 @@ int destroy_routes(void) {
 int route_request(int sock, dz_t dz, struct http_request *req) {
         route_handler rh;
         char *resp = NULL;
-        int resplen = -1,
-            status = -1,
-            rstatus = -1,
+        int status = -1,
             rst; /* route status */
 
         struct http_response *respst;
@@ -229,7 +227,6 @@ int http_response(int sock, struct http_response *resp) {
 
 EORESP:
         destroy_http_response(resp);
-        resp = NULL;
         NFREE(response);
         return ret;
 }

@@ -46,6 +46,6 @@ int destroy_http_response(struct http_response *resp) {
         }
         st = destroy_http_headers(resp->headers);
         resp->headers = NULL;
-        NFREE(resp);
+        free(resp);
         return st;
 }
