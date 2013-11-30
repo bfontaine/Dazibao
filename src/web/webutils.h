@@ -1,6 +1,13 @@
 #ifndef _WEBUTILS_H
 #define _WEBUTILS_H 1
 
+/* = Global server properties = */
+struct wserver_info {
+        int port;
+        char *hostname;
+        char *dzname;
+} WSERVER;
+
 /* = Logging = */
 
 /* this is set in webutils.c but can be changed in another file. */
@@ -29,6 +36,8 @@ extern int _wlog_level;
 #define WLOGWARN(fmt, ...)  _WLOG(WLOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
 #define WLOGERROR(fmt, ...) _WLOG(WLOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
 #define WLOGFATAL(fmt, ...) _WLOG(WLOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
+
+/* = I/O = */
 
 /**
  * Wrapper around write(2) to write the whole buffer instead of (sometimes)

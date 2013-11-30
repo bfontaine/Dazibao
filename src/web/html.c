@@ -85,9 +85,21 @@ int dz2html(dz_t dz, char **html) {
         *tlv_html = NULL;
 
         /* We may be able to optimize memory allocation here */
-        *html = strdup(HTML_DZ_TOP);
-        html_len = strlen(*html) + sizeof(char)*(HTML_DZ_BOTTOM_LEN+1);
-        *html = safe_realloc(*html, html_len);
+        html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
+                        + strlen(HTML_DZ_BOTTOM);
+
+        *html = (char*)malloc(sizeof(char)*html_len);
+        if (*html == NULL) {
+                WLOGERROR("Cannot allocate enough memory for the dazibao");
+                perror("malloc");
+                free(t);
+                free(tlv_html);
+                return -1;
+        }
+        if (snprintf(*html, html_len, HTML_DZ_TOP_FMT, \
+                                WSERVER.dzname) > html_len) {
+                WLOGDEBUG("Dazibao name truncated.");
+        }
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
                 int tlv_type = tlv_get_type(*t);
@@ -136,7 +148,7 @@ int dz2html(dz_t dz, char **html) {
         tlv_destroy(t);
         NFREE(tlv_html);
 
-        strncat(*html, HTML_DZ_BOTTOM, HTML_DZ_BOTTOM_LEN);
+        strncat(*html, HTML_DZ_BOTTOM, strlen(HTML_DZ_BOTTOM));
 
         return tlv_off == -1 ? -1 : 0;
 }

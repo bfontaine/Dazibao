@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>
+#include <libgen.h>
 #include "dazibao.h"
 #include "daziweb.h"
 #include "utils.h"
@@ -31,6 +32,8 @@ void clean_close(int s) {
         }
         destroy_http_request(req);
         destroy_routes();
+        free(WSERVER.hostname);
+        free(WSERVER.dzname);
         exit(EXIT_SUCCESS);
 }
 
@@ -43,6 +46,7 @@ int parse_args(int argc, char **argv, int *port) {
              loglvl_flag = 0;
 
         dz = -1;
+        WSERVER.dzname = NULL;
         while ((c = getopt(argc, argv, "l:p:d:v")) != -1) {
                 switch (c) {
                 case 'l':
@@ -58,11 +62,15 @@ int parse_args(int argc, char **argv, int *port) {
                                 WLOGWARN("Wrong port: '%s'", optarg);
                                 *port = DEFAULT_PORT;
                         }
+                        WSERVER.port = *port;
                         break;
                 case 'd':
-                        if (dz == -1 && dz_open(&dz,  optarg,  0) < 0) {
-                                WLOGFATAL("Cannot open '%s'", optarg);
-                                return -1;
+                        if (dz == -1) {
+                                if (dz_open(&dz,  optarg,  0) < 0) {
+                                        WLOGFATAL("Cannot open '%s'", optarg);
+                                        return -1;
+                                }
+                                WSERVER.dzname = strdup(basename(optarg));
                         }
                         break;
                 case 'v':
@@ -80,6 +88,35 @@ int parse_args(int argc, char **argv, int *port) {
         return 0;
 }
 
+/**
+ * helper to move code off the main function
+ **/
+static void init_wserver_infos(void) {
+        WSERVER.hostname = strdup("localhost"); /* should be ok for now */
+
+        if (WSERVER.dzname == NULL) {
+                WSERVER.dzname = strdup("<no dazibao>");
+        } else {
+                /* Remove the extension if there's one */
+                char *tmp;
+                for (int i=0; WSERVER.dzname[i] != '\0'; i++) {
+                        if (WSERVER.dzname[i] == '.') {
+                                tmp = (char*)malloc(sizeof(char)*(i+1));
+                                strncpy(tmp, WSERVER.dzname, i);
+                                tmp[i] = '\0';
+                                free(WSERVER.dzname);
+                                WSERVER.dzname = tmp;
+                                break;
+                        }
+                }
+
+                /* Capitalize the first word */
+                if (WSERVER.dzname[0] >= 97 && WSERVER.dzname[0] <= 122) {
+                        WSERVER.dzname[0] -= ('a' - 'A');
+                }
+        }
+}
+
 int main(int argc, char **argv) {
         int status = 0,
             port = DEFAULT_PORT;
@@ -95,6 +132,7 @@ int main(int argc, char **argv) {
                 }
                 exit(EXIT_FAILURE);
         }
+        init_wserver_infos();
 
         if (dz < 0) {
                 WLOGWARN("Starting with no dazibao");
