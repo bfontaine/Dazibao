@@ -12,7 +12,7 @@ CC=gcc
 CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
-WUTILS=$(WEBSRC)/webutils.h
+WUTILS=$(WEBSRC)/webutils.h $(WEBSRC)/http.h
 
 TARGET=dazibao
 SERVER=notification-server
