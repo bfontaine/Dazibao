@@ -222,11 +222,9 @@ int accept_client(int server) {
 
 		/* set handler for SIGUSR1 */
 		struct sigaction action;
-		action.sa_flags = SA_SIGINFO;
+		action.sa_flags = SA_SIGINFO | SA_NODEFER;
 		action.sa_sigaction = notify;
-		sigfillset(&action.sa_mask);
 		if(sigaction(SIGUSR1, &action, NULL) == -1) {
-			/* TODO: delete client */
 			ERROR("sigaction", -1);
 		}
 		printf("[pid:%d] Client configured\n", getpid());	
@@ -259,7 +257,7 @@ void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 }
 
 
-int set_up_server_sigaction() {
+int set_up_server_sigaction(void) {
 	/* ignore signal used by notifier */
 	struct sigaction action;
 	action.sa_flags = SA_RESTART;

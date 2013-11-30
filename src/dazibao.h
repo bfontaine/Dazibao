@@ -98,21 +98,6 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
 int dz_add_tlv(dz_t *d, tlv_t tlv);
 
 /**
- * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
- * @return offset of the begging of this serie on search succes
- * @return {offset} if search was unsuccessful
- */
-off_t dz_pad_serie_start(dz_t *d, off_t offset);
-
-/**
- * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
- * starting after the skipped tlv.
- * @return offset of the end of this serie on search succes
- * @return offset of next tlv after {offset} if search was unsuccessful
- */
-off_t dz_pad_serie_end(dz_t *d, off_t offset);
-
-/**
  * Erase a tlv. If tlv is surrounded by pad1/padN, they will be concatened.
  * If it leaves pad1/padN at the end of dazibao, it will be truncated
  * @param d dazibao where is tlv to remove

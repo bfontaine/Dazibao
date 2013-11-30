@@ -13,6 +13,10 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 #include "utils.h"
 
 #define WATCH_SLEEP_MIN 2
@@ -27,7 +31,7 @@ struct file_watcher {
 /**
  * Compare two file_watcher struct
  */
-int fwcmp (const void*, const void*);
+int fwcmp(const void*, const void*);
 
 /**
  * Signal handler.

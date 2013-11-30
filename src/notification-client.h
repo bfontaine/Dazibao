@@ -18,6 +18,7 @@
 
 int check_notifier(void);
 void print_notification(char *title, char *msg);
-void notify(char *title, char *msg);
+int notify(char *title, char *msg);
+int receive_notifications(int fd);
 
 #endif

@@ -1,18 +1,12 @@
 #include "notification-client.h"
 
-static char notifier_enabled = 0;
-
-static char notifier[] = "/usr/bin/notify-send";
+static char notifier_enabled = 1;
+static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
+static char cmd[BUFFER_SIZE*2];
 
 int check_notifier(void) {
-
 	printf("[pid:%d] Looking for %s\n", getpid(), notifier);
-
-	if (access(notifier, X_OK) == -1) {
-		ERROR("access", 0);
-	}
-	printf("[pid:%d] %s found\n", getpid(), notifier);
-	return 1;
+	return (notify("Welcome!", "dazibao-client") == 0) ? 1 : 0;
 }
 
 void print_notification(char *title, char *msg) {
@@ -20,88 +14,56 @@ void print_notification(char *title, char *msg) {
 	fflush(stdout);
 }
 
-void notify(char *title, char *msg) {
+int notify(char *title, char *msg) {
+
+	int status = 0;
 
 	if (notifier_enabled) {
-
-		int pid;
-		pid = fork();
-
-		if (pid == -1) {
-			PERROR("fork");
-			return;
-		}
-		if (pid == 0) {
-			execlp(notifier, notifier, title, msg, NULL);
-		} else {
-			if (waitpid(pid, NULL, 0) == -1) {
-				PERROR("wait");
-			}
-		}
+		sprintf(cmd, notifier, title, msg);
+		status = system(cmd) == -1 ? -1 : 0;
 	}
 
 	print_notification(title, msg);
-
+	return status;
 }
 
 
-int main(int argc, char **argv) {
-	notifier_enabled = check_notifier();
+int receive_notifications(int fd) {
+
 	char buf[BUFFER_SIZE];
-	struct sockaddr_un sun;
-	int fd, bufptr, rc;
-
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-
-	if (argc == 1) {
-		strncpy(sun.sun_path, getenv("HOME"), 107);
-		strncat(sun.sun_path, "/", 107);
-		strncat(sun.sun_path, ".dazibao-notification-socket", 107);
-	} else {
-		strncpy(sun.sun_path, argv[1], 107);
-	}
-
-	fd = socket(PF_UNIX, SOCK_STREAM, 0);
-	if(fd < 0) {
-		perror("socket");
-		exit(1);
-	}
-
-	rc = connect(fd, (struct sockaddr*)&sun, sizeof(sun));
-	if(rc < 0) {
-		perror("connect");
-		exit(1);
-	}
-
-	printf("[pid:%d] Connected to %s\n", getpid(), sun.sun_path);
+	int bufptr, rc;
+	char *p;
 
 	bufptr = 0;
-	while(1) {
-		char *p;
+
+	while (1) {
+		
 		rc = read(fd, buf + bufptr, BUFFER_SIZE - bufptr);
-		if(rc < 0) {
-			if(errno == EINTR)
+		
+		if (rc < 0) {
+			if (errno == EINTR) {
 				continue;
-			perror("read");
-			exit(1);
+			} else {
+				ERROR("read", -1);
+			}
 		}
 
-		if(rc == 0)
+		if (rc == 0) {
 			break;
-
+		}
+		
 		bufptr += rc;
 
 		p = memchr(buf, '\n', bufptr);
-		if(p == NULL) {
-			if(bufptr >= BUFFER_SIZE) {
+		if (p == NULL) {
+			if (bufptr >= BUFFER_SIZE) {
 				fprintf(stderr, "Notification too long!\n");
-				exit(1);
+				return -1;
 			}
 			continue;
 		}
 
-		if(buf[0] == 'C') {
+		if (buf[0] == 'C') {
 			char *msg;
 			msg = calloc(sizeof(*msg), p - buf);
 			strncpy(msg, buf + 1, p - buf - 1);
@@ -111,7 +73,7 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "Unknown notification type %c.\n", buf[0]);
 		}
 
-		if(p + 1 >= buf + bufptr) {
+		if (p + 1 >= buf + bufptr) {
 			bufptr = 0;
 		} else {
 			memmove(buf, p + 1, buf + bufptr - (p + 1));
@@ -119,5 +81,58 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	return 0;
+	return -1;
+}
+
+
+int main(int argc, char **argv) {
+
+	struct sockaddr_un sun;
+	int fd;
+
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+
+	if (argc >= 3) {
+		if (strcmp(argv[1], "--path") == 0) {
+			strncpy(sun.sun_path, argv[2], 107);
+		} else if (strcmp(argv[1], "--notifier") == 0) {
+			notifier = argv[2];
+		}
+		if (argc == 5) {
+			if (strcmp(argv[3], "--path") == 0) {
+				strncpy(sun.sun_path, argv[4], 107);
+			} else if (strcmp(argv[3], "--notifier") == 0) {
+				notifier = argv[4];
+			}
+		}
+	}
+
+	if (strcmp(sun.sun_path, "") == 0) {
+		strncpy(sun.sun_path, getenv("HOME"), 107);
+		strncat(sun.sun_path, "/", 107);
+		strncat(sun.sun_path, ".dazibao-notification-socket", 107);
+	}
+
+	notifier_enabled = check_notifier();
+
+	fd = socket(PF_UNIX, SOCK_STREAM, 0);
+	if(fd < 0) {
+		PERROR("socket");
+		exit(1);
+	}
+
+	if(connect(fd, (struct sockaddr*)&sun, sizeof(sun)) < 0) {
+		PERROR("connect");
+		exit(1);
+	}
+
+	printf("[pid:%d] Connected to %s\n", getpid(), sun.sun_path);
+	
+	if (receive_notifications(fd) == -1) {
+		fprintf(stderr, "[pid:%d] receive_notifications failed. Exiting with 1.\n", getpid());
+		exit(1);
+	}
+
+	exit(0);
 }
