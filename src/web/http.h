@@ -3,8 +3,8 @@
 
 #include "utils.h"
 
-#define HTTP_HEADER_CL "Content-Length:"
-#define HTTP_HEADER_CL_LEN 14
+#define CR 13
+#define LF 10
 
 /* Methods */
 #define HTTP_M_GET 1
@@ -61,10 +61,16 @@ struct http_status {
 #define HTTP_H_SERVER         6
 #define HTTP_H_POWEREDBY      7
 
-/* custom extentions/limits */
-#define HTTP_MAX_HEADERS 8
+/* arbitrary extentions/limits */
+#define HTTP_MAX_HEADERS 16
+#define HTTP_MAX_HEADER_NAME_LENGTH 64
+#define HTTP_MAX_HEADER_VALUE_LENGTH 512
 #define HTTP_MAX_PATH 512
 #define HTTP_MAX_MTH_LENGTH 16
+
+/* defined for easier formating strings */
+#define HTTP_MAX_MTH_LENGTH_S "16"
+#define HTTP_MAX_PATH_S "512"
 
 /* Headers */
 struct http_headers {
@@ -72,17 +78,20 @@ struct http_headers {
 };
 
 /**
- * Retrieve either the code of an header or its string. If 'str' points to the
- * address of a NULL pointer and 'code' points to the address of a valid header
- * code, 'str' is filled with the address of a string describing the header. On
- * the opposite, if '*str' is a valid header string and '*code' is negative,
- * it's filled with the header code. The function returns 0 on success, -1 if
- * the header doesn't exist, or -2 if there was an error.
- *
- * Be carefull to free '*str' if you use this function to get the string for an
- * header.
+ * Test if the c-th and (c+1)th characters of a string represent an HTTP end of
+ * line (CRLF). Returns 1 or 0.
  **/
-int http_header_code_str(char **str, int *code);
+char is_crlf(char *s, int c, int len);
+
+/**
+ * Get the code for an HTTP header. Return a negative value on error.
+ **/
+int get_http_header_code(char *str);
+
+/**
+ * Get the HTTP header for a code. Return NULL on error.
+ **/
+char *get_http_header_str(int code);
 
 /**
  * Initialize a struct http_headers. Return 0 or -1.
@@ -104,7 +113,7 @@ int http_add_header(struct http_headers *hs, int code, char *value,
 /**
  * Helper for http_headers_size.
  **/
-int http_header_size(int code, char *value) WARN_UNUSED;
+int http_header_size(int code, char *value);
 
 /**
  * Return the size of the string representation of a list of headers, without

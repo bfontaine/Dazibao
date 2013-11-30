@@ -72,8 +72,7 @@ int destroy_routes(void) {
         return 0;
 }
 
-int route_request(int sock, dz_t dz, int mth, char *path, char *body,
-                        int bodylen) {
+int route_request(int sock, dz_t dz, struct http_request *req) {
         route_handler rh;
         char *resp = NULL;
         int resplen = -1,
@@ -81,8 +80,8 @@ int route_request(int sock, dz_t dz, int mth, char *path, char *body,
             rstatus = -1,
             rst; /* route status */
 
-        if (body == NULL) {
-                bodylen = -1;
+        if (req->body == NULL) {
+                req->body_len = -1;
         }
 
         if (sock < 0) {
@@ -90,13 +89,13 @@ int route_request(int sock, dz_t dz, int mth, char *path, char *body,
                 return -1;
         }
 
-        if (path == NULL) {
+        if (req->path == NULL) {
                 WLOGERROR("Got a NULL path");
                 error_response(sock, HTTP_S_BADREQ);
                 return -1;
         }
 
-        if (mth == HTTP_M_UNSUPPORTED) {
+        if (req->method == HTTP_M_UNSUPPORTED) {
                 error_response(sock, HTTP_S_NOTIMPL);
                 return 0;
         }
@@ -105,19 +104,20 @@ int route_request(int sock, dz_t dz, int mth, char *path, char *body,
                 WLOGWARN("Routing a request with no dazibao (%d)", dz);
         }
 
-        rh = get_route_handler(mth, path);
+        rh = get_route_handler(req->method, req->path);
 
         if (rh == NULL) {
-                WLOGWARN("No route found for path '%s'", path);
+                WLOGWARN("No route found for path '%s'", req->path);
                 error_response(sock, HTTP_S_NOTFOUND);
                 return 0;
         }
 
-        if (mth == HTTP_M_POST && bodylen <= 0) {
-                WLOGWARN("Got a POST request with empty body on '%s'", path);
+        if (req->method == HTTP_M_POST && req->body_len <= 0) {
+                WLOGWARN("Got a POST request with empty body on '%s'",
+                                req->path);
         }
 
-        rst = (*rh)(dz, mth, path, body, bodylen, &rstatus, &resp, &resplen);
+        rst = (*rh)(dz, *req, &rstatus, &resp, &resplen);
         if (rst < 0) {
                 WLOGERROR("Route handler error, rst=%d, status=%d",
                                 rst, status);

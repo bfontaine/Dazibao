@@ -16,6 +16,7 @@
 #include "routes.h"
 
 static int listening_sock;
+static struct http_request *req;
 static dz_t dz;
 
 /* FIXME: this function is not called on ^C
@@ -28,6 +29,7 @@ void clean_close(int s) {
         if (dz > 0) {
                 dz_close(&dz);
         }
+        destroy_http_request(req);
         destroy_routes();
         exit(EXIT_SUCCESS);
 }
@@ -80,20 +82,12 @@ int parse_args(int argc, char **argv, int *port) {
 
 int main(int argc, char **argv) {
         int status = 0,
-            mth, body_len,
             port = DEFAULT_PORT;
-        char *path = NULL;
-        char *body = NULL;
 
         struct sockaddr_in bindaddr,
                            addr;
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
-
-        sig.sa_handler = clean_close;
-        sig.sa_sigaction = NULL;
-        sig.sa_flags = 0;
-        sigemptyset(&sig.sa_mask);
 
         if (parse_args(argc, argv, &port) != 0) {
                 if (dz > 0) {
@@ -102,12 +96,22 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
 
-        if (sigaction(SIGINT, &sig, NULL) == -1) {
-                perror("sigaction");
-        }
-
         if (dz < 0) {
                 WLOGWARN("Starting with no dazibao");
+        }
+
+        sig.sa_handler = clean_close;
+        sig.sa_sigaction = NULL;
+        sig.sa_flags = 0;
+        sigemptyset(&sig.sa_mask);
+
+        if (sigaction(SIGINT, &sig, NULL) == -1) {
+                perror("sigaction");
+                WLOGWARN("Cannot intercept SIGINT");
+        }
+        if (sigaction(SIGSEGV, &sig, NULL) == -1) {
+                perror("sigaction");
+                WLOGWARN("Cannot intercept SIGSEGV");
         }
 
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -154,10 +158,17 @@ int main(int argc, char **argv) {
 
         register_routes();
 
+        req = (struct http_request*)malloc(sizeof(struct http_request));
+        req->path = NULL;
+        req->body = NULL;
+        req->body_len = -1;
+        req->headers = \
+              (struct http_headers*)malloc(sizeof(struct http_headers));
+        http_init_headers(req->headers);
+
         while (1) {
                 int client;
-                NFREE(path);
-                NFREE(body);
+                reset_http_request(req);
 
                 if ((client = accept(listening_sock,
                                 (struct sockaddr *)&addr, &len)) == -1) {
@@ -166,11 +177,11 @@ int main(int argc, char **argv) {
                 }
                 WLOGINFO("Got a connection.");
 
-                status = parse_request(client, &mth, &path, &body, &body_len);
+                status = parse_request(client, req);
                 if (status != 0) {
                         WLOGWARN("request parse error (status=%d)", status);
                         WLOGWARN("with method %d, path %s, body length %d",
-                                mth, path, body_len);
+                                req->method, req->path, req->body_len);
                         if (error_response(client, status) < 0) {
                                 WLOGERROR("error_response failed");
                         }
@@ -181,8 +192,8 @@ int main(int argc, char **argv) {
                         continue;
                 }
                 WLOGDEBUG("Got method %d, path %s, body length %d",
-                               mth, path, body_len);
-                status = route_request(client, dz, mth, path, body, body_len);
+                               req->method, req->path, req->body_len);
+                status = route_request(client, dz, req);
                 if (status != 0) {
                         WLOGWARN("route error, status=%d", status);
                         if (error_response(client, HTTP_S_NOTFOUND) < 0) {

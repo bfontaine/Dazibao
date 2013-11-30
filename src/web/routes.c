@@ -7,18 +7,15 @@
 #include "http.h"
 #include "html.h"
 
-int route_get_index(dz_t dz, int mth, char *path, char *body, int bodylen,
+int route_get_index(dz_t dz, struct http_request req,
                         int *status, char **resp, int *resplen) {
 
-        if (strcmp(path, "/index.html") != 0 || dz <= 0 || mth != HTTP_M_GET) {
+        if (strcmp(req.path, "/index.html") != 0 || dz <= 0
+                        || req.method != HTTP_M_GET) {
                 WLOGERROR("get_index - got wrong path '%s' and/or wrong " \
                                 "dz=%d and/or wrong method %d.",
-                                path, dz, mth);
+                                req.path, dz, req.method);
                 return -1;
-        }
-
-        if (body != NULL && bodylen > 0) {
-                WLOGDEBUG("GET /index got a body (len=%d)", bodylen);
         }
 
         if (dz2html(dz, resp) < 0) {

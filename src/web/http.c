@@ -48,28 +48,27 @@ static char *headers_strs[] = {
         "X-Powered-By"
 };
 
-int http_header_code_str(char **str, int *code) {
-        int i;
+char is_crlf(char *s, int c, int len) {
+        return s != NULL && c < len-1 && s[c] == CR && s[c+1] == LF;
+}
 
-        if ((str == NULL) || (*str == NULL && (code == NULL || *code < 0))) {
+int get_http_header_code(char *str) {
+        if (str == NULL) {
                 return -2;
         }
-        if (*str == NULL) {
-                if (*code >= HTTP_MAX_HEADERS) {
-                        return -1;
-                }
-                *str = strdup(headers_strs[*code]);
-                return 0;
-        }
-
-        for (i=0; i<HTTP_MAX_HEADERS; i++) {
-                if (strcasecmp(headers_strs[i], *str) == 0) {
-                        *code = i;
-                        return 0;
+        for (int i=0; i<HTTP_MAX_HEADERS; i++) {
+                if (strcasecmp(headers_strs[i], str) == 0) {
+                    return i;
                 }
         }
-
         return -1;
+}
+
+char *get_http_header_str(int code) {
+        if (code < 0 || code >= HTTP_MAX_HEADERS) {
+                return NULL;
+        }
+        return strdup(headers_strs[code]);
 }
 
 const char *get_http_status_phrase(int *code) {
@@ -140,20 +139,17 @@ int http_add_header(struct http_headers *hs, int code, char *value,
  * but excluding \0.
  */
 int http_header_size(int code, char *value) {
-        char **name = (char**)malloc(sizeof(char*));
+        char *name;
         int len = 0;
-        if (code < 0 || code > HTTP_MAX_HEADERS ||
-                        value == NULL || name == NULL) {
+        if (code < 0 || code > HTTP_MAX_HEADERS || value == NULL) {
                 return -1;
         }
-        *name = NULL;
-        if (http_header_code_str(name, &code) != 0) {
+        if ((name = get_http_header_str(code)) == NULL) {
                 free(name);
                 return -1;
         }
-        /* <name>: <value>\r\n */
-        len = strlen(*name) + 2 + strlen(value) + 2;
-        NFREE(*name);
+        /* <name> COLON SPACE <value> CR LF */
+        len = strlen(name) + 2 + strlen(value) + 2;
         free(name);
         return len;
 }
@@ -180,33 +176,29 @@ int http_headers_size(struct http_headers *hs) {
 }
 
 char *http_header_string(int code, char *value) {
-        char **name = (char**)malloc(sizeof(char*));
-        char *repr;
+        char *name, *repr;
         int len;
 
-        if (name == NULL || code < 0 || code > HTTP_MAX_HEADERS
-                        || value == NULL) {
+        if (code < 0 || code > HTTP_MAX_HEADERS || value == NULL) {
                 return NULL;
         }
 
-        *name = NULL;
-        if (http_header_code_str(name, &code) != 0) {
+        name = get_http_header_str(code);
+        if (name == NULL) {
                 free(name);
                 return NULL;
         }
 
-        len = strlen(*name) + 2 + strlen(value) + 2;
+        len = strlen(name) + 2 + strlen(value) + 2;
         repr = (char*)malloc(sizeof(char)*(len+1));
 
         if (repr == NULL) {
                 perror("malloc");
-                NFREE(*name);
                 free(name);
                 return NULL;
         }
 
-        snprintf(repr, len+1, "%s: %s\r\n", *name, value);
-        NFREE(*name);
+        snprintf(repr, len+1, "%s: %s\r\n", name, value);
         free(name);
         return repr;
 }

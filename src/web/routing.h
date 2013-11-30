@@ -1,6 +1,7 @@
 #ifndef _ROUTING_H
 #define _ROUTING_H 1
 
+#include "request.h"
 #include "dazibao.h"
 #include "http.h"
 
@@ -11,10 +12,7 @@
  * (a status, 0 if everything is ok, or an error code if there was an error. It
  * takes the following arguments:
  *  - dz (dz_t): the currently open dazibao
- *  - method (int): the method used by the request, as defined in http.h
- *  - path (char*): the path of the request (e.g. /index.html)
- *  - body (char*): the raw body of the request
- *  - len (int): the length of this body
+ *  - req (struct http_request): the request
  *  - status (int*): this is a result variable. It should be filled by the
  *    function to represent the status of the response
  *  - resp (char**): this is a result variable. It should be filled with a
@@ -22,7 +20,7 @@
  *  - resplen (int*): this is a result variable. It should be filled with the
  *    length of the response body
  **/
-typedef int (*route_handler)(dz_t, int, char*, char*, int, int*, char**, int*);
+typedef int (*route_handler)(dz_t, struct http_request, int*, char**, int*);
 
 /**
  * Add a new route handler. 'mth' is the method used by the request.
@@ -40,14 +38,11 @@ route_handler get_route_handler(char mth, char *path);
 
 /**
  * Route a request, i.e. find the matching route and accordingly respond to the
- * request. The response will be sent on the client socket 'sock', and the
- * request was made with method 'mth', on path 'path', with body 'body' of
- * length 'bodylen'. The currently open dazibao is given in the second argument
- * ('dz').
+ * request. The response will be sent on the client socket 'sock'.
+ * The currently open dazibao is given in the second argument ('dz').
  * Return 0 or -1.
  **/
-int route_request(int sock, dz_t dz, int mth, char *path, char *body,
-                        int bodylen);
+int route_request(int sock, dz_t dz, struct http_request *req);
 
 /**
  * Free the routes table and return 0.

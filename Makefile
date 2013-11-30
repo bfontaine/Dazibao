@@ -5,7 +5,8 @@ SRC=src
 WEBSRC=$(SRC)/web
 
 VALGRIND=valgrind
-VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes
+VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
+	 --show-reachable=yes
 
 CC=gcc
 CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
@@ -55,7 +56,7 @@ $(CLIENT): $(SRC)/notification-client.o
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
-		$(WEBSRC)/html.o \
+		$(WEBSRC)/html.o $(WEBSRC)/response.o \
 		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -79,7 +80,7 @@ check: cleantmp
 	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
 
 memcheck-%: %
-	$(VALGRIND) $(VALFLAGS) ./$<
+	$(VALGRIND) $(VALFLAGS) ./$< $(CLI_OPTS)
 
 checkwhattodo:
 	@d=$(SRC);c="TO";f="FIX";x="X"; \
