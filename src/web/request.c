@@ -9,6 +9,176 @@
 #include "webutils.h"
 #include "utils.h"
 
+struct http_request *create_http_request(void) {
+        struct http_request *req;
+
+        req = (struct http_request*)malloc(sizeof(struct http_request));
+
+        if (req == NULL) {
+                return NULL;
+        }
+        req->method = req->body_len = -1;
+        req->path = req->body = NULL;
+        req->headers = \
+              (struct http_headers*)malloc(sizeof(struct http_headers));
+        http_init_headers(req->headers);
+        return req;
+}
+
+int reset_http_request(struct http_request *req) {
+        if (req == NULL) {
+                return -1;
+        }
+        req->method = -1;
+        NFREE(req->path);
+        NFREE(req->body);
+        destroy_http_headers(req->headers);
+        req->headers = NULL;
+
+        return 0;
+}
+
+int destroy_http_request(struct http_request *req) {
+        int st = reset_http_request(req);
+        free(req);
+        return st;
+}
+
+int parse_request(int sock, struct http_request *req) {
+        char *line,
+             *mth_str,
+             status_fmt[] = "%" HTTP_MAX_MTH_LENGTH_S "s " \
+                            "%" HTTP_MAX_PATH_S "s HTTP/%*s";
+
+        int eoh = 0,
+            readlen = 0,
+            body_len = 0,
+            status = 0;
+
+        if (req == NULL) {
+                return -1;
+        }
+
+        line = next_header(sock, &eoh); /* First line */
+        if (line == NULL || eoh) {
+                WLOGWARN("Cannot get the first header line (eoh=%d)", eoh);
+                next_header(-1, NULL);
+                return HTTP_S_BADREQ;
+        }
+
+        mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
+        if (mth_str == NULL) {
+                perror("malloc");
+                next_header(-1, NULL);
+                return HTTP_S_BADREQ;
+        }
+
+        if (req->path == NULL) {
+                req->path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
+        }
+        if (req->path == NULL) {
+                perror("malloc");
+                NFREE(mth_str);
+                next_header(-1, NULL);
+                return HTTP_S_BADREQ;
+        }
+
+        if (sscanf(line, status_fmt, mth_str, req->path) < 2) {
+                WLOGWARN("Cannot scan first header line");
+                perror("sscanf");
+                NFREE(mth_str);
+                goto MALFORMED;
+        }
+
+        req->method = http_mth(mth_str);
+        NFREE(mth_str);
+
+        if (req->method == HTTP_M_UNSUPPORTED) {
+            status = HTTP_S_NOTIMPL;
+            goto EOPARSING;
+        }
+
+        if (req->method != HTTP_M_POST) {
+                /* no request body */
+                goto EOPARSING;
+        }
+
+        if (req->headers != NULL) {
+                destroy_http_headers(req->headers);
+                req->headers = NULL;
+        }
+
+        if (req->headers == NULL || !http_init_headers(req->headers)) {
+                WLOGERROR("Couldn't allocate memory for headers.");
+                perror("malloc");
+                goto MALFORMED;
+        }
+
+        /* Other headers */
+        while ((line = next_header(sock, &eoh)) != NULL && !eoh) {
+                if (parse_header(line, req->headers) != 0) {
+                        WLOGDEBUG("Couldn't parse header <%s>", line);
+                }
+
+                NFREE(line);
+        }
+
+        while (!eoh) {
+                free(line);
+                line = next_header(sock, &eoh);
+
+                if (line == NULL) {
+                        goto MALFORMED;
+                }
+        }
+
+        if (req->headers->headers[HTTP_H_CONTENT_LENGTH] == NULL) {
+                WLOGERROR("Got no content length header");
+                status = HTTP_S_LENGTHREQD;
+                goto EOPARSING;
+        }
+        req->body_len = strtol(req->headers->headers[HTTP_H_CONTENT_LENGTH],
+                                NULL, 10);
+
+        if (STRTOL_ERR(req->body_len) || req->body_len <= 0) {
+                WLOGERROR("Got malformed content length header");
+                status = HTTP_S_LENGTHREQD;
+                goto EOPARSING;
+        }
+
+        /* request body */
+        req->body = (char*)malloc(sizeof(char)*(req->body_len));
+        if (req->body == NULL) {
+                WLOGERROR("Cannot alloc for the request body");
+                perror("malloc");
+                goto MALFORMED;
+        }
+
+        memcpy(req->body, line, eoh);
+        NFREE(line);
+
+        readlen = 0;
+        body_len = eoh;
+        while (body_len < req->body_len
+                && (readlen = read(sock, req->body + body_len,
+                                        req->body_len - body_len)) > 0) {
+                body_len += readlen;
+        }
+        if (body_len < req->body_len) {
+                goto MALFORMED;
+        }
+
+        return 0;
+
+MALFORMED:
+        status = HTTP_S_BADREQ;
+        /*destroy_http_request(req);*/
+EOPARSING:
+        NFREE(line);
+        next_header(-1, NULL);
+        return status;
+}
+
 char *next_header(int sock, int *eoh) {
         static char rest[BUFFLEN];
         static int restlen = 0;
@@ -166,165 +336,4 @@ int parse_header(char *line, struct http_headers *hs) {
         value[idx2] = '\0';
 
         return http_add_header(hs, code, value, 1);
-}
-
-int parse_request(int sock, struct http_request *req) {
-        char *line,
-             *mth_str,
-             status_fmt[] = "%" HTTP_MAX_MTH_LENGTH_S "s " \
-                            "%" HTTP_MAX_PATH_S "s HTTP/%*s";
-
-        int eoh = 0,
-            readlen = 0,
-            body_len = 0,
-            status = 0;
-
-        if (req == NULL) {
-                return -1;
-        }
-
-        line = next_header(sock, &eoh); /* First line */
-        if (line == NULL || eoh) {
-                WLOGWARN("Cannot get the first header line (eoh=%d)", eoh);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
-        if (mth_str == NULL) {
-                perror("malloc");
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        if (req->path == NULL) {
-                req->path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
-        }
-        if (req->path == NULL) {
-                perror("malloc");
-                NFREE(mth_str);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
-        }
-
-        if (sscanf(line, status_fmt, mth_str, req->path) < 2) {
-                WLOGWARN("Cannot scan first header line");
-                perror("sscanf");
-                NFREE(mth_str);
-                goto MALFORMED;
-        }
-
-        req->method = http_mth(mth_str);
-        NFREE(mth_str);
-
-        if (req->method == HTTP_M_UNSUPPORTED) {
-            status = HTTP_S_NOTIMPL;
-            goto EOPARSING;
-        }
-
-        if (req->method != HTTP_M_POST) {
-                /* no request body */
-                goto EOPARSING;
-        }
-
-        if (req->headers != NULL) {
-                destroy_http_headers(req->headers);
-                req->headers = NULL;
-        }
-
-        if (req->headers == NULL || !http_init_headers(req->headers)) {
-                WLOGERROR("Couldn't allocate memory for headers.");
-                perror("malloc");
-                goto MALFORMED;
-        }
-
-        /* Other headers */
-        while ((line = next_header(sock, &eoh)) != NULL && !eoh) {
-                if (parse_header(line, req->headers) != 0) {
-                        WLOGDEBUG("Couldn't parse header <%s>", line);
-                }
-
-                NFREE(line);
-        }
-
-        while (!eoh) {
-                free(line);
-                line = next_header(sock, &eoh);
-
-                if (line == NULL) {
-                        goto MALFORMED;
-                }
-        }
-
-        if (req->headers->headers[HTTP_H_CONTENT_LENGTH] == NULL) {
-                WLOGERROR("Got no content length header");
-                status = HTTP_S_LENGTHREQD;
-                goto EOPARSING;
-        }
-        req->body_len = strtol(req->headers->headers[HTTP_H_CONTENT_LENGTH],
-                                NULL, 10);
-
-        if (STRTOL_ERR(req->body_len) || req->body_len <= 0) {
-                WLOGERROR("Got malformed content length header");
-                status = HTTP_S_LENGTHREQD;
-                goto EOPARSING;
-        }
-
-        /* request body */
-        req->body = (char*)malloc(sizeof(char)*(req->body_len));
-        if (req->body == NULL) {
-                WLOGERROR("Cannot alloc for the request body");
-                perror("malloc");
-                goto MALFORMED;
-        }
-
-        memcpy(req->body, line, eoh);
-        NFREE(line);
-
-        readlen = 0;
-        body_len = eoh;
-        while (body_len < req->body_len
-                && (readlen = read(sock, req->body + body_len,
-                                        req->body_len - body_len)) > 0) {
-                body_len += readlen;
-        }
-        if (body_len < req->body_len) {
-                goto MALFORMED;
-        }
-
-        return 0;
-
-MALFORMED:
-        status = HTTP_S_BADREQ;
-        /*destroy_http_request(req);*/
-EOPARSING:
-        NFREE(line);
-        next_header(-1, NULL);
-        return status;
-}
-
-int destroy_http_request(struct http_request *req) {
-        int st = 0;
-        if (req == NULL) {
-                return 0;
-        }
-        NFREE(req->path);
-        NFREE(req->body);
-        st = destroy_http_headers(req->headers);
-        req->headers = NULL;
-        free(req);
-        return st;
-}
-
-int reset_http_request(struct http_request *req) {
-        if (req == NULL) {
-                return -1;
-        }
-        req->method = -1;
-        NFREE(req->path);
-        NFREE(req->body);
-        destroy_http_headers(req->headers);
-        req->headers = NULL;
-
-        return 0;
 }

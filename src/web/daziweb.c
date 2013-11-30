@@ -158,13 +158,7 @@ int main(int argc, char **argv) {
 
         register_routes();
 
-        req = (struct http_request*)malloc(sizeof(struct http_request));
-        req->path = NULL;
-        req->body = NULL;
-        req->body_len = -1;
-        req->headers = \
-              (struct http_headers*)malloc(sizeof(struct http_headers));
-        http_init_headers(req->headers);
+        req = create_http_request();
 
         while (1) {
                 int client;
