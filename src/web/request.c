@@ -228,7 +228,7 @@ int parse_request(int sock, struct http_request *req) {
         }
 
         if (req->headers != NULL) {
-                http_destroy_headers(req->headers);
+                destroy_http_headers(req->headers);
                 req->headers = NULL;
         }
 
@@ -310,7 +310,7 @@ int destroy_http_request(struct http_request *req) {
         }
         NFREE(req->path);
         NFREE(req->body);
-        st = http_destroy_headers(req->headers);
+        st = destroy_http_headers(req->headers);
         req->headers = NULL;
         free(req);
         return st;
@@ -323,7 +323,7 @@ int reset_http_request(struct http_request *req) {
         req->method = -1;
         NFREE(req->path);
         NFREE(req->body);
-        http_destroy_headers(req->headers);
+        destroy_http_headers(req->headers);
         req->headers = NULL;
 
         return 0;

@@ -134,7 +134,7 @@ char *http_headers_string(struct http_headers *hs);
 /**
  * Free all the allocated memory for a list of headers. Return 0 or -1.
  **/
-int http_destroy_headers(struct http_headers *hs);
+int destroy_http_headers(struct http_headers *hs);
 
 /**
  * Return the phrase associated with an HTTP code. If this code is unsupported,

@@ -243,7 +243,7 @@ char *http_headers_string(struct http_headers *hs) {
         return repr;
 }
 
-int http_destroy_headers(struct http_headers *hs) {
+int destroy_http_headers(struct http_headers *hs) {
         if (hs == NULL) {
                 return 0;
         }

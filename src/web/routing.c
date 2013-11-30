@@ -169,7 +169,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         len = 15+strlen(phrase);
         response = (char*)malloc(sizeof(char)*(len+1));
         if (response == NULL) {
-                http_destroy_headers(hs);
+                destroy_http_headers(hs);
                 return -1;
         }
 
@@ -185,7 +185,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         str_headers = http_headers_string(hs);
         if (str_headers == NULL) {
                 WLOGERROR("Cannot get headers string");
-                http_destroy_headers(hs);
+                destroy_http_headers(hs);
                 ret = -1;
                 goto EORESP;
         }
@@ -196,7 +196,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
                 WLOGERROR("Cannot realloc for headers");
                 perror("realloc");
                 NFREE(str_headers);
-                http_destroy_headers(hs);
+                destroy_http_headers(hs);
                 ret = -1;
                 goto EORESP;
         }
@@ -209,7 +209,7 @@ int http_response(int sock, int status, struct http_headers *hs, char *body,
         }
 
         NFREE(str_headers);
-        http_destroy_headers(hs);
+        destroy_http_headers(hs);
         /* -- /headers -- */
 
         if (write_all(sock, body, bodylen) < bodylen) {
