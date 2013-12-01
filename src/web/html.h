@@ -32,10 +32,6 @@
  *      char fmt[] = HTML_TLV_FMT("<p>%s</p>");
  */
 
-#define JPEG_EXT ".jpg"
-#define PNG_EXT  ".png"
-#define DEFAULT_EXT ""
-
 /**
  * Make a NULL-terminated HTML representation of a TLV, assuming its value is
  * in plain text.

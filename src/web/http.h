@@ -66,6 +66,11 @@ struct http_status {
 
 /* Helpful constants */
 #define HTTP_CT_HTML "text/html; charset=utf-8"
+#define HTTP_CT_PNG "image/png"
+#define HTTP_CT_JPEG "image/jpeg"
+
+#define HTTP_CT_CSS "text/css"
+#define HTTP_CT_JS  "application/javascript"
 
 /* arbitrary extentions/limits */
 #define HTTP_MAX_HEADERS 16
