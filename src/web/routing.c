@@ -127,8 +127,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         rst = (*rh)(dz, *req, respst);
         if (rst < 0) {
-                WLOGERROR("Route handler error, rst=%d, status=%d",
-                                rst, status);
+                WLOGERROR("Route handler error, rst=%d", rst);
                 destroy_http_response(respst);
                 NFREE(resp);
                 return -1;
@@ -200,8 +199,8 @@ int http_response(int sock, struct http_response *resp) {
                 goto EORESP;
         }
         len_headers = strlen(str_headers);
-        len += len_headers + 3;
-        response = safe_realloc(response, len);
+        len += len_headers + 2;
+        response = safe_realloc(response, len+1);
         if (response == NULL) {
                 WLOGERROR("Cannot realloc for headers");
                 perror("realloc");
