@@ -51,7 +51,7 @@ struct http_status {
 
 /* Headers internal codes
  *
- * headers will be stored in an array, so we're using small ones to access
+ * headers will be stored in an array, so we're using small codes to access
  * each header. */
 #define HTTP_H_CONTENT_TYPE   0
 #define HTTP_H_CONTENT_LENGTH 1
@@ -63,6 +63,9 @@ struct http_status {
 #define HTTP_H_DATE           5
 #define HTTP_H_SERVER         6
 #define HTTP_H_POWEREDBY      7
+
+/* Helpful constants */
+#define HTTP_CT_HTML "text/html; charset=utf-8"
 
 /* arbitrary extentions/limits */
 #define HTTP_MAX_HEADERS 16
