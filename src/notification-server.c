@@ -8,6 +8,7 @@ static int *client;
 static struct config config;
 
 void send_message(int *sock, char *str, int len) {
+
 	printf("[pid:%d] Sending message at client number %d\n", getpid(), *sock);
 	
 	if (write(*sock, str, len) < len) {
@@ -90,6 +91,15 @@ int nsa(int n, char **file) {
 }
 
 int set_up_server(char *path) {
+
+	struct sigaction action;
+	action.sa_handler = SIG_IGN;
+	sigfillset(&action.sa_mask);
+
+	if (sigaction(SIGPIPE, &action, 0)) {
+		ERROR("sigaction", -1);
+	}
+
 	int server;
 	struct sockaddr_un saddr;
 	
