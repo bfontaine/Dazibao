@@ -78,7 +78,7 @@ void *safe_realloc(void *ptr, size_t size);
 /* = Logging = */
 
 /* this is set in webutils.c but can be changed in another file. */
-extern int _wlog_level;
+extern int _log_level;
 
 #define LOG_LVL_DEBUG  50
 #define LOG_LVL_INFO   40
@@ -88,7 +88,7 @@ extern int _wlog_level;
 
 /* Don't use this macro directly */
 #define _LOG(lvl, s, fmt, ...) { \
-        if ((lvl) <= (_wlog_level)) { \
+        if ((lvl) <= (_log_level)) { \
         printf("[%5s][%-17s:%20s:%03d] " fmt "\n", \
                         s, __FILE__, __func__, __LINE__, ##__VA_ARGS__); }}
 
