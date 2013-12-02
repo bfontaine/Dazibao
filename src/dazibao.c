@@ -529,8 +529,8 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
                 const char *tlv_str = tlv_type2str((char) tlv_type);
 
-                printf("[%4d] TLV %3d | %8d | %s\n",
-                                (int)off, tlv_get_type(tlv), len, tlv_str);
+                printf("[%9d] TLV %S | %8d |\n",
+                                (int)off, tlv_str, len);
 
 
                 switch (tlv_type) {
