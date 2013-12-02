@@ -528,9 +528,9 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
 		printf("[%4d] TLV %3d | %8d | ",
 			(int)off, tlv_get_type(tlv), len);
-
+                
                 if (type == TLV_COMPOUND ) {
-                        printf("COMPOUND \n");
+                        printf("%s \n"i,TLV_COMPOUND_STR);
                         if (depth > 0) {
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
@@ -542,7 +542,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                 continue;
                         }
                 } else if (type == TLV_DATED) {
-                        printf("DATE\n");
+                        printf("%s \n"i,TLV_DATED_STR);
                         if (depth > 0) {
                                 /* TODO function to print date */
                                 off_t current = GET_OFFSET(*daz_buf);
@@ -555,11 +555,11 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                 SET_OFFSET(*daz_buf, current);
                         }
                 } else if (type == TLV_PNG) {
-                        printf("PNG\n");
+                        printf("%s \n"i,TLV_PNG_STR);
                 } else if (type == TLV_JPEG) {
-                        printf("JPEG\n");
+                        printf("%s \n"i,TLV_JPEG_STR);
                 } else if (type == TLV_TEXT) {
-                        printf("TEXTE\n");
+                        printf("%s \n"i,TLV_TEXT_STR);
                  } else {
                         printf("...\n");
                 }
