@@ -99,17 +99,15 @@ int parse_request(int sock, struct http_request *req) {
             goto EOPARSING;
         }
 
-        if (req->method != HTTP_M_POST) {
-                /* no request body */
-                goto EOPARSING;
-        }
-
         if (req->headers != NULL) {
                 destroy_http_headers(req->headers);
                 req->headers = NULL;
         }
+        req->headers =
+                (struct http_headers*)malloc(sizeof(struct http_headers));
 
-        if (req->headers == NULL || !http_init_headers(req->headers)) {
+
+        if (req->headers == NULL || http_init_headers(req->headers) != 0) {
                 WLOGERROR("Couldn't allocate memory for headers.");
                 perror("malloc");
                 goto MALFORMED;
@@ -122,6 +120,11 @@ int parse_request(int sock, struct http_request *req) {
                 }
 
                 NFREE(line);
+        }
+
+        if (req->method != HTTP_M_POST) {
+                /* no request body */
+                goto EOPARSING;
         }
 
         while (!eoh) {
@@ -327,13 +330,14 @@ int parse_header(char *line, struct http_headers *hs) {
                 return -1;
         }
 
-        while (line[idx++] == ' '); /* skip spaces */
+        while (line[idx] == ' ') { /* skip spaces */
+                idx++;
+        }
 
         idx2 = 0;
         while (line[idx] != '\0' && idx2 < HTTP_MAX_HEADER_VALUE_LENGTH - 1) {
                 value[idx2++] = line[idx++];
         }
-        /* TODO check if value ends with CRLF (if so, remove them) */
         value[idx2] = '\0';
 
         return http_add_header(hs, code, value, 1);

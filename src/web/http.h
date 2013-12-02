@@ -63,6 +63,7 @@ struct http_status {
 #define HTTP_H_DATE           5
 #define HTTP_H_SERVER         6
 #define HTTP_H_POWEREDBY      7
+#define HTTP_H_ACCEPT         8
 
 /* Helpful constants */
 #define HTTP_CT_HTML "text/html; charset=utf-8"

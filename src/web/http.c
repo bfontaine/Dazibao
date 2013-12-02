@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "webutils.h"
 
-static struct http_status http_statuses[] = {
+static const struct http_status http_statuses[] = {
         { HTTP_S_OK            , "OK"                    },
         { HTTP_S_CREATED       , "Created"               },
         { HTTP_S_NO_CT         , "No Content"            },
@@ -27,10 +27,10 @@ static struct http_status http_statuses[] = {
         { HTTP_S_NOTIMPL       , "Not Implemented"       },
         { HTTP_UNSUPP_VER      , "Version Not Supported" }
 };
-static int http_statuses_len =
+static const int http_statuses_len =
                 sizeof(http_statuses)/sizeof(struct http_status);
 
-static char *headers_strs[] = {
+static const char *headers_strs[] = {
         /* HTTP_H_CONTENT_TYPE   0 */
         "Content-Type",
         /* HTTP_H_CONTENT_LENGTH 1 */
@@ -46,7 +46,9 @@ static char *headers_strs[] = {
         /* HTTP_H_SERVER         6 */
         "Server",
         /* HTTP_H_POWEREDBY      7 */
-        "X-Powered-By"
+        "X-Powered-By",
+        /* HTTP_H_ACCEPT         8 */
+        "Accept"
 };
 
 char is_crlf(char *s, int c, int len) {

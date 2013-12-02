@@ -225,6 +225,7 @@ int main(int argc, char **argv) {
                 }
                 WLOGDEBUG("Got method %d, path %s, body length %d",
                                req->method, req->path, req->body_len);
+                WLOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
                 status = route_request(client, dz, req);
                 if (status != 0) {
                         WLOGWARN("route error, status=%d", status);
