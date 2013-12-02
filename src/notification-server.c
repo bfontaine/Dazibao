@@ -76,7 +76,7 @@ int watch_file(char *path) {
 
 		/* watchers ignore signals USER1 */
 		struct sigaction action;
-		action.sa_flags = SA_RESTART;
+		action.sa_flags = SA_RESTART | SA_NODEFER;
 		action.sa_handler = SIG_IGN;
 		
 		if(sigaction(SIGUSR1, &action, NULL) == -1) {
@@ -260,7 +260,7 @@ void collect_zombie(int unused_sigint, siginfo_t *info, void *unused_ptr) {
 int set_up_server_sigaction(void) {
 	/* ignore signal used by notifier */
 	struct sigaction action;
-	action.sa_flags = SA_RESTART;
+	action.sa_flags = SA_RESTART | SA_NODEFER;
 	action.sa_handler = SIG_IGN;
 	
 	if(sigaction(SIGUSR1, &action, NULL) == -1) {
@@ -268,7 +268,7 @@ int set_up_server_sigaction(void) {
 	}
 
 	struct sigaction action2;
-	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
+	action2.sa_flags = SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP | SA_NODEFER;
 	action2.sa_sigaction = collect_zombie;
 	if(sigaction(SIGCHLD, &action2, NULL) == -1) {
 		ERROR("sigaction", -1);

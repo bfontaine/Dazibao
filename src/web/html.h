@@ -19,7 +19,9 @@
                         "<ol class=\"tlvs\">\n"
 #define HTML_TLV_FMT(F)   "<li class=\"tlv\">\n" \
                            "<div class=\"metadata\">" \
-                             "<span class=\"type\">%d</span>" \
+                             "<span class=\"type\">" \
+                               "%s (<span class=\"id\">%d</span>)" \
+                             "</span>" \
                              " <span class=\"length\">%u</span>" \
                            "</div>\n" \
                            "<div class=\"value\">" F "</div>\n" \
@@ -44,6 +46,11 @@ int text_tlv2html(tlv_t *t, int type, unsigned int len, char *html);
  **/
 int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext);
+
+/**
+ * Make a NULL-terminated HTML representation of a PAD1 or PADN.
+ **/
+int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html);
 
 /**
  * Make a NULL-terminated HTML representation of a TLV.
