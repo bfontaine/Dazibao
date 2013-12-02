@@ -521,44 +521,44 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
         }
 	
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end ) && (off != EOD)) {
-                int type, len;
-                
+                int tlv_type, len;
+
                 printf("%s",ind);
-                
+
                 tlv_type = tlv_get_type(tlv);
-                len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-                char *tlv_str = tlv_type2str(tlv_type); 
+                len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
+                const char *tlv_str = tlv_type2str((char) tlv_type);
 
-		printf("[%4d] TLV %3d | %8d | %s\n",
-			(int)off, tlv_get_type(tlv), len, tlv_str);
+                printf("[%4d] TLV %3d | %8d | %s\n",
+                                (int)off, tlv_get_type(tlv), len, tlv_str);
 
-                if (type == TLV_COMPOUND ) {
-                        if (depth > 0) {
-                                off_t current = GET_OFFSET(*daz_buf);
-                                SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
-                                if (dz_dump_compound(daz_buf,current,
-                                        (depth-1), (indent+1))) {
-                                        ERROR(NULL,-1);
-                                }
-                                SET_OFFSET(*daz_buf, current);
-                                continue;
-                        }
-                } else if (type == TLV_DATED) {
-                        if (depth > 0) {
-                                /* TODO function to print date */
-                                off_t current = GET_OFFSET(*daz_buf);
-                                SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER +
-                                TLV_SIZEOF_DATE);
-                                if (dz_dump_compound(daz_buf,current,
+
+                switch (tlv_type) {
+                        case TLV_COMPOUND:
+                                if (depth > 0) {
+                                        off_t current = GET_OFFSET(*daz_buf);
+                                        SET_OFFSET(*daz_buf, off
+                                                + TLV_SIZEOF_HEADER);
+                                        if (dz_dump_compound(daz_buf,current,
                                                 (depth-1), (indent+1))) {
-                                        ERROR(NULL,-1);
+                                                ERROR(NULL,-1);
+                                        }
+                                        SET_OFFSET(*daz_buf, current);
+                                        break;
                                 }
-                                SET_OFFSET(*daz_buf, current);
-                        }
-                } else if (type == TLV_PNG) {
-                } else if (type == TLV_JPEG) {
-                } else if (type == TLV_TEXT) {
-                 } else {
+                        case TLV_DATED:
+                                if (depth > 0) {
+                                        /* TODO function to print date */
+                                        off_t current = GET_OFFSET(*daz_buf);
+                                        SET_OFFSET(*daz_buf, off
+                                        + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE);
+                                        if (dz_dump_compound(daz_buf,current,
+                                              (depth-1), (indent+1))) {
+                                                ERROR(NULL,-1);
+                                        }
+                                        SET_OFFSET(*daz_buf, current);
+                                }
+                        default: break;
                 }
 
         }
