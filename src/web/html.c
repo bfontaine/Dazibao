@@ -4,11 +4,28 @@
 #include "tlv.h"
 #include "webutils.h"
 
-#define HTML_TLV_SIZE 128
+#define HTML_TLV_SIZE 1024
+
+int text_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
+        char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
+        int st;
+
+        st = snprintf(html, HTML_TLV_SIZE, fmt,
+                        type, len, len, tlv_get_value_ptr(*t));
+
+        return st;
+}
+
+int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html, const char *ext) {
+        char fmt[] = HTML_TLV_FMT("<img src=\"/tlv/%li%s\" />");
+
+        return snprintf(html, HTML_TLV_SIZE, fmt, type, len, off, ext);
+}
 
 int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
-        int st;
-        char text_fmt[] = "<li>One TLV of type %.3d, length %.8u</li>\n";
+        int st, type, len;
+        char text_fmt[] = HTML_TLV_FMT("");
 
         if (dz_read_tlv(&dz, t, off) < 0) {
                 WLOGERROR("Cannot read TLV at offset %li", off);
@@ -24,17 +41,28 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                 return -1;
         }
 
-        st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
-                        tlv_get_type(*t), tlv_get_length(*t));
+        type = tlv_get_type(*t);
+        len  = tlv_get_length(*t);
 
-        if (st < 2) {
-                WLOGERROR("sprintf of TLV at %lu failed", off);
-                perror("sprintf");
-                return -1;
+        /* TODO generate proper HTML for each TLV type */
+        switch (type) {
+                case TLV_TEXT:
+                        st = text_tlv2html(t, type, len, *html);
+                        break;
+                case TLV_PNG:
+                        st = img_tlv2html(t, type, len, off, *html, PNG_EXT);
+                        break;
+                case TLV_JPEG:
+                        st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
+                        break;
+                default:
+                        st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
+                                        type, len);
         }
 
-        /* TODO generate proper HTML for each TLV type
-        *html = strdup("<li>one tlv</li>\n"); */
+        if (st > HTML_TLV_SIZE) {
+                WLOGWARN("sprintf of TLV at %lu failed (truncated)", off);
+        }
 
         return 0;
 }
@@ -57,11 +85,30 @@ int dz2html(dz_t dz, char **html) {
         *tlv_html = NULL;
 
         /* We may be able to optimize memory allocation here */
-        *html = strdup(HTML_DZ_TOP);
-        html_len = strlen(*html) + sizeof(char)*(HTML_DZ_BOTTOM_LEN+1);
-        *html = safe_realloc(*html, html_len);
+        html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
+                        + strlen(HTML_DZ_BOTTOM);
+
+        *html = (char*)malloc(sizeof(char)*html_len);
+        if (*html == NULL) {
+                WLOGERROR("Cannot allocate enough memory for the dazibao");
+                perror("malloc");
+                free(t);
+                free(tlv_html);
+                return -1;
+        }
+        if (snprintf(*html, html_len, HTML_DZ_TOP_FMT, \
+                                WSERVER.dzname) > html_len) {
+                WLOGDEBUG("Dazibao name truncated.");
+        }
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
+                int tlv_type = tlv_get_type(*t);
+                if (tlv_type == TLV_PAD1 || tlv_type == TLV_PADN) {
+                        WLOGDEBUG("TLV at %li is a pad1/padN, skipping.",
+                                        tlv_off);
+                        continue;
+                }
+
                 if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
@@ -101,7 +148,7 @@ int dz2html(dz_t dz, char **html) {
         tlv_destroy(t);
         NFREE(tlv_html);
 
-        strncat(*html, HTML_DZ_BOTTOM, HTML_DZ_BOTTOM_LEN);
+        strncat(*html, HTML_DZ_BOTTOM, strlen(HTML_DZ_BOTTOM));
 
         return tlv_off == -1 ? -1 : 0;
 }
