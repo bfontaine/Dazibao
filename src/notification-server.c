@@ -14,7 +14,9 @@ void send_message(int *sock, char *str, int len) {
 	if (write(*sock, str, len) < len) {
 		if (errno == EPIPE) {
 			*sock = -1;
-			printf("[pid:%d] Client has disconnected: exiting\n", getpid());
+			nbclient--;
+			printf("[pid:%d] Client has disconnected: removing it from list (still %d clients)\n",
+				getpid(), nbclient);
 		} else {
 			PERROR("write");
 		}
@@ -93,17 +95,17 @@ int nsa(int n, char **file) {
 int set_up_server(char *path) {
 
 	struct sigaction action;
+	int server;
+	struct sockaddr_un saddr;
+	
+	printf("[pid:%d] Setting up server\n", getpid());
+
 	action.sa_handler = SIG_IGN;
 	sigfillset(&action.sa_mask);
 
 	if (sigaction(SIGPIPE, &action, 0)) {
 		ERROR("sigaction", -1);
 	}
-
-	int server;
-	struct sockaddr_un saddr;
-	
-	printf("[pid:%d] Setting up server\n", getpid());
 
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sun_family = AF_UNIX;
