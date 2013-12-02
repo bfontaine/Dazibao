@@ -19,7 +19,9 @@
                         "<ol class=\"tlvs\">\n"
 #define HTML_TLV_FMT(F)   "<li class=\"tlv\">\n" \
                            "<div class=\"metadata\">" \
-                             "<span class=\"type\">%d</span>" \
+                             "<span class=\"type\">" \
+                               "%s (<span class=\"id\">%d</span>)" \
+                             "</span>" \
                              " <span class=\"length\">%u</span>" \
                            "</div>\n" \
                            "<div class=\"value\">" F "</div>\n" \

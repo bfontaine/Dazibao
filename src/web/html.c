@@ -8,24 +8,24 @@
 
 int text_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
-        int st;
 
-        st = snprintf(html, HTML_TLV_SIZE, fmt,
+        return snprintf(html, HTML_TLV_SIZE, fmt, tlv_type2str(type),
                         type, len, len, tlv_get_value_ptr(*t));
-
-        return st;
 }
 
 int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext) {
         char fmt[] = HTML_TLV_FMT("<img src=\"/tlv/%li%s\" />");
 
-        return snprintf(html, HTML_TLV_SIZE, fmt, type, len, off, ext);
+        return snprintf(html, HTML_TLV_SIZE, fmt,
+                        tlv_type2str(type), type, len, off, ext);
 }
 
 int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
-        return snprintf(html, HTML_TLV_SIZE, fmt, type, len);
+
+        return snprintf(html, HTML_TLV_SIZE, fmt,
+                        tlv_type2str(type), type, len);
 }
 
 int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
