@@ -1,18 +1,43 @@
 #ifndef _REQUEST_H
 #define _REQUEST_H 1
 
+#include "http.h"
+
 #ifndef BUFFLEN
 #define BUFFLEN 512
 #endif
 
-#define CR 13
-#define LF 10
+/* A struct describing an HTTP request */
+struct http_request {
+        int method;    /* Method, as defined in http.h: GET, POST */
+        char *path;    /* Requested path, e.g. "/foo" */
+        struct http_headers *headers; /* Supported headers */
+        char *body;    /* Request body (may be NULL) */
+        int body_len;  /* Length of the request body (-1 if no body) */
+};
 
 /**
- * Test if the c-th and (c+1)th characters of a string represent an HTTP end of
- * line (CRLF). Returns 1 or 0.
+ * Create a new request: allocate enough memory and initialize all fields.
  **/
-char is_crlf(char *s, int c, int len);
+struct http_request *create_http_request(void);
+
+/**
+ * Free all the fields of a struct http_request.
+ **/
+int destroy_http_request(struct http_request *req);
+
+/**
+ * Reset a request struct.
+ **/
+int reset_http_request(struct http_request *req);
+
+/**
+ * Parse an HTTP request read from the socket 'sock', and fill the given
+ * struct.
+ *
+ * The function returns 0 on success or the appropriate HTTP status on error.
+ **/
+int parse_request(int sock, struct http_request *req);
 
 /**
  * This function is a wrapper around recv to read the beginning of the input on
@@ -26,15 +51,8 @@ char is_crlf(char *s, int c, int len);
 char *next_header(int sock, int *eoh);
 
 /**
- * Parse an HTTP request read from the socket 'sock', and fill the other
- * arguments with the important things:
- * - mth: the method used (as defined in http.h)
- * - path: the requested path
- * - body: the request body
- * - len: the length of the request body
- *
- * The function returns 0 on success or the appropriate HTTP status on error.
+ * Parse an header and add it to the HTTP headers struct. Return 0 on success.
  **/
-int parse_request(int sock, int *mth, char **path, char **body, int *len);
+int parse_header(char *line, struct http_headers *hs);
 
 #endif

@@ -14,6 +14,10 @@
 #include <sys/mman.h>
 #include <pthread.h>
 
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 #include "utils.h"
 
 #define MAX_CLIENTS 10

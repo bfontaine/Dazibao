@@ -32,11 +32,12 @@ int tlv_init(tlv_t *t) {
 }
 
 int tlv_destroy(tlv_t *t) {
-        if (t == NULL || *t == NULL) {
+        if (t == NULL) {
                 return 0;
         }
-        free(*t);
-        *t = NULL;
+        if (*t != NULL) {
+                NFREE(*t);
+        }
         free(t);
         return 0;
 }

@@ -170,9 +170,9 @@ int accept_client(int server) {
 			break;
 		}
 	}
-	
 	printf("[pid:%d] *** New client connected and attached to %d ***\n", getpid(), s);
 	return s;
+
 }
 
 int main(int argc, char **argv) {
