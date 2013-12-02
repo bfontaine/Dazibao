@@ -74,4 +74,36 @@
  **/
 void *safe_realloc(void *ptr, size_t size);
 
+
+/* = Logging = */
+
+/* this is set in webutils.c but can be changed in another file. */
+extern int _wlog_level;
+
+#define LOG_LVL_DEBUG  50
+#define LOG_LVL_INFO   40
+#define LOG_LVL_WARN   30
+#define LOG_LVL_ERROR  20
+#define LOG_LVL_FATAL  10
+
+/* Don't use this macro directly */
+#define _LOG(lvl, s, fmt, ...) { \
+        if ((lvl) <= (_wlog_level)) { \
+        printf("[%5s][%-17s:%20s:%03d] " fmt "\n", \
+                        s, __FILE__, __func__, __LINE__, ##__VA_ARGS__); }}
+
+/* Use these instead.
+ * Examples:
+ *      LOGDEBUG("yo");
+ *      LOGERROR("2+2=%d", 5);
+ *
+ * Don't put a \n at the end of the format string */
+#define LOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
+#define LOGINFO(fmt, ...)  _LOG(LOG_LVL_INFO,  "INFO", fmt, ##__VA_ARGS__)
+#define LOGWARN(fmt, ...)  _LOG(LOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
+#define LOGERROR(fmt, ...) _LOG(LOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
+#define LOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
+
+
+
 #endif
