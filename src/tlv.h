@@ -9,12 +9,6 @@
 #define TLV_COMPOUND 5
 #define TLV_DATED    6
 
-#define TLV_TEXT_STR     "TEXT"
-#define TLV_PNG_STR      "PNG"
-#define TLV_JPEG_STR     "JPEG"
-#define TLV_COMPOUND_STR "COMPOUND"
-#define TLV_DATED_STR    "DATE"
-
 #define TLV_SIZEOF_DATE 4
 #define TLV_SIZEOF_TYPE 1
 #define TLV_SIZEOF_LENGTH 3

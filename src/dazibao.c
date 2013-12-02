@@ -520,17 +520,19 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 ind[0]='\0';
         }
 	
-        while (((off = dz_next_tlv(daz_buf, &tlv)) != end )
-                        && (off != EOD)) {
-                printf("%s",ind);
+        while (((off = dz_next_tlv(daz_buf, &tlv)) != end ) && (off != EOD)) {
                 int type, len;
-                type = tlv_get_type(tlv);
-                len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-		printf("[%4d] TLV %3d | %8d | ",
-			(int)off, tlv_get_type(tlv), len);
                 
+                printf("%s",ind);
+                
+                tlv_type = tlv_get_type(tlv);
+                len = type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
+                char *tlv_str = tlv_type2str(tlv_type); 
+
+		printf("[%4d] TLV %3d | %8d | %s\n",
+			(int)off, tlv_get_type(tlv), len, tlv_str);
+
                 if (type == TLV_COMPOUND ) {
-                        printf("%s \n"i,TLV_COMPOUND_STR);
                         if (depth > 0) {
                                 off_t current = GET_OFFSET(*daz_buf);
                                 SET_OFFSET(*daz_buf, off + TLV_SIZEOF_HEADER);
@@ -542,7 +544,6 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                 continue;
                         }
                 } else if (type == TLV_DATED) {
-                        printf("%s \n"i,TLV_DATED_STR);
                         if (depth > 0) {
                                 /* TODO function to print date */
                                 off_t current = GET_OFFSET(*daz_buf);
@@ -555,13 +556,9 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                 SET_OFFSET(*daz_buf, current);
                         }
                 } else if (type == TLV_PNG) {
-                        printf("%s \n"i,TLV_PNG_STR);
                 } else if (type == TLV_JPEG) {
-                        printf("%s \n"i,TLV_JPEG_STR);
                 } else if (type == TLV_TEXT) {
-                        printf("%s \n"i,TLV_TEXT_STR);
                  } else {
-                        printf("...\n");
                 }
 
         }
