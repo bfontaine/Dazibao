@@ -46,6 +46,11 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext);
 
 /**
+ * Make a NULL-terminated HTML representation of a PAD1 or PADN.
+ **/
+int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html);
+
+/**
  * Make a NULL-terminated HTML representation of a TLV.
  **/
 int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html);

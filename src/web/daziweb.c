@@ -47,7 +47,8 @@ int parse_args(int argc, char **argv, int *port) {
 
         dz = -1;
         WSERVER.dzname = NULL;
-        while ((c = getopt(argc, argv, "l:p:d:v")) != -1) {
+        WSERVER.debug = 0;
+        while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
                 switch (c) {
                 case 'l':
                         l = strtol(optarg, NULL, 10);
@@ -72,6 +73,9 @@ int parse_args(int argc, char **argv, int *port) {
                                 }
                                 WSERVER.dzname = strdup(basename(optarg));
                         }
+                        break;
+                case 'D':
+                        WSERVER.debug = 1;
                         break;
                 case 'v':
                         if (!loglvl_flag) {
@@ -189,6 +193,10 @@ int main(int argc, char **argv) {
                         dz_close(&dz);
                 }
                 exit(EXIT_FAILURE);
+        }
+
+        if (WSERVER.debug) {
+                WLOGINFO("Serving files in debug mode");
         }
 
         WLOGINFO("Listening on port %d...", port);
