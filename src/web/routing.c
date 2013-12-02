@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "utils.h"
 #include "webutils.h"
 #include "http.h"
 #include "routing.h"
+#include "mime.h"
 
 static char *routes_paths[MAX_ROUTES];
 static route_handler routes_handlers[MAX_ROUTES];
@@ -74,11 +78,6 @@ int destroy_routes(void) {
 
 int route_request(int sock, dz_t dz, struct http_request *req) {
         route_handler rh;
-        char *resp = NULL;
-        int status = -1,
-            rst; /* route status */
-
-        struct http_response *respst;
 
         if (req->body == NULL) {
                 req->body_len = -1;
@@ -106,40 +105,142 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         rh = get_route_handler(req->method, req->path);
 
-        if (rh == NULL) {
-                WLOGWARN("No route found for path '%s'", req->path);
-                error_response(sock, HTTP_S_NOTFOUND);
+        if (rh != NULL) {
+                int status, rst;
+                struct http_response *resp;
+                const char *mime;
+
+                if (req->method == HTTP_M_POST && req->body_len <= 0) {
+                        WLOGWARN("Got a POST request with empty body on '%s'",
+                                        req->path);
+                }
+
+                resp = create_http_response();
+                if (resp == NULL) {
+                        WLOGERROR("Cannot create a new HTTP response");
+                        error_response(sock, HTTP_S_ERR);
+                        return -1;
+                }
+
+                rst = (*rh)(dz, *req, resp);
+                if (rst < 0) {
+                        WLOGERROR("Route handler error, rst=%d", rst);
+                        destroy_http_response(resp);
+                        return -1;
+                }
+
+                /* Set the MIME type if it's not set by the route */
+                mime = get_mime_type(req->path);
+                if (mime != NULL) {
+                        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                                        mime, 0);
+                }
+
+                status = http_response(sock, resp);
+
+                NFREE(resp);
+                return status;
+        }
+
+        WLOGDEBUG("No route found for path '%s'", req->path);
+
+        /* TODO use the 'Accept' header? */
+        if (file_response(sock, req->path) == 0) {
                 return 0;
         }
 
-        if (req->method == HTTP_M_POST && req->body_len <= 0) {
-                WLOGWARN("Got a POST request with empty body on '%s'",
-                                req->path);
-        }
+        error_response(sock, HTTP_S_NOTFOUND);
+        return 0;
+}
 
-        respst = create_http_response();
-        if (respst == NULL) {
-                WLOGERROR("Cannot create a new HTTP response");
-                NFREE(resp);
-                error_response(sock, HTTP_S_ERR);
+int file_response(int sock, char *path) {
+        char *realpath, *map;
+        int plen, pdlen, len, fd;
+        struct stat st;
+        struct http_response *resp;
+
+        WLOGDEBUG("Trying to find the file %s", path);
+
+        if (path == NULL || path[0] != '/' || strstr(path, "..")) {
+                WLOGDEBUG("Wrong file path");
                 return -1;
         }
 
-        rst = (*rh)(dz, *req, respst);
-        if (rst < 0) {
-                WLOGERROR("Route handler error, rst=%d", rst);
-                destroy_http_response(respst);
-                NFREE(resp);
+        plen = strlen(path);
+        if (plen > MAX_FILE_PATH_LENGTH) {
+                WLOGDEBUG("Path is too long (max=%d)", MAX_FILE_PATH_LENGTH);
                 return -1;
         }
 
-        status = http_response(sock, respst);
+        pdlen = strlen(PUBLIC_DIR);
+        len = plen + pdlen + 1;
 
-        NFREE(resp);
-        return status;
+        realpath = (char*)malloc(sizeof(char)*len);
+
+        strncpy(realpath, PUBLIC_DIR, pdlen+1);
+        strncat(realpath, path, len);
+
+        fd = open(realpath, O_RDONLY);
+
+        if (fd < 0) {
+                WLOGERROR("Cannot open '%s'", realpath);
+                perror("open");
+                free(realpath);
+                return -1;
+        }
+
+        free(realpath);
+
+        if (fstat(fd, &st) == -1) {
+                perror("stat");
+                close(fd);
+                return -1;
+        }
+
+        map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+
+        if (map == MAP_FAILED) {
+                WLOGERROR("Cannot mmap with size=%lu", st.st_size);
+                perror("mmap");
+                close(fd);
+                return -1;
+        }
+
+        resp = create_http_response();
+        if (resp == NULL) {
+                WLOGERROR("Cannot create an HTTP response");
+                munmap(map, st.st_size);
+                close(fd);
+                return -1;
+        }
+
+        resp->status = HTTP_S_OK;
+        resp->body_len = st.st_size;
+        *resp->body = map;
+
+        /* TODO mime type */
+
+        if (http_response2(sock, resp, 0) == -1) {
+                WLOGERROR("Cannot send the file");
+        }
+
+        if (munmap(map, st.st_size) == -1) {
+                perror("munmap");
+        }
+        if (close(fd) == -1) {
+                perror("close");
+        }
+
+        *resp->body = NULL;
+        destroy_http_response(resp);
+        return 0;
 }
 
 int http_response(int sock, struct http_response *resp) {
+        return http_response2(sock, resp, 1);
+}
+
+int http_response2(int sock, struct http_response *resp, char free_resp) {
         const char *phrase = get_http_status_phrase(&resp->status);
         char *str_headers,
              *response;
@@ -189,6 +290,7 @@ int http_response(int sock, struct http_response *resp) {
                 WLOGERROR("response sprintf failed");
                 perror("sprintf");
                 ret = -1;
+                goto EORESP;
         }
 
         /* -- headers -- */
@@ -225,7 +327,9 @@ int http_response(int sock, struct http_response *resp) {
         }
 
 EORESP:
-        destroy_http_response(resp);
+        if (free_resp) {
+                destroy_http_response(resp);
+        }
         NFREE(response);
         return ret;
 }

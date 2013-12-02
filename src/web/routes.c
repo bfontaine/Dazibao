@@ -25,8 +25,6 @@ int route_get_index(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE, HTTP_CT_HTML, 1);
-
         resp->body_len = strlen(*(resp->body));
         resp->status = HTTP_S_OK;
 
@@ -39,7 +37,6 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         tlv_t *tlv;
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
-        char *ct;
 
         if (dz <= 0 || req.method != HTTP_M_GET) {
                 WLOGERROR("get_image_tmpv - got wrong dz or method (%d)",
@@ -97,8 +94,6 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        ct = tlv_type == TLV_PNG ? HTTP_CT_PNG : HTTP_CT_JPEG;
-
         *resp->body = (char*)malloc(sizeof(char)*resp->body_len);
         if (*resp->body == NULL) {
                 perror("malloc");
@@ -111,7 +106,6 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         tlv_destroy(tlv);
 
         resp->status = HTTP_S_OK;
-        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE, ct, 1);
 
         return 0;
 }

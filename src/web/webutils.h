@@ -40,6 +40,8 @@ extern int _wlog_level;
 
 /* = I/O = */
 
+#define MAX_FILE_PATH_LENGTH 256
+
 /**
  * Wrapper around write(2) to write the whole buffer instead of (sometimes)
  * only a part of it.

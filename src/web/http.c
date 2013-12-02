@@ -116,7 +116,7 @@ int http_init_headers(struct http_headers *hs) {
         return 0;
 }
 
-int http_add_header(struct http_headers *hs, int code, char *value,
+int http_add_header(struct http_headers *hs, int code, const char *value,
                                 char overr) {
         if (hs == NULL || hs->headers == NULL || code < 0
                         || code > HTTP_MAX_HEADERS || value == NULL) {

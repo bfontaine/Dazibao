@@ -8,6 +8,8 @@
 
 #define MAX_ROUTES 16
 
+#define PUBLIC_DIR "public_html"
+
 /**
  * Type of a route handler. This a pointer to a function which returns an int
  * (a status, 0 if everything is ok, or an error code if there was an error. It
@@ -46,10 +48,22 @@ int route_request(int sock, dz_t dz, struct http_request *req);
 int destroy_routes(void);
 
 /**
+ * Search for a file in PUBLIC_DIR which matches the given path. If so, serve
+ * the file through 'sock'. The function returns 0 on success, -1 on failure.
+ **/
+int file_response(int sock, char *path);
+
+/**
  * Send an HTTP response 'resp' on the socket 'sock', and free all memory for
  * the 'resp' struct. Returns 0 on success, -1 on error.
  **/
 int http_response(int sock, struct http_response *resp);
+
+/**
+ * Same as http_response, but let you choose if you want to free the 'resp'
+ * struct with 'free_resp'.
+ **/
+int http_response2(int sock, struct http_response *resp, char free_resp);
 
 /**
  * Send an HTTP error status ('status', as defined in http.h) in a socket

@@ -28,10 +28,10 @@ void clean_close(int s) {
         if (dz > 0) {
                 dz_close(&dz);
         }
-        destroy_http_request(req);
-        destroy_routes();
         free(WSERVER.hostname);
         free(WSERVER.dzname);
+        destroy_http_request(req);
+        destroy_routes();
         exit(EXIT_SUCCESS);
 }
 
