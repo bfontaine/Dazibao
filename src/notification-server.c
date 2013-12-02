@@ -6,17 +6,18 @@ static int nbclient = 0;
 static int client_max = 10;
 static int *client;
 static struct config config;
+int _log_level;
 
 void send_message(int *sock, char *str, int len) {
 
-	printf("[pid:%d] Sending message at client number %d\n", getpid(), *sock);
+	LOGDEBUG("Sending message at client n°%d", *sock);
 	
 	if (write(*sock, str, len) < len) {
 		if (errno == EPIPE) {
 			*sock = -1;
 			nbclient--;
-			printf("[pid:%d] Client has disconnected: removing it from list (still %d clients)\n",
-				getpid(), nbclient);
+			LOGINFO("Client disconnected. %d remaining",
+				nbclient);
 		} else {
 			PERROR("write");
 		}
@@ -56,16 +57,16 @@ void *watch_file(void *arg) {
 
 	ctime = st.st_ctime;
 
-	printf("[pid:%d] Started watching %s\n", getpid(), path);	
+	LOGINFO("Started watching %s", path);
+
 	while (1) {
 		sleep(sleeping_time);
-		printf("[pid:%d] Checking %s\n", getpid(), path);	
 		if (stat(path, &st) == -1) {
 			PERROR("stat");
 			continue;
 		}
 		if (st.st_ctime != ctime) {
-			printf("[pid:%d] %s has changed\n", getpid(), path);	
+			LOGINFO("%s changed", path);
 			ctime = st.st_ctime;
 			sleeping_time =
 				MAX(MIN(sleeping_time / 2, WATCH_SLEEP_DEFAULT),
@@ -98,7 +99,7 @@ int set_up_server(char *path) {
 	int server;
 	struct sockaddr_un saddr;
 	
-	printf("[pid:%d] Setting up server\n", getpid());
+	LOGDEBUG("Setting up server");
 
 	action.sa_handler = SIG_IGN;
 	sigfillset(&action.sa_mask);
@@ -121,7 +122,7 @@ int set_up_server(char *path) {
 	server = socket(PF_UNIX, SOCK_STREAM, 0);
 	
 	if(server < 0) {
-		perror("socket");
+		PERROR("socket");
 		exit(1);
 	}
 
@@ -131,8 +132,7 @@ int set_up_server(char *path) {
 		}
 		if (connect(server, (struct sockaddr*)&saddr,
 				sizeof(saddr)) == -1) {
-			printf("[pid:%d] Removing old socket at \"%s\"\n",
-				getpid(), saddr.sun_path);
+			LOGINFO("Removing old socket at \"%s\"", saddr.sun_path);
 			if (unlink(saddr.sun_path) == -1) {
 				ERROR("unlink", -1);
 			}
@@ -144,8 +144,7 @@ int set_up_server(char *path) {
 			if (close(server) == -1) {
 				ERROR("close", -1);
 			}
-			printf("[pid:%d] Socket at \"%s\" already in use.\n",
-				getpid(), saddr.sun_path);
+			LOGERROR("Socket at \"%s\" already in use", saddr.sun_path);
 			return -1;
 		}
 	}
@@ -154,7 +153,7 @@ int set_up_server(char *path) {
 		ERROR("listen", -1);
 	}
 
-	printf("[pid:%d] Socket created at \"%s\"\n", getpid(), saddr.sun_path);
+	LOGINFO("Socket created at \"%s\"", saddr.sun_path);
 
 	return server;
 }
@@ -182,7 +181,7 @@ int accept_client(int server) {
 			break;
 		}
 	}
-	printf("[pid:%d] *** New client connected and attached to %d ***\n", getpid(), s);
+	LOGINFO("New client connected");
 	return s;
 
 }
@@ -194,6 +193,7 @@ int main(int argc, char **argv) {
 	int server;
 	int next_arg = 1;
 	int client_max = 10;
+	_log_level = LOG_LVL_DEBUG;
 
 	if (argc < 2) {
                 printf("Usage:\n\t%s [OPTION] [FILE]\n", argv[0]);
@@ -221,7 +221,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-
 	client = mmap(NULL, sizeof(*client)*client_max, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
 	memset(client, -1, sizeof(*client)*client_max);
 
@@ -231,18 +230,16 @@ int main(int argc, char **argv) {
 		ERROR("set_up_server", -1);
 	}
 
-	printf("[pid:%d] Server set up\n", getpid());	
+	LOGINFO("Server set up");
 
 	if(nsa(nbdaz, files) != nbdaz) {
-		fprintf(stderr, "[pid:%d] Some files could not be watched\n", getpid());
-	} else {
-		printf("[pid:%d] nsa launch has gone well\n", getpid());	
+		LOGWARN("Some files could not be watched")
 	}
 	
 	while (1) {
 		if (accept_client(server) > 0) {
 			nbclient++;
-			printf("[pid:%d] Now handles %d clients\n", getpid(), nbclient);	
+			LOGINFO("Server now handles %d clients", nbclient);
 		} else {
 			PERROR("accept_client");
 			continue;
