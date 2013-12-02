@@ -59,7 +59,7 @@ int get_http_header_code(char *str) {
         if (str == NULL) {
                 return -2;
         }
-        for (int i=0; i<HTTP_MAX_HEADERS; i++) {
+        for (int i=0; i<HTTP_MAX_HEADERS && headers_strs[i] != NULL; i++) {
                 if (strcasecmp(headers_strs[i], str) == 0) {
                     return i;
                 }
