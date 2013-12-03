@@ -4,7 +4,7 @@
 #define CR 13
 #define LF 10
 
-#define HTTP_VERSION "1.0"
+#define HTTP_VERSION "1.1"
 
 /* Methods */
 #define HTTP_M_GET 1
