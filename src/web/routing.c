@@ -111,6 +111,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
          */
         if (rh == NULL && strcmp(req->path, "/") == 0) {
                 WLOGDEBUG("Using alias '/' -> '%s'", DEFAULT_ROOT_ROUTE);
+                free(req->path);
                 req->path = strdup(DEFAULT_ROOT_ROUTE);
                 rh = get_route_handler(req->method, req->path);
         }
