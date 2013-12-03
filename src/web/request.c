@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -153,7 +154,7 @@ int parse_request(int sock, struct http_request *req) {
         req->body_len = strtol(req->headers->headers[HTTP_H_CONTENT_LENGTH],
                                 NULL, 10);
 
-        if (STRTOL_ERR(req->body_len) || req->body_len <= 0) {
+        if (!IN_RANGE(req->body_len, 1, INT_MAX)) {
                 LOGERROR("Got malformed content length header");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;

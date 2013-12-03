@@ -56,14 +56,14 @@ int parse_args(int argc, char **argv, int *port) {
                 switch (c) {
                 case 'l':
                         l = strtol(optarg, NULL, 10);
-                        if (!STRTOL_ERR(l)) {
+                        if (!IN_RANGE(l, 0, 1000)) {
                                 _log_level = l;
                                 loglvl_flag = 1;
                         }
                         break;
                 case 'p':
                         *port = strtol(optarg, NULL, 10);
-                        if (STRTOL_ERR(*port)) {
+                        if (!IN_RANGE(*port, 1, 65535)) {
                                 LOGWARN("Wrong port: '%s'", optarg);
                                 *port = DEFAULT_PORT;
                         }
