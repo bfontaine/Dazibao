@@ -50,7 +50,9 @@ static const char *headers_strs[] = {
         /* HTTP_H_ACCEPT         8 */
         "Accept",
         /* HTTP_H_IFMODIFSINCE   9 */
-        "If-Modified-Since"
+        "If-Modified-Since",
+        /* HTTP_H_LASTMODIF     10 */
+        "Last-Modified"
 };
 
 char is_crlf(char *s, int c, int len) {

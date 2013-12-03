@@ -64,6 +64,7 @@ struct http_status {
 #define HTTP_H_POWEREDBY      7
 #define HTTP_H_ACCEPT         8
 #define HTTP_H_IFMODIFSINCE   9
+#define HTTP_H_LASTMODIF     10
 
 /* arbitrary extentions/limits */
 #define HTTP_MAX_HEADERS 16

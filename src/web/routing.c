@@ -169,7 +169,6 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         WLOGDEBUG("No route found for path '%s'", req->path);
 
-        /* TODO use the 'Accept' header? */
         if (file_response(sock, req) == 0) {
                 return 0;
         }
@@ -245,6 +244,9 @@ int file_response(int sock, struct http_request *req) {
                 return -1;
         }
 
+        http_add_header(resp->headers, HTTP_H_LASTMODIF,
+                        gmtdate(st.st_mtime), 0);
+
         resp->status = HTTP_S_OK;
         resp->body_len = st.st_size;
         *resp->body = map;
@@ -280,6 +282,7 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
             no_body = (resp->body == NULL || *resp->body == NULL),
             noheaders = (resp->headers == NULL),
             len_headers;
+        time_t now;
 
         if (sock < 0) {
                 return -1;
@@ -305,6 +308,12 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
                 char ct[16];
                 snprintf(ct, 15, "%d", resp->body_len);
                 http_add_header(resp->headers, HTTP_H_CONTENT_LENGTH, ct, 0);
+        }
+
+        if (time(&now) == (time_t)-1) {
+                perror("time");
+        } else {
+                http_add_header(resp->headers, HTTP_H_DATE, gmtdate(-2), 0);
         }
 
         /* bonuses */
