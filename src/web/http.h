@@ -4,12 +4,13 @@
 #define CR 13
 #define LF 10
 
-#define HTTP_VERSION "1.0"
+#define HTTP_VERSION "1.1"
 
 /* Methods */
 #define HTTP_M_GET 1
 #define HTTP_M_POST 2
-#define HTTP_M_UNSUPPORTED 4
+#define HTTP_M_HEAD 4
+#define HTTP_M_UNSUPPORTED 8
 
 #define HTTP_M_ANY (HTTP_M_GET|HTTP_M_POST)
 
@@ -62,6 +63,8 @@ struct http_status {
 #define HTTP_H_SERVER         6
 #define HTTP_H_POWEREDBY      7
 #define HTTP_H_ACCEPT         8
+#define HTTP_H_IFMODIFSINCE   9
+#define HTTP_H_LASTMODIF     10
 
 /* arbitrary extentions/limits */
 #define HTTP_MAX_HEADERS 16

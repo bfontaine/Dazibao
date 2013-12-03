@@ -31,6 +31,11 @@ int add_route(char mth, char *path_suffix, route_handler route) {
                 return -1;
         }
 
+        if (mth == HTTP_M_HEAD) {
+                WLOGWARN("Registering an HEAD route as a GET one");
+                mth = HTTP_M_GET;
+        }
+
         WLOGDEBUG("Route handler for method %d and suffix '%s' added.",
                         mth, path_suffix);
 
@@ -46,6 +51,12 @@ int add_route(char mth, char *path_suffix, route_handler route) {
 
 route_handler get_route_handler(char mth, char *path) {
         WLOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
+
+        if (mth == HTTP_M_HEAD) {
+                /* A HEAD request is the same as GET but without response body
+                 */
+                mth = HTTP_M_GET;
+        }
 
         for (int i=0, len, pmth, paths_match; i<routes_cpt; i++) {
                 pmth = routes_paths[i][0];
@@ -140,6 +151,10 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                         return -1;
                 }
 
+                if (req->method == HTTP_M_HEAD) {
+                        resp->body_len = -1;
+                }
+
                 /* Set the MIME type if it's not set by the route */
                 mime = get_mime_type(req->path);
                 if (mime != NULL) {
@@ -154,7 +169,6 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         WLOGDEBUG("No route found for path '%s'", req->path);
 
-        /* TODO use the 'Accept' header? */
         if (file_response(sock, req) == 0) {
                 return 0;
         }
@@ -230,6 +244,9 @@ int file_response(int sock, struct http_request *req) {
                 return -1;
         }
 
+        http_add_header(resp->headers, HTTP_H_LASTMODIF,
+                        gmtdate(st.st_mtime), 0);
+
         resp->status = HTTP_S_OK;
         resp->body_len = st.st_size;
         *resp->body = map;
@@ -265,6 +282,7 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
             no_body = (resp->body == NULL || *resp->body == NULL),
             noheaders = (resp->headers == NULL),
             len_headers;
+        time_t now;
 
         if (sock < 0) {
                 return -1;
@@ -291,6 +309,16 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
                 snprintf(ct, 15, "%d", resp->body_len);
                 http_add_header(resp->headers, HTTP_H_CONTENT_LENGTH, ct, 0);
         }
+
+        if (time(&now) == (time_t)-1) {
+                perror("time");
+        } else {
+                http_add_header(resp->headers, HTTP_H_DATE, gmtdate(-2), 0);
+        }
+
+        /* bonuses */
+        http_add_header(resp->headers, HTTP_H_SERVER, WSERVER.name, 0);
+        http_add_header(resp->headers, HTTP_H_POWEREDBY, "Pure C99 FTW", 0);
 
         /* HTTP/1.x <code> <phrase>\r\n */
         len = strlen("HTTP/") + strlen(HTTP_VERSION) + 5 + strlen(phrase) + 2;

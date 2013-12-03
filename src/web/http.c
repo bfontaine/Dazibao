@@ -48,7 +48,11 @@ static const char *headers_strs[] = {
         /* HTTP_H_POWEREDBY      7 */
         "X-Powered-By",
         /* HTTP_H_ACCEPT         8 */
-        "Accept"
+        "Accept",
+        /* HTTP_H_IFMODIFSINCE   9 */
+        "If-Modified-Since",
+        /* HTTP_H_LASTMODIF     10 */
+        "Last-Modified"
 };
 
 char is_crlf(char *s, int c, int len) {
@@ -101,6 +105,9 @@ int http_mth(char *s) {
         }
         if (strcasecmp(s, "POST") == 0) {
                 return HTTP_M_POST;
+        }
+        if (strcasecmp(s, "HEAD") == 0) {
+                return HTTP_M_HEAD;
         }
         return HTTP_M_UNSUPPORTED;
 }

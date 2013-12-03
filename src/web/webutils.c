@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #include "webutils.h"
-#include "tlv.h"
 #include "tlv.h"
 
 int _wlog_level =
@@ -38,4 +38,31 @@ int get_image_tlv_type(const char *path) {
                 return TLV_JPEG;
         }
         return -1;
+}
+
+#define MAX_DATE_LENGTH 64
+
+char *gmtdate(time_t secs) {
+        char *s, *nl;
+        int len;
+
+        if (secs == -2) {
+                time(&secs);
+        }
+        if (secs < 0) {
+                return NULL;
+        }
+
+        s = asctime(gmtime(&secs));
+
+        if (s == NULL) {
+                return NULL;
+        }
+
+        nl = strchr(s, '\n');
+        if (nl != NULL) {
+                *nl = '\0';
+        }
+
+        return s;
 }

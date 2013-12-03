@@ -2,6 +2,7 @@
 #define _WEBUTILS_H 1
 
 #include "utils.h"
+#include <time.h>
 
 /* = Global server properties = */
 struct wserver_info {
@@ -9,6 +10,7 @@ struct wserver_info {
         char debug;     /* Debug mode */
         char *hostname;
         char *dzname;
+        char *name;
 } WSERVER;
 
 #define WLOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
@@ -39,5 +41,11 @@ int write_all(int fd, char *buff, int len);
  * the TLV type cannot be found.
  **/
 int get_image_tlv_type(const char *path);
+
+/**
+ * Return a string representing a given GMT date. 'secs' is the number of
+ * seconds since the Epoch, or -2 if you want the current date.
+ **/
+char *gmtdate(time_t secs);
 
 #endif

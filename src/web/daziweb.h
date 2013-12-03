@@ -6,6 +6,8 @@
 #define DEFAULT_PORT 3437
 #define MAX_QUEUE 64
 
+#define DAZIWEB_VERSION "0.1.0-alpha"
+
 /**
  * Handler for signals used to close the listening socket.
  **/
