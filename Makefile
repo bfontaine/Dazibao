@@ -3,6 +3,7 @@
 
 SRC=src
 WEBSRC=$(SRC)/web
+NSRC=$(SRC)/notifier
 
 VALGRIND=valgrind
 VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
@@ -13,12 +14,13 @@ CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
 
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h $(WEBSRC)/http.h
+NUTILS=$(NOTIFSRC)/notifutils.h
 
 TARGET=dazibao
-SERVER=notification-server
-CLIENT=notification-client
+NSERVER=notification-server
+NCLIENT=notification-client
 WSERVER=daziweb
-TARGETS=$(TARGET) $(SERVER) $(CLIENT) $(WSERVER)
+TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER)
 
 ifndef UNUSED
 #ifndef STRICT
@@ -48,10 +50,10 @@ all: check $(TARGETS)
 $(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(SERVER): $(SRC)/$(SERVER).o $(SRC)/notification-server.h
+$(NSERVER): $(NSRC)/$(NSERVER).o $(NSRC)/notification-server.h
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(CLIENT): $(SRC)/notification-client.o
+$(NCLIENT): $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
