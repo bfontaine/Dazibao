@@ -105,6 +105,16 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         rh = get_route_handler(req->method, req->path);
 
+        /*
+         * If no route can be found and the path is '/', replace it with
+         * DEFAULT_ROOT_ROUTE and try to match a route again.
+         */
+        if (rh == NULL && strcmp(req->path, "/") == 0) {
+                WLOGDEBUG("Using alias '/' -> '%s'", DEFAULT_ROOT_ROUTE);
+                req->path = strdup(DEFAULT_ROOT_ROUTE);
+                rh = get_route_handler(req->method, req->path);
+        }
+
         if (rh != NULL) {
                 int status, rst;
                 struct http_response *resp;
@@ -145,7 +155,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         WLOGDEBUG("No route found for path '%s'", req->path);
 
         /* TODO use the 'Accept' header? */
-        if (file_response(sock, req->path) == 0) {
+        if (file_response(sock, req) == 0) {
                 return 0;
         }
 
@@ -153,13 +163,14 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         return 0;
 }
 
-int file_response(int sock, char *path) {
-        char *realpath, *map;
+int file_response(int sock, struct http_request *req) {
+        char *path = req->path,
+             *realpath, *map;
         int plen, pdlen, len, fd;
         struct stat st;
         struct http_response *resp;
 
-        WLOGDEBUG("Trying to find the file %s", path);
+        WLOGDEBUG("Trying to find the file %s", req->path);
 
         if (path == NULL || path[0] != '/' || strstr(path, "..")) {
                 WLOGDEBUG("Wrong file path");
@@ -196,6 +207,11 @@ int file_response(int sock, char *path) {
                 close(fd);
                 return -1;
         }
+        if (!S_ISREG(st.st_mode)) {
+                WLOGDEBUG("'%s' is not a regular file", path);
+                close(fd);
+                return -1;
+        }
 
         map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
@@ -218,7 +234,8 @@ int file_response(int sock, char *path) {
         resp->body_len = st.st_size;
         *resp->body = map;
 
-        /* TODO mime type */
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                        get_mime_type(req->path), 0);
 
         if (http_response2(sock, resp, 0) == -1) {
                 WLOGERROR("Cannot send the file");

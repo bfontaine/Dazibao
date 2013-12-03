@@ -7,6 +7,7 @@
 #include "http.h"
 
 #define MAX_ROUTES 16
+#define DEFAULT_ROOT_ROUTE "/index.html"
 
 #define PUBLIC_DIR "public_html"
 
@@ -51,7 +52,7 @@ int destroy_routes(void);
  * Search for a file in PUBLIC_DIR which matches the given path. If so, serve
  * the file through 'sock'. The function returns 0 on success, -1 on failure.
  **/
-int file_response(int sock, char *path);
+int file_response(int sock, struct http_request *req);
 
 /**
  * Send an HTTP response 'resp' on the socket 'sock', and free all memory for
