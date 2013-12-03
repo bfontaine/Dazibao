@@ -31,6 +31,11 @@ int add_route(char mth, char *path_suffix, route_handler route) {
                 return -1;
         }
 
+        if (mth == HTTP_M_HEAD) {
+                WLOGWARN("Registering an HEAD route as a GET one");
+                mth = HTTP_M_GET;
+        }
+
         WLOGDEBUG("Route handler for method %d and suffix '%s' added.",
                         mth, path_suffix);
 
@@ -46,6 +51,12 @@ int add_route(char mth, char *path_suffix, route_handler route) {
 
 route_handler get_route_handler(char mth, char *path) {
         WLOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
+
+        if (mth == HTTP_M_HEAD) {
+                /* A HEAD request is the same as GET but without response body
+                 */
+                mth = HTTP_M_GET;
+        }
 
         for (int i=0, len, pmth, paths_match; i<routes_cpt; i++) {
                 pmth = routes_paths[i][0];
@@ -138,6 +149,10 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                         WLOGERROR("Route handler error, rst=%d", rst);
                         destroy_http_response(resp);
                         return -1;
+                }
+
+                if (req->method == HTTP_M_HEAD) {
+                        resp->body_len = -1;
                 }
 
                 /* Set the MIME type if it's not set by the route */

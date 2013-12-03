@@ -102,6 +102,9 @@ int http_mth(char *s) {
         if (strcasecmp(s, "POST") == 0) {
                 return HTTP_M_POST;
         }
+        if (strcasecmp(s, "HEAD") == 0) {
+                return HTTP_M_HEAD;
+        }
         return HTTP_M_UNSUPPORTED;
 }
 

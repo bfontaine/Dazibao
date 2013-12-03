@@ -12,22 +12,25 @@
 int route_get_index(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
-        if (strcmp(req.path, "/index.html") != 0 || dz <= 0
-                        || req.method != HTTP_M_GET) {
+        if (strcmp(req.path, "/index.html") != 0 || dz <= 0) {
                 WLOGERROR("get_index - got wrong path '%s' and/or wrong " \
                                 "dz=%d and/or wrong method %d.",
                                 req.path, dz, req.method);
                 return -1;
         }
 
-        if (dz2html(dz, resp->body) < 0) {
-                WLOGERROR("Error while making dazibao's HTML");
-                return -1;
+        if (req.method != HTTP_M_HEAD) {
+                if (dz2html(dz, resp->body) < 0) {
+                        WLOGERROR("Error while making dazibao's HTML");
+                        return -1;
+                }
+
+                resp->body_len = strlen(*(resp->body));
+        } else {
+                resp->body_len = -1;
         }
 
-        resp->body_len = strlen(*(resp->body));
         resp->status = HTTP_S_OK;
-
         return 0;
 }
 
@@ -38,9 +41,9 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
 
-        if (dz <= 0 || req.method != HTTP_M_GET) {
-                WLOGERROR("get_image_tmpv - got wrong dz or method (%d)",
-                                req.method);
+        if (dz <= 0) {
+                WLOGERROR("got wrong dz or method (dz=%d, m=%d)",
+                                dz, req.method);
                 return -1;
         }
 
@@ -85,7 +88,9 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        resp->body_len = tlv_get_length(*tlv);
+        if (req.method != HTTP_M_HEAD) {
+                resp->body_len = tlv_get_length(*tlv);
+        }
         WLOGDEBUG("TLV is of type %d, with length %d", tlv_type,
                         resp->body_len);
 
@@ -95,19 +100,21 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        *resp->body = (char*)malloc(sizeof(char)*resp->body_len);
-        if (*resp->body == NULL) {
-                perror("malloc");
-                WLOGERROR("Cannot alloc memory to store the TLV's value");
-                tlv_destroy(tlv);
-                return -1;
+        if (req.method != HTTP_M_HEAD) {
+                *resp->body = (char*)malloc(sizeof(char)*resp->body_len);
+                if (*resp->body == NULL) {
+                        perror("malloc");
+                        WLOGERROR("Cannot alloc memory to store the " \
+                                        "TLV's value");
+                        tlv_destroy(tlv);
+                        return -1;
+                }
+
+                memcpy(*resp->body, tlv_get_value_ptr(*tlv), resp->body_len);
         }
 
-        memcpy(*resp->body, tlv_get_value_ptr(*tlv), resp->body_len);
         tlv_destroy(tlv);
-
         resp->status = HTTP_S_OK;
-
         return 0;
 }
 
