@@ -20,7 +20,13 @@ static int listening_sock = -1;
 static struct http_request *req;
 static dz_t dz;
 
-void clean_close(int s) {
+static void init_wserver_infos(void);
+static void destroy_wserver_infos(void);
+
+/**
+ * Handler for signals used to close the listening socket.
+ **/
+static void clean_close(int s) {
         /* avoid 'unused parameter' warning */ s++;
         if (listening_sock >= 0 && close(listening_sock) == -1) {
             perror("close");
@@ -28,9 +34,7 @@ void clean_close(int s) {
         if (dz > 0) {
                 dz_close(&dz);
         }
-        free(WSERVER.hostname);
-        free(WSERVER.dzname);
-        free(WSERVER.name);
+        destroy_wserver_infos();
         destroy_http_request(req);
         destroy_routes();
         exit(EXIT_SUCCESS);
@@ -46,6 +50,7 @@ int parse_args(int argc, char **argv, int *port) {
 
         dz = -1;
         WSERVER.dzname = NULL;
+        WSERVER.dzpath = NULL;
         WSERVER.debug = 0;
         while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
                 switch (c) {
@@ -70,6 +75,9 @@ int parse_args(int argc, char **argv, int *port) {
                                         WLOGFATAL("Cannot open '%s'", optarg);
                                         return -1;
                                 }
+                                dz_close(&dz);
+                                dz = -2;
+                                WSERVER.dzpath = strdup(optarg);
                                 WSERVER.dzname = strdup(basename(optarg));
                         }
                         break;
@@ -121,6 +129,14 @@ static void init_wserver_infos(void) {
         }
 }
 
+/** Helper to free the memory of WSERVER */
+static void destroy_wserver_infos(void) {
+        free(WSERVER.hostname);
+        free(WSERVER.dzname);
+        free(WSERVER.dzpath);
+        free(WSERVER.name);
+}
+
 int main(int argc, char **argv) {
         int status = 0,
             port = DEFAULT_PORT;
@@ -136,11 +152,12 @@ int main(int argc, char **argv) {
                 }
                 exit(EXIT_FAILURE);
         }
-        init_wserver_infos();
 
-        if (dz < 0) {
-                WLOGWARN("Starting with no dazibao");
+        if (dz == -1) {
+                WLOGFATAL("Starting with no dazibao");
+                return -1;
         }
+        init_wserver_infos();
 
         memset(&sig, 0, sizeof(sig));
         sig.sa_handler = clean_close;
@@ -161,10 +178,11 @@ int main(int argc, char **argv) {
                 if (dz > 0) {
                         dz_close(&dz);
                 }
+                destroy_wserver_infos();
                 exit(EXIT_FAILURE);
         }
 
-        bzero(&bindaddr, sizeof(struct sockaddr_in));
+        memset(&bindaddr, 0, sizeof(bindaddr));
         bindaddr.sin_family = AF_INET;
         bindaddr.sin_port = htons(port);
         bindaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -212,7 +230,6 @@ int main(int argc, char **argv) {
                         continue;
                 }
                 WLOGINFO("Got a connection.");
-
                 status = parse_request(client, req);
                 if (status != 0) {
                         WLOGWARN("request parse error (status=%d)", status);
@@ -225,12 +242,22 @@ int main(int argc, char **argv) {
                         if (close(client) == -1) {
                             perror("close");
                         }
+                        if (dz > 0 && dz_close(&dz) == -1) {
+                                WLOGERROR("Cannot close the Dazibao.");
+                        }
                         continue;
                 }
                 WLOGDEBUG("Got method %d, path %s, body length %d",
                                req->method, req->path, req->body_len);
                 WLOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
+
+                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, 0) == -1) {
+                        WLOGERROR("Cannot open the Dazibao.");
+                }
                 status = route_request(client, dz, req);
+                dz_close(&dz);
+                dz = -1;
+
                 if (status != 0) {
                         WLOGWARN("route error, status=%d", status);
                         if (error_response(client, HTTP_S_NOTFOUND) < 0) {
@@ -241,10 +268,6 @@ int main(int argc, char **argv) {
                 WLOGINFO("Connection closed.");
                 if (close(client) == -1) {
                         perror("close");
-                }
-
-                if (dz_reset(&dz) < 0) {
-                        WLOGWARN("Cannot reset dazibao.");
                 }
         }
 

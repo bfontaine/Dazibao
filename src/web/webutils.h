@@ -7,10 +7,11 @@
 /* = Global server properties = */
 struct wserver_info {
         int port;
-        char debug;     /* Debug mode */
+        char debug;    /* Debug mode */
         char *hostname;
-        char *dzname;
-        char *name;
+        char *dzname;  /* Dazibao "pretty" name */
+        char *dzpath;  /* Dazibao path */
+        char *name;    /* Name of the server */
 } WSERVER;
 
 #define WLOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)

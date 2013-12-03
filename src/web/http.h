@@ -73,9 +73,11 @@ struct http_status {
 #define HTTP_MAX_PATH 512
 #define HTTP_MAX_MTH_LENGTH 16
 
-/* defined for easier formating strings */
+/* defined for easier strings formating */
 #define HTTP_MAX_MTH_LENGTH_S "16"
 #define HTTP_MAX_PATH_S "512"
+
+#define HTTP_DATE_FMT "%a, %d %b %Y %T GMT"
 
 /* Headers */
 struct http_headers {

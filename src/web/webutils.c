@@ -1,8 +1,10 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
 #include "webutils.h"
 #include "tlv.h"
+#include "http.h"
 
 int _wlog_level =
 #ifdef DEBUG
@@ -43,8 +45,8 @@ int get_image_tlv_type(const char *path) {
 #define MAX_DATE_LENGTH 64
 
 char *gmtdate(time_t secs) {
-        char *s, *nl;
-        int len;
+        char *s,
+             *nl;
 
         if (secs == -2) {
                 time(&secs);
@@ -53,9 +55,13 @@ char *gmtdate(time_t secs) {
                 return NULL;
         }
 
-        s = asctime(gmtime(&secs));
-
+        s = (char*)malloc(sizeof(char)*MAX_DATE_LENGTH);
         if (s == NULL) {
+                return NULL;
+        }
+
+        if (strftime(s, MAX_DATE_LENGTH, HTTP_DATE_FMT, gmtime(&secs)) == 0) {
+                free(s);
                 return NULL;
         }
 
