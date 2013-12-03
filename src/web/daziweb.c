@@ -177,10 +177,7 @@ int main(int argc, char **argv) {
         if (status == -1) {
                 perror("bind");
                 close(listening_sock);
-                if (dz > 0) {
-                        dz_close(&dz);
-                }
-                exit(EXIT_FAILURE);
+                clean_close(0);
         }
 
         if (listen(listening_sock, MAX_QUEUE) == -1) {
