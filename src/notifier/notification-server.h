@@ -27,42 +27,32 @@
 #define WATCH_SLEEP_MAX 60
 
 
-struct config {
+struct ns_config {
+	
+	/* general config */
 	int client_max;
+	int nb_files;
+	char *s_path;
+	char **file;
+	
+	/* sockets */
+	int s_socket;
+	int *c_socket;
+	
+	/* waiting time */
+	int w_sleep_min;
+	int w_sleep_default;
+	int w_sleep_max;
 };
 
-/**
- * Signal handler.
- * Write on client socket when SIGUSR1 is received.
- */
 void *notify(void *arg);
 
-/**
- * Create a new process to check file changes.
- * @param path path of file to check
- * @return pid of new process, in father process.
- * @return never return in child process.
- * @return -1 on error.
- */
 void *watch_file(void *path);
 
-/**
- * Set up the server
- * @return file descriptor (positive integer) of server on success
- * @return -1 on error
- */
-int set_up_server(char *);
+int set_up_server(void);
 
-/**
- * Establish connection with client, and create a new process to handle
- * notifications
- * @param server file descriptor of server used
- * @return pid of client on success
- * @return -1 on error
- */
-int accept_client(int server);
+int accept_client(void);
 
-/**
- * @return -1 on error
- */
-int nsa(int nb, char **file);
+int nsa(void);
+
+int parse_arg(int argc, char **argv);

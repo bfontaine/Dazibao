@@ -1,23 +1,16 @@
 #include "notification-server.h"
 
-static int nbdaz;
-static int sock;
-static int nbclient = 0;
-static int client_max = 10;
-static int *client;
-static struct config config;
+static struct ns_config conf;
 int _log_level;
 
-void send_message(int *sock, char *str, int len) {
+void send_message(int s_index, char *str, int len) {
 
-	LOGDEBUG("Sending message at client n°%d", *sock);
+	LOGDEBUG("Sending message at client n°%d", s_index);
 	
-	if (write(*sock, str, len) < len) {
+	if (write(conf.c_socket[s_index], str, len) < len) {
 		if (errno == EPIPE) {
-			*sock = -1;
-			nbclient--;
-			LOGINFO("Client disconnected. %d remaining",
-				nbclient);
+			conf.c_socket[s_index] = -1;
+			LOGINFO("Client disconnected");
 		} else {
 			PERROR("write");
 		}
@@ -33,9 +26,9 @@ void *notify(void *arg) {
 	memcpy(&str[1], file, len - 2);
 	str[len - 1] = '\n';
 
-	for (i = 0; i < client_max; i++) {
-		if (client[i] != -1) {
-			send_message(&client[i], str, len);
+	for (i = 0; i < conf.client_max; i++) {
+		if (conf.c_socket[i] != -1) {
+			send_message(i, str, len);
 		}
 	}
 
@@ -49,7 +42,7 @@ void *watch_file(void *arg) {
 	char *path = (char *)arg;
 	struct stat st;
 	time_t ctime;
-	int sleeping_time = WATCH_SLEEP_DEFAULT;
+	int sleeping_time = conf.w_sleep_default;
 		
 	if (stat(path, &st) == -1) {
 		PERROR("stat");
@@ -69,34 +62,32 @@ void *watch_file(void *arg) {
 			LOGINFO("%s changed", path);
 			ctime = st.st_ctime;
 			sleeping_time =
-				MAX(MIN(sleeping_time / 2, WATCH_SLEEP_DEFAULT),
-					WATCH_SLEEP_MIN);
+				MAX(MIN(sleeping_time / 2, conf.w_sleep_default),
+					conf.w_sleep_min);
 			notify(path);
 		} else {
-			sleeping_time = MIN(sleeping_time * 1.5,
-					WATCH_SLEEP_MAX);
+			sleeping_time =
+				MIN(sleeping_time * 1.5, conf.w_sleep_max);
 		}
 	}
 	return (void *)NULL;
 }
 
 
-int nsa(int n, char **file) {
-	
+int nsa() {
 	int i;
 	int nb = 0;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < conf.nb_files; i++) {
 		pthread_t thread;
-		pthread_create(&thread, NULL, watch_file, (void *) (file[i]));
+		pthread_create(&thread, NULL, watch_file, (void *) (conf.file[i]));
 		nb++;
 	}
 	return nb;
 }
 
-int set_up_server(char *path) {
+int set_up_server() {
 
 	struct sigaction action;
-	int server;
 	struct sockaddr_un saddr;
 	
 	LOGDEBUG("Setting up server");
@@ -111,37 +102,37 @@ int set_up_server(char *path) {
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sun_family = AF_UNIX;
 
-	if (path == NULL) {
+	if (conf.s_path == NULL) {
 		strncpy(saddr.sun_path, getenv("HOME"), 107);
 		strncat(saddr.sun_path, "/", 107);
 		strncat(saddr.sun_path, ".dazibao-notification-socket", 107);
 	} else {
-		strncpy(saddr.sun_path, path, 107);
+		strncpy(saddr.sun_path, conf.s_path, 107);
 	}
 
-	server = socket(PF_UNIX, SOCK_STREAM, 0);
+	conf.s_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 	
-	if(server < 0) {
+	if(conf.s_socket < 0) {
 		PERROR("socket");
 		exit(1);
 	}
 
-	if (bind(server, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
+	if (bind(conf.s_socket, (struct sockaddr*)&saddr, sizeof(saddr))  == -1) {
 		if (errno != EADDRINUSE) {
 			ERROR("bind", -1);
 		}
-		if (connect(server, (struct sockaddr*)&saddr,
+		if (connect(conf.s_socket, (struct sockaddr*)&saddr,
 				sizeof(saddr)) == -1) {
 			LOGINFO("Removing old socket at \"%s\"", saddr.sun_path);
 			if (unlink(saddr.sun_path) == -1) {
 				ERROR("unlink", -1);
 			}
-			if (bind(server, (struct sockaddr*)&saddr,
+			if (bind(conf.s_socket, (struct sockaddr*)&saddr,
 					sizeof(saddr))  == -1) {
 				ERROR("bind", -1);
 			}
 		} else {
-			if (close(server) == -1) {
+			if (close(conf.s_socket) == -1) {
 				ERROR("close", -1);
 			}
 			LOGERROR("Socket at \"%s\" already in use", saddr.sun_path);
@@ -149,104 +140,124 @@ int set_up_server(char *path) {
 		}
 	}
 
-	if (listen(server, 10) == -1) {
+	if (listen(conf.s_socket, 10) == -1) {
 		ERROR("listen", -1);
 	}
 
 	LOGINFO("Socket created at \"%s\"", saddr.sun_path);
 
-	return server;
+	return 0;
 }
 
-int accept_client(int server) {
+int accept_client() {
 
-	int pid;
-	int s;
-	socklen_t len;
 	struct sockaddr_un caddr;
-
-	s = accept(server, (struct sockaddr*)&caddr, &len);
-
-	if (s == -1) {
-		if (errno == EINTR) {
-			sleep(1);
-			return accept_client(server);
-		}
-		ERROR("accept", -1);
-	}
+	socklen_t len = sizeof(caddr);
 	int i;
-	for (i = 0; i < client_max; i++) {
-		if (client[i] == -1) {
-			client[i] = s;
+
+	for (i = 0; i < conf.client_max; i++) {
+		if (conf.c_socket[i] == -1) {
+			conf.c_socket[i] =
+				accept(conf.s_socket,
+					(struct sockaddr*)&caddr,
+					&len);
+			if (conf.c_socket[i] == -1) {
+				if (errno == EINTR) {
+					sleep(1);
+					return accept_client();
+				}
+				ERROR("accept", -1);
+			}
+			LOGINFO("New client connected");
 			break;
 		}
 	}
-	LOGINFO("New client connected");
-	return s;
 
-}
-
-int main(int argc, char **argv) {
-
-	char *path = NULL;
-	char **files = NULL;
-	int server;
-	int next_arg = 1;
-	int client_max = 10;
-	_log_level = LOG_LVL_DEBUG;
-
-	if (argc < 2) {
-                printf("Usage:\n\t%s [OPTION] [FILE]\n", argv[0]);
-                exit(EXIT_FAILURE);
+	if (i == conf.client_max) {
+		LOGWARN("Server is full");
+		return -1;
 	}
 
-	while (files == NULL) {
+	return 0;
+}
+
+
+int parse_arg(int argc, char **argv) {
+
+	int next_arg = 1;
+
+	conf.client_max = MAX_CLIENTS;
+	conf.w_sleep_min = WATCH_SLEEP_MIN;
+	conf.w_sleep_default = WATCH_SLEEP_DEFAULT;
+	conf.w_sleep_max = WATCH_SLEEP_MAX;
+
+	while (next_arg < argc) {
 		if (strcmp(argv[next_arg], "--path") == 0) {
-			if (next_arg > argc - 2) {
-				printf("Usage:\n\t%s [OPTION] [FILE]\n", argv[0]);
-				exit(EXIT_FAILURE);
+			if (next_arg > argc - 3) {
+				LOGFATAL("\"--path\" expected parameter");
+				return -1;
 			}
-			path = argv[next_arg + 1];
+			conf.s_path = argv[next_arg + 1];
 			next_arg += 2;			
 		} else if (strcmp(argv[next_arg], "--max") == 0) {
-			if (next_arg > argc - 2) {
-				printf("Usage:\n\t%s [OPTION] [FILE]\n", argv[0]);
-				exit(EXIT_FAILURE);
+			if (next_arg > argc - 3) {
+				LOGFATAL("\"--max\" expected parameter");
+				return -1;
 			}
-			client_max = atoi(argv[next_arg + 1]);
+			conf.client_max = atoi(argv[next_arg + 1]);
 			next_arg += 2;			
 		} else {
-			files = &argv[next_arg];
-			nbdaz = argc - next_arg;
+			conf.file = &argv[next_arg];
+			conf.nb_files = argc - next_arg;
+			break;
 		}
 	}
 
-	client = mmap(NULL, sizeof(*client)*client_max, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-	memset(client, -1, sizeof(*client)*client_max);
+	return 0;
+}
 
-	server = set_up_server(path);
 
-	if (server == -1) {
+int main(int argc, char **argv) {
+
+	int client_max = 10;
+	_log_level = LOG_LVL_DEBUG;
+
+	memset(&conf, 0, sizeof(conf));
+
+	if (argc < 2) {
+		LOGFATAL("Usage:\n\t%s [OPTION] [FILE]", argv[0]);
+                exit(EXIT_FAILURE);
+	}
+
+	if (parse_arg(argc, argv) == -1) {
+		LOGFATAL("Wrong arguments, see documentation for details");
+		exit(EXIT_FAILURE);
+	}
+
+	conf.c_socket = mmap(NULL, sizeof(*conf.c_socket) * client_max,
+		PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+	memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
+
+	if (set_up_server() == -1) {
 		ERROR("set_up_server", -1);
 	}
 
 	LOGINFO("Server set up");
 
-	if(nsa(nbdaz, files) != nbdaz) {
-		LOGWARN("Some files could not be watched")
+	int nc = nsa();
+	if (nc != conf.nb_files) {
+		LOGWARN("%d file(s) could not be watched",
+			conf.nb_files - nc)
 	}
 	
 	while (1) {
-		if (accept_client(server) > 0) {
-			nbclient++;
-			LOGINFO("Server now handles %d clients", nbclient);
-		} else {
+		if (accept_client() < 0) {
 			PERROR("accept_client");
 			continue;
 		}
 	}
 
-	munmap(client, sizeof(*client)*client_max);
+	munmap(conf.c_socket, sizeof(*conf.c_socket) * conf.client_max);
 
 	return 0;
 }
