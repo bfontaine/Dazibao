@@ -19,6 +19,7 @@
 #endif
 
 #include "utils.h"
+#include "notifutils.h"
 
 #define MAX_CLIENTS 10
 #define WATCH_SLEEP_MIN 2
