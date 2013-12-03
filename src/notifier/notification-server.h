@@ -13,6 +13,7 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -34,6 +35,7 @@ struct ns_config {
 	int nb_files;
 	char *s_path;
 	char **file;
+	char reliable;
 	
 	/* sockets */
 	int s_socket;

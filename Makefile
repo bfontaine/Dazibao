@@ -51,7 +51,7 @@ $(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(NSERVER): $(NSRC)/$(NSERVER).o $(NSRC)/notifutils.o $(NSRC)/notification-server.h
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(NCLIENT): $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
