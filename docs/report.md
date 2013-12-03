@@ -24,13 +24,17 @@ NB: For now, there still is some lack in the API. For instance, we work with fil
 
 #### Usage
 ```
-notification-server [FILE]
+notification-server [OPTION] [FILE]
 ```
-If you want to change the file used by the socket, use the `--path` option
+Available options:
 ```
-notification-server --path /path/to/the/file/you/want/to/use
+--path <path> use <path> as connection point for clients
+       	      default is "$HOME/.dazibao-notification-socket"
+--max <n>     allow <n> client maximum on server
+      	      default is MAX_CLIENTS (from notification-server.h)
+--reliable    enable the reliable mode (use hash instead of ctime to detect file modifications)
 ```
-NB: You can put the `--path` option both before or after the file list, but the file list must not be splitted by it.
+NB: Order between options does not matter, but all options have to be written before the file list.
 
 #### History
 
@@ -50,8 +54,9 @@ The bad side:
 * This issue could have been resolved with real-time signals, but we would loose the broadcasting ability of "normal" signals.
 
 #### Known issues
-* As file watching is based on `ctime` of files, it can notify false modification, or miss some of them.
+* As default file watching is based on `ctime` of files, it can notify false modification, or miss some of them.
   This choice have been made to save ressources avoiding file parsing.
+  Not a real issue since you can enable the *reliable mode* with `--reliable` option.
 
 ### Notification client
 
