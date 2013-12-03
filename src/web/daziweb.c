@@ -16,24 +16,22 @@
 #include "routing.h"
 #include "routes.h"
 
-static int listening_sock;
+static int listening_sock = -1;
 static struct http_request *req;
 static dz_t dz;
 
-/* FIXME: this function is not called on ^C
-   (I checked with Valgrind, GDB and strace) */
 void clean_close(int s) {
         /* avoid 'unused parameter' warning */ s++;
-        if (close(listening_sock) == -1) {
+        if (listening_sock >= 0 && close(listening_sock) == -1) {
             perror("close");
         }
         if (dz > 0) {
                 dz_close(&dz);
         }
-        destroy_http_request(req);
-        destroy_routes();
         free(WSERVER.hostname);
         free(WSERVER.dzname);
+        destroy_http_request(req);
+        destroy_routes();
         exit(EXIT_SUCCESS);
 }
 
@@ -142,10 +140,9 @@ int main(int argc, char **argv) {
                 WLOGWARN("Starting with no dazibao");
         }
 
+        memset(&sig, 0, sizeof(sig));
         sig.sa_handler = clean_close;
-        sig.sa_sigaction = NULL;
         sig.sa_flags = 0;
-        sigemptyset(&sig.sa_mask);
 
         if (sigaction(SIGINT, &sig, NULL) == -1) {
                 perror("sigaction");
@@ -180,10 +177,7 @@ int main(int argc, char **argv) {
         if (status == -1) {
                 perror("bind");
                 close(listening_sock);
-                if (dz > 0) {
-                        dz_close(&dz);
-                }
-                exit(EXIT_FAILURE);
+                clean_close(0);
         }
 
         if (listen(listening_sock, MAX_QUEUE) == -1) {

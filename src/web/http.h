@@ -1,8 +1,6 @@
 #ifndef _HTTP_H
 #define _HTTP_H 1
 
-#include "utils.h"
-
 #define CR 13
 #define LF 10
 
@@ -65,14 +63,6 @@ struct http_status {
 #define HTTP_H_POWEREDBY      7
 #define HTTP_H_ACCEPT         8
 
-/* Helpful constants */
-#define HTTP_CT_HTML "text/html; charset=utf-8"
-#define HTTP_CT_PNG "image/png"
-#define HTTP_CT_JPEG "image/jpeg"
-
-#define HTTP_CT_CSS "text/css"
-#define HTTP_CT_JS  "application/javascript"
-
 /* arbitrary extentions/limits */
 #define HTTP_MAX_HEADERS 16
 #define HTTP_MAX_HEADER_NAME_LENGTH 64
@@ -119,7 +109,7 @@ int http_init_headers(struct http_headers *hs);
  *
  * Please also note that only a small set of HTTP headers are supported
  **/
-int http_add_header(struct http_headers *hs, int code, char *value,
+int http_add_header(struct http_headers *hs, int code, const char *value,
             char overr);
 
 /**

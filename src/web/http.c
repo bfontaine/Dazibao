@@ -56,10 +56,16 @@ char is_crlf(char *s, int c, int len) {
 }
 
 int get_http_header_code(char *str) {
+        unsigned int len;
         if (str == NULL) {
                 return -2;
         }
+        len = strlen(str);
+
         for (int i=0; i<HTTP_MAX_HEADERS && headers_strs[i] != NULL; i++) {
+                if (strlen(headers_strs[i]) != len) {
+                        continue;
+                }
                 if (strcasecmp(headers_strs[i], str) == 0) {
                     return i;
                 }
@@ -116,7 +122,7 @@ int http_init_headers(struct http_headers *hs) {
         return 0;
 }
 
-int http_add_header(struct http_headers *hs, int code, char *value,
+int http_add_header(struct http_headers *hs, int code, const char *value,
                                 char overr) {
         if (hs == NULL || hs->headers == NULL || code < 0
                         || code > HTTP_MAX_HEADERS || value == NULL) {
