@@ -7,6 +7,7 @@ struct wserver_info {
         char debug;     /* Debug mode */
         char *hostname;
         char *dzname;
+        char *name;
 } WSERVER;
 
 /* = Logging = */

@@ -30,6 +30,7 @@ void clean_close(int s) {
         }
         free(WSERVER.hostname);
         free(WSERVER.dzname);
+        free(WSERVER.name);
         destroy_http_request(req);
         destroy_routes();
         exit(EXIT_SUCCESS);
@@ -95,6 +96,7 @@ int parse_args(int argc, char **argv, int *port) {
  **/
 static void init_wserver_infos(void) {
         WSERVER.hostname = strdup("localhost"); /* should be ok for now */
+        WSERVER.name = strdup("Daziweb/" DAZIWEB_VERSION);
 
         if (WSERVER.dzname == NULL) {
                 WSERVER.dzname = strdup("<no dazibao>");

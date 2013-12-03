@@ -307,6 +307,10 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
                 http_add_header(resp->headers, HTTP_H_CONTENT_LENGTH, ct, 0);
         }
 
+        /* bonuses */
+        http_add_header(resp->headers, HTTP_H_SERVER, WSERVER.name, 0);
+        http_add_header(resp->headers, HTTP_H_POWEREDBY, "Pure C99 FTW", 0);
+
         /* HTTP/1.x <code> <phrase>\r\n */
         len = strlen("HTTP/") + strlen(HTTP_VERSION) + 5 + strlen(phrase) + 2;
         response = (char*)malloc(sizeof(char)*(len+1));
