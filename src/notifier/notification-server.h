@@ -45,14 +45,16 @@ struct ns_config {
 	int w_sleep_max;
 };
 
+void send_message(int s_index, char *str, int len);
+
 void *notify(void *arg);
 
 void *watch_file(void *path);
 
+int nsa(void);
+
 int set_up_server(void);
 
 int accept_client(void);
-
-int nsa(void);
 
 int parse_arg(int argc, char **argv);
