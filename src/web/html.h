@@ -6,6 +6,7 @@
 #include "string.h"
 
 #define HTML_DZ_MAX_NAME_LENGTH 64
+#define HTML_TLV_SIZE 1024
 
 #define HTML_DZ_TOP_FMT \
                   "<!doctype html>\n" \

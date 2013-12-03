@@ -4,8 +4,6 @@
 #include "tlv.h"
 #include "webutils.h"
 
-#define HTML_TLV_SIZE 1024
-
 int text_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
 
@@ -37,6 +35,7 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                 return -1;
         }
 
+        /* XXX Uninitialised value was created by a heap allocation */
         *html = (char*)malloc(sizeof(char)*HTML_TLV_SIZE);
 
         if (*html == NULL) {
@@ -53,10 +52,8 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         switch (type) {
                 case TLV_PAD1:
                 case TLV_PADN:
-                        if (WSERVER.debug) {
-                                st = empty_pad_tlv2html(t, type, len, *html);
-                                break;
-                        }
+                        st = empty_pad_tlv2html(t, type, len, *html);
+                        break;
                 case TLV_TEXT:
                         st = text_tlv2html(t, type, len, *html);
                         break;
@@ -67,7 +64,7 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
                         break;
                 default:
-                        /* FIXME: Invalid read of size 1 */
+                        /* XXX: Invalid read of size 1 */
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
                                         type, len);
         }
@@ -85,6 +82,7 @@ int dz2html(dz_t dz, char **html) {
         off_t tlv_off;
         int html_len,
             tlv_html_len;
+
         tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
 
         if (tlv_html == NULL || t == NULL || tlv_init(t) < 0) {
@@ -93,7 +91,6 @@ int dz2html(dz_t dz, char **html) {
                 free(tlv_html);
                 return -1;
         }
-
         *tlv_html = NULL;
 
         html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
@@ -120,10 +117,10 @@ int dz2html(dz_t dz, char **html) {
                         continue;
                 }
 
+                NFREE(*tlv_html);
                 if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
-                        /*NFREE(tlv_html);*/
                         continue;
                 }
 
@@ -140,7 +137,6 @@ int dz2html(dz_t dz, char **html) {
                         WLOGWARN("Cannot realloc, skipping tlv %lu", tlv_off);
                         perror("realloc");
                         *html = tmp_ptr;
-                        NFREE(*tlv_html);
                         continue;
                 }
                 *html = tmp_ptr;
@@ -149,7 +145,6 @@ int dz2html(dz_t dz, char **html) {
 
                 /*tlv_destroy(t);
                 t = NULL;*/
-                NFREE(*tlv_html);
         }
         if (tlv_off == -1) {
                 WLOGERROR("got an error when reading dazibao with next_tlv");
