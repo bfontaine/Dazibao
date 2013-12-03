@@ -32,13 +32,26 @@ notification-server --path /path/to/the/file/you/want/to/use
 ```
 NB: You can put the `--path` option both before or after the file list, but the file list must not be splitted by it.
 
-#### Known issues
+#### History
 
+Until [4e5562e](4e5562e28d15ed8013407136ed62125a16d6686d), we used signals to notify change on file. The plan was:
+* one process per file
+* one process per client connection
+* Once a process watching a file see a modification, it sends a SIGUSR1 to all processes in groupid. Then:
+  * Processes watching files ignore this signal
+  * Processes managing clients find the file name correponding to the process who sent the signal (`si_pid`), and write notification on its socket.
+
+The good side:
+* Different processes means that if one fail, others still work and do not care.
+* It is easy to broadcast a signal to a whole group id.
+
+The bad side:
+* If a signal is sent more than one time before entering handler, only one signal will be delivered.
+* This issue could have been resolved with real-time signals, but we would loose the broadcasting ability of "normal" signals.
+
+#### Known issues
 * As file watching is based on `ctime` of files, it can notify false modification, or miss some of them.
   This choice have been made to save ressources avoiding file parsing.
-
-* As we use signals to tell a notification has to be sent to clients, if many files are modified and checked at the same time, some of them will actually not be notified. We do not use real-time signals because it can not be broadcast.
-
 
 ### Notification client
 

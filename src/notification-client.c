@@ -3,9 +3,10 @@
 static char notifier_enabled = 1;
 static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
 static char cmd[BUFFER_SIZE*2];
+int _log_level = LOG_LVL_DEBUG;
 
 int check_notifier(void) {
-	printf("[pid:%d] Looking for %s\n", getpid(), notifier);
+	LOGINFO("Looking for %s", notifier);
 	return (notify("Welcome!", "dazibao-client") == 0) ? 1 : 0;
 }
 
@@ -136,10 +137,10 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	printf("[pid:%d] Connected to %s\n", getpid(), sun.sun_path);
+	LOGINFO("Connected to %s", sun.sun_path);
 	
 	if (receive_notifications(fd) == -1) {
-		fprintf(stderr, "[pid:%d] receive_notifications failed. Exiting with 1.\n", getpid());
+		LOGFATAL("receive_notifications failed. Exiting with 1");
 		exit(1);
 	}
 

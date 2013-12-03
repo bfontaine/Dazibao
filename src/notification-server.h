@@ -12,6 +12,7 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <pthread.h>
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -19,25 +20,21 @@
 
 #include "utils.h"
 
+#define MAX_CLIENTS 10
 #define WATCH_SLEEP_MIN 2
 #define WATCH_SLEEP_DEFAULT 10
 #define WATCH_SLEEP_MAX 60
 
-struct file_watcher {
-	int pid;
-	char *file;
-};
 
-/**
- * Compare two file_watcher struct
- */
-int fwcmp(const void*, const void*);
+struct config {
+	int client_max;
+};
 
 /**
  * Signal handler.
  * Write on client socket when SIGUSR1 is received.
  */
-void notify(int sigrtmin, siginfo_t *info, void *unused_ptr);
+void *notify(void *arg);
 
 /**
  * Create a new process to check file changes.
@@ -46,7 +43,7 @@ void notify(int sigrtmin, siginfo_t *info, void *unused_ptr);
  * @return never return in child process.
  * @return -1 on error.
  */
-int watch_file(char *path);
+void *watch_file(void *path);
 
 /**
  * Set up the server
