@@ -44,7 +44,6 @@ int get_image_tlv_type(const char *path) {
 
 char *gmtdate(time_t secs) {
         char *s, *nl;
-        int len;
 
         if (secs == -2) {
                 time(&secs);

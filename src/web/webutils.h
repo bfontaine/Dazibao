@@ -6,10 +6,11 @@
 /* = Global server properties = */
 struct wserver_info {
         int port;
-        char debug;     /* Debug mode */
+        char debug;    /* Debug mode */
         char *hostname;
-        char *dzname;
-        char *name;
+        char *dzname;  /* Dazibao "pretty" name */
+        char *dzpath;  /* Dazibao path */
+        char *name;    /* Name of the server */
 } WSERVER;
 
 /* = Logging = */
