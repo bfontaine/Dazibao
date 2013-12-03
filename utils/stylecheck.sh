@@ -6,7 +6,9 @@ function _check() {
     # usage:
     #   _check <regex> <text>
     grep -EIn "$1" \
-            src/*.c src/*.h src/web/*.c src/web/*.h > $T
+            src/*.c src/*.h \
+            src/web/*.c src/web/*.h \
+            src/notifier/*.c src/notifier/*.h > $T
     if [ "$?" -eq "0" ]; then
             echo "$2"
             cut -f1,2 -d: < $T
