@@ -266,8 +266,8 @@ int parse_arg(int argc, char **argv) {
 				LOGFATAL("\"--max\" parameter or [FILE] is missing");
 				return -1;
 			}
-			conf.client_max = atoi(argv[next_arg + 1]);
-			next_arg += 2;			
+			conf.client_max = strtol(argv[next_arg + 1], NULL, 10);
+			next_arg += 2;
 		} else if (strcmp(argv[next_arg], "--reliable") == 0) {
 			if (next_arg > argc - 2) {
 				LOGFATAL("[FILE] is missing");
