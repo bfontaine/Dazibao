@@ -6,11 +6,11 @@
 #include "tlv.h"
 #include "http.h"
 
-int _wlog_level =
+int _log_level =
 #ifdef DEBUG
-        WLOG_LVL_DEBUG;
+        LOG_LVL_DEBUG;
 #else
-        WLOG_LVL_INFO;
+        LOG_LVL_INFO;
 #endif
 
 int write_all(int fd, char *buff, int len) {

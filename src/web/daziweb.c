@@ -57,7 +57,7 @@ int parse_args(int argc, char **argv, int *port) {
                 case 'l':
                         l = strtol(optarg, NULL, 10);
                         if (!STRTOL_ERR(l)) {
-                                _wlog_level = l;
+                                _log_level = l;
                                 loglvl_flag = 1;
                         }
                         break;
@@ -86,7 +86,7 @@ int parse_args(int argc, char **argv, int *port) {
                         break;
                 case 'v':
                         if (!loglvl_flag) {
-                                _wlog_level += 10;
+                                _log_level += 10;
                         }
                         break;
                 case ':':
