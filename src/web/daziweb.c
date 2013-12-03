@@ -16,13 +16,13 @@
 #include "routing.h"
 #include "routes.h"
 
-static int listening_sock;
+static int listening_sock = -1;
 static struct http_request *req;
 static dz_t dz;
 
 void clean_close(int s) {
         /* avoid 'unused parameter' warning */ s++;
-        if (close(listening_sock) == -1) {
+        if (listening_sock >= 0 && close(listening_sock) == -1) {
             perror("close");
         }
         if (dz > 0) {
