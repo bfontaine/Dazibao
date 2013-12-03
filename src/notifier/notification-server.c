@@ -246,22 +246,30 @@ int parse_arg(int argc, char **argv) {
 	conf.w_sleep_min = WATCH_SLEEP_MIN;
 	conf.w_sleep_default = WATCH_SLEEP_DEFAULT;
 	conf.w_sleep_max = WATCH_SLEEP_MAX;
+	conf.reliable = RELIABLE_DEFAULT;
 
 	while (next_arg < argc) {
 		if (strcmp(argv[next_arg], "--path") == 0) {
 			if (next_arg > argc - 3) {
-				LOGFATAL("\"--path\" expected parameter");
+				LOGFATAL("\"--path\" parameter or [FILE] is missing");
 				return -1;
 			}
 			conf.s_path = argv[next_arg + 1];
 			next_arg += 2;			
 		} else if (strcmp(argv[next_arg], "--max") == 0) {
 			if (next_arg > argc - 3) {
-				LOGFATAL("\"--max\" expected parameter");
+				LOGFATAL("\"--max\" parameter or [FILE] is missing");
 				return -1;
 			}
 			conf.client_max = atoi(argv[next_arg + 1]);
 			next_arg += 2;			
+		} else if (strcmp(argv[next_arg], "--reliable") == 0) {
+			if (next_arg > argc - 2) {
+				LOGFATAL("[FILE] is missing");
+				return -1;
+			}
+			conf.reliable = 1;
+			next_arg += 1;			
 		} else {
 			conf.file = &argv[next_arg];
 			conf.nb_files = argc - next_arg;

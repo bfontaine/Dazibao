@@ -23,6 +23,7 @@
 #include "notifutils.h"
 
 #define MAX_CLIENTS 10
+#define RELIABLE_DEFAULT 1
 #define WATCH_SLEEP_MIN 2
 #define WATCH_SLEEP_DEFAULT 10
 #define WATCH_SLEEP_MAX 60
@@ -50,6 +51,10 @@ struct ns_config {
 void send_message(int s_index, char *str, int len);
 
 void *notify(void *arg);
+
+int unreliable_watch(char *file, time_t *old_time);
+
+int reliable_watch(char *file, uint32_t *old_hash);
 
 void *watch_file(void *path);
 
