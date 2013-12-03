@@ -62,8 +62,14 @@ $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-#$(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(WUTILS)
-#	$(CC) $(CFLAGS) -o $@ -c $<
+$(WEBSRC)/$(WSERVER).o: $(SRC)/dazibao.o $(WEBSRC)/request.o \
+			$(WEBSRC)/routing.o $(WEBSRC)/routes.o
+$(WEBSRC)/html.o: $(SRC)/dazibao.o $(SRC)/tlv.o
+$(WEBSRC)/request.o: $(WEBSRC)/http.o
+$(WEBSRC)/routes.o: $(SRC)/dazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
+			$(WEBSRC)/html.o
+$(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
+$(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
 #$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 %.o: %.c %.h
