@@ -56,10 +56,16 @@ char is_crlf(char *s, int c, int len) {
 }
 
 int get_http_header_code(char *str) {
+        unsigned int len;
         if (str == NULL) {
                 return -2;
         }
+        len = strlen(str);
+
         for (int i=0; i<HTTP_MAX_HEADERS && headers_strs[i] != NULL; i++) {
+                if (strlen(headers_strs[i]) != len) {
+                        continue;
+                }
                 if (strcasecmp(headers_strs[i], str) == 0) {
                     return i;
                 }
