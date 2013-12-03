@@ -32,11 +32,11 @@ int add_route(char mth, char *path_suffix, route_handler route) {
         }
 
         if (mth == HTTP_M_HEAD) {
-                WLOGWARN("Registering an HEAD route as a GET one");
+                LOGWARN("Registering an HEAD route as a GET one");
                 mth = HTTP_M_GET;
         }
 
-        WLOGDEBUG("Route handler for method %d and suffix '%s' added.",
+        LOGDEBUG("Route handler for method %d and suffix '%s' added.",
                         mth, path_suffix);
 
         routes_paths[routes_cpt] = strdup(path_suffix);
@@ -50,7 +50,7 @@ int add_route(char mth, char *path_suffix, route_handler route) {
 }
 
 route_handler get_route_handler(char mth, char *path) {
-        WLOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
+        LOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
 
         if (mth == HTTP_M_HEAD) {
                 /* A HEAD request is the same as GET but without response body
@@ -95,12 +95,12 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         }
 
         if (sock < 0) {
-                WLOGERROR("Cannot route a request on negative socket");
+                LOGERROR("Cannot route a request on negative socket");
                 return -1;
         }
 
         if (req->path == NULL) {
-                WLOGERROR("Got a NULL path");
+                LOGERROR("Got a NULL path");
                 error_response(sock, HTTP_S_BADREQ);
                 return -1;
         }
@@ -111,7 +111,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         }
 
         if (dz < 0) {
-                WLOGWARN("Routing a request with no dazibao (%d)", dz);
+                LOGWARN("Routing a request with no dazibao (%d)", dz);
         }
 
         rh = get_route_handler(req->method, req->path);
@@ -121,7 +121,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
          * DEFAULT_ROOT_ROUTE and try to match a route again.
          */
         if (rh == NULL && strcmp(req->path, "/") == 0) {
-                WLOGDEBUG("Using alias '/' -> '%s'", DEFAULT_ROOT_ROUTE);
+                LOGDEBUG("Using alias '/' -> '%s'", DEFAULT_ROOT_ROUTE);
                 free(req->path);
                 req->path = strdup(DEFAULT_ROOT_ROUTE);
                 rh = get_route_handler(req->method, req->path);
@@ -133,20 +133,20 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 const char *mime;
 
                 if (req->method == HTTP_M_POST && req->body_len <= 0) {
-                        WLOGWARN("Got a POST request with empty body on '%s'",
+                        LOGWARN("Got a POST request with empty body on '%s'",
                                         req->path);
                 }
 
                 resp = create_http_response();
                 if (resp == NULL) {
-                        WLOGERROR("Cannot create a new HTTP response");
+                        LOGERROR("Cannot create a new HTTP response");
                         error_response(sock, HTTP_S_ERR);
                         return -1;
                 }
 
                 rst = (*rh)(dz, *req, resp);
                 if (rst < 0) {
-                        WLOGERROR("Route handler error, rst=%d", rst);
+                        LOGERROR("Route handler error, rst=%d", rst);
                         destroy_http_response(resp);
                         return -1;
                 }
@@ -167,7 +167,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 return status;
         }
 
-        WLOGDEBUG("No route found for path '%s'", req->path);
+        LOGDEBUG("No route found for path '%s'", req->path);
 
         if (file_response(sock, req) == 0) {
                 return 0;
@@ -184,16 +184,16 @@ int file_response(int sock, struct http_request *req) {
         struct stat st;
         struct http_response *resp;
 
-        WLOGDEBUG("Trying to find the file %s", req->path);
+        LOGDEBUG("Trying to find the file %s", req->path);
 
         if (path == NULL || path[0] != '/' || strstr(path, "..")) {
-                WLOGDEBUG("Wrong file path");
+                LOGDEBUG("Wrong file path");
                 return -1;
         }
 
         plen = strlen(path);
         if (plen > MAX_FILE_PATH_LENGTH) {
-                WLOGDEBUG("Path is too long (max=%d)", MAX_FILE_PATH_LENGTH);
+                LOGDEBUG("Path is too long (max=%d)", MAX_FILE_PATH_LENGTH);
                 return -1;
         }
 
@@ -208,7 +208,7 @@ int file_response(int sock, struct http_request *req) {
         fd = open(realpath, O_RDONLY);
 
         if (fd < 0) {
-                WLOGERROR("Cannot open '%s'", realpath);
+                LOGERROR("Cannot open '%s'", realpath);
                 perror("open");
                 free(realpath);
                 return -1;
@@ -222,7 +222,7 @@ int file_response(int sock, struct http_request *req) {
                 return -1;
         }
         if (!S_ISREG(st.st_mode)) {
-                WLOGDEBUG("'%s' is not a regular file", path);
+                LOGDEBUG("'%s' is not a regular file", path);
                 close(fd);
                 return -1;
         }
@@ -230,7 +230,7 @@ int file_response(int sock, struct http_request *req) {
         map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
         if (map == MAP_FAILED) {
-                WLOGERROR("Cannot mmap with size=%lu", st.st_size);
+                LOGERROR("Cannot mmap with size=%lu", st.st_size);
                 perror("mmap");
                 close(fd);
                 return -1;
@@ -238,7 +238,7 @@ int file_response(int sock, struct http_request *req) {
 
         resp = create_http_response();
         if (resp == NULL) {
-                WLOGERROR("Cannot create an HTTP response");
+                LOGERROR("Cannot create an HTTP response");
                 munmap(map, st.st_size);
                 close(fd);
                 return -1;
@@ -255,7 +255,7 @@ int file_response(int sock, struct http_request *req) {
                         get_mime_type(req->path), 0);
 
         if (http_response2(sock, resp, 0) == -1) {
-                WLOGERROR("Cannot send the file");
+                LOGERROR("Cannot send the file");
         }
 
         if (munmap(map, st.st_size) == -1) {
@@ -332,7 +332,7 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
         /* status line (header) */
         if (snprintf(response, len+1, "HTTP/" HTTP_VERSION " %3d %s\r\n",
                         resp->status, phrase) < len) {
-                WLOGERROR("response sprintf failed");
+                LOGERROR("response sprintf failed");
                 perror("sprintf");
                 ret = -1;
                 goto EORESP;
@@ -341,7 +341,7 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
         /* -- headers -- */
         str_headers = http_headers_string(resp->headers);
         if (str_headers == NULL) {
-                WLOGERROR("Cannot get headers string");
+                LOGERROR("Cannot get headers string");
                 ret = -1;
                 goto EORESP;
         }
@@ -349,7 +349,7 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
         len += len_headers + 2;
         response = safe_realloc(response, len+1);
         if (response == NULL) {
-                WLOGERROR("Cannot realloc for headers");
+                LOGERROR("Cannot realloc for headers");
                 perror("realloc");
                 NFREE(str_headers);
                 ret = -1;
@@ -360,14 +360,14 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
         strncat(response, "\r\n", 2);
 
         if (write_all(sock, response, len) < len) {
-            WLOGERROR("Couldn't send all headers (len=%d)", len);
+            LOGERROR("Couldn't send all headers (len=%d)", len);
         }
 
         NFREE(str_headers);
         /* -- /headers -- */
 
         if (write_all(sock, *resp->body, resp->body_len) < resp->body_len) {
-            WLOGERROR("Couldn't send the whole request body (len=%d)",
+            LOGERROR("Couldn't send the whole request body (len=%d)",
                             resp->body_len)
         }
 

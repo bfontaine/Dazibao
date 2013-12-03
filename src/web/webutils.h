@@ -14,12 +14,6 @@ struct wserver_info {
         char *name;    /* Name of the server */
 } WSERVER;
 
-#define WLOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
-#define WLOGINFO(fmt, ...)  _LOG(LOG_LVL_INFO,  "INFO", fmt, ##__VA_ARGS__)
-#define WLOGWARN(fmt, ...)  _LOG(LOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
-#define WLOGERROR(fmt, ...) _LOG(LOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
-#define WLOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
-
 /* = I/O = */
 
 #define MAX_FILE_PATH_LENGTH 256

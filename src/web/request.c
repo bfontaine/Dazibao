@@ -63,7 +63,7 @@ int parse_request(int sock, struct http_request *req) {
 
         line = next_header(sock, &eoh); /* First line */
         if (line == NULL || eoh) {
-                WLOGWARN("Cannot get the first header line (eoh=%d)", eoh);
+                LOGWARN("Cannot get the first header line (eoh=%d)", eoh);
                 next_header(-1, NULL);
                 free(line);
                 return HTTP_S_BADREQ;
@@ -93,7 +93,7 @@ int parse_request(int sock, struct http_request *req) {
         }
 
         if (sscanf(line, status_fmt, mth_str, req->path) < 2) {
-                WLOGWARN("Cannot scan first header line");
+                LOGWARN("Cannot scan first header line");
                 perror("sscanf");
                 NFREE(mth_str);
                 goto MALFORMED;
@@ -116,7 +116,7 @@ int parse_request(int sock, struct http_request *req) {
 
 
         if (req->headers == NULL || http_init_headers(req->headers) != 0) {
-                WLOGERROR("Couldn't allocate memory for headers.");
+                LOGERROR("Couldn't allocate memory for headers.");
                 perror("malloc");
                 goto MALFORMED;
         }
@@ -125,7 +125,7 @@ int parse_request(int sock, struct http_request *req) {
         NFREE(line);
         while ((line = next_header(sock, &eoh)) != NULL && !eoh) {
                 if (parse_header(line, req->headers) != 0) {
-                        WLOGDEBUG("Couldn't parse header <%s>", line);
+                        LOGDEBUG("Couldn't parse header <%s>", line);
                 }
 
                 NFREE(line);
@@ -146,7 +146,7 @@ int parse_request(int sock, struct http_request *req) {
         }
 
         if (req->headers->headers[HTTP_H_CONTENT_LENGTH] == NULL) {
-                WLOGERROR("Got no content length header");
+                LOGERROR("Got no content length header");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;
         }
@@ -154,7 +154,7 @@ int parse_request(int sock, struct http_request *req) {
                                 NULL, 10);
 
         if (STRTOL_ERR(req->body_len) || req->body_len <= 0) {
-                WLOGERROR("Got malformed content length header");
+                LOGERROR("Got malformed content length header");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;
         }
@@ -162,7 +162,7 @@ int parse_request(int sock, struct http_request *req) {
         /* request body */
         req->body = (char*)malloc(sizeof(char)*(req->body_len));
         if (req->body == NULL) {
-                WLOGERROR("Cannot alloc for the request body");
+                LOGERROR("Cannot alloc for the request body");
                 perror("malloc");
                 goto MALFORMED;
         }

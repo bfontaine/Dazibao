@@ -64,7 +64,7 @@ int parse_args(int argc, char **argv, int *port) {
                 case 'p':
                         *port = strtol(optarg, NULL, 10);
                         if (STRTOL_ERR(*port)) {
-                                WLOGWARN("Wrong port: '%s'", optarg);
+                                LOGWARN("Wrong port: '%s'", optarg);
                                 *port = DEFAULT_PORT;
                         }
                         WSERVER.port = *port;
@@ -72,7 +72,7 @@ int parse_args(int argc, char **argv, int *port) {
                 case 'd':
                         if (dz == -1) {
                                 if (dz_open(&dz,  optarg,  0) < 0) {
-                                        WLOGFATAL("Cannot open '%s'", optarg);
+                                        LOGFATAL("Cannot open '%s'", optarg);
                                         return -1;
                                 }
                                 dz_close(&dz);
@@ -90,10 +90,10 @@ int parse_args(int argc, char **argv, int *port) {
                         }
                         break;
                 case ':':
-                        WLOGFATAL("-%c requires an argument", optopt);
+                        LOGFATAL("-%c requires an argument", optopt);
                         return -1;
                 case '?':
-                        WLOGWARN("Unrecognized option: '-%c'", optopt);
+                        LOGWARN("Unrecognized option: '-%c'", optopt);
                 }
         }
         return 0;
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
         }
 
         if (dz == -1) {
-                WLOGFATAL("Starting with no dazibao");
+                LOGFATAL("Starting with no dazibao");
                 return -1;
         }
         init_wserver_infos();
@@ -165,11 +165,11 @@ int main(int argc, char **argv) {
 
         if (sigaction(SIGINT, &sig, NULL) == -1) {
                 perror("sigaction");
-                WLOGWARN("Cannot intercept SIGINT");
+                LOGWARN("Cannot intercept SIGINT");
         }
         if (sigaction(SIGSEGV, &sig, NULL) == -1) {
                 perror("sigaction");
-                WLOGWARN("Cannot intercept SIGSEGV");
+                LOGWARN("Cannot intercept SIGSEGV");
         }
 
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -210,11 +210,11 @@ int main(int argc, char **argv) {
         }
 
         if (WSERVER.debug) {
-                WLOGINFO("Serving files in debug mode");
+                LOGINFO("Serving files in debug mode");
         }
 
-        WLOGINFO("Listening on port %d...", port);
-        WLOGINFO("Press ^C to interrupt.");
+        LOGINFO("Listening on port %d...", port);
+        LOGINFO("Press ^C to interrupt.");
 
         register_routes();
 
@@ -229,48 +229,48 @@ int main(int argc, char **argv) {
                         perror("accept");
                         continue;
                 }
-                WLOGINFO("Got a connection.");
+                LOGINFO("Got a connection.");
                 status = parse_request(client, req);
                 if (status != 0) {
-                        WLOGWARN("request parse error (status=%d)", status);
-                        WLOGWARN("with method %d, path %s, body length %d",
+                        LOGWARN("request parse error (status=%d)", status);
+                        LOGWARN("with method %d, path %s, body length %d",
                                 req->method, req->path, req->body_len);
                         if (error_response(client, status) < 0) {
-                                WLOGERROR("error_response failed");
+                                LOGERROR("error_response failed");
                         }
-                        WLOGINFO("Connection closed.");
+                        LOGINFO("Connection closed.");
                         if (close(client) == -1) {
                             perror("close");
                         }
                         if (dz > 0 && dz_close(&dz) == -1) {
-                                WLOGERROR("Cannot close the Dazibao.");
+                                LOGERROR("Cannot close the Dazibao.");
                         }
                         continue;
                 }
-                WLOGDEBUG("Got method %d, path %s, body length %d",
+                LOGDEBUG("Got method %d, path %s, body length %d",
                                req->method, req->path, req->body_len);
-                WLOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
+                LOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
 
                 if (dz < 0 && dz_open(&dz, WSERVER.dzpath, 0) == -1) {
-                        WLOGERROR("Cannot open the Dazibao.");
+                        LOGERROR("Cannot open the Dazibao.");
                 }
                 status = route_request(client, dz, req);
                 dz_close(&dz);
                 dz = -1;
 
                 if (status != 0) {
-                        WLOGWARN("route error, status=%d", status);
+                        LOGWARN("route error, status=%d", status);
                         if (error_response(client, HTTP_S_NOTFOUND) < 0) {
-                                WLOGERROR("404 error response failed");
+                                LOGERROR("404 error response failed");
                         }
                 }
 
-                WLOGINFO("Connection closed.");
+                LOGINFO("Connection closed.");
                 if (close(client) == -1) {
                         perror("close");
                 }
         }
 
-        WLOGINFO("Closing...");
+        LOGINFO("Closing...");
         clean_close(0);
 }

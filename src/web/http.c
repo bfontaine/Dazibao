@@ -138,11 +138,11 @@ int http_add_header(struct http_headers *hs, int code, const char *value,
 
         if (hs->headers[code] != NULL) {
                 if (!overr) {
-                        WLOGDEBUG("Cannot override header %d with '%s'",
+                        LOGDEBUG("Cannot override header %d with '%s'",
                                         code, value);
                         return -1;
                 }
-                WLOGDEBUG("Overriding header %d (%s) with '%s'",
+                LOGDEBUG("Overriding header %d (%s) with '%s'",
                                 code, hs->headers[code], value);
                 NFREE(hs->headers[code]);
         }

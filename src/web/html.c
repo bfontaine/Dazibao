@@ -31,14 +31,14 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         char text_fmt[] = HTML_TLV_FMT("");
 
         if (dz_read_tlv(&dz, t, off) < 0) {
-                WLOGERROR("Cannot read TLV at offset %li", off);
+                LOGERROR("Cannot read TLV at offset %li", off);
                 return -1;
         }
 
         *html = (char*)malloc(sizeof(char)*HTML_TLV_SIZE);
 
         if (*html == NULL) {
-                WLOGERROR("Cannot malloc enough to generate HTML " \
+                LOGERROR("Cannot malloc enough to generate HTML " \
                                 "for the TLV at %li", off);
                 perror("malloc");
                 return -1;
@@ -68,7 +68,7 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         }
 
         if (st > HTML_TLV_SIZE) {
-                WLOGWARN("sprintf of TLV at %lu failed (truncated)", off);
+                LOGWARN("sprintf of TLV at %lu failed (truncated)", off);
         }
 
         return 0;
@@ -84,7 +84,7 @@ int dz2html(dz_t dz, char **html) {
         tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
 
         if (tlv_html == NULL || t == NULL || tlv_init(t) < 0) {
-                WLOGERROR("Cannot initialize TLV");
+                LOGERROR("Cannot initialize TLV");
                 free(t);
                 free(tlv_html);
                 return -1;
@@ -96,7 +96,7 @@ int dz2html(dz_t dz, char **html) {
 
         *html = (char*)malloc(sizeof(char)*html_len);
         if (*html == NULL) {
-                WLOGERROR("Cannot allocate enough memory for the dazibao");
+                LOGERROR("Cannot allocate enough memory for the dazibao");
                 perror("malloc");
                 free(t);
                 free(tlv_html);
@@ -104,20 +104,20 @@ int dz2html(dz_t dz, char **html) {
         }
         if (snprintf(*html, html_len, HTML_DZ_TOP_FMT, \
                                 WSERVER.dzname) > html_len) {
-                WLOGDEBUG("Dazibao name truncated.");
+                LOGDEBUG("Dazibao name truncated.");
         }
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
                 int tlv_type = tlv_get_type(*t);
                 if (!WSERVER.debug && TLV_IS_EMPTY_PAD(tlv_type)) {
-                        WLOGDEBUG("TLV at %li is a pad1/padN, skipping.",
+                        LOGDEBUG("TLV at %li is a pad1/padN, skipping.",
                                         tlv_off);
                         continue;
                 }
 
                 NFREE(*tlv_html);
                 if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
-                        WLOGWARN("Error while reading TLV at %li, skipping.",
+                        LOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
                         continue;
                 }
@@ -125,14 +125,14 @@ int dz2html(dz_t dz, char **html) {
                 tlv_html_len = strlen(*tlv_html);
                 html_len += tlv_html_len;
 
-                WLOGDEBUG("Called tlv2html on offset %lu, got %d chars",
+                LOGDEBUG("Called tlv2html on offset %lu, got %d chars",
                                 tlv_off, tlv_html_len);
 
                 /* TODO: optimize me (realloc everytime) */
                 tmp_ptr = (char*)realloc(*html, html_len);
 
                 if (tmp_ptr == NULL) {
-                        WLOGWARN("Cannot realloc, skipping tlv %lu", tlv_off);
+                        LOGWARN("Cannot realloc, skipping tlv %lu", tlv_off);
                         perror("realloc");
                         *html = tmp_ptr;
                         continue;
@@ -145,7 +145,7 @@ int dz2html(dz_t dz, char **html) {
                 t = NULL;*/
         }
         if (tlv_off == -1) {
-                WLOGERROR("got an error when reading dazibao with next_tlv");
+                LOGERROR("got an error when reading dazibao with next_tlv");
         }
 
         tlv_destroy(t);
