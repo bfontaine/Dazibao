@@ -13,6 +13,7 @@ static const char *mime_types_ext[][2] = {
 
         /* TLVs */
         { "jpeg" , "image/jpeg"               },
+        { "jpg"  , "image/jpeg"               },
         { "png"  , "image/png"                },
 
         /* other common types */
