@@ -14,6 +14,7 @@
                       "<head>\n" \
                         "<meta charset=\"utf-8\" />\n" \
                         "<meta name=\"language\" content=\"fr\" />\n" \
+                        "<link rel=\"stylesheet\" href=\"/dz.css\">" \
                         "<title>Dazibao - %s</title>\n" \
                       "</head>\n" \
                       "<body>\n" \
