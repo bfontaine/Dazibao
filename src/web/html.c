@@ -67,6 +67,7 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
                         break;
                 default:
+                        /* FIXME: Invalid read of size 1 */
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
                                         type, len);
         }
@@ -95,7 +96,6 @@ int dz2html(dz_t dz, char **html) {
 
         *tlv_html = NULL;
 
-        /* We may be able to optimize memory allocation here */
         html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
                         + strlen(HTML_DZ_BOTTOM);
 

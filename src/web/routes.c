@@ -59,6 +59,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
+        /* We assume that we use only .png and .jpg (not .jpeg) */
         if (sscanf(req.path, "/tlv/%16lu.%*3s", &off) == 0) {
                 WLOGERROR("Cannot parse the request path");
                 tlv_destroy(tlv);
