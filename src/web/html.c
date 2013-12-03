@@ -35,7 +35,6 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                 return -1;
         }
 
-        /* XXX Uninitialised value was created by a heap allocation */
         *html = (char*)malloc(sizeof(char)*HTML_TLV_SIZE);
 
         if (*html == NULL) {
@@ -64,9 +63,8 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
                         break;
                 default:
-                        /* XXX: Invalid read of size 1 */
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
-                                        type, len);
+                                        tlv_type2str(type), type, len);
         }
 
         if (st > HTML_TLV_SIZE) {
@@ -151,6 +149,7 @@ int dz2html(dz_t dz, char **html) {
         }
 
         tlv_destroy(t);
+        NFREE(*tlv_html);
         NFREE(tlv_html);
 
         strncat(*html, HTML_DZ_BOTTOM, strlen(HTML_DZ_BOTTOM));

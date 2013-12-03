@@ -149,7 +149,6 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
                 status = http_response(sock, resp);
 
-                NFREE(resp);
                 return status;
         }
 
