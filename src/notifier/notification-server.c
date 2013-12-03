@@ -84,6 +84,11 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 		PERROR("munmap");
 	}
 
+	if (*old_hash == 0) {
+		*old_hash = hash;
+		return 0;
+	}
+	
 	if (hash != *old_hash) {
 		*old_hash = hash;
 		return 1;
