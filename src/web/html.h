@@ -6,6 +6,7 @@
 #include "string.h"
 
 #define HTML_DZ_MAX_NAME_LENGTH 64
+#define HTML_TLV_SIZE 1024
 
 #define HTML_DZ_TOP_FMT \
                   "<!doctype html>\n" \
@@ -13,6 +14,7 @@
                       "<head>\n" \
                         "<meta charset=\"utf-8\" />\n" \
                         "<meta name=\"language\" content=\"fr\" />\n" \
+                        "<link rel=\"stylesheet\" href=\"/dz.css\">" \
                         "<title>Dazibao - %s</title>\n" \
                       "</head>\n" \
                       "<body>\n" \

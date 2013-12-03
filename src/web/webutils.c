@@ -2,6 +2,7 @@
 #include <string.h>
 #include "webutils.h"
 #include "tlv.h"
+#include "tlv.h"
 
 int _wlog_level =
 #ifdef DEBUG
@@ -27,11 +28,9 @@ int get_image_tlv_type(const char *path) {
         if (path == NULL) {
                 return -1;
         }
-
         if ((dot = strrchr(path, '.')) == NULL) {
                 return -1;
         }
-
         if (strcasecmp(dot, PNG_EXT) == 0) {
                 return TLV_PNG;
         }
