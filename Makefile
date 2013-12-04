@@ -12,6 +12,9 @@ VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
 CC=gcc
 CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
 
+DOXYGEN=doxygen
+DOXYFLAGS=
+
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
 WUTILS=$(WEBSRC)/webutils.h $(WEBSRC)/http.h
 NUTILS=$(NOTIFSRC)/notifutils.h
@@ -43,7 +46,7 @@ CPPCHECK=cppcheck \
 	--language=c -q
 
 .DEFAULT: all
-.PHONY: clean cleantmp check checkwhattodo
+.PHONY: clean cleantmp check checkwhattodo doc
 
 all: check $(TARGETS)
 
@@ -88,6 +91,10 @@ check: cleantmp
 
 memcheck-%: %
 	$(VALGRIND) $(VALFLAGS) ./$< $(CLI_OPTS)
+
+doc:
+	$(DOXYGEN) $(DOXYFLAGS) docs/doxygen.conf
+	@echo --> open docs/codedoc/html/index.html for the HTML doc
 
 checkwhattodo:
 	@d=$(SRC);c="TO";f="FIX";x="X"; \
