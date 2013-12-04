@@ -8,6 +8,11 @@
  * Set of utilities
  **/
 
+#ifndef BUFFLEN
+/** size of buffers used in various functions */
+#define BUFFLEN 512
+#endif
+
 /** get the minimum of two values */
 #define MIN(a,b) ((a)<(b)?(a):(b))
 /** get the maximum of two values */
