@@ -2,6 +2,7 @@
 #define _UTILS_H 1
 
 #include <stdlib.h>
+#include <unistd.h>
 
 /** @file
  * Set of utilities
@@ -82,6 +83,12 @@
  * fails. See #35.
  **/
 void *safe_realloc(void *ptr, size_t size);
+
+/**
+ * Wrapper around write(2) to write the whole buffer instead of (sometimes)
+ * only a part of it.
+ **/
+int write_all(int fd, char *buff, int len);
 
 
 /* = Logging = */
