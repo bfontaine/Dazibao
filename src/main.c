@@ -29,25 +29,6 @@ int cmd_add(int argc, char **argv, char * daz) {
         int args = 0;
         int i;
         for (i = 0; i < argc; i++) {
-                if (!strcmp(argv[i],"--date") ||
-                        !strcmp(argv[i],"-d") ||
-                        flag_date != 1) {
-                        flag_date = 1;
-                }
-                if (!strcmp(argv[i],"--dazibao") ||
-                        !strcmp(argv[i],"-D") ||
-                        flag_dazibao != 1) {
-                        flag_dazibao = 1;
-                        /* add check to args fic tlv */
-                        args = argc - i -1;
-                }
-                if (!strcmp(argv[i],"--compound") ||
-                        !strcmp(argv[i],"-c") ||
-                        flag_compound != 1) {
-                        flag_compound = 1;
-                        /* add check to args fic dazibao */
-                        args = 1;
-                }
                 /* check args for dazibao or compound*/
                 if (args > 0) {
                         /* TODO add function
@@ -56,6 +37,19 @@ int cmd_add(int argc, char **argv, char * daz) {
                                 - exist fic
                                 - exist type TLV fic
                         */
+                } else if (!strcmp(argv[i],"--date") ||
+                        !strcmp(argv[i],"-d") || flag_date != 1) {
+                        flag_date = 1;
+                } else if (!strcmp(argv[i],"--dazibao") ||
+                        !strcmp(argv[i],"-D") || flag_dazibao != 1) {
+                        flag_dazibao = 1;
+                        /* add check to args fic tlv */
+                        args = argc - i -1;
+                } else if (!strcmp(argv[i],"--compound") ||
+                        !strcmp(argv[i],"-c") || flag_compound != 1) {
+                        flag_compound = 1;
+                        /* add check to args fic dazibao */
+                        args = 1;
                 } else {
                         /* TODO args[i] is not option and args
                                 or already use
@@ -150,17 +144,18 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 
         return 0;
 }
-int action_dump(char *daz, int flag_debug, int flag_depth){
+int action_dump(char *daz, int flag_debug, int flag_depth) {
 	dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY)) {
+                printf("open dazibao failed\n");
                 exit(EXIT_FAILURE);
         }
 
-        /* option dump compound with limited depth 
+        /* option dump compound with limited depth
           TODO add option debug
         */
-        if (dz_dump_compound(&daz_buf, EOD, flag_depth,0)) {
-                printf("dump_compound failed\n");
+        if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
+                printf("dump failed\n");
                 dz_close(&daz_buf);
                 exit(EXIT_FAILURE);
         }
@@ -174,46 +169,57 @@ int action_dump(char *daz, int flag_debug, int flag_depth){
 }
 
 int cmd_dump(int argc , char ** argv, char * daz) {
-	dz_t daz_buf;
-        int flag_debug;
-        int flag_depth;
-        /* if argc = à means command it like that
-                .dazibao dump  daz
-           standard dump depth = 0 debug = -1
-        */
-        if (argc == 0) {
-                flag_debug = -1;
-                flag_depth = 0;
-        }
-
-        else if (argc > 5) {
-                printf("expected type\n");
-                exit(EXIT_FAILURE);
-        } else {
-                int dep;
-                cmd_dump = argv[3];
-                depth = argv[4];
-                dep = strtol(depth, NULL, 10);
-
-                if (STRTOL_ERR(dep)) {
-                        printf("wrong depth");
-                        exit(EXIT_FAILURE);
-                }
-
-                if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)) {
-                        int dep = strtol(depth, NULL, 10);
-                        if (STRTOL_ERR(dep)) {
-                                printf("wrong depth");
-                                exit(EXIT_FAILURE);
-                        }
+        int flag_debug = -1;
+        int flag_depth = 0 ;
+        if (argc < 4) {
+                int i;
+                int args =  0;
+                for (i = 0; i < argc; i++) {
+                        if (args > 0) {
+                                flag_depth = i;
+                        } else if (!strcmp(argv[i],"--depth") ||
+                                !strcmp(argv[i],"-d") || flag_depth != 1) {
+                                flag_depth = 1;
+                                args = 1;
+                        } else if (!strcmp(argv[i],"--debug") ||
+                                !strcmp(argv[i],"-D") || flag_depth != 1) {
+                                flag_depth = 1;
                         } else {
-                        printf("expected type\n");
-                        exit(EXIT_FAILURE);
+                                /* TODO args[i] is not option and args
+                                        or already use
+                                        ERROR
+                                */
+                                printf("cmd_dump arg failed\n");
+                                return -1;
+                        }
+
                 }
+                if ((flag_depth == 0) && (flag_debug == -1) && (argc != 0)) {
+                        /*
+                        error impossible to any flag is activate
+                        */
+                        printf("cmd_dump flag failed\n");
+                        return -1;
+                }
+                if (flag_depth > 0) {
+                        flag_depth = strtol(argv[flag_depth], NULL, 10);
+                        if (STRTOL_ERR(flag_depth)) {
+                                printf("wrong depth");
+                                return -1;
+                        }
+                }
+        } else {
+                /* if argc > 4 , too many argument
+                */
+                printf("too many arguments with dump");
+                return -1;
         }
 
+        if (action_dump(daz, flag_debug, flag_depth) == -1) {
+                printf("wrong depth");
+                return -1;
+        }
         return 0;
-
 }
 
 int cmd_create(int argc , char ** argv, char * daz) {
@@ -292,6 +298,7 @@ int main(int argc, char **argv) {
                         argv_cmd[i] = argv[i+2];
                 }
         } else {
+                free(argv_cmd);
                 argc_cmd = 0;
                 argv_cmd = NULL;
         }
@@ -308,6 +315,7 @@ int main(int argc, char **argv) {
                 }
 	} else if (!strcmp(cmd, "dump")) {
                 if (cmd_dump(argc_cmd, argv_cmd, daz)) {
+                        printf("cmd_dump failed\n");
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "create")) {
