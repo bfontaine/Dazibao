@@ -77,7 +77,7 @@ $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 
 
 cleantmp:
-	rm -f *~ */*~
+	find . -name "*~" -delete
 
 clean: cleantmp
 	rm -f *.o $(SRC)/*.o $(WEBSRC)/*.o
