@@ -1,6 +1,10 @@
 #ifndef _HTML_H
 #define _HTML_H 1
 
+/** @file
+ * Utilities to generate HTML code
+ **/
+
 #include "dazibao.h"
 #include "tlv.h"
 #include "string.h"

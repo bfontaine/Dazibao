@@ -16,6 +16,10 @@
 #include "routing.h"
 #include "routes.h"
 
+/** @file
+ * Main file for the Web server
+ **/
+
 static int listening_sock = -1;
 static struct http_request *req;
 static dz_t dz;

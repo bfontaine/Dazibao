@@ -1,11 +1,18 @@
 #ifndef _MIME_H
 #define _MIME_H 1
 
+/** @file
+ * Utilities to work with MIME types
+ **/
+
 /* Add most used types at the top for a faster lookup
  *
  * List from:
  *  en.wikipedia.org/wiki/Internet_media_type#List_of_common_media_types
- * */
+ **/
+/**
+ * Known mime types
+ **/
 static const char *mime_types_ext[][2] = {
 
         /* common types */

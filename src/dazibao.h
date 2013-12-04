@@ -14,10 +14,28 @@
 #include "tlv.h"
 #include "utils.h"
 
+/** @file
+ * Dazibao API
+ **/
+
+/**
+ * Size of a Dazibao header
+ **/
 #define DAZIBAO_HEADER_SIZE 4
+
+/**
+ * code used to represent "End Of Dazibao", similarly to EOF.
+ **/
 #define EOD 0
+
+/**
+ * The magic number used to identify a Dazibao
+ **/
 #define MAGIC_NUMBER 53
 
+/**
+ * The type of a Dazibao
+ **/
 typedef int dz_t;
 
 /**
@@ -28,23 +46,23 @@ typedef int dz_t;
  * @param path location where to create the file
  * @return 0 on success
  * @return -1 on error
- */
+ **/
 int dz_create(dz_t *daz_buf, char *path);
 
 /**
  * Open a dazibao.
- * @param dad_buf dazibao to fill with information
+ * @param d dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
  * @return 0 on success
  * @return -1 on error
- */
+ **/
 int dz_open(dz_t *d, char *path, int flags);
 
 /**
  * Close a dazibao
  * @return 0 on success
- */
+ **/
 int dz_close(dz_t *d);
 
 /**
@@ -59,7 +77,7 @@ int dz_reset(dz_t *d);
  * @param offset off wanted tlv
  * @return 0 on success
  * @return -1 on error
- */
+ **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
 /**
@@ -69,7 +87,7 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
  * @return offset this tlv on success
  * @return EOD if end of file reached
  * @return -1 on error
- */
+ **/
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
 
 /**
@@ -79,7 +97,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
  * @param offset position of the tlv wanted in d
  * @return 0 on success
  * @return -1 on error
- */
+ **/
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
 
 /**
@@ -94,7 +112,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset);
  * sequence.
  * @param d dazibao receiving new tlv
  * @param tlv to add
- */
+ **/
 int dz_add_tlv(dz_t *d, tlv_t tlv);
 
 /**
@@ -102,14 +120,15 @@ int dz_add_tlv(dz_t *d, tlv_t tlv);
  * If it leaves pad1/padN at the end of dazibao, it will be truncated
  * @param d dazibao where is tlv to remove
  * @param offset offset of the tlv to remove
- */
+ **/
 int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
  * Empty a part of a dazibao.The part is filled with padN/pad1
+ * @param d the Dazibao
  * @param start starting offset of emptying
  * @param length number of bytes to be erased
- */
+ **/
 int dz_do_empty(dz_t *d, off_t start, off_t length);
 
 /**
@@ -118,20 +137,20 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
  * Also, the dazibao offset is NOT preserved.
  * @return number of bytes saved by the compacting operation on success
  * @return -1 on error
- */
+ **/
 int dz_compact(dz_t *d);
 
 
 /**
  * dump information of tlv contained in a dazibao on standard output
  * @param daz_buf
- */
+ **/
 int dz_dump(dz_t *daz_buf);
 
-/*
+/**
  * print tlvs contained in 'daz_buf' with option depth
  * on standard output
- */
+ **/
 int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent);
 
 #endif /* _DAZIBAO_H */

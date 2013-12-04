@@ -1,16 +1,27 @@
 #ifndef _RESPONSE_H
 #define _RESPONSE_H 1
 
+/** @file
+ * structure and functions to create HTTP responses
+ **/
+
 #include "http.h"
 
 /* Note: a lot of these functions are copied from request.h, because HTTP
  * response and HTTP requests are highly similar.
  */
 
+/**
+ * An HTTP response
+ **/
 struct http_response {
+        /** status of the response */
         int status;
-        struct http_headers *headers; /* HTTP headers */
+        /** headers of the response */
+        struct http_headers *headers;
+        /** optional body */
         char **body;
+        /** length of the body, -1 if there's no one */
         int body_len;
 };
 
