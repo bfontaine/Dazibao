@@ -64,37 +64,45 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 	uint32_t hash;
 	char *buf;
 	int fd = open (file, O_RDONLY);
+	int status = 0;
 
 	if (fd < 0) {
 		ERROR("open", -1);
 	}
 
 	if (fstat(fd, &st) < 0) {
-		ERROR("fstat", -1);
+		PERROR("fstat");
+		goto CLOSE;
 	}
 
 	buf = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (buf == MAP_FAILED) {
-		ERROR("mmap", -1)
+		PERROR("mmap");
+		goto CLOSE;
 	}
 	
 	hash = qhashmurmur3_32(buf, st.st_size);
+
+	if (*old_hash == 0) {
+		*old_hash = hash;
+		status = 0;
+	}
+	
+	if (hash != *old_hash) {
+		*old_hash = hash;
+		status = 1;
+	} 
 
 	if (munmap(buf, st.st_size) == -1) {
 		PERROR("munmap");
 	}
 
-	if (*old_hash == 0) {
-		*old_hash = hash;
-		return 0;
+CLOSE:
+	if (close(fd) == -1) {
+		PERROR("close");
 	}
 	
-	if (hash != *old_hash) {
-		*old_hash = hash;
-		return 1;
-	} else {
-		return 0;
-	}
+	return status;
 
 }
 
