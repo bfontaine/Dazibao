@@ -80,7 +80,7 @@ cleantmp:
 	find . -name "*~" -delete
 
 clean: cleantmp
-	rm -f *.o $(SRC)/*.o $(WEBSRC)/*.o
+	find . -name "*.o" -delete
 
 cleanall: clean
 	rm -f $(TARGETS)
