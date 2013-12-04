@@ -24,11 +24,15 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
 int dated_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html) {
         /* TODO HTML to dated TLVs */
+        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(dated)"),
+                        tlv_type2str(type), type, len);
         return -1;
 }
 int compound_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html) {
         /* TODO HTML to compound TLVs */
+        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(compound)"),
+                        tlv_type2str(type), type, len);
         return -1;
 }
 
@@ -75,11 +79,11 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
                         break;
                 case TLV_DATED:
-                        break;
                         st = dated_tlv2html(t, type, len, off, *html);
-                case TLV_COMPOUND:
                         break;
+                case TLV_COMPOUND:
                         st = compound_tlv2html(t, type, len, off, *html);
+                        break;
                 default:
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
                                         tlv_type2str(type), type, len);
