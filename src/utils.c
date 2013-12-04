@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "utils.h"
 
+/** @file */
+
 void *safe_realloc(void *ptr, size_t size) {
         void *newptr = realloc(ptr, size);
 

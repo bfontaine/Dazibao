@@ -10,9 +10,14 @@
 #include "routing.h"
 #include "mime.h"
 
+/** @file */
+
+/** paths of registered routes */
 static char *routes_paths[MAX_ROUTES];
+/** handlers of registered routes */
 static route_handler routes_handlers[MAX_ROUTES];
 
+/** count of registered routes */
 static int routes_cpt = 0;
 
 /*
@@ -179,7 +184,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
 int file_response(int sock, struct http_request *req) {
         char *path = req->path,
-             *realpath, *map;
+             *realpath, *map, *tmp;
         int plen, pdlen, len, fd;
         struct stat st;
         struct http_response *resp;
@@ -244,8 +249,9 @@ int file_response(int sock, struct http_request *req) {
                 return -1;
         }
 
-        http_add_header(resp->headers, HTTP_H_LASTMODIF,
-                        gmtdate(st.st_mtime), 0);
+        tmp = gmtdate(st.st_mtime);
+        http_add_header(resp->headers, HTTP_H_LASTMODIF, tmp, 0);
+        NFREE(tmp);
 
         resp->status = HTTP_S_OK;
         resp->body_len = st.st_size;
@@ -313,7 +319,9 @@ int http_response2(int sock, struct http_response *resp, char free_resp) {
         if (time(&now) == (time_t)-1) {
                 perror("time");
         } else {
-                http_add_header(resp->headers, HTTP_H_DATE, gmtdate(-2), 0);
+                tmp = gmtdate(-2);
+                http_add_header(resp->headers, HTTP_H_DATE, tmp, 0);
+                NFREE(tmp);
         }
 
         /* bonuses */

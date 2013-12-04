@@ -10,9 +10,11 @@
 #include "dazibao.h"
 #include "http.h"
 
+/** maximum number of routes of the server */
 #define MAX_ROUTES 16
+/** default route to use when a client request the root ("/") */
 #define DEFAULT_ROOT_ROUTE "/index.html"
-
+/** directory used to search for static files */
 #define PUBLIC_DIR "public_html"
 
 /**

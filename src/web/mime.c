@@ -3,6 +3,8 @@
 #include "webutils.h"
 #include "mime.h"
 
+/** @file */
+
 const char *get_mime_type(const char *path) {
         char *dot;
         if (path == NULL) {

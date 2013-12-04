@@ -20,11 +20,16 @@
  * Main file for the Web server
  **/
 
+/** the socket used by the server to listen for new clients */
 static int listening_sock = -1;
+/** the structure used to store the current request */
 static struct http_request *req;
+/** the current dazibao */
 static dz_t dz;
 
+/** initialize WSERVER */
 static void init_wserver_infos(void);
+/** free the memory used by WSERVER */
 static void destroy_wserver_infos(void);
 
 /**
@@ -45,8 +50,14 @@ static void clean_close(int s) {
 }
 
 
-/* -p <port> -l <loglevel> -d <dazibao path>
- * -v: if -l is not used, increase verbosity */
+/**
+ * parse command-line arguments, and fill relevant fields in WSERVER.
+ * `-d <dazibao path> [-p <port>] [-l <loglevel> |-v[v...]]`
+ * @return 0 on success, -1 on error
+ * @param argc the number of arguments (as received by main)
+ * @param argv arguments (as received by main)
+ * @param port result variable, will be filled with the port number
+ **/
 int parse_args(int argc, char **argv, int *port) {
         int l;
         char c,
@@ -103,9 +114,6 @@ int parse_args(int argc, char **argv, int *port) {
         return 0;
 }
 
-/**
- * helper to move code off the main function
- **/
 static void init_wserver_infos(void) {
         WSERVER.hostname = strdup("localhost"); /* should be ok for now */
         WSERVER.name = strdup("Daziweb/" DAZIWEB_VERSION);
@@ -133,7 +141,6 @@ static void init_wserver_infos(void) {
         }
 }
 
-/** Helper to free the memory of WSERVER */
 static void destroy_wserver_infos(void) {
         free(WSERVER.hostname);
         free(WSERVER.dzname);
@@ -141,6 +148,9 @@ static void destroy_wserver_infos(void) {
         free(WSERVER.name);
 }
 
+/**
+ * main function for the Web server
+ **/
 int main(int argc, char **argv) {
         int status = 0,
             port = DEFAULT_PORT;

@@ -8,6 +8,7 @@
 #include "http.h"
 
 #ifndef BUFFLEN
+/** The length of the buffer to use in various functions */
 #define BUFFLEN 512
 #endif
 
@@ -64,7 +65,7 @@ char *next_header(int sock, int *eoh);
  **/
 int parse_header(char *line, struct http_headers *hs);
 
-/* handy shortcut */
+/** handy shortcut to get a particular header in a request */
 #define REQ_HEADER(req, h) ((req).headers->headers[h])
 
 #endif

@@ -3,6 +3,8 @@
 #include "response.h"
 #include "utils.h"
 
+/** @file */
+
 struct http_response *create_http_response(void) {
         struct http_response *resp;
 

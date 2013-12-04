@@ -43,6 +43,9 @@ static const char *mime_types_ext[][2] = {
         { "txt"  , "text/plain"               }
 };
 
+/**
+ * Number of registered MIME types
+ **/
 #define MIME_TYPES_COUNT (sizeof(mime_types_ext)/sizeof(char*[2]))
 
 /**
