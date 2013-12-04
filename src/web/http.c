@@ -5,6 +5,9 @@
 #include "utils.h"
 #include "webutils.h"
 
+/** @file */
+
+/** array containing all HTTP statuses with their code and phrase */
 static const struct http_status http_statuses[] = {
         { HTTP_S_OK            , "OK"                    },
         { HTTP_S_CREATED       , "Created"               },
@@ -27,9 +30,12 @@ static const struct http_status http_statuses[] = {
         { HTTP_S_NOTIMPL       , "Not Implemented"       },
         { HTTP_UNSUPP_VER      , "Version Not Supported" }
 };
+
+/** length of http_statuses */
 static const int http_statuses_len =
                 sizeof(http_statuses)/sizeof(struct http_status);
 
+/** supported HTTP headers strings */
 static const char *headers_strs[] = {
         /* HTTP_H_CONTENT_TYPE   0 */
         "Content-Type",

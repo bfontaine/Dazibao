@@ -11,7 +11,7 @@
 /* = Global server properties = */
 
 /**
- * A global struct used to store server properties
+ * A struct used to store a server's properties
  **/
 struct wserver_info {
         /** port the server is listening on **/
@@ -26,10 +26,15 @@ struct wserver_info {
         char *dzpath;
         /** name of the server */
         char *name;
-} WSERVER;
+};
+/**
+ * A global struct used to store the server's properties
+ **/
+struct wserver_info WSERVER;
 
 /* = I/O = */
 
+/** The maximum length of a local file path */
 #define MAX_FILE_PATH_LENGTH 256
 
 /**
@@ -40,8 +45,11 @@ int write_all(int fd, char *buff, int len);
 
 /* = Other helpers = */
 
+/** default extension of a JPEG image */
 #define JPEG_EXT ".jpg"
+/** default extension of a PNG image */
 #define PNG_EXT  ".png"
+/** default extension of a file */
 #define DEFAULT_EXT ""
 
 /**

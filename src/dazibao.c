@@ -1,5 +1,8 @@
 #include "dazibao.h"
 
+/** @file */
+
+/** buffer length used by various functions */
 #define BUFFLEN 128
 
 /**
