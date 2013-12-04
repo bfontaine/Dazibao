@@ -226,7 +226,7 @@ void print_usage() {
 }
 
 int main(int argc, char **argv) {
-	char *cmd;
+	char *cmd, *daz;
 
         if (setlocale(LC_ALL, "") == NULL) {
                 PERROR("setlocale");
@@ -238,27 +238,37 @@ int main(int argc, char **argv) {
         }
 
 	cmd = argv[1];
+        daz = argv[argc -1];
+
+        /* recover tab option and args */
+        int argc_cmd = argc-3;
+        char **argv_cmd = malloc(sizeof(char *)* argc_cmd);
+        int i ;
+        for (i = 0; i < argc_cmd ;i++) {
+                argv_cmd[i] = argv[i+2];
+        }
+
         /*
         TODO : management error write request
         */
 	if ( !strcmp(cmd, "add")) {
-                if (cmd_add(argc,argv) == -1){
+                if (cmd_add(argc_cmd,argv_cmd) == -1) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "rm")) {
-                if (cmd_rm(argc,argv) == -1){
+                if (cmd_rm(argc_cmd,argv_cmd) == -1) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "dump")) {
-                if (cmd_dump(argc,argv)){
+                if (cmd_dump(argc_cmd,argv_cmd)) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "create")) {
-                if (cmd_create(argc,argv)){
+                if (cmd_create(argc_cmd,argv_cmd)) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "compact")) {
-                if (cmd_compact(argc,argv)){
+                if (cmd_compact(argc_cmd,argv_cmd)) {
                         exit(EXIT_FAILURE);
                 }
 	} else {
