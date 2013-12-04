@@ -389,7 +389,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
     		/* set length */
 	    	htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
 
-	    	if(dz_write_tlv_at(d, buff, start) == 1) {
+            	if(dz_write_tlv_at(d, buff, start) == -1) {
                         ERROR(NULL, -1);
                 }
                 start = start + length;
