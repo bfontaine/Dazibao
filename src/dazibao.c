@@ -74,8 +74,11 @@ int dz_open(dz_t *d, char *path, int flags) {
 	}
 
 	if (header[0] != MAGIC_NUMBER || header[1] != 0) {
-		/* FIXME: calling perror makes no sense here... */
-		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+		fprintf(stderr, "Wrong dazibao header");
+                if (close(fd) == -1) {
+                        perror("close");
+                }
+                return -1;
 	}
 
 	*d = fd;
