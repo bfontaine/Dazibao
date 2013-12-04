@@ -21,6 +21,17 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                         tlv_type2str(type), type, len, off, ext);
 }
 
+int dated_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html) {
+        /* TODO HTML to dated TLVs */
+        return -1;
+}
+int compound_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html) {
+        /* TODO HTML to compound TLVs */
+        return -1;
+}
+
 int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
 
@@ -49,7 +60,6 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         type = tlv_get_type(*t);
         len  = type == TLV_PAD1 ? 0 : tlv_get_length(*t);
 
-        /* TODO generate proper HTML for each TLV type */
         switch (type) {
                 case TLV_PAD1:
                 case TLV_PADN:
@@ -64,6 +74,12 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                 case TLV_JPEG:
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
                         break;
+                case TLV_DATED:
+                        break;
+                        st = dated_tlv2html(t, type, len, off, *html);
+                case TLV_COMPOUND:
+                        break;
+                        st = compound_tlv2html(t, type, len, off, *html);
                 default:
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
                                         tlv_type2str(type), type, len);

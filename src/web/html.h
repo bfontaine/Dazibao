@@ -61,6 +61,17 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext);
 
 /**
+ * Return a NULL-terminated HTML representation of a dated TLV.
+ **/
+int dated_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html);
+
+/**
+ * Return a NULL-terminated HTML representation of a compound TLV.
+ **/
+int compound_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html);
+/**
  * Make a NULL-terminated HTML representation of a PAD1 or PADN.
  **/
 int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html);
