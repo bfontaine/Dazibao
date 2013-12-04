@@ -16,7 +16,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         printf("unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
-                if (action_add(daz, cmd, tmp_type) == -1) {
+                if (action_add(daz, tmp_type) == -1) {
                         printf("add error action_add\n");
                         exit(EXIT_FAILURE);
                 }
@@ -26,24 +26,41 @@ int cmd_add(int argc, char **argv, char * daz) {
         flag_date = -1;
         flag_compound = -1;
         flag_dazibao = -1;
-
+        int args = 0;
         int i;
         for (i = 0; i < argc; i++) {
                 if (!strcmp(argv[i],"--date") ||
-                        !strcmp(argv[i],"-d")) {
+                        !strcmp(argv[i],"-d") ||
+                        flag_date != 1) {
                         flag_date = 1;
                 }
                 if (!strcmp(argv[i],"--dazibao") ||
-                        !strcmp(argv[i],"-D")) {
+                        !strcmp(argv[i],"-D") ||
+                        flag_dazibao != 1) {
                         flag_dazibao = 1;
                         /* add check to args fic tlv */
-                        break;
+                        args = argc - i -1;
                 }
                 if (!strcmp(argv[i],"--compound") ||
-                        !strcmp(argv[i],"-c")) {
+                        !strcmp(argv[i],"-c") ||
+                        flag_compound != 1) {
                         flag_compound = 1;
                         /* add check to args fic dazibao */
-                        break;
+                        args = 1;
+                }
+                /* check args for dazibao or compound*/
+                if (args > 0) {
+                        /* TODO add function
+                        to check fic:
+                                - normaly fic
+                                - exist fic
+                                - exist type TLV fic
+                        */
+                } else {
+                        /* TODO args[i] is not option and args
+                                or already use
+                                ERROR
+                        */
                 }
         }
         if ((flag_dazibao == 1) && (flag_compound == 1)) {
@@ -54,7 +71,7 @@ int cmd_add(int argc, char **argv, char * daz) {
 }
 
 
-int action_add(char *daz, char *cmd, unsigned char type) {
+int action_add(char *daz, unsigned char type) {
 	dz_t daz_buf;
         char reader[BUFFSIZE],
              *buff = NULL;
