@@ -14,8 +14,23 @@
 #include "tlv.h"
 #include "utils.h"
 
+/** @file
+ * Dazibao API
+ **/
+
+/**
+ * Size of a Dazibao header
+ **/
 #define DAZIBAO_HEADER_SIZE 4
+
+/**
+ * code used to represent "End Of Dazibao", similarly to EOF.
+ **/
 #define EOD 0
+
+/**
+ * The magic number used to identify a Dazibao
+ **/
 #define MAGIC_NUMBER 53
 
 /**
@@ -36,7 +51,7 @@ int dz_create(dz_t *daz_buf, char *path);
 
 /**
  * Open a dazibao.
- * @param dad_buf dazibao to fill with information
+ * @param d dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
  * @return 0 on success
@@ -110,6 +125,7 @@ int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
  * Empty a part of a dazibao.The part is filled with padN/pad1
+ * @param d the Dazibao
  * @param start starting offset of emptying
  * @param length number of bytes to be erased
  **/

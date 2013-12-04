@@ -1,6 +1,10 @@
 #ifndef _WEBUTILS_H
 #define _WEBUTILS_H 1
 
+/** @file
+ * Utilities for the Web server
+ **/
+
 #include "utils.h"
 #include <time.h>
 

@@ -1,6 +1,10 @@
 #ifndef _REQUEST_H
 #define _REQUEST_H 1
 
+/** @file
+ * structures and functions to work with HTTP requests
+ **/
+
 #include "http.h"
 
 #ifndef BUFFLEN

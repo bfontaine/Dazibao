@@ -1,6 +1,10 @@
 #ifndef _RESPONSE_H
 #define _RESPONSE_H 1
 
+/** @file
+ * structure and functions to create HTTP responses
+ **/
+
 #include "http.h"
 
 /* Note: a lot of these functions are copied from request.h, because HTTP

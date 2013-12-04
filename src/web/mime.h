@@ -1,6 +1,10 @@
 #ifndef _MIME_H
 #define _MIME_H 1
 
+/** @file
+ * Utilities to work with MIME types
+ **/
+
 /* Add most used types at the top for a faster lookup
  *
  * List from:

@@ -1,6 +1,10 @@
 #ifndef _HTTP_H
 #define _HTTP_H 1
 
+/** @file
+ * Utilities to work with the HTTP protocol
+ **/
+
 #define CR 13
 #define LF 10
 

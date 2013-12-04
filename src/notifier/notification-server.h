@@ -15,6 +15,10 @@
 #include <pthread.h>
 #include <fcntl.h>
 
+/** @file
+ * A notifications server
+ **/
+
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif

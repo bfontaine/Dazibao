@@ -1,25 +1,55 @@
 #ifndef _TLVS_H
 #define _TLVS_H 1
 
+/** @file
+ * Set of functions used to work with TLVs
+ **/
+
+/** code for a Pad1 TLV */
 #define TLV_PAD1     0
+
+/** code for a PadN TLV */
 #define TLV_PADN     1
+
+/** code for a TEXT TLV */
 #define TLV_TEXT     2
+
+/** code for a PNG TLV */
 #define TLV_PNG      3
+
+/** code for a JPEG TLV */
 #define TLV_JPEG     4
+
+/** code for a compound TLV */
 #define TLV_COMPOUND 5
+
+/** code for a dated TLV */
 #define TLV_DATED    6
 
+/** size of the date field in a dated TLV */
 #define TLV_SIZEOF_DATE 4
+
+/** size of the type field in a TLV header */
 #define TLV_SIZEOF_TYPE 1
+
+/** size of the length field in a TLV header */
 #define TLV_SIZEOF_LENGTH 3
+
+/** size of a TLV header */
 #define TLV_SIZEOF_HEADER (TLV_SIZEOF_TYPE + TLV_SIZEOF_LENGTH)
+
+/** size of a whole TLV */
 #define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+(tlv_get_type(t)==TLV_PAD1 \
                                 ? 0                               \
                                 : TLV_SIZEOF_LENGTH+tlv_get_length((t))))
 
+/** test if a TLV is a Pad1 or a PadN */
 #define TLV_IS_EMPTY_PAD(t) ((t) == TLV_PAD1 || (t) == TLV_PADN)
 
+/** maximum size of a TLV value */
 #define TLV_MAX_VALUE_SIZE ((1<<((TLV_SIZEOF_LENGTH)*8))-1)
+
+/** maximum size of a whole TLV */
 #define TLV_MAX_SIZE ((TLV_SIZEOF_HEADER)+(TLV_MAX_VALUE_SIZE))
 
 /**
