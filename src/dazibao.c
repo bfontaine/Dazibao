@@ -503,7 +503,7 @@ OUT:
         return status;
 }
 
-int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int debug) {
+int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
@@ -528,9 +528,11 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int debug) {
                 tlv_type = tlv_get_type(tlv);
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
                 const char *tlv_str = tlv_type2str((char) tlv_type);
-
-                printf("[%9d] TLV %s | %8d |\n",
+                if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
+                        || (flag_debug == 1)) {
+                        printf("[%9d] TLV %s | %8d |\n",
                                 (int)off, tlv_str, len);
+                }
 
 
                 switch (tlv_type) {
@@ -539,8 +541,9 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int debug) {
                                         off_t current = GET_OFFSET(*daz_buf);
                                         SET_OFFSET(*daz_buf, off
                                                 + TLV_SIZEOF_HEADER);
-                                        if (dz_dump_compound(daz_buf,current,
-                                                (depth-1), (indent+1))) {
+                                        if (dz_dump(daz_buf,current,
+                                                (depth-1), (indent+1),
+                                                flag_debug)) {
                                                 ERROR(NULL,-1);
                                         }
                                         SET_OFFSET(*daz_buf, current);
@@ -552,8 +555,9 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int debug) {
                                         off_t current = GET_OFFSET(*daz_buf);
                                         SET_OFFSET(*daz_buf, off
                                         + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE);
-                                        if (dz_dump_compound(daz_buf,current,
-                                              (depth-1), (indent+1))) {
+                                        if (dz_dump(daz_buf,current,
+                                              (depth-1), (indent+1),
+                                              flag_debug)) {
                                                 ERROR(NULL,-1);
                                         }
                                         SET_OFFSET(*daz_buf, current);
