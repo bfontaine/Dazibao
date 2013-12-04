@@ -308,6 +308,7 @@ int main(int argc, char **argv) {
         */
 	if ( !strcmp(cmd, "add")) {
                 if (cmd_add(argc_cmd, argv_cmd, daz) == -1) {
+                        printf("cmd_add failed\n");
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "rm")) {
@@ -322,10 +323,12 @@ int main(int argc, char **argv) {
                 }
 	} else if (!strcmp(cmd, "create")) {
                 if (cmd_create(argc_cmd, argv_cmd, daz)) {
+                        printf("cmd_create failed\n");
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "compact")) {
                 if (cmd_compact(argc_cmd, argv_cmd, daz)) {
+                        printf("cmd_compact failed\n");
                         exit(EXIT_FAILURE);
                 }
 	} else {
