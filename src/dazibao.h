@@ -121,17 +121,11 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
  */
 int dz_compact(dz_t *d);
 
-
-/**
+/*
  * dump information of tlv contained in a dazibao on standard output
+ * with possible option depth and debug
  * @param daz_buf
  */
-int dz_dump(dz_t *daz_buf);
-
-/*
- * print tlvs contained in 'daz_buf' with option depth
- * on standard output
- */
-int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent);
+int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
 #endif /* _DAZIBAO_H */

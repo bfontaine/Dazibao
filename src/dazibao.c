@@ -503,7 +503,7 @@ OUT:
         return status;
 }
 
-int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
+int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int debug) {
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
@@ -529,7 +529,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
                 const char *tlv_str = tlv_type2str((char) tlv_type);
 
-                printf("[%9d] TLV %S | %8d |\n",
+                printf("[%9d] TLV %s | %8d |\n",
                                 (int)off, tlv_str, len);
 
 
@@ -567,10 +567,6 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
         }
 	free(tlv);
         return 0;
-}
-
-int dz_dump(dz_t *daz_buf) {
-        return dz_dump_compound(daz_buf, EOD, 0,0);
 }
 
 #undef BUFFLEN
