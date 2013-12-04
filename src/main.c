@@ -3,7 +3,12 @@
 #include <limits.h>
 #include <locale.h>
 
+/** @file */
+
+/** buffer size used in various functions */
 #define BUFFSIZE 512
+
+/** main function of the command-line interface */
 int main(int argc, char **argv) {
 
 	dz_t daz_buf;

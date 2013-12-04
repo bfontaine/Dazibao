@@ -1,13 +1,20 @@
 #ifndef _HTML_H
 #define _HTML_H 1
 
+/** @file
+ * Utilities to generate HTML code
+ **/
+
 #include "dazibao.h"
 #include "tlv.h"
 #include "string.h"
 
+/** maximum length of a Dazibao filename in an HTML page */
 #define HTML_DZ_MAX_NAME_LENGTH 64
+/** maximum HTML length of a TLV */
 #define HTML_TLV_SIZE 1024
 
+/** Format used for the HTML top of a dazibao */
 #define HTML_DZ_TOP_FMT \
                   "<!doctype html>\n" \
                     "<html lang=\"en\" dir=\"ltr\">\n" \
@@ -19,6 +26,9 @@
                       "</head>\n" \
                       "<body>\n" \
                         "<ol class=\"tlvs\">\n"
+/** Format used for the HTML of a TLV.
+ * @param F the format of the value of the TLV (may be an empty string)
+ **/
 #define HTML_TLV_FMT(F)   "<li class=\"tlv\">\n" \
                            "<div class=\"metadata\">" \
                              "<span class=\"type\">" \
@@ -28,6 +38,7 @@
                            "</div>\n" \
                            "<div class=\"value\">" F "</div>\n" \
                          "</li>"
+/** Format used for the HTML bottom of a dazibao */
 #define HTML_DZ_BOTTOM  "</ol>\n" \
                       "</body>\n" \
                     "</html>"

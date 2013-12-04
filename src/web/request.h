@@ -1,19 +1,29 @@
 #ifndef _REQUEST_H
 #define _REQUEST_H 1
 
+/** @file
+ * structures and functions to work with HTTP requests
+ **/
+
 #include "http.h"
 
 #ifndef BUFFLEN
+/** The length of the buffer to use in various functions */
 #define BUFFLEN 512
 #endif
 
-/* A struct describing an HTTP request */
+/** A struct describing an HTTP request */
 struct http_request {
-        int method;    /* Method, as defined in http.h: GET, POST */
-        char *path;    /* Requested path, e.g. "/foo" */
-        struct http_headers *headers; /* Supported headers */
-        char *body;    /* Request body (may be NULL) */
-        int body_len;  /* Length of the request body (-1 if no body) */
+        /** the request method, as defined in http.h */
+        int method;
+        /** requested path, e.g. "/foo" */
+        char *path;
+        /** supported headers */
+        struct http_headers *headers;
+        /** optional request body */
+        char *body;
+        /** length of the body (-1 if there isn't one) */
+        int body_len;
 };
 
 /**
@@ -55,7 +65,7 @@ char *next_header(int sock, int *eoh);
  **/
 int parse_header(char *line, struct http_headers *hs);
 
-/* handy shortcut */
+/** handy shortcut to get a particular header in a request */
 #define REQ_HEADER(req, h) ((req).headers->headers[h])
 
 #endif

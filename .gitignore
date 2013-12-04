@@ -2,6 +2,7 @@
 *.swo
 *.swp
 *.o
+.DS_Store
 a.out
 /tmp
 # executables
@@ -9,3 +10,4 @@ dazibao
 daziweb
 notification-server
 notification-client
+/docs/codedoc

@@ -1,21 +1,40 @@
 #ifndef _WEBUTILS_H
 #define _WEBUTILS_H 1
 
+/** @file
+ * Utilities for the Web server
+ **/
+
 #include "utils.h"
 #include <time.h>
 
 /* = Global server properties = */
+
+/**
+ * A struct used to store a server's properties
+ **/
 struct wserver_info {
+        /** port the server is listening on **/
         int port;
-        char debug;    /* Debug mode */
+        /** debug mode (used to serve Pad1s and PadNs) */
+        char debug;
+        /** hostname of the server */
         char *hostname;
-        char *dzname;  /* Dazibao "pretty" name */
-        char *dzpath;  /* Dazibao path */
-        char *name;    /* Name of the server */
-} WSERVER;
+        /** current Dazibao prettified name */
+        char *dzname;
+        /** path of the current Dazibao */
+        char *dzpath;
+        /** name of the server */
+        char *name;
+};
+/**
+ * A global struct used to store the server's properties
+ **/
+struct wserver_info WSERVER;
 
 /* = I/O = */
 
+/** The maximum length of a local file path */
 #define MAX_FILE_PATH_LENGTH 256
 
 /**
@@ -26,8 +45,11 @@ int write_all(int fd, char *buff, int len);
 
 /* = Other helpers = */
 
+/** default extension of a JPEG image */
 #define JPEG_EXT ".jpg"
+/** default extension of a PNG image */
 #define PNG_EXT  ".png"
+/** default extension of a file */
 #define DEFAULT_EXT ""
 
 /**

@@ -1,6 +1,10 @@
 #ifndef _NOTIFICATION_CLIENT_H
 #define _NOTIFICATION_CLIENT_H 1
 
+/** @file
+ * A client for the notifications server
+ **/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

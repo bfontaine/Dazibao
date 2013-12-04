@@ -6,6 +6,8 @@
 #include "tlv.h"
 #include "http.h"
 
+/** @file */
+
 int _log_level =
 #ifdef DEBUG
         LOG_LVL_DEBUG;
@@ -42,6 +44,7 @@ int get_image_tlv_type(const char *path) {
         return -1;
 }
 
+/** maximum length of a date string */
 #define MAX_DATE_LENGTH 64
 
 char *gmtdate(time_t secs) {

@@ -9,6 +9,9 @@
 #include "http.h"
 #include "html.h"
 
+/** @file */
+
+/** route for GET /index.html */
 int route_get_index(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
@@ -34,6 +37,7 @@ int route_get_index(dz_t dz, struct http_request req,
         return 0;
 }
 
+/** route for GET /tlv/.* */
 int route_get_image_tlv(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 

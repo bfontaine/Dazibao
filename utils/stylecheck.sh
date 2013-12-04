@@ -43,3 +43,8 @@ warnfncheck 'gets'   'fgets'
 
 # from http://www.ibm.com/developerworks/library/s-buffer-defend.html
 warnfncheck 'vsprintf' 'vsnprintf'
+
+# from https://github.com/leafsr/gcc-poison/blob/master/poison.h
+warnfncheck 'wcscpy' 'wcsncpy'
+warnfncheck 'stpcpy' 'stpncpy'
+warnfncheck 'wcpcpy' 'wcpncpy'
