@@ -84,7 +84,7 @@ cleanall: clean
 
 check: cleantmp
 	./utils/stylecheck.sh
-	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) $(SRC) $(WEBSRC)
+	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) -I$(NSRC) $(SRC) $(WEBSRC) $(NSRC)
 
 memcheck-%: %
 	$(VALGRIND) $(VALFLAGS) ./$< $(CLI_OPTS)

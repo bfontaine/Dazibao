@@ -48,7 +48,11 @@ static const char *headers_strs[] = {
         /* HTTP_H_POWEREDBY      7 */
         "X-Powered-By",
         /* HTTP_H_ACCEPT         8 */
-        "Accept"
+        "Accept",
+        /* HTTP_H_IFMODIFSINCE   9 */
+        "If-Modified-Since",
+        /* HTTP_H_LASTMODIF     10 */
+        "Last-Modified"
 };
 
 char is_crlf(char *s, int c, int len) {
@@ -102,6 +106,9 @@ int http_mth(char *s) {
         if (strcasecmp(s, "POST") == 0) {
                 return HTTP_M_POST;
         }
+        if (strcasecmp(s, "HEAD") == 0) {
+                return HTTP_M_HEAD;
+        }
         return HTTP_M_UNSUPPORTED;
 }
 
@@ -131,11 +138,11 @@ int http_add_header(struct http_headers *hs, int code, const char *value,
 
         if (hs->headers[code] != NULL) {
                 if (!overr) {
-                        WLOGDEBUG("Cannot override header %d with '%s'",
+                        LOGDEBUG("Cannot override header %d with '%s'",
                                         code, value);
                         return -1;
                 }
-                WLOGDEBUG("Overriding header %d (%s) with '%s'",
+                LOGDEBUG("Overriding header %d (%s) with '%s'",
                                 code, hs->headers[code], value);
                 NFREE(hs->headers[code]);
         }

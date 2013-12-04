@@ -2,20 +2,17 @@
 #define _WEBUTILS_H 1
 
 #include "utils.h"
+#include <time.h>
 
 /* = Global server properties = */
 struct wserver_info {
         int port;
-        char debug;     /* Debug mode */
+        char debug;    /* Debug mode */
         char *hostname;
-        char *dzname;
+        char *dzname;  /* Dazibao "pretty" name */
+        char *dzpath;  /* Dazibao path */
+        char *name;    /* Name of the server */
 } WSERVER;
-
-#define WLOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
-#define WLOGINFO(fmt, ...)  _LOG(LOG_LVL_INFO,  "INFO", fmt, ##__VA_ARGS__)
-#define WLOGWARN(fmt, ...)  _LOG(LOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
-#define WLOGERROR(fmt, ...) _LOG(LOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
-#define WLOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
 
 /* = I/O = */
 
@@ -39,5 +36,11 @@ int write_all(int fd, char *buff, int len);
  * the TLV type cannot be found.
  **/
 int get_image_tlv_type(const char *path);
+
+/**
+ * Return a string representing a given GMT date. 'secs' is the number of
+ * seconds since the Epoch, or -2 if you want the current date.
+ **/
+char *gmtdate(time_t secs);
 
 #endif

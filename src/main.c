@@ -1,5 +1,6 @@
 #include "main.h"
 #include "dazibao.h"
+#include <limits.h>
 #include <locale.h>
 
 #define BUFFSIZE 512
@@ -39,7 +40,7 @@ int main(int argc, char **argv) {
 
                 tmp_type = strtol(argv[3], NULL, 10);
 
-                if (STRTOL_ERR(tmp_type)) {
+                if (!IN_RANGE(tmp_type, 1, 256)) {
                         printf("unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
 
 		long off = strtol(argv[3], NULL, 10);
 
-                if (STRTOL_ERR(off)) {
+                if (!IN_RANGE(off, 0, LONG_MAX-1)) {
                         printf("wrong offset\n");
                         exit(EXIT_FAILURE);
                 }
@@ -125,14 +126,14 @@ int main(int argc, char **argv) {
                         depth = argv[4];
                         dep = strtol(depth, NULL, 10);
 
-                        if (STRTOL_ERR(dep)) {
+                        if (!IN_RANGE(dep, 0, 16)) {
                                 printf("wrong depth");
                                 exit(EXIT_FAILURE);
                         }
 
                         if ((!strcmp(cmd_dump, "--depth")) && (dep >= 0)) {
                                 int dep = strtol(depth, NULL, 10);
-                                if (STRTOL_ERR(dep)) {
+                                if (!IN_RANGE(dep, 0, 16)) {
                                         printf("wrong depth");
                                         exit(EXIT_FAILURE);
                                 }
