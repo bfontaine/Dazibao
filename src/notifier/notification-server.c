@@ -55,6 +55,7 @@ int unreliable_watch(char *file, time_t *old_time) {
 		*old_time = st.st_ctime;
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -63,8 +64,8 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 	struct stat st;
 	uint32_t hash;
 	char *buf;
-	int fd = open (file, O_RDONLY);
-	int status = 0;
+	int fd = open(file, O_RDONLY);
+	int status;
 
 	if (fd < 0) {
 		ERROR("open", -1);
@@ -72,6 +73,7 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 
 	if (fstat(fd, &st) < 0) {
 		PERROR("fstat");
+		status = -1;
 		goto CLOSE;
 	}
 
@@ -91,7 +93,9 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 	if (hash != *old_hash) {
 		*old_hash = hash;
 		status = 1;
-	} 
+	} else {
+		status = 0;
+	}
 
 	if (munmap(buf, st.st_size) == -1) {
 		PERROR("munmap");
@@ -101,16 +105,20 @@ CLOSE:
 	if (close(fd) == -1) {
 		PERROR("close");
 	}
-	
-	return status;
 
+	return status;
 }
 
 void *watch_file(void *arg) {
 
 	char *path = (char *)arg;
-	time_t ctime = 0;
-	uint32_t hash = 0;
+
+	union {
+		time_t time;
+		uint32_t hash;
+	} value;
+
+	memset(&value, 0, sizeof(value));
 
 	int sleeping_time = conf.w_sleep_default;
 	int changed = 0;
@@ -120,9 +128,9 @@ void *watch_file(void *arg) {
 	while (1) {
 		sleep(sleeping_time);
 		if (conf.reliable) {
-			changed = reliable_watch(path, &hash);
+			changed = reliable_watch(path, &(value.hash));
 		} else {
-			changed = unreliable_watch(path, &ctime);
+			changed = unreliable_watch(path, &(value.time));
 		}
 		
 		if (changed == 1) {
