@@ -5,13 +5,23 @@
 #include <time.h>
 
 /* = Global server properties = */
+
+/**
+ * A global struct used to store server properties
+ **/
 struct wserver_info {
+        /** port the server is listening on **/
         int port;
-        char debug;    /* Debug mode */
+        /** debug mode (used to serve Pad1s and PadNs) */
+        char debug;
+        /** hostname of the server */
         char *hostname;
-        char *dzname;  /* Dazibao "pretty" name */
-        char *dzpath;  /* Dazibao path */
-        char *name;    /* Name of the server */
+        /** current Dazibao prettified name */
+        char *dzname;
+        /** path of the current Dazibao */
+        char *dzpath;
+        /** name of the server */
+        char *name;
 } WSERVER;
 
 /* = I/O = */

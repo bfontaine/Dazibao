@@ -7,13 +7,18 @@
 #define BUFFLEN 512
 #endif
 
-/* A struct describing an HTTP request */
+/** A struct describing an HTTP request */
 struct http_request {
-        int method;    /* Method, as defined in http.h: GET, POST */
-        char *path;    /* Requested path, e.g. "/foo" */
-        struct http_headers *headers; /* Supported headers */
-        char *body;    /* Request body (may be NULL) */
-        int body_len;  /* Length of the request body (-1 if no body) */
+        /** the request method, as defined in http.h */
+        int method;
+        /** requested path, e.g. "/foo" */
+        char *path;
+        /** supported headers */
+        struct http_headers *headers;
+        /** optional request body */
+        char *body;
+        /** length of the body (-1 if there isn't one) */
+        int body_len;
 };
 
 /**

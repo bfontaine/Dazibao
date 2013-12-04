@@ -60,13 +60,6 @@
 
 #define NFREE(p) { free(p);(p) = NULL; }
 
-/* see sourcefrog.net/weblog/software/languages/C/warn-unused.html */
-#ifdef __GNUC__
-#define WARN_UNUSED  __attribute__((warn_unused_result))
-#else
-#define WARN_UNUSED
-#endif
-
 /**
  * Wrapper around realloc(3) which frees the original pointer if the request
  * fails. See #35.
@@ -76,7 +69,7 @@ void *safe_realloc(void *ptr, size_t size);
 
 /* = Logging = */
 
-/* this is set in webutils.c but can be changed in another file. */
+/** this is set in webutils.c but can be changed in another file. */
 extern int _log_level;
 
 #define LOG_LVL_DEBUG  50

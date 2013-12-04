@@ -29,22 +29,32 @@
 #define WATCH_SLEEP_MAX 60
 
 
+/** general config */
 struct ns_config {
 	
-	/* general config */
+        /** max number of clients */
 	int client_max;
+        /** ? */
 	int nb_files;
+        /** ? */
 	char *s_path;
+        /** ? */
 	char **file;
+        /** ? */
 	char reliable;
 	
 	/* sockets */
+        /** ? */
 	int s_socket;
+        /** ? */
 	int *c_socket;
 	
 	/* waiting time */
+        /** ? */
 	int w_sleep_min;
+        /** ? */
 	int w_sleep_default;
+        /** ? */
 	int w_sleep_max;
 };
 

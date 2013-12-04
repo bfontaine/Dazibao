@@ -5,7 +5,10 @@
  *
  * List from:
  *  en.wikipedia.org/wiki/Internet_media_type#List_of_common_media_types
- * */
+ **/
+/**
+ * Known mime types
+ **/
 static const char *mime_types_ext[][2] = {
 
         /* common types */

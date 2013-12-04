@@ -18,8 +18,18 @@
  *  Not all statuses are included here, only those we might need to use.
  */
 
+/**
+ * An HTTP status
+ **/
 struct http_status {
+        /**
+         * The code of the status, e.g.: 200
+         **/
         int code;
+
+        /**
+         * The phrase of the status, used in server responses, e.g.: "OK"
+         **/
         char *phrase;
 };
 
@@ -79,8 +89,9 @@ struct http_status {
 
 #define HTTP_DATE_FMT "%a, %d %b %Y %T GMT"
 
-/* Headers */
+/** A list of HTTP headers */
 struct http_headers {
+        /** the list of headers */
         char **headers;
 };
 

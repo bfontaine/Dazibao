@@ -7,10 +7,17 @@
  * response and HTTP requests are highly similar.
  */
 
+/**
+ * An HTTP response
+ **/
 struct http_response {
+        /** status of the response */
         int status;
-        struct http_headers *headers; /* HTTP headers */
+        /** headers of the response */
+        struct http_headers *headers;
+        /** optional body */
         char **body;
+        /** length of the body, -1 if there's no one */
         int body_len;
 };
 
