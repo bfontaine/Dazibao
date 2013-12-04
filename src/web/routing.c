@@ -283,7 +283,8 @@ int http_response(int sock, struct http_response *resp) {
 int http_response2(int sock, struct http_response *resp, char free_resp) {
         const char *phrase = get_http_status_phrase(&resp->status);
         char *str_headers,
-             *response;
+             *response,
+             *tmp;
         int ret = 0, len,
             no_body = (resp->body == NULL || *resp->body == NULL),
             noheaders = (resp->headers == NULL),
