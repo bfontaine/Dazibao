@@ -238,43 +238,31 @@ int main(int argc, char **argv) {
         }
 
 	cmd = argv[1];
-
+        /*
+        TODO : management error write request
+        */
 	if ( !strcmp(cmd, "add")) {
-                /* cmd reconnue add
-                        recupere tableau des argument et option
-                        si existant:
-                        --date          -d
-                        --compound      -c argument type ou nom fic
-                        --dazibao       -d un seul argument type compound
-                        --fichier       -f argument nom de fichier
-                */
+                if (cmd_add(argc,argv) == -1){
+                        exit(EXIT_FAILURE);
+                }
 	} else if (!strcmp(cmd, "rm")) {
-                /* cmd rm reconnue
-                        recuperer tableau option ou arguments
-                rm  <offset>  <daibao>
-                */
-
+                if (cmd_rm(argc,argv) == -1){
+                        exit(EXIT_FAILURE);
+                }
 	} else if (!strcmp(cmd, "dump")) {
-                /* cmd dump valider
-                commande :
-                        dump <option & argument> <dazibao>
-                        option :
-                                --debug -d
-                                --depth -D argument defaud 0
-
-                */
+                if (cmd_dump(argc,argv)){
+                        exit(EXIT_FAILURE);
+                }
 	} else if (!strcmp(cmd, "create")) {
-                /* cmd create accepted
-                        create <option & argument> <nom du dazibao>
-                option :
-                --fusion -f 2 argument <dazibao>
-                */
+                if (cmd_create(argc,argv)){
+                        exit(EXIT_FAILURE);
+                }
 	} else if (!strcmp(cmd, "compact")) {
-                /* cmd compact
-                compact <option & argument> <dazibao>
-                */
+                if (cmd_compact(argc,argv)){
+                        exit(EXIT_FAILURE);
+                }
 	} else {
-                /*appeller helper avec cmd unknow*/
+                print_usage();
                 exit(EXIT_FAILURE);
         }
 
