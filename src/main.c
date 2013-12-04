@@ -5,6 +5,9 @@
 #define BUFFSIZE 512
 
 int cmd_add(int argc, char **argv, char * daz) {
+        /* if argc = 1 means command it like that
+        .dazibao add <number type TLV> daz
+        */
         if (argc == 1) {
                 long tmp_type;
 
@@ -13,8 +16,12 @@ int cmd_add(int argc, char **argv, char * daz) {
                         printf("unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
+                if (action_add(daz, cmd, tmp_type) == -1) {
+                        printf("add error action_add\n");
+                        exit(EXIT_FAILURE);
+                }
         }
-
+        /* option exist (date , compound or dazibo)*/
         int flag_date, flag_compound, flag_dazibao;
         flag_date = -1;
         flag_compound = -1;
@@ -29,26 +36,20 @@ int cmd_add(int argc, char **argv, char * daz) {
                 if (!strcmp(argv[i],"--dazibao") ||
                         !strcmp(argv[i],"-D")) {
                         flag_dazibao = 1;
-                        // add check to args fic tlv
+                        /* add check to args fic tlv */
                         break;
                 }
                 if (!strcmp(argv[i],"--compound") ||
                         !strcmp(argv[i],"-c")) {
                         flag_compound = 1;
-                        // add check to args fic dazibao
+                        /* add check to args fic dazibao */
                         break;
                 }
         }
         if ((flag_dazibao == 1) && (flag_compound == 1)) {
-                // help message 2 flag not it the same time
+                /* help message 2 flag not it the same time*/
                 return -1;
         }
-        /*
-
-        if (action_add(daz, cmd, tmp_type) == -1) {
-                printf("add error\n");
-                exit(EXIT_FAILURE);
-        }*/
         return 0;
 }
 
@@ -85,8 +86,7 @@ int action_add(char *daz, char *cmd, unsigned char type) {
         }
 
 
-        tlv_t tlv = malloc((buff_size
-                                + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
         tlv_set_type(&tlv, type);
         tlv_set_length(&tlv, buff_size);
 
@@ -97,9 +97,7 @@ int action_add(char *daz, char *cmd, unsigned char type) {
         }
 
         free(tlv);
-        if (buff != NULL) {
-                free(buff);
-        }
+        free(buff);
         return 0;
 }
 
