@@ -515,29 +515,25 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
         off_t off;
         char *ind;
         if (indent > 0) {
-                ind = malloc(sizeof(char)*indent+1);
-                int i;
-                for(i = 0; i < indent; i++) {
-                        ind[i] = '\t';
-                }
+                ind = malloc(sizeof(char)*(indent+1));
+                memset(ind, '\t', indent-1);
                 ind[indent]='\0';
         } else {
-                ind = malloc(sizeof(char)*1);
-                ind[0]='\0';
+                ind = strdup("");
         }
 	
-        while (((off = dz_next_tlv(daz_buf, &tlv)) != end ) && (off != EOD)) {
+        while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
                 int tlv_type, len;
+                const char *tlv_str;
 
-                printf("%s",ind);
+                printf("%s", ind);
 
                 tlv_type = tlv_get_type(tlv);
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-                const char *tlv_str = tlv_type2str((char) tlv_type);
+                tlv_str = tlv_type2str((char) tlv_type);
 
                 printf("[%9d] TLV %8s | %8d |\n",
                                 (int)off, tlv_str, len);
-
 
                 switch (tlv_type) {
                         case TLV_COMPOUND:
@@ -568,7 +564,7 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                 }
 
         }
-        if (indent < 0 ) {
+        if (indent < 0) {
                 free(ind);
         }
 	free(tlv);
