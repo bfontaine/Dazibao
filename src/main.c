@@ -115,31 +115,32 @@ int action_add(char *daz, unsigned char type) {
 int cmd_rm(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
 
-        if (argc < 4) {
+        if (argc != 1) {
                 printf("expected offset\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR)) {
-                exit(EXIT_FAILURE);
+                printf("Error while opening the dazibao\n");
+                return -1;
         }
 
-        long off = strtol(argv[3], NULL, 10);
+        long off = strtol(argv[argc - 1], NULL, 10);
 
         if (STRTOL_ERR(off)) {
                 printf("wrong offset\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 printf("rm failed\n");
                 dz_close(&daz_buf);
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_close(&daz_buf) < 0) {
                 printf("Error while closing the dazibao\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         return 0;
@@ -173,17 +174,17 @@ int cmd_dump(int argc , char ** argv, char * daz) {
         int flag_depth = 0 ;
         if (argc < 4) {
                 int i;
-                int args =  0;
+                int args = 0;
                 for (i = 0; i < argc; i++) {
                         if (args > 0) {
                                 flag_depth = i;
-                        } else if (!strcmp(argv[i],"--depth") ||
-                                !strcmp(argv[i],"-d") || flag_depth != 1) {
+                        } else if ((!strcmp(argv[i],"--depth") ||
+                                !strcmp(argv[i],"-d")) && (flag_depth < 1)) {
                                 flag_depth = 1;
                                 args = 1;
-                        } else if (!strcmp(argv[i],"--debug") ||
-                                !strcmp(argv[i],"-D") || flag_depth != 1) {
-                                flag_depth = 1;
+                        } else if ((!strcmp(argv[i],"--debug") ||
+                                !strcmp(argv[i],"-D")) && (flag_debug != 1)) {
+                                flag_debug = 1;
                         } else {
                                 /* TODO args[i] is not option and args
                                         or already use
@@ -311,6 +312,7 @@ int main(int argc, char **argv) {
                 }
 	} else if (!strcmp(cmd, "rm")) {
                 if (cmd_rm(argc_cmd, argv_cmd, daz) == -1) {
+                        printf("cmd_rm failed\n");
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "dump")) {
