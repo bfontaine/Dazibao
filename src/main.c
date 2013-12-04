@@ -150,24 +150,46 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 
         return 0;
 }
-
-int cmd_dump(int argc , char ** argv, char * daz) {
+int action_dump(char *daz, int flag_debug, int flag_depth){
 	dz_t daz_buf;
-
         if (dz_open(&daz_buf, daz, O_RDONLY)) {
                 exit(EXIT_FAILURE);
         }
-        if ( argc < 4 ) {
-                if (dz_dump(&daz_buf)) {
-                        printf("dump failed\n");
-                        dz_close(&daz_buf);
-                        exit(EXIT_FAILURE);
-                }
-        } else if (argc > 5) {
+
+        /* option dump compound with limited depth 
+          TODO add option debug
+        */
+        if (dz_dump_compound(&daz_buf, EOD, flag_depth,0)) {
+                printf("dump_compound failed\n");
+                dz_close(&daz_buf);
+                exit(EXIT_FAILURE);
+        }
+
+        if (dz_close(&daz_buf) < 0) {
+                printf("Error while closing the dazibao\n");
+                exit(EXIT_FAILURE);
+        }
+
+        return 0;
+}
+
+int cmd_dump(int argc , char ** argv, char * daz) {
+	dz_t daz_buf;
+        int flag_debug;
+        int flag_depth;
+        /* if argc = à means command it like that
+                .dazibao dump  daz
+           standard dump depth = 0 debug = -1
+        */
+        if (argc == 0) {
+                flag_debug = -1;
+                flag_depth = 0;
+        }
+
+        else if (argc > 5) {
                 printf("expected type\n");
                 exit(EXIT_FAILURE);
         } else {
-                char *cmd_dump, *depth;
                 int dep;
                 cmd_dump = argv[3];
                 depth = argv[4];
@@ -184,23 +206,12 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                                 printf("wrong depth");
                                 exit(EXIT_FAILURE);
                         }
-                        /* option dump compound with limited depth */
-                        if (dz_dump_compound(&daz_buf, EOD, dep,0)) {
-                                printf("dump_compound failed\n");
-                                dz_close(&daz_buf);
-                                exit(EXIT_FAILURE);
-                        }
-
-                } else {
+                        } else {
                         printf("expected type\n");
                         exit(EXIT_FAILURE);
                 }
         }
 
-        if (dz_close(&daz_buf) < 0) {
-                printf("Error while closing the dazibao\n");
-                exit(EXIT_FAILURE);
-        }
         return 0;
 
 }
@@ -269,18 +280,21 @@ int main(int argc, char **argv) {
                 print_usage();
                 exit(EXIT_FAILURE);
         }
-
 	cmd = argv[1];
         daz = argv[argc -1];
 
         /* recover tab option and args */
         int argc_cmd = argc-3;
         char **argv_cmd = malloc(sizeof(char *)* argc_cmd);
-        int i ;
-        for (i = 0; i < argc_cmd ;i++) {
-                argv_cmd[i] = argv[i+2];
+        if (argc > 3) {
+                int i ;
+                for (i = 0; i < argc_cmd ;i++) {
+                        argv_cmd[i] = argv[i+2];
+                }
+        } else {
+                argc_cmd = 0;
+                argv_cmd = NULL;
         }
-
         /*
         TODO : management error write request
         */
@@ -308,6 +322,7 @@ int main(int argc, char **argv) {
                 print_usage();
                 exit(EXIT_FAILURE);
         }
+        free(argv_cmd);
 
         exit(EXIT_SUCCESS);
 }
