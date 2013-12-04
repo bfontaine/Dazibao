@@ -124,6 +124,15 @@ extern int _log_level;
 /** add an entry to a log using the "fatal" level */
 #define LOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
 
+/* = other utilities = */
 
+/** helper for STR macro */
+#define _STR(x) #x
+
+/**
+ * make a string of a #define'd litteral number
+ * @param x the #define'd litteral number
+ **/
+#define STR(x) _STR(x)
 
 #endif

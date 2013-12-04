@@ -51,8 +51,8 @@ int destroy_http_request(struct http_request *req) {
 int parse_request(int sock, struct http_request *req) {
         char *line,
              *mth_str,
-             status_fmt[] = "%" HTTP_MAX_MTH_LENGTH_S "s " \
-                            "%" HTTP_MAX_PATH_S "s HTTP/%*s";
+             status_fmt[] = "%" STR(HTTP_MAX_MTH_LENGTH) "s " \
+                            "%" STR(HTTP_MAX_PATH) "s HTTP/%*s";
 
         int linelen,
             eoh = 0,

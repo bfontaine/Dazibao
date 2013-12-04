@@ -128,12 +128,6 @@ struct http_status {
 /** maximum length of a method in an HTTP request */
 #define HTTP_MAX_MTH_LENGTH 16
 
-/* defined for easier strings formating - TODO use a cleaner alternative */
-/** Same as HTTP_MAX_MTH_LENGTH but as a string **/
-#define HTTP_MAX_MTH_LENGTH_S "16"
-/** Same as HTTP_MAX_PATH but as a string **/
-#define HTTP_MAX_PATH_S "512"
-
 /** Format used for HTTP dates */
 #define HTTP_DATE_FMT "%a, %d %b %Y %T GMT"
 
