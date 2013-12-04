@@ -136,7 +136,6 @@ int dz2html(dz_t dz, char **html) {
                 if (tmp_ptr == NULL) {
                         LOGWARN("Cannot realloc, skipping tlv %lu", tlv_off);
                         perror("realloc");
-                        *html = tmp_ptr;
                         continue;
                 }
                 *html = tmp_ptr;
