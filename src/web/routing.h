@@ -37,9 +37,26 @@ typedef int (*route_handler)(dz_t, struct http_request, struct http_response*);
 int add_route(char mth, char *path_suffix, route_handler route);
 
 /**
- * Return a route handler for a method and a path.
+ * code returned by get_route_handler when the request method is wrong.
+ * @see get_route_handler
  **/
-route_handler get_route_handler(char mth, char *path);
+#define ROUTING_WRONG_MTH 1
+/**
+ * code returned by get_route_handler when the requested path is wrong.
+ * @see get_route_handler
+ **/
+#define ROUTING_WRONG_PATH 2
+
+/**
+ * Return a route handler for a method and a path.
+ * @param mth the method
+ * @param path the path
+ * @status if not NULL and the route handler cannot be found, it'll be filled
+ * with either ROUTING_WRONG_MTH (good path but wrong method) or
+ * ROUTING_WRONG_PATH (wrong path).
+ * @return the route handler if there's one, or NULL
+ **/
+route_handler get_route_handler(char mth, char *path, int *status);
 
 /**
  * Route a request, i.e. find the matching route and accordingly respond to the

@@ -54,7 +54,7 @@ int add_route(char mth, char *path_suffix, route_handler route) {
         return 0;
 }
 
-route_handler get_route_handler(char mth, char *path) {
+route_handler get_route_handler(char mth, char *path, int *status) {
         LOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
 
         if (mth == HTTP_M_HEAD) {
@@ -66,20 +66,28 @@ route_handler get_route_handler(char mth, char *path) {
         for (int i=0, len, pmth, paths_match; i<routes_cpt; i++) {
                 pmth = routes_paths[i][0];
 
-                if ((mth & pmth) != mth) {
-                        continue;
-                }
-
                 routes_paths[i][0] = '/';
                 len = strlen(routes_paths[i]);
                 paths_match = (strncmp(path, routes_paths[i], len) == 0);
                 routes_paths[i][0] = pmth;
 
                 if (paths_match) {
+                        if ((mth & pmth) != mth) {
+                                LOGDEBUG("Good path (matches '/%s'), " \
+                                                "wrong method.",
+                                                routes_paths[i]+1);
+                                if (status != NULL) {
+                                        *status = ROUTING_WRONG_MTH;
+                                }
+                                continue;
+                        }
                         return routes_handlers[i];
                 }
         }
 
+        if (status != NULL) {
+                *status = ROUTING_WRONG_PATH;
+        }
         return NULL;
 }
 
@@ -94,6 +102,7 @@ int destroy_routes(void) {
 
 int route_request(int sock, dz_t dz, struct http_request *req) {
         route_handler rh;
+        int route_status = -1, err;
 
         if (req->body == NULL) {
                 req->body_len = -1;
@@ -119,7 +128,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 LOGWARN("Routing a request with no dazibao (%d)", dz);
         }
 
-        rh = get_route_handler(req->method, req->path);
+        rh = get_route_handler(req->method, req->path, &route_status);
 
         /*
          * If no route can be found and the path is '/', replace it with
@@ -129,7 +138,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 LOGDEBUG("Using alias '/' -> '%s'", DEFAULT_ROOT_ROUTE);
                 free(req->path);
                 req->path = strdup(DEFAULT_ROOT_ROUTE);
-                rh = get_route_handler(req->method, req->path);
+                rh = get_route_handler(req->method, req->path, &route_status);
         }
 
         if (rh != NULL) {
@@ -178,7 +187,9 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 return 0;
         }
 
-        error_response(sock, HTTP_S_NOTFOUND);
+        err = (route_status == ROUTING_WRONG_MTH
+                        ? HTTP_S_NOTIMPL : HTTP_S_NOTFOUND);
+        error_response(sock, err);
         return 0;
 }
 
