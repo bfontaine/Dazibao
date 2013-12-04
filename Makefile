@@ -94,7 +94,7 @@ memcheck-%: %
 
 doc:
 	$(DOXYGEN) $(DOXYFLAGS) docs/doxygen.conf
-	@echo --> open docs/codedoc/html/index.html for the HTML doc
+	@echo '--> open docs/codedoc/html/index.html for the HTML doc'
 
 checkwhattodo:
 	@d=$(SRC);c="TO";f="FIX";x="X"; \
