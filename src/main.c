@@ -225,6 +225,10 @@ int cmd_dump(int argc , char ** argv, char * daz) {
 
 int cmd_create(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
+        if (argc > 0) {
+                printf("no argument for commande create\n");
+                return -1;
+        }
 
         if (dz_create(&daz_buf, daz)) {
                 printf("error during dazibao creation\n");
@@ -240,6 +244,11 @@ int cmd_create(int argc , char ** argv, char * daz) {
 }
 int cmd_compact(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
+        if (argc > 0) {
+                printf("no argument for commande compact\n");
+                return -1;
+        }
+
         if (dz_open(&daz_buf, daz, O_RDWR)) {
                 exit(EXIT_FAILURE);
         }
