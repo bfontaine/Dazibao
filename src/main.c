@@ -4,26 +4,51 @@
 
 #define BUFFSIZE 512
 
-int cmd_add(int argc, char **argv) {
-        long tmp_type;
-	char *daz, *cmd;
-        cmd = argv[1];
-	daz = argv[0];
-        if (argc < 4) {
-                printf("expected type\n");
-                exit(EXIT_FAILURE);
+int cmd_add(int argc, char **argv, char * daz) {
+        if (argc == 1) {
+                long tmp_type;
+
+                tmp_type = strtol(argv[0], NULL, 10);
+                if (STRTOL_ERR(tmp_type)) {
+                        printf("unrecognized type\n");
+                        exit(EXIT_FAILURE);
+                }
         }
 
-        tmp_type = strtol(argv[3], NULL, 10);
-        if (STRTOL_ERR(tmp_type)) {
-                printf("unrecognized type\n");
-                exit(EXIT_FAILURE);
+        int flag_date, flag_compound, flag_dazibao;
+        flag_date = -1;
+        flag_compound = -1;
+        flag_dazibao = -1;
+
+        int i;
+        for (i = 0; i < argc; i++) {
+                if (!strcmp(argv[i],"--date") ||
+                        !strcmp(argv[i],"-d")) {
+                        flag_date = 1;
+                }
+                if (!strcmp(argv[i],"--dazibao") ||
+                        !strcmp(argv[i],"-D")) {
+                        flag_dazibao = 1;
+                        // add check to args fic tlv
+                        break;
+                }
+                if (!strcmp(argv[i],"--compound") ||
+                        !strcmp(argv[i],"-c")) {
+                        flag_compound = 1;
+                        // add check to args fic dazibao
+                        break;
+                }
         }
+        if ((flag_dazibao == 1) && (flag_compound == 1)) {
+                // help message 2 flag not it the same time
+                return -1;
+        }
+        /*
 
         if (action_add(daz, cmd, tmp_type) == -1) {
                 printf("add error\n");
                 exit(EXIT_FAILURE);
-        }
+        }*/
         return 0;
 }
 
@@ -78,10 +103,8 @@ int action_add(char *daz, char *cmd, unsigned char type) {
         return 0;
 }
 
-int cmd_rm(int argc , char ** argv) {
+int cmd_rm(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
-	char *daz;
-	daz = argv[1];
 
         if (argc < 4) {
                 printf("expected offset\n");
@@ -113,10 +136,8 @@ int cmd_rm(int argc , char ** argv) {
         return 0;
 }
 
-int cmd_dump(int argc , char ** argv) {
+int cmd_dump(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
-	char *daz;
-	daz = argv[1];
 
         if (dz_open(&daz_buf, daz, O_RDONLY)) {
                 exit(EXIT_FAILURE);
@@ -169,10 +190,8 @@ int cmd_dump(int argc , char ** argv) {
 
 }
 
-int cmd_create(int argc , char ** argv) {
+int cmd_create(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
-	char *daz;
-	daz = argv[1];
 
         if (dz_create(&daz_buf, daz)) {
                 printf("error during dazibao creation\n");
@@ -186,10 +205,8 @@ int cmd_create(int argc , char ** argv) {
         return 0;
 
 }
-int cmd_compact(int argc , char ** argv) {
+int cmd_compact(int argc , char ** argv, char * daz) {
 	dz_t daz_buf;
-	char *daz;
-	daz = argv[1];
         if (dz_open(&daz_buf, daz, O_RDWR)) {
                 exit(EXIT_FAILURE);
         }
@@ -215,7 +232,8 @@ void print_usage() {
         \t\t-m or --merge :(todo)\n");
         printf("\t- add : add TLV \n\tcmd : add [-d or --date ]\
         [-c or --compound ] <tlv args> <dazibao>\n\tadd option:\n\
-        \t\t\t-d or --date : (todo)\n\t\t\t-c or --compound :(todo)\n");
+        \t\t\t-d or --date : (todo)\n\t\t\t-c or --compound :(todo)\n\t\t\t\
+        -C or --dazibao\n");
         printf("\t- rm  : remove TLV\ncmd : rm <offset> <dazibao>\n");
         printf("\t- dump : dump Dazibaio\ncmd : dump [-d or --debug ]\
         [-D or --depth] <number depth> <dazibao>\n\tdump option :\n\
@@ -252,23 +270,23 @@ int main(int argc, char **argv) {
         TODO : management error write request
         */
 	if ( !strcmp(cmd, "add")) {
-                if (cmd_add(argc_cmd,argv_cmd) == -1) {
+                if (cmd_add(argc_cmd, argv_cmd, daz) == -1) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "rm")) {
-                if (cmd_rm(argc_cmd,argv_cmd) == -1) {
+                if (cmd_rm(argc_cmd, argv_cmd, daz) == -1) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "dump")) {
-                if (cmd_dump(argc_cmd,argv_cmd)) {
+                if (cmd_dump(argc_cmd, argv_cmd, daz)) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "create")) {
-                if (cmd_create(argc_cmd,argv_cmd)) {
+                if (cmd_create(argc_cmd, argv_cmd, daz)) {
                         exit(EXIT_FAILURE);
                 }
 	} else if (!strcmp(cmd, "compact")) {
-                if (cmd_compact(argc_cmd,argv_cmd)) {
+                if (cmd_compact(argc_cmd, argv_cmd, daz)) {
                         exit(EXIT_FAILURE);
                 }
 	} else {
