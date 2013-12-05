@@ -104,13 +104,13 @@ int main(int argc, char **argv) {
 
 	if (argc >= 3) {
 		if (strcmp(argv[1], "--path") == 0) {
-			strncpy(sun.sun_path, argv[2], 107);
+			strncpy(sun.sun_path, argv[2], UNIX_PATH_MAX - 1);
 		} else if (strcmp(argv[1], "--notifier") == 0) {
 			notifier = argv[2];
 		}
 		if (argc == 5) {
 			if (strcmp(argv[3], "--path") == 0) {
-				strncpy(sun.sun_path, argv[4], 107);
+				strncpy(sun.sun_path, argv[4], UNIX_PATH_MAX - 1);
 			} else if (strcmp(argv[3], "--notifier") == 0) {
 				notifier = argv[4];
 			}
@@ -118,9 +118,9 @@ int main(int argc, char **argv) {
 	}
 
 	if (strcmp(sun.sun_path, "") == 0) {
-		strncpy(sun.sun_path, getenv("HOME"), 107);
-		strncat(sun.sun_path, "/", 107);
-		strncat(sun.sun_path, ".dazibao-notification-socket", 107);
+		strncpy(sun.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
+		strncat(sun.sun_path, "/", UNIX_PATH_MAX - 1);
+		strncat(sun.sun_path, ".dazibao-notification-socket", UNIX_PATH_MAX - 1);
 	}
 
 	notifier_enabled = check_notifier();

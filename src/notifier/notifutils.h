@@ -7,6 +7,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/un.h>
+
+#ifndef UNIX_PATH_MAX
+struct sockaddr_un sizecheck;
+#define UNIX_PATH_MAX sizeof(sizecheck.sun_path)
+#endif
 
 /**
  * @param data data to be hashed

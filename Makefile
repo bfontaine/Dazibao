@@ -56,7 +56,7 @@ $(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 $(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NCLIENT): $(SRC)/utils.o $(NSRC)/notification-client.o 
+$(NCLIENT): $(SRC)/utils.o $(NSRC)/notifutils.o $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \

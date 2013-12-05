@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "notifutils.h"
 
 #define BUFFER_SIZE 1024
 
