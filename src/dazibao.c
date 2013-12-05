@@ -9,16 +9,18 @@
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
- * @return offset of the begging of this serie on search succes
- * @return {offset} if search was unsuccessful
+ * @return offset of the beginning of this serie on success, or the given
+ *         offset if there are no pad1/padNs before it.
+ * @see dz_pad_serie_end
  */
 static off_t dz_pad_serie_start(dz_t *d, off_t offset);
 
 /**
  * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
  * starting after the skipped tlv.
- * @return offset of the end of this serie on search succes
- * @return offset of next tlv after {offset} if search was unsuccessful
+ * @return offset of the end of this serie on success, or the offset of the
+ *         next tlv if it's not followed by pad1/padNs.
+ * @see dz_pad_serie_start
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset);
 

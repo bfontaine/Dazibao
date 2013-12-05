@@ -8,13 +8,6 @@
 
 /** @file */
 
-int _log_level =
-#ifdef DEBUG
-        LOG_LVL_DEBUG;
-#else
-        LOG_LVL_INFO;
-#endif
-
 int get_image_tlv_type(const char *path) {
         char *dot;
         if (path == NULL) {

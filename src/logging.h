@@ -10,7 +10,10 @@
  * Logging utilities for servers
  **/
 
-/** this is set in webutils.c but can be changed in another file. */
+/** 
+ * global variable used to set the log level. This is set in logging.c but can
+ * be changed in another file.
+ **/
 extern int _log_level;
 
 /** "debug" log level */
