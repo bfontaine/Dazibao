@@ -22,7 +22,7 @@ int dz_create(dz_t *daz_buf, char *path) {
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
 
-	fd = open(path, O_CREAT | O_EXCL, 0644);
+	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
 
 	if (fd == -1) {
 		ERROR("open", -1);
