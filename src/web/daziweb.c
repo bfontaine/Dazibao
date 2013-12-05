@@ -52,16 +52,15 @@ static void clean_close(int s) {
 
 /**
  * parse command-line arguments, and fill relevant fields in WSERVER.
- * `-d <dazibao path> [-p <port>] [-l <loglevel> |-v[v...]]`
+ * `-d <dazibao path> [-p <port>] [-v[v...]]`
  * @return 0 on success, -1 on error
  * @param argc the number of arguments (as received by main)
  * @param argv arguments (as received by main)
  * @param port result variable, will be filled with the port number
  **/
-int parse_args(int argc, char **argv, int *port) {
+static int parse_args(int argc, char **argv, int *port) {
         int l;
-        char c,
-             loglvl_flag = 0;
+        char c;
 
         dz = -1;
         WSERVER.dzname = NULL;
@@ -69,13 +68,6 @@ int parse_args(int argc, char **argv, int *port) {
         WSERVER.debug = 0;
         while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
                 switch (c) {
-                case 'l':
-                        l = strtol(optarg, NULL, 10);
-                        if (!IN_RANGE(l, 0, 1000)) {
-                                _log_level = l;
-                                loglvl_flag = 1;
-                        }
-                        break;
                 case 'p':
                         *port = strtol(optarg, NULL, 10);
                         if (!IN_RANGE(*port, 1, 65535)) {
@@ -100,9 +92,7 @@ int parse_args(int argc, char **argv, int *port) {
                         WSERVER.debug = 1;
                         break;
                 case 'v':
-                        if (!loglvl_flag) {
-                                _log_level += 10;
-                        }
+                        _log_level += 10;
                         break;
                 case ':':
                         LOGFATAL("-%c requires an argument", optopt);
