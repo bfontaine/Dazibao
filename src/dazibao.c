@@ -535,7 +535,6 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                                 (int)off, tlv_str, len);
                 }
 
-
                 switch (tlv_type) {
                         case TLV_COMPOUND:
                                 if (depth > 0) {

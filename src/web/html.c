@@ -8,19 +8,24 @@
 
 int text_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
-        int st;
 
-        st = snprintf(html, HTML_TLV_SIZE, fmt,
+        return snprintf(html, HTML_TLV_SIZE, fmt, tlv_type2str(type),
                         type, len, len, tlv_get_value_ptr(*t));
-
-        return st;
 }
 
 int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext) {
         char fmt[] = HTML_TLV_FMT("<img src=\"/tlv/%li%s\" />");
 
-        return snprintf(html, HTML_TLV_SIZE, fmt, type, len, off, ext);
+        return snprintf(html, HTML_TLV_SIZE, fmt,
+                        tlv_type2str(type), type, len, off, ext);
+}
+
+int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
+        char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
+
+        return snprintf(html, HTML_TLV_SIZE, fmt,
+                        tlv_type2str(type), type, len);
 }
 
 int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
@@ -42,10 +47,16 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         }
 
         type = tlv_get_type(*t);
-        len  = tlv_get_length(*t);
+        len  = type == TLV_PAD1 ? 0 : tlv_get_length(*t);
 
         /* TODO generate proper HTML for each TLV type */
         switch (type) {
+                case TLV_PAD1:
+                case TLV_PADN:
+                        if (WSERVER.debug) {
+                                st = empty_pad_tlv2html(t, type, len, *html);
+                                break;
+                        }
                 case TLV_TEXT:
                         st = text_tlv2html(t, type, len, *html);
                         break;
@@ -103,7 +114,7 @@ int dz2html(dz_t dz, char **html) {
 
         while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
                 int tlv_type = tlv_get_type(*t);
-                if (tlv_type == TLV_PAD1 || tlv_type == TLV_PADN) {
+                if (!WSERVER.debug && TLV_IS_EMPTY_PAD(tlv_type)) {
                         WLOGDEBUG("TLV at %li is a pad1/padN, skipping.",
                                         tlv_off);
                         continue;
@@ -112,8 +123,7 @@ int dz2html(dz_t dz, char **html) {
                 if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
                         WLOGWARN("Error while reading TLV at %li, skipping.",
                                         tlv_off);
-                        /*tlv_destroy(t);*/
-                        NFREE(tlv_html);
+                        /*NFREE(tlv_html);*/
                         continue;
                 }
 

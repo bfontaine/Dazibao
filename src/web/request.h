@@ -55,4 +55,7 @@ char *next_header(int sock, int *eoh);
  **/
 int parse_header(char *line, struct http_headers *hs);
 
+/* handy shortcut */
+#define REQ_HEADER(req, h) ((req).headers->headers[h])
+
 #endif

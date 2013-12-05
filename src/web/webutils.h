@@ -4,6 +4,7 @@
 /* = Global server properties = */
 struct wserver_info {
         int port;
+        char debug;     /* Debug mode */
         char *hostname;
         char *dzname;
 } WSERVER;

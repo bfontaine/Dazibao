@@ -51,7 +51,8 @@ int parse_request(int sock, struct http_request *req) {
              status_fmt[] = "%" HTTP_MAX_MTH_LENGTH_S "s " \
                             "%" HTTP_MAX_PATH_S "s HTTP/%*s";
 
-        int eoh = 0,
+        int linelen,
+            eoh = 0,
             readlen = 0,
             body_len = 0,
             status = 0;
@@ -64,21 +65,28 @@ int parse_request(int sock, struct http_request *req) {
         if (line == NULL || eoh) {
                 WLOGWARN("Cannot get the first header line (eoh=%d)", eoh);
                 next_header(-1, NULL);
+                free(line);
                 return HTTP_S_BADREQ;
         }
 
-        mth_str = (char*)malloc(sizeof(char)*(HTTP_MAX_MTH_LENGTH+1));
+        linelen = strlen(line);
+
+        mth_str =(char*)malloc(sizeof(char) * (
+                                MIN(HTTP_MAX_MTH_LENGTH, linelen)+1));
         if (mth_str == NULL) {
                 perror("malloc");
+                NFREE(line);
                 next_header(-1, NULL);
                 return HTTP_S_BADREQ;
         }
 
         if (req->path == NULL) {
-                req->path = (char*)malloc(sizeof(char)*(HTTP_MAX_PATH+1));
+                req->path = (char*)malloc(sizeof(char)*(
+                                        MIN(HTTP_MAX_PATH, linelen)+1));
         }
         if (req->path == NULL) {
                 perror("malloc");
+                NFREE(line);
                 NFREE(mth_str);
                 next_header(-1, NULL);
                 return HTTP_S_BADREQ;
@@ -99,29 +107,33 @@ int parse_request(int sock, struct http_request *req) {
             goto EOPARSING;
         }
 
-        if (req->method != HTTP_M_POST) {
-                /* no request body */
-                goto EOPARSING;
-        }
-
         if (req->headers != NULL) {
                 destroy_http_headers(req->headers);
                 req->headers = NULL;
         }
+        req->headers =
+                (struct http_headers*)malloc(sizeof(struct http_headers));
 
-        if (req->headers == NULL || !http_init_headers(req->headers)) {
+
+        if (req->headers == NULL || http_init_headers(req->headers) != 0) {
                 WLOGERROR("Couldn't allocate memory for headers.");
                 perror("malloc");
                 goto MALFORMED;
         }
 
         /* Other headers */
+        NFREE(line);
         while ((line = next_header(sock, &eoh)) != NULL && !eoh) {
                 if (parse_header(line, req->headers) != 0) {
                         WLOGDEBUG("Couldn't parse header <%s>", line);
                 }
 
                 NFREE(line);
+        }
+
+        if (req->method != HTTP_M_POST) {
+                /* no request body */
+                goto EOPARSING;
         }
 
         while (!eoh) {
@@ -173,7 +185,6 @@ int parse_request(int sock, struct http_request *req) {
 
 MALFORMED:
         status = HTTP_S_BADREQ;
-        /*destroy_http_request(req);*/
 EOPARSING:
         NFREE(line);
         next_header(-1, NULL);
@@ -273,6 +284,7 @@ char *next_header(int sock, int *eoh) {
 
         };
 
+        NFREE(line);
         restlen = 0;
         return NULL;
 
@@ -289,7 +301,7 @@ RETURN_LINE:
 }
 
 int parse_header(char *line, struct http_headers *hs) {
-        int code, idx, idx2;
+        int code, idx, idx2, st;
         char *name, *value;
 
         if (line == NULL || hs == NULL || hs->headers == NULL) {
@@ -316,25 +328,27 @@ int parse_header(char *line, struct http_headers *hs) {
         name[idx++] = '\0';
 
         code = get_http_header_code(name);
+        NFREE(name);
         if (code < 0) {
-                NFREE(name);
                 return -1;
         }
 
         value = (char*)malloc(sizeof(char)*HTTP_MAX_HEADER_VALUE_LENGTH);
         if (value == NULL) {
-                free(name);
                 return -1;
         }
 
-        while (line[idx++] == ' '); /* skip spaces */
+        while (line[idx] == ' ') { /* skip spaces */
+                idx++;
+        }
 
         idx2 = 0;
         while (line[idx] != '\0' && idx2 < HTTP_MAX_HEADER_VALUE_LENGTH - 1) {
                 value[idx2++] = line[idx++];
         }
-        /* TODO check if value ends with CRLF (if so, remove them) */
         value[idx2] = '\0';
 
-        return http_add_header(hs, code, value, 1);
+        st = http_add_header(hs, code, value, 1);
+        free(value);
+        return st;
 }

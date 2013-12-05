@@ -27,12 +27,44 @@ int notify(char *title, char *msg) {
 	return status;
 }
 
+int read_notifications(char *buf, int len) {
+
+	char *p;
+	while (1) {
+		p = memchr(buf, '\n', len);
+		if (p == NULL) {
+			if (len >= BUFFER_SIZE) {
+				fprintf(stderr, "Notification too long!\n");
+				return -1;
+			}
+			return len;
+		}
+		
+		if (buf[0] == 'C') {
+			char *msg;
+			msg = calloc(sizeof(*msg), p - buf);
+			strncpy(msg, buf + 1, p - buf - 1);
+			notify("Dazibao changed", msg);
+			free(msg);
+		} else {
+			fprintf(stderr, "Unknown notification type %c.\n", buf[0]);
+		}
+		
+		if (p + 1 >= buf + len) {
+			return 0;
+		} else {
+			len -= p + 1 - buf;
+			memmove(buf, p + 1, len);
+		}
+	}
+	return len;
+}
+
 
 int receive_notifications(int fd) {
 
 	char buf[BUFFER_SIZE];
 	int bufptr, rc;
-	char *p;
 
 	bufptr = 0;
 
@@ -51,33 +83,10 @@ int receive_notifications(int fd) {
 		if (rc == 0) {
 			break;
 		}
-		
-		bufptr += rc;
 
-		p = memchr(buf, '\n', bufptr);
-		if (p == NULL) {
-			if (bufptr >= BUFFER_SIZE) {
-				fprintf(stderr, "Notification too long!\n");
-				return -1;
-			}
-			continue;
-		}
-
-		if (buf[0] == 'C') {
-			char *msg;
-			msg = calloc(sizeof(*msg), p - buf);
-			strncpy(msg, buf + 1, p - buf - 1);
-			notify("Dazibao changed", msg);
-			free(msg);
-		} else {
-			fprintf(stderr, "Unknown notification type %c.\n", buf[0]);
-		}
-
-		if (p + 1 >= buf + bufptr) {
-			bufptr = 0;
-		} else {
-			memmove(buf, p + 1, buf + bufptr - (p + 1));
-			bufptr -= p + 1 - buf;
+		bufptr = read_notifications(buf, bufptr + rc);
+		if (bufptr == -1) {
+			ERROR("read_notifications", -1);
 		}
 	}
 
