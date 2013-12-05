@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 /** @file
  * Set of utilities
@@ -109,5 +111,27 @@ int write_all(int fd, char *buff, int len);
  * @param x the #define'd litteral number
  **/
 #define STR(x) _STR(x)
+
+
+enum arg_type {
+	ARG_TYPE_INT,
+	ARG_TYPE_STRING
+};
+
+struct s_option {
+	char *name;
+	enum arg_type type;
+	void *value;
+};
+
+struct s_args {
+	int *argc;
+	char ***argv;
+	struct s_option *options;
+};
+
+
+int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt);
+
 
 #endif

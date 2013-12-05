@@ -276,8 +276,8 @@ int accept_client() {
 
 
 int parse_arg(int argc, char **argv) {
-
-	int next_arg = 1;
+	
+	LOGDEBUG("begin parsing args");
 
 	conf.client_max = MAX_CLIENTS;
 	conf.w_sleep_min = WATCH_SLEEP_MIN;
@@ -285,54 +285,21 @@ int parse_arg(int argc, char **argv) {
 	conf.w_sleep_max = WATCH_SLEEP_MAX;
 	conf.reliable = RELIABLE_DEFAULT;
 
-	while (next_arg < argc) {
-		if (strcmp(argv[next_arg], "--path") == 0) {
-			if (next_arg > argc - 3) {
-				LOGFATAL("\"--path\" parameter or [FILE] is missing");
-				return -1;
-			}
-			conf.s_path = argv[next_arg + 1];
-			next_arg += 2;			
-		} else if (strcmp(argv[next_arg], "--max") == 0) {
-			if (next_arg > argc - 3) {
-				LOGFATAL("\"--max\" parameter or [FILE] is missing");
-				return -1;
-			}
-			conf.client_max = strtol(argv[next_arg + 1], NULL, 10);
-			next_arg += 2;
-		} else if (strcmp(argv[next_arg], "--wtimemin") == 0) {
-			if (next_arg > argc - 3) {
-				LOGFATAL("\"--wtimemin\" parameter or [FILE] is missing");
-				return -1;
-			}
-			conf.w_sleep_min = strtol(argv[next_arg + 1], NULL, 10);
-			next_arg += 2;
-		} else if (strcmp(argv[next_arg], "--wtimemax") == 0) {
-			if (next_arg > argc - 3) {
-				LOGFATAL("\"--wtimemax\" parameter or [FILE] is missing");
-				return -1;
-			}
-			conf.w_sleep_max = strtol(argv[next_arg + 1], NULL, 10);
-			next_arg += 2;
-		} else if (strcmp(argv[next_arg], "--wtimedef") == 0) {
-			if (next_arg > argc - 3) {
-				LOGFATAL("\"--wtimedef\" parameter or [FILE] is missing");
-				return -1;
-			}
-			conf.w_sleep_default = strtol(argv[next_arg + 1], NULL, 10);
-			next_arg += 2;
-		} else if (strcmp(argv[next_arg], "--reliable") == 0) {
-			if (next_arg > argc - 2) {
-				LOGFATAL("[FILE] is missing");
-				return -1;
-			}
-			conf.reliable = 1;
-			next_arg += 1;			
-		} else {
-			conf.file = &argv[next_arg];
-			conf.nb_files = argc - next_arg;
-			break;
-		}
+	struct s_option options[] = {
+		{"--path", ARG_TYPE_STRING, (void *)conf.s_path},
+		{"--max", ARG_TYPE_STRING, (void *)&(conf.client_max)},
+		{"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
+		{"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
+		{"--wtimedef", ARG_TYPE_INT, (void *)&(conf.w_sleep_default)},
+		{"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)},
+	};
+
+	struct s_args args = {
+		&(conf.nb_files), &conf.file, options
+	};
+
+	if (jparse_args(argc, argv, &args, 6) != 0) {
+		ERROR("parse_args", -1);
 	}
 
 	return 0;
@@ -358,7 +325,7 @@ int main(int argc, char **argv) {
 
 	conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
 	
-	if (conf.c_socket == NULL){
+	if (conf.c_socket == NULL) {
 		ERROR("malloc", -1);
 	}
 	

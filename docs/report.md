@@ -28,11 +28,18 @@ notification-server [OPTION] [FILE]
 ```
 Available options:
 ```
---path <path> use <path> as connection point for clients
-       	      default is "$HOME/.dazibao-notification-socket"
---max <n>     allow <n> client maximum on server
-      	      default is MAX_CLIENTS (from notification-server.h)
---reliable    enable the reliable mode (use hash instead of ctime to detect file modifications)
+--path <path>  use <path> as connection point for clients
+       	       default is "$HOME/.dazibao-notification-socket"
+--max <n>      allow <n> client maximum on server
+      	       default is MAX_CLIENTS (from notification-server.h)
+--reliable <n> if n = 0, disable the reliable mode, else, enable it
+	       default is 1
+--wtimemin <n> modify minimum waiting time between 2 file checks
+	       default is WATCH_SLEEP_MIN
+--wtimedef <n> modify default waiting time between 2 file checks
+	       default is WATCH_SLEEP_DEFAULT
+--wtimemax <n> modify maximum waiting time between 2 file checks
+	       default is WATCH_SLEEP_MAX
 ```
 NB: Order between options does not matter, but all options have to be written before the file list.
 
