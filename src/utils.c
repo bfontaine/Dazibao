@@ -2,6 +2,28 @@
 #include "utils.h"
 
 /** @file */
+int safe_path(const char * path, int flag_access){
+        struct stat f_path;
+        if (access(path,F_OK | flag_access) == -1) {
+                printf("[utils.c|safe_path]file %s not exist\n",path);
+                return -1;
+        }
+        if(stat(path ,f_path) == -1) {
+                printf("[utils.c|safe_path] error stat \n");
+                return -1;
+        }
+
+        if (!S_ISREG(f_path.st_mode)) {
+                printf("[utils.c|safe_path]file %s not regular\n",path);
+                return -1;
+        }
+
+        if (f_path.st_size > TLV_MAX_VALUE_SIZE) {
+                printf("[utils.c|safe_path]file %s is to large\n",path);
+                return -1;
+        }
+        return 0;
+}
 
 void *safe_realloc(void *ptr, size_t size) {
         void *newptr = realloc(ptr, size);
