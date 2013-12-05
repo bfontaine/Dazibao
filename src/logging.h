@@ -10,7 +10,7 @@
  * Logging utilities for servers
  **/
 
-/** 
+/**
  * global variable used to set the log level. This is set in logging.c but can
  * be changed in another file.
  **/
