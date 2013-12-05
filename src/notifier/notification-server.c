@@ -298,7 +298,7 @@ int parse_arg(int argc, char **argv) {
 		&(conf.nb_files), &conf.file, options
 	};
 
-	if (parse_args(argc, argv, &args, 6) != 0) {
+	if (jparse_args(argc, argv, &args, 6) != 0) {
 		ERROR("parse_args", -1);
 	}
 
@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
 
 	conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
 	
-	if (conf.c_socket == NULL){
+	if (conf.c_socket == NULL) {
 		ERROR("malloc", -1);
 	}
 	

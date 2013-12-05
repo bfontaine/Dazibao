@@ -53,10 +53,10 @@ all: check $(TARGETS)
 $(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NSERVER): $(NSRC)/$(NSERVER).o $(NSRC)/notifutils.o $(NSRC)/notification-server.h
+$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NCLIENT): $(NSRC)/notification-client.o
+$(NCLIENT): $(SRC)/utils.o $(NSRC)/notification-client.o 
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
