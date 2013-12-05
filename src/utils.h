@@ -23,6 +23,20 @@
 /** test if a value is in a range [a,b] */
 #define IN_RANGE(n,a,b) ((a)<=(n) && (n)<=(b))
 
+/* = errors =
+ * see #6     */
+
+/** code for write errors */
+#define DZ_WRITE_ERROR         -1
+/** code for read errors */
+#define DZ_READ_ERROR          -2
+/** code for rights errors */
+#define DZ_RIGHTS_ERROR        -4
+/** code for null pointers errors */
+#define DZ_NULL_POINTER_ERROR  -8
+/** code for memory errors */
+#define DZ_MEMORY_ERROR       -16
+
 /** use 'perror' and exit */
 #define PANIC(str) {                        \
                 PERROR((str));              \
