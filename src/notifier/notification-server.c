@@ -153,13 +153,11 @@ void *watch_file(void *arg) {
 
 int nsa() {
 	int i;
-	int nb = 0;
 	for (i = 0; i < conf.nb_files; i++) {
 		pthread_t thread;
 		pthread_create(&thread, NULL, watch_file, (void *) (conf.file[i]));
-		nb++;
 	}
-	return nb;
+	return 0;
 }
 
 int set_up_server() {
@@ -284,6 +282,27 @@ int parse_arg(int argc, char **argv) {
 			}
 			conf.client_max = strtol(argv[next_arg + 1], NULL, 10);
 			next_arg += 2;
+		} else if (strcmp(argv[next_arg], "--wtimemin") == 0) {
+			if (next_arg > argc - 3) {
+				LOGFATAL("\"--wtimemin\" parameter or [FILE] is missing");
+				return -1;
+			}
+			conf.w_sleep_min = strtol(argv[next_arg + 1], NULL, 10);
+			next_arg += 2;
+		} else if (strcmp(argv[next_arg], "--wtimemax") == 0) {
+			if (next_arg > argc - 3) {
+				LOGFATAL("\"--wtimemax\" parameter or [FILE] is missing");
+				return -1;
+			}
+			conf.w_sleep_max = strtol(argv[next_arg + 1], NULL, 10);
+			next_arg += 2;
+		} else if (strcmp(argv[next_arg], "--wtimedef") == 0) {
+			if (next_arg > argc - 3) {
+				LOGFATAL("\"--wtimedef\" parameter or [FILE] is missing");
+				return -1;
+			}
+			conf.w_sleep_default = strtol(argv[next_arg + 1], NULL, 10);
+			next_arg += 2;
 		} else if (strcmp(argv[next_arg], "--reliable") == 0) {
 			if (next_arg > argc - 2) {
 				LOGFATAL("[FILE] is missing");
@@ -321,19 +340,17 @@ int main(int argc, char **argv) {
 
 	conf.c_socket = mmap(NULL, sizeof(*conf.c_socket) * client_max,
 		PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+	if (conf.c_socket == MAP_FAILED){
+		ERROR("mmap", -1);
+	}
 	memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
 
 	if (set_up_server() == -1) {
-		ERROR("set_up_server", -1);
+		PERROR("set_up_server");
+		goto OUT;
 	}
 
 	LOGINFO("Server set up");
-
-	int nc = nsa();
-	if (nc != conf.nb_files) {
-		LOGWARN("%d file(s) could not be watched",
-			conf.nb_files - nc)
-	}
 	
 	while (1) {
 		if (accept_client() < 0) {
@@ -341,7 +358,7 @@ int main(int argc, char **argv) {
 			continue;
 		}
 	}
-
+OUT:
 	munmap(conf.c_socket, sizeof(*conf.c_socket) * conf.client_max);
 
 	return 0;
