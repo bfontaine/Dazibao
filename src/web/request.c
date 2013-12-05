@@ -51,8 +51,8 @@ int destroy_http_request(struct http_request *req) {
 int parse_request(int sock, struct http_request *req) {
         char *line,
              *mth_str,
-             status_fmt[] = "%" HTTP_MAX_MTH_LENGTH_S "s " \
-                            "%" HTTP_MAX_PATH_S "s HTTP/%*s";
+             status_fmt[] = "%" STR(HTTP_MAX_MTH_LENGTH) "s " \
+                            "%" STR(HTTP_MAX_PATH) "s HTTP/%*s";
 
         int linelen,
             eoh = 0,
@@ -61,15 +61,15 @@ int parse_request(int sock, struct http_request *req) {
             status = 0;
 
         if (req == NULL) {
+                LOGDEBUG("Got a NULL req struct");
                 return -1;
         }
 
         line = next_header(sock, &eoh); /* First line */
         if (line == NULL || eoh) {
                 LOGWARN("Cannot get the first header line (eoh=%d)", eoh);
-                next_header(-1, NULL);
-                free(line);
-                return HTTP_S_BADREQ;
+                status = HTTP_S_BADREQ;
+                goto EOPARSING;
         }
 
         linelen = strlen(line);
@@ -78,9 +78,8 @@ int parse_request(int sock, struct http_request *req) {
                                 MIN(HTTP_MAX_MTH_LENGTH, linelen)+1));
         if (mth_str == NULL) {
                 perror("malloc");
-                NFREE(line);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
+                status = HTTP_S_BADREQ;
+                goto EOPARSING;
         }
 
         if (req->path == NULL) {
@@ -89,10 +88,9 @@ int parse_request(int sock, struct http_request *req) {
         }
         if (req->path == NULL) {
                 perror("malloc");
-                NFREE(line);
                 NFREE(mth_str);
-                next_header(-1, NULL);
-                return HTTP_S_BADREQ;
+                status = HTTP_S_BADREQ;
+                goto EOPARSING;
         }
 
         if (sscanf(line, status_fmt, mth_str, req->path) < 2) {
@@ -156,14 +154,14 @@ int parse_request(int sock, struct http_request *req) {
         req->body_len = strtol(req->headers->headers[HTTP_H_CONTENT_LENGTH],
                                 NULL, 10);
 
-        if (!IN_RANGE(req->body_len, 1, INT_MAX)) {
-                LOGERROR("Got malformed content length header");
+        if (!IN_RANGE(req->body_len, 0, INT_MAX)) {
+                LOGERROR("Got no or malformed Content-Length header");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;
         }
 
         /* request body */
-        req->body = (char*)malloc(sizeof(char)*(req->body_len));
+        req->body = (char*)malloc(sizeof(char)*(MAX(req->body_len, eoh)));
         if (req->body == NULL) {
                 LOGERROR("Cannot alloc for the request body");
                 perror("malloc");
@@ -184,6 +182,7 @@ int parse_request(int sock, struct http_request *req) {
                 goto MALFORMED;
         }
 
+        next_header(-1, NULL);
         return 0;
 
 MALFORMED:
@@ -300,6 +299,7 @@ RETURN_LINE:
                 return line;
         }
         line[i] = '\0';
+        LOGDEBUG("[header line] %s", line);
         return line;
 }
 

@@ -37,12 +37,6 @@ struct wserver_info WSERVER;
 /** The maximum length of a local file path */
 #define MAX_FILE_PATH_LENGTH 256
 
-/**
- * Wrapper around write(2) to write the whole buffer instead of (sometimes)
- * only a part of it.
- **/
-int write_all(int fd, char *buff, int len);
-
 /* = Other helpers = */
 
 /** default extension of a JPEG image */
