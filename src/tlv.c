@@ -10,7 +10,7 @@
 /**
  * Convert {n} in dazibao's endianess
  * and set {tlv}'s length field with the converted value.
- * @param n length wanted
+ * @param n wanted length
  * @param tlv tlv receiving length
  * @deprecated use tlv_set_length instead
  **/

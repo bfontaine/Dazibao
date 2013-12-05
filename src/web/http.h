@@ -140,16 +140,26 @@ struct http_headers {
 /**
  * Test if the c-th and (c+1)th characters of a string represent an HTTP end of
  * line (CRLF). Returns 1 or 0.
+ * @param s the string
+ * @param c the index to check for a CRLF at
+ * @param len the length of the string
+ * @return 1 if there're at least two chars at the given index, the first one
+ * being a CR and the second one an LF, or 0.
+ * @see CR
+ * @see LF
  **/
 char is_crlf(char *s, int c, int len);
 
 /**
  * Get the code for an HTTP header. Return a negative value on error.
+ * @param str the HTTP header string
+ * @return -1 on error, the code of the the header on success
  **/
 int get_http_header_code(char *str);
 
 /**
  * Get the HTTP header for a code. Return NULL on error.
+ * @param code the code of the header
  **/
 char *get_http_header_str(int code);
 

@@ -60,36 +60,41 @@ typedef char* tlv_t;
 /**
  * Initialize a TLV. If the TLV was previously initialized/filled, call
  * tlv_destroy on it before calling this function.
+ * @param t the TLV to init
+ * @return 0 on success
  **/
 int tlv_init(tlv_t *t);
 
 /**
  * Destroy a TLV.
+ * @param t the TLV to destroy
+ * @return 0 on success
  **/
 int tlv_destroy(tlv_t *t);
 
 /**
+ * Return the type of a TLV
  * @param tlv
  * @return type of tlv
  **/
 int tlv_get_type(tlv_t tlv);
 
 /**
- * Set type of a tlv.
- * @param tlv tlv whose type has to be set
+ * Set the type of a TLV
+ * @param tlv TLV whose type has to be set
  * @param t type to set
  **/
 void tlv_set_type(tlv_t *tlv, char t);
 
 /**
- * Set length of a tlv.
- * @param tlv tlv whose length has to be set
+ * Set length of a TLV.
+ * @param tlv TLV whose length has to be set
  * @param n length to set
  **/
 void tlv_set_length(tlv_t *tlv, unsigned int n);
 
 /**
- * Get the adress of a tlv length.
+ * Get the adress of the length of a TLV
  * @param tlv
  * @return a pointer to the length field of tlv
  **/
@@ -98,7 +103,7 @@ tlv_t tlv_get_length_ptr(tlv_t tlv);
 /**
  * Get length of a tlv.
  * @param tlv tlv whose length is asked
- * @return value of tlv's length
+ * @return value of TLV's length
  **/
 unsigned int tlv_get_length(tlv_t tlv);
 
@@ -110,29 +115,25 @@ unsigned int tlv_get_length(tlv_t tlv);
 tlv_t tlv_get_value_ptr(tlv_t tlv);
 
 /**
- * Write a tlv.
+ * Write a TLV.
  * Offset of {fd} when returning is unspecified.
  * @param tlv tlv to write
  * @param fd file descriptor where tlv is written
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int tlv_write(tlv_t tlv, int fd);
 
 /**
- * Read a tlv value.
- * Offset of {fd} when returning is set after the value read on success, and
- * unspecified on error.
+ * Read a TLV value.
  * @param tlv tlv to write
  * @param fd file descriptor from which value is read
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int tlv_read(tlv_t *tlv, int fd);
 
 /**
- * Write a whole tlv in a file
- * @param tlv tlv to write
+ * Write a whole TLV in a file
+ * @param tlv TLV to write
  * @param fd file descriptor where you want to dump
  * @return same as write(2)
  **/
@@ -140,15 +141,17 @@ int dump_tlv(tlv_t tlv, int fd);
 
 
 /**
- * Write the value of a tlv in a file
- * @param tlv tlv containing the value
+ * Write the value of a TLV in a file
+ * @param tlv TLV containing the value
  * @param fd file descriptor where you want to dump
- * @return same as write(2)
+ * @return same value as as write(2)
  **/
 int dump_tlv_value(tlv_t tlv, int fd);
 
 /**
  * Return a string representation for a TLV type
+ * @param tlv_type the type
+ * @return a string representation of this type
  **/
 const char *tlv_type2str(char tlv_type);
 
