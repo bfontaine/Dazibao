@@ -178,6 +178,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                 for (i = 0; i < argc; i++) {
                         if (args > 0) {
                                 flag_depth = i;
+                                args--;
                         } else if ((!strcmp(argv[i],"--depth") ||
                                 !strcmp(argv[i],"-d")) && (flag_depth < 1)) {
                                 flag_depth = 1;
@@ -185,12 +186,19 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                         } else if ((!strcmp(argv[i],"--debug") ||
                                 !strcmp(argv[i],"-D")) && (flag_debug != 1)) {
                                 flag_debug = 1;
+                        } else if ((!strcmp(argv[i],"-dD") || 
+                                !strcmp(argv[i],"-Dd")) && (flag_depth < 1)
+                                && (flag_debug)) {
+                                flag_debug = 1;
+                                flag_depth = 1;
+                                args = 1;
                         } else {
                                 /* TODO args[i] is not option and args
                                         or already use
                                         ERROR
                                 */
-                                printf("cmd_dump arg failed\n");
+                                printf("[main|cmd_dump] arg failed"
+                                ":%s\n",argv[i]);
                                 return -1;
                         }
 
@@ -300,15 +308,9 @@ int main(int argc, char **argv) {
         daz = argv[argc -1];
 
         /* recover tab option and args */
-        int argc_cmd = argc-3;
-        char **argv_cmd = malloc(sizeof(char *)* argc_cmd);
-        if (argc > 3) {
-                int i ;
-                for (i = 0; i < argc_cmd ;i++) {
-                        argv_cmd[i] = argv[i+2];
-                }
-        } else {
-                free(argv_cmd);
+        int argc_cmd = argc - 3;
+        char **argv_cmd = argv + 2;
+        if (argc_cmd == 0) {
                 argc_cmd = 0;
                 argv_cmd = NULL;
         }
@@ -344,7 +346,6 @@ int main(int argc, char **argv) {
                 print_usage();
                 exit(EXIT_FAILURE);
         }
-        free(argv_cmd);
 
         exit(EXIT_SUCCESS);
 }
