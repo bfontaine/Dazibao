@@ -338,11 +338,12 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	conf.c_socket = mmap(NULL, sizeof(*conf.c_socket) * client_max,
-		PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-	if (conf.c_socket == MAP_FAILED){
+	conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
+	
+	if (conf.c_socket == NULL){
 		ERROR("mmap", -1);
 	}
+	
 	memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
 
 	if (set_up_server() == -1) {
@@ -359,7 +360,7 @@ int main(int argc, char **argv) {
 		}
 	}
 OUT:
-	munmap(conf.c_socket, sizeof(*conf.c_socket) * conf.client_max);
+	free(conf.c_socket);
 
 	return 0;
 }
