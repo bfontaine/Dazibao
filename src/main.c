@@ -37,16 +37,16 @@ int cmd_add(int argc, char **argv, char * daz) {
                                 - exist fic
                                 - exist type TLV fic
                         */
-                } else if (!strcmp(argv[i],"--date") ||
-                        !strcmp(argv[i],"-d") || flag_date != 1) {
+                } else if ((!strcmp(argv[i],"--date") ||
+                        !strcmp(argv[i],"-d")) && (flag_date != 1)) {
                         flag_date = 1;
-                } else if (!strcmp(argv[i],"--dazibao") ||
-                        !strcmp(argv[i],"-D") || flag_dazibao != 1) {
+                } else if ((!strcmp(argv[i],"--dazibao") ||
+                        !strcmp(argv[i],"-D")) && (flag_dazibao != 1)) {
                         flag_dazibao = 1;
                         /* add check to args fic tlv */
                         args = argc - i -1;
-                } else if (!strcmp(argv[i],"--compound") ||
-                        !strcmp(argv[i],"-c") || flag_compound != 1) {
+                } else if ((!strcmp(argv[i],"--compound") ||
+                        !strcmp(argv[i],"-c")) && (flag_compound != 1)) {
                         flag_compound = 1;
                         /* add check to args fic dazibao */
                         args = 1;
