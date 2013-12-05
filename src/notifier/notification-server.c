@@ -154,12 +154,27 @@ void *watch_file(void *arg) {
 
 int nsa() {
 	int i;
+	pthread_attr_t attr;
+
+	if (pthread_attr_init(&attr) != 0) {
+		ERROR("pthread_attr_init", -1);
+	}
+	
+	if (pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED) != 0) {
+		ERROR("pthread_attr_setdetachstate", -1);
+	}
+
 	for (i = 0; i < conf.nb_files; i++) {
 		pthread_t thread;
-		if (pthread_create(&thread, NULL, watch_file, (void *) (conf.file[i])) != 0) {
+		if (pthread_create(&thread, &attr, watch_file, (void *) (conf.file[i])) != 0) {
 			PERROR("pthread_create");
 		}
 	}
+
+	if (pthread_attr_destroy(&attr) != 0) {
+		PERROR("pthread_attr_destroy");
+	}
+
 	return 0;
 }
 
