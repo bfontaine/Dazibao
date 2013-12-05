@@ -2,8 +2,10 @@
 
 /** @file */
 
+#ifndef BUFFLEN
 /** buffer length used by various functions */
 #define BUFFLEN 128
+#endif
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
