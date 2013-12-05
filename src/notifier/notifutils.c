@@ -51,3 +51,34 @@ uint32_t qhashmurmur3_32(const void *data, size_t nbytes)
 
 	return h;
 }
+
+int parse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
+
+	int next_arg = 1;
+
+	while (next_arg < argc) {
+		char is_opt = 0;
+		int i;
+		for (i = 0; i < nb_opt; i++) {
+			if (strcmp(argv[next_arg], res->options[i].name) == 0) {
+				if (next_arg > argc - 2) {
+					fprintf(stderr, "\"%s\" parameter is missing.\n",
+						res->options[i].name);
+					return -1;
+				}
+				is_opt = 1;
+				res->options[i].value = (void *)argv[next_arg + 1];
+				next_arg += 2;
+				break;
+			}
+		}
+		
+		if (!is_opt) {
+			*res->argc = argc - next_arg;
+			*(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;
+			break;
+		}
+	}
+
+	return 0;
+}
