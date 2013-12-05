@@ -1,91 +1,139 @@
 #ifndef _HTTP_H
 #define _HTTP_H 1
 
-#include "utils.h"
+/** @file
+ * Utilities to work with the HTTP protocol
+ **/
 
+/** a "CR" character (carriage return) */
 #define CR 13
+
+/** a "LF" character (linefeed) */
 #define LF 10
 
+/** version of HTTP used by the server */
 #define HTTP_VERSION "1.0"
 
 /* Methods */
+/** code for a GET method */
 #define HTTP_M_GET 1
+/** code for a POST method */
 #define HTTP_M_POST 2
-#define HTTP_M_UNSUPPORTED 4
+/** code for a HEAD method */
+#define HTTP_M_HEAD 4
+/** code for an unsupported method */
+#define HTTP_M_UNSUPPORTED 8
 
+/**
+ * code for GET and POST methods. This is used when a route is registered for
+ * both GET and POST methods
+ **/
 #define HTTP_M_ANY (HTTP_M_GET|HTTP_M_POST)
 
 /* Statuses
  *  Not all statuses are included here, only those we might need to use.
  */
 
+/**
+ * An HTTP status
+ **/
 struct http_status {
+        /** The code of the status, e.g.: 200 **/
         int code;
+
+        /** The phrase of the status, used in server responses, e.g.: "OK" **/
         char *phrase;
 };
 
 /* 2XX (success) */
+/** "OK" HTTP status */
 #define HTTP_S_OK            200
+/** 201 HTTP status */
 #define HTTP_S_CREATED       201
+/** 204 HTTP status */
 #define HTTP_S_NO_CT         204
+/** 205 HTTP status */
 #define HTTP_S_RESET_CT      205
 
 /* 3XX (redirections) */
+/** 300 HTTP status */
 #define HTTP_S_MLTPL_CHOICES 300
+/** 301 HTTP status */
 #define HTTP_S_MOVED         301
+/** 302 HTTP status */
 #define HTTP_S_FOUND         302
 
 /* 4XX (client errors) */
+/** 400 HTTP status */
 #define HTTP_S_BADREQ        400
+/** 403 HTTP status */
 #define HTTP_S_FORBIDDEN     403
+/** 404 HTTP status */
 #define HTTP_S_NOTFOUND      404
+/** 405 HTTP status */
 #define HTTP_S_NOTALLOWED    405
+/** 409 HTTP status */
 #define HTTP_S_CONFLICT      409
+/** 411 HTTP status */
 #define HTTP_S_LENGTHREQD    411
+/** 415 HTTP status */
 #define HTTP_S_URITOOLONG    414
 
 /* 5XX (server errors) */
+/** generic server error HTTP status */
 #define HTTP_S_ERR           500
+/** "Not Implemented" HTTP status */
 #define HTTP_S_NOTIMPL       501
+/** "Unsupported Version" HTTP status */
 #define HTTP_UNSUPP_VER      505
 
 /* Headers internal codes
  *
  * headers will be stored in an array, so we're using small codes to access
  * each header. */
+/** code for a "Content-Type" HTTP header */
 #define HTTP_H_CONTENT_TYPE   0
+/** code for a "Content-Length" HTTP header */
 #define HTTP_H_CONTENT_LENGTH 1
 
+/** code for an "Host" HTTP header */
 #define HTTP_H_HOST           2
+/** code for an "User-Agent" HTTP header */
 #define HTTP_H_UA             3
 
+/** code for an "Allow" HTTP header */
 #define HTTP_H_ALLOW          4
+/** code for a "Date" HTTP header */
 #define HTTP_H_DATE           5
+/** code for a "Server" HTTP header */
 #define HTTP_H_SERVER         6
+/** code for an "X-Powered-By" HTTP header */
 #define HTTP_H_POWEREDBY      7
+/** code for an "Accept" HTTP header */
 #define HTTP_H_ACCEPT         8
-
-/* Helpful constants */
-#define HTTP_CT_HTML "text/html; charset=utf-8"
-#define HTTP_CT_PNG "image/png"
-#define HTTP_CT_JPEG "image/jpeg"
-
-#define HTTP_CT_CSS "text/css"
-#define HTTP_CT_JS  "application/javascript"
+/** code for an "If-Modified-Since" HTTP header */
+#define HTTP_H_IFMODIFSINCE   9
+/** code for a "Last Modified" HTTP header */
+#define HTTP_H_LASTMODIF     10
 
 /* arbitrary extentions/limits */
+/** maximum number of HTTP headers in a request/response */
 #define HTTP_MAX_HEADERS 16
+/** maximum size of an HTTP header name field */
 #define HTTP_MAX_HEADER_NAME_LENGTH 64
+/** maximum size of an HTTP header value field */
 #define HTTP_MAX_HEADER_VALUE_LENGTH 512
+/** maximum path in an HTTP request */
 #define HTTP_MAX_PATH 512
+/** maximum length of a method in an HTTP request */
 #define HTTP_MAX_MTH_LENGTH 16
 
-/* defined for easier formating strings */
-#define HTTP_MAX_MTH_LENGTH_S "16"
-#define HTTP_MAX_PATH_S "512"
+/** Format used for HTTP dates */
+#define HTTP_DATE_FMT "%a, %d %b %Y %T GMT"
 
-/* Headers */
+/** A list of HTTP headers */
 struct http_headers {
+        /** the list of headers */
         char **headers;
 };
 
@@ -119,7 +167,7 @@ int http_init_headers(struct http_headers *hs);
  *
  * Please also note that only a small set of HTTP headers are supported
  **/
-int http_add_header(struct http_headers *hs, int code, char *value,
+int http_add_header(struct http_headers *hs, int code, const char *value,
             char overr);
 
 /**

@@ -1,7 +1,11 @@
 #include "main.h"
 #include "dazibao.h"
+#include <limits.h>
 #include <locale.h>
 
+/** @file */
+
+/** buffer size used in various functions */
 #define BUFFSIZE 512
 
 int cmd_add(int argc, char **argv, char * daz) {
@@ -12,7 +16,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                 long tmp_type;
 
                 tmp_type = strtol(argv[0], NULL, 10);
-                if (STRTOL_ERR(tmp_type)) {
+                if (!IN_RANGE(tmp_type, 1, 256)) {
                         printf("unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
@@ -127,7 +131,7 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 
         long off = strtol(argv[argc - 1], NULL, 10);
 
-        if (STRTOL_ERR(off)) {
+        if (off < DAZIBAO_HEADER_SIZE ) {
                 printf("wrong offset\n");
                 return -1;
         }
@@ -152,9 +156,6 @@ int action_dump(char *daz, int flag_debug, int flag_depth) {
                 exit(EXIT_FAILURE);
         }
 
-        /* option dump compound with limited depth
-          TODO add option debug
-        */
         if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
                 printf("dump failed\n");
                 dz_close(&daz_buf);
@@ -186,7 +187,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                         } else if ((!strcmp(argv[i],"--debug") ||
                                 !strcmp(argv[i],"-D")) && (flag_debug != 1)) {
                                 flag_debug = 1;
-                        } else if ((!strcmp(argv[i],"-dD") || 
+                        } else if ((!strcmp(argv[i],"-dD") ||
                                 !strcmp(argv[i],"-Dd")) && (flag_depth < 1)
                                 && (flag_debug)) {
                                 flag_debug = 1;
@@ -212,8 +213,8 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                 }
                 if (flag_depth > 0) {
                         flag_depth = strtol(argv[flag_depth], NULL, 10);
-                        if (STRTOL_ERR(flag_depth)) {
-                                printf("wrong depth");
+                        if (flag_depth >= 0) {
+                                printf("unrecognized depth\n");
                                 return -1;
                         }
                 }

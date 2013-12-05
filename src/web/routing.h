@@ -1,12 +1,21 @@
 #ifndef _ROUTING_H
 #define _ROUTING_H 1
 
+/** @file
+ * Routing utilities
+ **/
+
 #include "request.h"
 #include "response.h"
 #include "dazibao.h"
 #include "http.h"
 
+/** maximum number of routes of the server */
 #define MAX_ROUTES 16
+/** default route to use when a client request the root ("/") */
+#define DEFAULT_ROOT_ROUTE "/index.html"
+/** directory used to search for static files */
+#define PUBLIC_DIR "public_html"
 
 /**
  * Type of a route handler. This a pointer to a function which returns an int
@@ -28,9 +37,26 @@ typedef int (*route_handler)(dz_t, struct http_request, struct http_response*);
 int add_route(char mth, char *path_suffix, route_handler route);
 
 /**
- * Return a route handler for a method and a path.
+ * code returned by get_route_handler when the request method is wrong.
+ * @see get_route_handler
  **/
-route_handler get_route_handler(char mth, char *path);
+#define ROUTING_WRONG_MTH 1
+/**
+ * code returned by get_route_handler when the requested path is wrong.
+ * @see get_route_handler
+ **/
+#define ROUTING_WRONG_PATH 2
+
+/**
+ * Return a route handler for a method and a path.
+ * @param mth the method
+ * @param path the path
+ * @status if not NULL and the route handler cannot be found, it'll be filled
+ * with either ROUTING_WRONG_MTH (good path but wrong method) or
+ * ROUTING_WRONG_PATH (wrong path).
+ * @return the route handler if there's one, or NULL
+ **/
+route_handler get_route_handler(char mth, char *path, int *status);
 
 /**
  * Route a request, i.e. find the matching route and accordingly respond to the
@@ -46,10 +72,22 @@ int route_request(int sock, dz_t dz, struct http_request *req);
 int destroy_routes(void);
 
 /**
+ * Search for a file in PUBLIC_DIR which matches the given path. If so, serve
+ * the file through 'sock'. The function returns 0 on success, -1 on failure.
+ **/
+int file_response(int sock, struct http_request *req);
+
+/**
  * Send an HTTP response 'resp' on the socket 'sock', and free all memory for
  * the 'resp' struct. Returns 0 on success, -1 on error.
  **/
 int http_response(int sock, struct http_response *resp);
+
+/**
+ * Same as http_response, but let you choose if you want to free the 'resp'
+ * struct with 'free_resp'.
+ **/
+int http_response2(int sock, struct http_response *resp, char free_resp);
 
 /**
  * Send an HTTP error status ('status', as defined in http.h) in a socket

@@ -1,55 +1,49 @@
 #ifndef _WEBUTILS_H
 #define _WEBUTILS_H 1
 
+/** @file
+ * Utilities for the Web server
+ **/
+
+#include "utils.h"
+#include <time.h>
+
 /* = Global server properties = */
+
+/**
+ * A struct used to store a server's properties
+ **/
 struct wserver_info {
+        /** port the server is listening on **/
         int port;
-        char debug;     /* Debug mode */
+        /** debug mode (used to serve Pad1s and PadNs) */
+        char debug;
+        /** hostname of the server */
         char *hostname;
+        /** current Dazibao prettified name */
         char *dzname;
-} WSERVER;
-
-/* = Logging = */
-
-/* this is set in webutils.c but can be changed in another file. */
-extern int _wlog_level;
-
-#define WLOG_LVL_DEBUG  50
-#define WLOG_LVL_INFO   40
-#define WLOG_LVL_WARN   30
-#define WLOG_LVL_ERROR  20
-#define WLOG_LVL_FATAL  10
-
-/* Don't use this macro directly */
-#define _WLOG(lvl, s, fmt, ...) { \
-        if ((lvl) <= (_wlog_level)) { \
-        printf("[%5s][%-17s:%20s:%03d] " fmt "\n", \
-                        s, __FILE__, __func__, __LINE__, ##__VA_ARGS__); }}
-
-/* Use these instead.
- * Examples:
- *      WLOGDEBUG("yo");
- *      WLOGERROR("2+2=%d", 5);
- *
- * Don't put a \n at the end of the format string */
-#define WLOGDEBUG(fmt, ...) _WLOG(WLOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
-#define WLOGINFO(fmt, ...)  _WLOG(WLOG_LVL_INFO,  "INFO", fmt, ##__VA_ARGS__)
-#define WLOGWARN(fmt, ...)  _WLOG(WLOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
-#define WLOGERROR(fmt, ...) _WLOG(WLOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
-#define WLOGFATAL(fmt, ...) _WLOG(WLOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
+        /** path of the current Dazibao */
+        char *dzpath;
+        /** name of the server */
+        char *name;
+};
+/**
+ * A global struct used to store the server's properties
+ **/
+struct wserver_info WSERVER;
 
 /* = I/O = */
 
-/**
- * Wrapper around write(2) to write the whole buffer instead of (sometimes)
- * only a part of it.
- **/
-int write_all(int fd, char *buff, int len);
+/** The maximum length of a local file path */
+#define MAX_FILE_PATH_LENGTH 256
 
 /* = Other helpers = */
 
+/** default extension of a JPEG image */
 #define JPEG_EXT ".jpg"
+/** default extension of a PNG image */
 #define PNG_EXT  ".png"
+/** default extension of a file */
 #define DEFAULT_EXT ""
 
 /**
@@ -58,5 +52,11 @@ int write_all(int fd, char *buff, int len);
  * the TLV type cannot be found.
  **/
 int get_image_tlv_type(const char *path);
+
+/**
+ * Return a string representing a given GMT date. 'secs' is the number of
+ * seconds since the Epoch, or -2 if you want the current date.
+ **/
+char *gmtdate(time_t secs);
 
 #endif

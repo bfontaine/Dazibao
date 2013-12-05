@@ -1,6 +1,11 @@
 #include "dazibao.h"
 
+/** @file */
+
+#ifndef BUFFLEN
+/** buffer length used by various functions */
 #define BUFFLEN 128
+#endif
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
@@ -71,8 +76,11 @@ int dz_open(dz_t *d, char *path, int flags) {
 	}
 
 	if (header[0] != MAGIC_NUMBER || header[1] != 0) {
-		/* FIXME: calling perror makes no sense here... */
-		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+		fprintf(stderr, "Wrong dazibao header");
+                if (close(fd) == -1) {
+                        perror("close");
+                }
+                return -1;
 	}
 
 	*d = fd;
@@ -381,9 +389,10 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
 	    	/* set type */
                 tlv_set_type(&buff, TLV_PADN);
     		/* set length */
-	    	htod(length - TLV_SIZEOF_HEADER, tlv_get_length_ptr(buff));
+                tlv_set_length(&buff, length - TLV_SIZEOF_HEADER);
 
-	    	if(dz_write_tlv_at(d, buff, start) == 1) {
+            	if(dz_write_tlv_at(d, buff, start) == -1) {
+                        free(buff);
                         ERROR(NULL, -1);
                 }
                 start = start + length;
@@ -509,25 +518,23 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
         off_t off;
         char *ind;
         if (indent > 0) {
-                ind = malloc(sizeof(char)*indent+1);
-                int i;
-                for(i = 0; i < indent; i++) {
-                        ind[i] = '\t';
-                }
+                ind = malloc(sizeof(char)*(indent+1));
+                memset(ind, '\t', indent-1);
                 ind[indent]='\0';
         } else {
-                ind = malloc(sizeof(char)*1);
-                ind[0]='\0';
+                ind = strdup("");
         }
 	
-        while (((off = dz_next_tlv(daz_buf, &tlv)) != end ) && (off != EOD)) {
+        while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
                 int tlv_type, len;
+                const char *tlv_str;
 
-                printf("%s",ind);
+                printf("%s", ind);
 
                 tlv_type = tlv_get_type(tlv);
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-                const char *tlv_str = tlv_type2str((char) tlv_type);
+
+                tlv_str = tlv_type2str((char) tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
                         || (flag_debug == 1)) {
@@ -566,7 +573,7 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                 }
 
         }
-        if (indent < 0 ) {
+        if (indent < 0) {
                 free(ind);
         }
 	free(tlv);

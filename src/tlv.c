@@ -5,7 +5,16 @@
 #include "utils.h"
 #include "tlv.h"
 
-void htod(unsigned int n, char *len) {
+/** @file */
+
+/**
+ * Convert {n} in dazibao's endianess
+ * and set {tlv}'s length field with the converted value.
+ * @param n length wanted
+ * @param tlv tlv receiving length
+ * @deprecated use tlv_set_length instead
+ **/
+static void htod(unsigned int n, char *len) {
 	union {
 		unsigned int i;
 		unsigned char c[4];
@@ -14,7 +23,13 @@ void htod(unsigned int n, char *len) {
 	memcpy(len, &tmp.c[1], 3);
 }
 
-unsigned int dtoh(char *len) {
+/**
+ * Convert an int written in dazibao's endianess to host endianess.
+ * @param len int using dazibao's endianess
+ * @return value of length
+ * @deprecated use get_length
+ **/
+static unsigned int dtoh(char *len) {
 	unsigned char *tmp = (unsigned char *)len;
 	return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
@@ -69,7 +84,7 @@ char *tlv_get_value_ptr(tlv_t tlv) {
 
 int tlv_write(tlv_t tlv, int fd) {
 	unsigned int to_write = TLV_SIZEOF(tlv);
-        int status = write(fd, tlv, to_write);
+        int status = write_all(fd, tlv, to_write);
 	if (status == -1 || (unsigned int)status != to_write) {
 		ERROR("write", -1);
 	}

@@ -5,6 +5,9 @@
 #include "utils.h"
 #include "webutils.h"
 
+/** @file */
+
+/** array containing all HTTP statuses with their code and phrase */
 static const struct http_status http_statuses[] = {
         { HTTP_S_OK            , "OK"                    },
         { HTTP_S_CREATED       , "Created"               },
@@ -27,9 +30,12 @@ static const struct http_status http_statuses[] = {
         { HTTP_S_NOTIMPL       , "Not Implemented"       },
         { HTTP_UNSUPP_VER      , "Version Not Supported" }
 };
+
+/** length of http_statuses */
 static const int http_statuses_len =
                 sizeof(http_statuses)/sizeof(struct http_status);
 
+/** supported HTTP headers strings */
 static const char *headers_strs[] = {
         /* HTTP_H_CONTENT_TYPE   0 */
         "Content-Type",
@@ -48,7 +54,11 @@ static const char *headers_strs[] = {
         /* HTTP_H_POWEREDBY      7 */
         "X-Powered-By",
         /* HTTP_H_ACCEPT         8 */
-        "Accept"
+        "Accept",
+        /* HTTP_H_IFMODIFSINCE   9 */
+        "If-Modified-Since",
+        /* HTTP_H_LASTMODIF     10 */
+        "Last-Modified"
 };
 
 char is_crlf(char *s, int c, int len) {
@@ -56,10 +66,16 @@ char is_crlf(char *s, int c, int len) {
 }
 
 int get_http_header_code(char *str) {
+        unsigned int len;
         if (str == NULL) {
                 return -2;
         }
+        len = strlen(str);
+
         for (int i=0; i<HTTP_MAX_HEADERS && headers_strs[i] != NULL; i++) {
+                if (strlen(headers_strs[i]) != len) {
+                        continue;
+                }
                 if (strcasecmp(headers_strs[i], str) == 0) {
                     return i;
                 }
@@ -96,6 +112,9 @@ int http_mth(char *s) {
         if (strcasecmp(s, "POST") == 0) {
                 return HTTP_M_POST;
         }
+        if (strcasecmp(s, "HEAD") == 0) {
+                return HTTP_M_HEAD;
+        }
         return HTTP_M_UNSUPPORTED;
 }
 
@@ -116,7 +135,7 @@ int http_init_headers(struct http_headers *hs) {
         return 0;
 }
 
-int http_add_header(struct http_headers *hs, int code, char *value,
+int http_add_header(struct http_headers *hs, int code, const char *value,
                                 char overr) {
         if (hs == NULL || hs->headers == NULL || code < 0
                         || code > HTTP_MAX_HEADERS || value == NULL) {
@@ -125,11 +144,11 @@ int http_add_header(struct http_headers *hs, int code, char *value,
 
         if (hs->headers[code] != NULL) {
                 if (!overr) {
-                        WLOGDEBUG("Cannot override header %d with '%s'",
+                        LOGDEBUG("Cannot override header %d with '%s'",
                                         code, value);
                         return -1;
                 }
-                WLOGDEBUG("Overriding header %d (%s) with '%s'",
+                LOGDEBUG("Overriding header %d (%s) with '%s'",
                                 code, hs->headers[code], value);
                 NFREE(hs->headers[code]);
         }

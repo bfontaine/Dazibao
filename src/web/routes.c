@@ -9,47 +9,51 @@
 #include "http.h"
 #include "html.h"
 
+/** @file */
+
+/** route for GET /index.html */
 int route_get_index(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
-        if (strcmp(req.path, "/index.html") != 0 || dz <= 0
-                        || req.method != HTTP_M_GET) {
-                WLOGERROR("get_index - got wrong path '%s' and/or wrong " \
+        if (strcmp(req.path, "/index.html") != 0 || dz <= 0) {
+                LOGERROR("get_index - got wrong path '%s' and/or wrong " \
                                 "dz=%d and/or wrong method %d.",
                                 req.path, dz, req.method);
                 return -1;
         }
 
-        if (dz2html(dz, resp->body) < 0) {
-                WLOGERROR("Error while making dazibao's HTML");
-                return -1;
+        if (req.method != HTTP_M_HEAD) {
+                if (dz2html(dz, resp->body) < 0) {
+                        LOGERROR("Error while making dazibao's HTML");
+                        return -1;
+                }
+
+                resp->body_len = strlen(*(resp->body));
+        } else {
+                resp->body_len = -1;
         }
 
-        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE, HTTP_CT_HTML, 1);
-
-        resp->body_len = strlen(*(resp->body));
         resp->status = HTTP_S_OK;
-
         return 0;
 }
 
+/** route for GET /tlv/.* */
 int route_get_image_tlv(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
         tlv_t *tlv;
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
-        char *ct;
 
-        if (dz <= 0 || req.method != HTTP_M_GET) {
-                WLOGERROR("get_image_tmpv - got wrong dz or method (%d)",
-                                req.method);
+        if (dz <= 0) {
+                LOGERROR("got wrong dz or method (dz=%d, m=%d)",
+                                dz, req.method);
                 return -1;
         }
 
         tlv = (tlv_t*)malloc(sizeof(tlv_t));
         if (tlv_init(tlv) == -1) {
-                WLOGERROR("Cannot allocate memory for a TLV");
+                LOGERROR("Cannot allocate memory for a TLV");
                 tlv_destroy(tlv);
                 return -1;
         }
@@ -57,61 +61,107 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         tlv_type = get_image_tlv_type(req.path);
 
         if (tlv_type == -1) {
-                WLOGERROR("Cannot get the TLV type from '%s'", req.path);
+                LOGERROR("Cannot get the TLV type from '%s'", req.path);
                 tlv_destroy(tlv);
                 return -1;
         }
 
+        /* We assume that we use only .png and .jpg (not .jpeg) */
         if (sscanf(req.path, "/tlv/%16lu.%*3s", &off) == 0) {
-                WLOGERROR("Cannot parse the request path");
+                LOGERROR("Cannot parse the request path");
                 tlv_destroy(tlv);
                 return -1;
         }
         if (off < DAZIBAO_HEADER_SIZE) {
-                WLOGERROR("Wrong offset (%lu)", off);
+                LOGERROR("Wrong offset (%lu < dazibao header size)", off);
                 tlv_destroy(tlv);
                 return -1;
         }
 
         if (dz_tlv_at(&dz, tlv, off) == -1) {
-                WLOGERROR("Cannot read TLV at offset %lu", off);
+                LOGERROR("Cannot read TLV at offset %lu", off);
                 tlv_destroy(tlv);
                 return -1;
         }
 
         tlv_real_type = tlv_get_type(*tlv);
         if (tlv_real_type != tlv_type) {
-                WLOGERROR("Wrong TLV type. Expected %d, got %d",
+                LOGERROR("Wrong TLV type. Expected %d, got %d",
                                 tlv_type, tlv_real_type);
                 tlv_destroy(tlv);
                 return -1;
         }
 
-        resp->body_len = tlv_get_length(*tlv);
-        WLOGDEBUG("TLV is of type %d, with length %d", tlv_type,
+        if (req.method != HTTP_M_HEAD) {
+                resp->body_len = tlv_get_length(*tlv);
+        }
+        LOGDEBUG("TLV is of type %d, with length %d", tlv_type,
                         resp->body_len);
 
         if (dz_read_tlv(&dz, tlv, off) == -1) {
-                WLOGERROR("Cannot read TLV at offset %lu", off);
+                LOGERROR("Cannot read TLV at offset %lu", off);
                 tlv_destroy(tlv);
                 return -1;
         }
 
-        ct = tlv_type == TLV_PNG ? HTTP_CT_PNG : HTTP_CT_JPEG;
+        if (req.method != HTTP_M_HEAD) {
+                *resp->body = (char*)malloc(sizeof(char)*resp->body_len);
+                if (*resp->body == NULL) {
+                        perror("malloc");
+                        LOGERROR("Cannot alloc memory to store the " \
+                                        "TLV's value");
+                        tlv_destroy(tlv);
+                        return -1;
+                }
 
-        *resp->body = (char*)malloc(sizeof(char)*resp->body_len);
-        if (*resp->body == NULL) {
-                perror("malloc");
-                WLOGERROR("Cannot alloc memory to store the TLV's value");
-                tlv_destroy(tlv);
-                return -1;
+                memcpy(*resp->body, tlv_get_value_ptr(*tlv), resp->body_len);
         }
 
-        memcpy(*resp->body, tlv_get_value_ptr(*tlv), resp->body_len);
         tlv_destroy(tlv);
-
         resp->status = HTTP_S_OK;
-        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE, ct, 1);
+        return 0;
+}
+
+/**
+ * Route used to delete a TLV
+ * @param dz the current dazibao
+ * @param req the client request
+ * @param resp the response, which will be filled by the function
+ * @return 0 on success, -1 on error
+ **/
+int route_post_rm_tlv(dz_t dz, struct http_request req,
+                struct http_response *resp) {
+
+        /* XXX this return 204 even if the TLV was not removed */
+
+        unsigned long off = -1;
+
+        if (dz <= 0) {
+                LOGERROR("got wrong dz or method (dz=%d, m=%d)",
+                                dz, req.method);
+                return -1;
+        }
+
+        if (sscanf(req.path, "/tlv/delete/%16lu", &off) == 0) {
+                LOGERROR("Cannot parse the request path");
+                return -1;
+        }
+
+        LOGDEBUG("Trying to remove TLV at offset %lu in dazibao fd=%d",
+                        off, dz);
+
+        if (off < DAZIBAO_HEADER_SIZE) {
+                LOGERROR("Wrong offset (%lu < dz header size)", off);
+                return -1;
+        }
+
+        if (dz_rm_tlv(&dz, off) == -1) {
+                LOGERROR("Cannot delete TLV at offset %lu", off);
+                return -1;
+        }
+
+        resp->status = HTTP_S_NO_CT;
+        resp->body_len = -1;
 
         return 0;
 }
@@ -120,7 +170,9 @@ int register_routes(void) {
         int st = 0;
 
         /* Add routes here */
-        st |= add_route(HTTP_M_GET, "/index.html", route_get_index);
-        st |= add_route(HTTP_M_GET, "/tlv/", route_get_image_tlv);
+        st |= add_route(HTTP_M_GET,  "/index.html", route_get_index);
+        st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
+        st |= add_route(HTTP_M_GET,  "/tlv/", route_get_image_tlv);
+
         return st;
 }
