@@ -3,17 +3,15 @@
 #include <string.h>
 #include <time.h>
 #include "webutils.h"
+#include "utils.h"
 #include "tlv.h"
 #include "http.h"
 
 /** @file */
 
 int get_image_tlv_type(const char *path) {
-        char *dot;
-        if (path == NULL) {
-                return -1;
-        }
-        if ((dot = strrchr(path, '.')) == NULL) {
+        const char *ext = get_ext(path);
+        if (path == NULL || ext == NULL) {
                 return -1;
         }
         if (strcasecmp(dot, PNG_EXT) == 0) {

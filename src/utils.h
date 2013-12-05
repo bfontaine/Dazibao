@@ -107,6 +107,16 @@ void *safe_realloc(void *ptr, size_t size);
  **/
 int write_all(int fd, char *buff, int len);
 
+/**
+ * Return the extension of a file.
+ * @param filename
+ * @return a pointer to the part of the filename which represents the
+ *         extension, or NULL if there's none. If you want to do some things
+ *         with the extension while being able to free the original pointer,
+ *         call strdup on it to be sure to have a new pointer.
+ **/
+const char *get_ext(const char *path);
+
 /* = Logging = */
 #include "logging.h"
 
