@@ -69,23 +69,6 @@ int tlv_init(tlv_t *t);
 int tlv_destroy(tlv_t *t);
 
 /**
- * Convert {n} in dazibao's endianess
- * and set {tlv}'s length field with the converted value.
- * @param n length wanted
- * @param tlv tlv receiving length
- * @deprecated use tlv_set_length instead
- **/
-void htod(unsigned int n, tlv_t tlv);
-
-/**
- * Convert an int written in dazibao's endianess to host endianess.
- * @param len int using dazibao's endianess
- * @return value of length
- * @deprecated use get_length
- **/
-unsigned int dtoh(char *len);
-
-/**
  * @param tlv
  * @return type of tlv
  **/
