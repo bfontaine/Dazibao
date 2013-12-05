@@ -2,13 +2,13 @@
 #include "utils.h"
 
 /** @file */
-int safe_path(const char * path, int flag_access){
+int safe_path(const char * path, int flag_access) {
         struct stat f_path;
         if (access(path,F_OK | flag_access) == -1) {
                 printf("[utils.c|safe_path]file %s not exist\n",path);
                 return -1;
         }
-        if(stat(path ,f_path) == -1) {
+        if(stat(path, f_path) == -1) {
                 printf("[utils.c|safe_path] error stat \n");
                 return -1;
         }

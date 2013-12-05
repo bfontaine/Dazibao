@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/type.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
@@ -91,7 +91,7 @@
  * Check if path exist file , regular file
  * and is not to large
  **/
-int safe_path(const char * path, int flag_access){
+int safe_path(const char * path, int flag_access);
 /**
  * Wrapper around realloc(3) which frees the original pointer if the request
  * fails. See #35.
