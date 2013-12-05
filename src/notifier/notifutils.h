@@ -9,12 +9,11 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 enum arg_type {
-	ARG_TYPE_CHAR,
 	ARG_TYPE_INT,
 	ARG_TYPE_STRING
-	
 };
 
 struct s_option {

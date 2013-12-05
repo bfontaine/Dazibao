@@ -67,7 +67,19 @@ int parse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 					return -1;
 				}
 				is_opt = 1;
-				res->options[i].value = (void *)argv[next_arg + 1];
+				switch (res->options[i].type) {
+				case ARG_TYPE_INT:
+					*((int *)res->options[i].value) = atoi(argv[next_arg + 1]);
+					break;
+				case ARG_TYPE_STRING:
+					res->options[i].value = argv[next_arg + 1];
+					break;
+				default:
+					fprintf(stderr, "Unkown arg type, doing nothing.\n");
+					return -1;
+				}
+
+
 				next_arg += 2;
 				break;
 			}
