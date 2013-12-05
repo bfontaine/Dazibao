@@ -154,7 +154,7 @@ int parse_request(int sock, struct http_request *req) {
         req->body_len = strtol(req->headers->headers[HTTP_H_CONTENT_LENGTH],
                                 NULL, 10);
 
-        if (!IN_RANGE(req->body_len, 1, INT_MAX)) {
+        if (!IN_RANGE(req->body_len, 0, INT_MAX)) {
                 LOGERROR("Got no or malformed Content-Length header");
                 status = HTTP_S_LENGTHREQD;
                 goto EOPARSING;

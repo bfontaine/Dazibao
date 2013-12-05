@@ -12,7 +12,7 @@
 #define LF 10
 
 /** version of HTTP used by the server */
-#define HTTP_VERSION "1.1"
+#define HTTP_VERSION "1.0"
 
 /* Methods */
 /** code for a GET method */
