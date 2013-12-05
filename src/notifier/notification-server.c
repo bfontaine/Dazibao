@@ -65,7 +65,7 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 	uint32_t hash;
 	char *buf;
 	int fd = open(file, O_RDONLY);
-	int status;
+	int status = 0;
 
 	if (fd < 0) {
 		ERROR("open", -1);
