@@ -21,6 +21,21 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                         tlv_type2str(type), type, len, off, ext);
 }
 
+int dated_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html) {
+        /* TODO HTML to dated TLVs */
+        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(dated)"),
+                        tlv_type2str(type), type, len);
+        return -1;
+}
+int compound_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
+                char *html) {
+        /* TODO HTML to compound TLVs */
+        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(compound)"),
+                        tlv_type2str(type), type, len);
+        return -1;
+}
+
 int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, char *html) {
         char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
 
@@ -49,7 +64,6 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
         type = tlv_get_type(*t);
         len  = type == TLV_PAD1 ? 0 : tlv_get_length(*t);
 
-        /* TODO generate proper HTML for each TLV type */
         switch (type) {
                 case TLV_PAD1:
                 case TLV_PADN:
@@ -63,6 +77,12 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
                         break;
                 case TLV_JPEG:
                         st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
+                        break;
+                case TLV_DATED:
+                        st = dated_tlv2html(t, type, len, off, *html);
+                        break;
+                case TLV_COMPOUND:
+                        st = compound_tlv2html(t, type, len, off, *html);
                         break;
                 default:
                         st = snprintf(*html, HTML_TLV_SIZE, text_fmt,
@@ -78,10 +98,10 @@ int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
 
 int dz2html(dz_t dz, char **html) {
         char **tlv_html = (char**)malloc(sizeof(char*));
-        char *tmp_ptr;
         off_t tlv_off;
         int html_len,
-            tlv_html_len;
+            tlv_html_len,
+            preallocated_len;
 
         tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
 
@@ -96,7 +116,10 @@ int dz2html(dz_t dz, char **html) {
         html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
                         + strlen(HTML_DZ_BOTTOM);
 
-        *html = (char*)malloc(sizeof(char)*html_len);
+        /* preallocating more memory to avoid repetitive 'realloc' calls */
+        preallocated_len = html_len + 2 * HTML_TLV_SIZE;
+
+        *html = (char*)malloc(sizeof(char)*preallocated_len);
         if (*html == NULL) {
                 LOGERROR("Cannot allocate enough memory for the dazibao");
                 perror("malloc");
@@ -130,16 +153,19 @@ int dz2html(dz_t dz, char **html) {
                 LOGDEBUG("Called tlv2html on offset %lu, got %d chars",
                                 tlv_off, tlv_html_len);
 
-                /* TODO: optimize me (realloc everytime) */
-                tmp_ptr = (char*)realloc(*html, html_len);
+                if (html_len > preallocated_len) {
+                        char *tmp_ptr = (char*)realloc(*html, html_len);
 
-                if (tmp_ptr == NULL) {
-                        LOGWARN("Cannot realloc, skipping tlv %lu", tlv_off);
-                        perror("realloc");
+                        if (tmp_ptr == NULL) {
+                                LOGWARN("Cannot realloc, skipping tlv %lu",
+                                                tlv_off);
+                                perror("realloc");
+                                continue;
+                        }
                         *html = tmp_ptr;
-                        continue;
+                } else {
+                        LOGDEBUG("Enough preallocated memory for this TLV");
                 }
-                *html = tmp_ptr;
 
                 strncat(*html, *tlv_html, tlv_html_len);
 

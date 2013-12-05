@@ -71,7 +71,7 @@ char *tlv_get_value_ptr(tlv_t tlv) {
 
 int tlv_write(tlv_t tlv, int fd) {
 	unsigned int to_write = TLV_SIZEOF(tlv);
-        int status = write(fd, tlv, to_write);
+        int status = write_all(fd, tlv, to_write);
 	if (status == -1 || (unsigned int)status != to_write) {
 		ERROR("write", -1);
 	}

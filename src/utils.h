@@ -2,10 +2,16 @@
 #define _UTILS_H 1
 
 #include <stdlib.h>
+#include <unistd.h>
 
 /** @file
  * Set of utilities
  **/
+
+#ifndef BUFFLEN
+/** size of buffers used in various functions */
+#define BUFFLEN 512
+#endif
 
 /** get the minimum of two values */
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -83,6 +89,12 @@
  **/
 void *safe_realloc(void *ptr, size_t size);
 
+/**
+ * Wrapper around write(2) to write the whole buffer instead of (sometimes)
+ * only a part of it.
+ **/
+int write_all(int fd, char *buff, int len);
+
 
 /* = Logging = */
 
@@ -124,6 +136,15 @@ extern int _log_level;
 /** add an entry to a log using the "fatal" level */
 #define LOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
 
+/* = other utilities = */
 
+/** helper for STR macro */
+#define _STR(x) #x
+
+/**
+ * make a string of a #define'd litteral number
+ * @param x the #define'd litteral number
+ **/
+#define STR(x) _STR(x)
 
 #endif

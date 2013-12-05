@@ -15,18 +15,6 @@ int _log_level =
         LOG_LVL_INFO;
 #endif
 
-int write_all(int fd, char *buff, int len) {
-        int wrote = 0,
-            w;
-
-        while (len > 0 && (w = write(fd, buff+wrote, len)) > 0) {
-                wrote += w;
-                len -= w;
-        }
-
-        return wrote;
-}
-
 int get_image_tlv_type(const char *path) {
         char *dot;
         if (path == NULL) {

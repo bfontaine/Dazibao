@@ -73,7 +73,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
         if (off < DAZIBAO_HEADER_SIZE) {
-                LOGERROR("Wrong offset (%lu)", off);
+                LOGERROR("Wrong offset (%lu < dazibao header size)", off);
                 tlv_destroy(tlv);
                 return -1;
         }
@@ -122,11 +122,57 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         return 0;
 }
 
+/**
+ * Route used to delete a TLV
+ * @param dz the current dazibao
+ * @param req the client request
+ * @param resp the response, which will be filled by the function
+ * @return 0 on success, -1 on error
+ **/
+int route_post_rm_tlv(dz_t dz, struct http_request req,
+                struct http_response *resp) {
+
+        /* XXX this return 204 even if the TLV was not removed */
+
+        unsigned long off = -1;
+
+        if (dz <= 0) {
+                LOGERROR("got wrong dz or method (dz=%d, m=%d)",
+                                dz, req.method);
+                return -1;
+        }
+
+        if (sscanf(req.path, "/tlv/delete/%16lu", &off) == 0) {
+                LOGERROR("Cannot parse the request path");
+                return -1;
+        }
+
+        LOGDEBUG("Trying to remove TLV at offset %lu in dazibao fd=%d",
+                        off, dz);
+
+        if (off < DAZIBAO_HEADER_SIZE) {
+                LOGERROR("Wrong offset (%lu < dz header size)", off);
+                return -1;
+        }
+
+        if (dz_rm_tlv(&dz, off) == -1) {
+                LOGERROR("Cannot delete TLV at offset %lu", off);
+                return -1;
+        }
+
+        resp->status = HTTP_S_NO_CT;
+        resp->body_len = -1;
+
+        return 0;
+}
+
 int register_routes(void) {
         int st = 0;
 
         /* Add routes here */
-        st |= add_route(HTTP_M_GET, "/index.html", route_get_index);
-        st |= add_route(HTTP_M_GET, "/tlv/", route_get_image_tlv);
+        st |= add_route(HTTP_M_GET,  "/index.html", route_get_index);
+        st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
+        st |= add_route(HTTP_M_GET,  "/tlv/", route_get_image_tlv);
+
         return st;
 }

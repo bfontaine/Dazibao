@@ -44,8 +44,7 @@ typedef int dz_t;
  * and return an error status instead.
  * @param daz_buf dazibao to fill with information
  * @param path location where to create the file
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int dz_create(dz_t *daz_buf, char *path);
 
@@ -54,8 +53,7 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param d dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int dz_open(dz_t *d, char *path, int flags);
 
@@ -75,8 +73,7 @@ int dz_reset(dz_t *d);
  * @param d dazibao used for reading
  * @param tlv tlv to be filled
  * @param offset off wanted tlv
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
@@ -95,8 +92,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
  * @param d dazibao used for reading
  * @param tlv to be filled
  * @param offset position of the tlv wanted in d
- * @return 0 on success
- * @return -1 on error
+ * @return 0 on success, -1 on error
  **/
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
 
@@ -120,6 +116,7 @@ int dz_add_tlv(dz_t *d, tlv_t tlv);
  * If it leaves pad1/padN at the end of dazibao, it will be truncated
  * @param d dazibao where is tlv to remove
  * @param offset offset of the tlv to remove
+ * @return 0 on success, -1 on error
  **/
 int dz_rm_tlv(dz_t *d, off_t offset);
 
@@ -128,6 +125,7 @@ int dz_rm_tlv(dz_t *d, off_t offset);
  * @param d the Dazibao
  * @param start starting offset of emptying
  * @param length number of bytes to be erased
+ * @return 0 on success, -1 on error
  **/
 int dz_do_empty(dz_t *d, off_t start, off_t length);
 
