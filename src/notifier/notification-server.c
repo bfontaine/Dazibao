@@ -126,7 +126,7 @@ void *watch_file(void *arg) {
 	LOGINFO("Started watching %s", path);
 
 	while (1) {
-		sleep(sleeping_time);
+		LOGDEBUG("watching %s", path);
 		if (conf.reliable) {
 			changed = reliable_watch(path, &(value.hash));
 		} else {
@@ -145,6 +145,7 @@ void *watch_file(void *arg) {
 			LOGWARN("Failed checking %s", path);
 			continue;
 		}
+		sleep(sleeping_time);
 	}
 
 	return (void *)NULL;
@@ -341,7 +342,7 @@ int main(int argc, char **argv) {
 	conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
 	
 	if (conf.c_socket == NULL){
-		ERROR("mmap", -1);
+		ERROR("malloc", -1);
 	}
 	
 	memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
@@ -353,6 +354,11 @@ int main(int argc, char **argv) {
 
 	LOGINFO("Server set up");
 	
+	if(nsa() != 0) {
+		PERROR("nsa");
+		goto OUT;
+	}
+
 	while (1) {
 		if (accept_client() < 0) {
 			PERROR("accept_client");
