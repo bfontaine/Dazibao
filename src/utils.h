@@ -97,44 +97,7 @@ int write_all(int fd, char *buff, int len);
 
 
 /* = Logging = */
-
-/** this is set in webutils.c but can be changed in another file. */
-extern int _log_level;
-
-/** "debug" log level */
-#define LOG_LVL_DEBUG  50
-/** "info" log level */
-#define LOG_LVL_INFO   40
-/** "warn" log level */
-#define LOG_LVL_WARN   30
-/** "error" log level */
-#define LOG_LVL_ERROR  20
-/** "fatal" log level */
-#define LOG_LVL_FATAL  10
-
-/** Don't use this macro directly */
-#define _LOG(lvl, s, fmt, ...) { \
-        if ((lvl) <= (_log_level)) { \
-        printf("[%5s][%-17s:%20s:%03d] " fmt "\n", \
-                        s, __FILE__, __func__, __LINE__, ##__VA_ARGS__); }}
-
-/* Use these instead.
- * Examples:
- *      LOGDEBUG("yo");
- *      LOGERROR("2+2=%d", 5);
- *
- * Don't put a \n at the end of the format string */
-
-/** add an entry to a log using the "debug" level */
-#define LOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
-/** add an entry to a log using the "info" level */
-#define LOGINFO(fmt, ...)  _LOG(LOG_LVL_INFO,  "INFO", fmt, ##__VA_ARGS__)
-/** add an entry to a log using the "warn" level */
-#define LOGWARN(fmt, ...)  _LOG(LOG_LVL_WARN,  "WARN", fmt, ##__VA_ARGS__)
-/** add an entry to a log using the "error" level */
-#define LOGERROR(fmt, ...) _LOG(LOG_LVL_ERROR, "ERROR", fmt, ##__VA_ARGS__)
-/** add an entry to a log using the "fatal" level */
-#define LOGFATAL(fmt, ...) _LOG(LOG_LVL_FATAL, "FATAL", fmt, ##__VA_ARGS__)
+#include "logging.h"
 
 /* = other utilities = */
 

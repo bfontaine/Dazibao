@@ -16,8 +16,8 @@ DOXYGEN=doxygen
 DOXYFLAGS=
 
 UTILS=$(SRC)/tlv.h $(SRC)/utils.h
-WUTILS=$(WEBSRC)/webutils.h $(WEBSRC)/http.h
-NUTILS=$(NOTIFSRC)/notifutils.h
+WUTILS=$(SRC)/logging.h $(WEBSRC)/webutils.h $(WEBSRC)/http.h
+NUTILS=$(SRC)/logging.h $(NOTIFSRC)/notifutils.h
 
 TARGET=dazibao
 NSERVER=notification-server
@@ -62,7 +62,7 @@ $(NCLIENT): $(NSRC)/notification-client.o
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
 		$(WEBSRC)/html.o $(WEBSRC)/response.o $(WEBSRC)/mime.o \
-		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/$(WSERVER).o: $(SRC)/dazibao.o $(WEBSRC)/request.o \
