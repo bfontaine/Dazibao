@@ -156,7 +156,9 @@ int nsa() {
 	int i;
 	for (i = 0; i < conf.nb_files; i++) {
 		pthread_t thread;
-		pthread_create(&thread, NULL, watch_file, (void *) (conf.file[i]));
+		if (pthread_create(&thread, NULL, watch_file, (void *) (conf.file[i])) != 0) {
+			PERROR("pthread_create");
+		}
 	}
 	return 0;
 }
