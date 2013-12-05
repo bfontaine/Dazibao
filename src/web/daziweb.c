@@ -59,7 +59,6 @@ static void clean_close(int s) {
  * @param port result variable, will be filled with the port number
  **/
 static int parse_args(int argc, char **argv, int *port) {
-        int l;
         char c;
 
         dz = -1;
