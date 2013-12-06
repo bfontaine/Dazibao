@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+#include "utils.h"
 #include "dazibao.h"
 
 /** @file */
@@ -113,7 +123,9 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 
         SAVE_OFFSET(*d);
 
-	/* FIXME probably some issues to fix with large tlv */
+	/* there are probably some issues to fix with large tlvs,
+         * see github.com/bfontaine/Dazibao/issues/73#issuecomment-29986821
+         */
 
 	if (SET_OFFSET(*d, offset + TLV_SIZEOF_HEADER) == -1) {
 		ERROR("lseek", -1);
@@ -123,6 +135,18 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
         RESTORE_OFFSET(*d);
 
         return st;
+}
+
+time_t dz_read_date_at(dz_t *d, off_t offset) {
+        time_t t = (time_t)0;
+
+        SET_OFFSET(*d, offset);
+        if (read(*d, &t, TLV_SIZEOF_DATE) < 0) {
+                perror("read");
+                return (time_t)-1;
+        }
+
+        return t;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
