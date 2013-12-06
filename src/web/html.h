@@ -136,6 +136,19 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor);
 
 /**
+ * Add a non-NULL-terminated HTML representation of a TLV to an HTML string.
+ * @param dz the dazibao
+ * @param t a pointer to the pre-filled TLV (type + length)
+ * @param dz_off a pointer to the TLV's offset in the dazibao
+ * @param html a pointer to an HTML string
+ * @param htmlsize a pointer to the size of the HTML string
+ * @param htmlcursor the current cursor in the HTML string
+ * @return 0 on success
+ **/
+int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
+                int *htmlcursor);
+
+/**
  * Make a NULL-terminated HTML representation of a dazibao.
  * @param dz the dazibao
  * @param html a pointer to a string which will be allocated to store the

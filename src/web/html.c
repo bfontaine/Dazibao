@@ -78,6 +78,12 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 
 int html_add_pad1padn_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
+        int type = tlv_get_type(*t),
+            w;
+        
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, "(%s)",
+                        type == TLV_PAD1 ? "pad1" : "padN");
+        *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
         return 0;
 }
 
@@ -88,6 +94,95 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
+        return 0;
+}
+
+int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
+                int *htmlcursor) {
+        int tlv_type = tlv_get_type(*t),
+            st = 0, written;
+
+        if (!TLV_VALID_TYPE(tlv_type)) {
+                LOGDEBUG("Unknown TLV type: %d", tlv_type);
+                return 0;
+        }
+
+        if (TLV_IS_EMPTY_PAD(tlv_type) && !WSERVER.debug) {
+                LOGDEBUG("Skipping Pad1/PadN at offset %lu", *dz_off);
+                return 0;
+        }
+
+        if (html_ensure_length(html, htmlsize, htmlcursor,
+                                HTML_TLV_MIN_SIZE) == -1) {
+                tlv_destroy(t);
+                LOGERROR("Cannot preallocate enough memory to " \
+                                "fit a TLV");
+                return -1;
+        }
+
+        written = snprintf(*html+(*htmlcursor), *htmlsize - (*htmlcursor),
+                        HTML_TLV_TOP_FMT,
+                        *dz_off, tlv_get_length(*t), tlv_type,
+                        tlv_type2str(tlv_type));
+        if (written > *htmlsize) {
+                perror("snprintf");
+                tlv_destroy(t);
+                NFREE(*html);
+                LOGERROR("snprintf of TLV top failed");
+                return -1;
+        }
+        *htmlcursor += written;
+
+        switch (tlv_type) {
+                case TLV_PAD1:
+                case TLV_PADN:
+                        st = html_add_pad1padn_tlv(dz, t, dz_off,
+                                        html, htmlsize, htmlcursor);
+                        break;
+                case TLV_TEXT:
+                        st = html_add_text_tlv(dz, t, dz_off,
+                                        html, htmlsize, htmlcursor);
+                        break;
+                case TLV_PNG:
+                case TLV_JPEG:
+                        st = html_add_img_tlv(dz, t, dz_off,
+                                        html, htmlsize, htmlcursor);
+                        break;
+                case TLV_DATED:
+                        st = html_add_dated_tlv(dz, t, dz_off,
+                                        html, htmlsize, htmlcursor);
+                case TLV_COMPOUND:
+                        st = html_add_compound_tlv(dz, t, dz_off,
+                                        html, htmlsize, htmlcursor);
+                        break;
+        };
+
+        if (st != 0) {
+                free(*html);
+                tlv_destroy(t);
+                LOGERROR("Something went wrong with a html_add_*");
+                return -1;
+        }
+
+        if (html_ensure_length(html, htmlsize, htmlcursor,
+                                strlen(HTML_TLV_BOTTOM)) == -1) {
+                tlv_destroy(t);
+                LOGERROR("Cannot preallocate enough memory to fit " \
+                                "the HTML bottom of a TLV");
+                return -1;
+        }
+
+        /* TODO memcpy here? */
+        written = snprintf(*html+(*htmlcursor), *htmlsize-(*htmlcursor),
+                        HTML_TLV_BOTTOM);
+        if (written > *htmlsize) {
+                perror("snprintf");
+                tlv_destroy(t);
+                NFREE(*html);
+                LOGERROR("snprintf of TLV bottom failed");
+                return -1;
+        }
+        *htmlcursor += written - 1;
         return 0;
 }
 
@@ -130,90 +225,10 @@ int dz2html(dz_t dz, char **html) {
         htmlcursor += written;
 
         while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
-                int tlv_type = tlv_get_type(*t),
-                    st = 0;
-                
-                if (!TLV_VALID_TYPE(tlv_type)) {
-                        LOGDEBUG("Unknown TLV type: %d", tlv_type);
-                        continue;
-                }
-
-                if (TLV_IS_EMPTY_PAD(tlv_type) && !WSERVER.debug) {
-                        LOGDEBUG("Skipping Pad1/PadN at offset %lu", dz_off);
-                        continue;
-                }
-
-                if (html_ensure_length(html, &htmlsize, &htmlcursor,
-                                        HTML_TLV_MIN_SIZE) == -1) {
-                        tlv_destroy(t);
-                        LOGERROR("Cannot preallocate enough memory to " \
-                                        "fit a TLV");
+                if (html_add_tlv(dz, t, &dz_off, html, &htmlsize,
+                                        &htmlcursor) != 0) {
                         return -1;
                 }
-
-                written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
-                                HTML_TLV_TOP_FMT,
-                                dz_off, tlv_get_length(*t) , tlv_type,
-                                tlv_type2str(tlv_type));
-                if (written > htmlsize) {
-                        perror("snprintf");
-                        tlv_destroy(t);
-                        NFREE(*html);
-                        LOGERROR("snprintf of TLV top failed");
-                        return -1;
-                }
-                htmlcursor += written;
-
-                switch (tlv_type) {
-                        case TLV_PAD1:
-                        case TLV_PADN:
-                                st = html_add_pad1padn_tlv(dz, t, &dz_off,
-                                                html, &htmlsize, &htmlcursor);
-                                break;
-                        case TLV_TEXT:
-                                st = html_add_text_tlv(dz, t, &dz_off,
-                                                html, &htmlsize, &htmlcursor);
-                                break;
-                        case TLV_PNG:
-                        case TLV_JPEG:
-                                st = html_add_img_tlv(dz, t, &dz_off,
-                                                html, &htmlsize, &htmlcursor);
-                                break;
-                        case TLV_DATED:
-                                st = html_add_dated_tlv(dz, t, &dz_off,
-                                                html, &htmlsize, &htmlcursor);
-                        case TLV_COMPOUND:
-                                st = html_add_compound_tlv(dz, t, &dz_off,
-                                                html, &htmlsize, &htmlcursor);
-                                break;
-                };
-
-                if (st != 0) {
-                        free(*html);
-                        tlv_destroy(t);
-                        LOGERROR("Something went wrong with a html_add_*");
-                        return -1;
-                }
-
-                if (html_ensure_length(html, &htmlsize, &htmlcursor,
-                                strlen(HTML_TLV_BOTTOM)) == -1) {
-                        tlv_destroy(t);
-                        LOGERROR("Cannot preallocate enough memory to fit " \
-                                        "the HTML bottom of a TLV");
-                        return -1;
-                }
-
-                /* TODO memcpy here? */
-                written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
-                                HTML_TLV_BOTTOM);
-                if (written > htmlsize) {
-                        perror("snprintf");
-                        tlv_destroy(t);
-                        NFREE(*html);
-                        LOGERROR("snprintf of TLV bottom failed");
-                        return -1;
-                }
-                htmlcursor += written - 1;
         }
 
         tlv_destroy(t);
@@ -233,28 +248,3 @@ int dz2html(dz_t dz, char **html) {
 
         return 0;
 }
-
-#if 0
-/* -- OLD -- */
-int text_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
-                char *html) {
-        char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
-
-        return snprintf(html, HTML_TLV_SIZE, fmt, off, tlv_type2str(type),
-                        type, len, len, tlv_get_value_ptr(*t));
-}
-int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
-                char *html, const char *ext) {
-        char fmt[] = HTML_TLV_FMT("<img src=\"/tlv/%li%s\" />");
-
-        return snprintf(html, HTML_TLV_SIZE, fmt, off,
-                        tlv_type2str(type), type, len, off, ext);
-}
-int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
-                char *html) {
-        char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
-
-        return snprintf(html, HTML_TLV_SIZE, fmt, off,
-                        tlv_type2str(type), type, len);
-}
-#endif
