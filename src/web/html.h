@@ -26,40 +26,39 @@
 
 /** Format used for the HTML top of a dazibao */
 #define HTML_DZ_TOP_FMT \
-                  "<!doctype html>\n" \
-                  "<html lang=\"en\" dir=\"ltr\">\n" \
-                  "  <head>\n" \
-                  "    <meta charset=\"utf-8\" />\n" \
-                  "    <meta name=\"language\" content=\"fr\" />\n" \
-                  "    <link rel=\"stylesheet\" href=\"/dz.css\">\n" \
-                  "    <title>Dazibao - %s</title>\n" \
-                  "  </head>\n" \
-                  "  <body>\n" \
-                  "    <ol class=\"tlvs\">\n"
+                  "<!doctype html>" \
+                  "<html lang=\"en\" dir=\"ltr\">" \
+                    "<head>" \
+                      "<meta charset=\"utf-8\" />" \
+                      "<meta name=\"language\" content=\"fr\" />" \
+                      "<link rel=\"stylesheet\" href=\"/dz.css\">" \
+                      "<title>Dazibao - %s</title>" \
+                    "</head>" \
+                    "<body>" \
+                      "<ol class=\"tlvs\">"
 /** Format used for the HTML top of a TLV */
 #define HTML_TLV_TOP_FMT \
-                  "      <li class=\"tlv\" data-offset=\"%lu\"" \
+                        "<li class=\"tlv\" data-offset=\"%lu\"" \
                                          " data-length=\"%u\"" \
-                                         " data-type=\"%d\">\n" \
-                  "        <span class=\"type\">%s</span>\n" \
-                  "        <div class=\"value\">\n"
+                                         " data-type=\"%d\">" \
+                          "<span class=\"type\">%s</span>" \
+                          "<div class=\"value\">"
 /** Format used for the HTML bottom of a TLV */
-#define HTML_TLV_BOTTOM "\n" \
-                  "        </div>\n" \
-                  "      </li>\n\n"
+#define HTML_TLV_BOTTOM   "</div>" \
+                        "</li>"
 /** Format used for the HTML bottom of a dazibao */
 #define HTML_DZ_BOTTOM \
-                  "    </ol>\n" \
-                  "    <script src=\"/dz.js\"></script>\n" \
-                  "  </body>\n" \
-                  "</html>\n"
+                      "</ol>" \
+                      "<script src=\"/dz.js\"></script>" \
+                    "</body>" \
+                  "</html>"
 
 /** HTML format for a text TLV */
 #define HTML_TLV_TEXT_FMT "<blockquote>%.*s</blockquote>"
 /** HTML format for an image TLV */
 #define HTML_TLV_IMG_FMT "<img src=\"/tlv/%lu%s\" />"
 /** HTML format for the top of a dated TLV */
-#define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>\n" \
+#define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>" \
                                  "<ol class=\"subtlv\">"
 /** HTML format for the bottom of a dated TLV */
 #define HTML_TLV_DATED_BOTTOM_FMT "</ol>"
