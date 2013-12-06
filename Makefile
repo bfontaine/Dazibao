@@ -74,8 +74,7 @@ $(WEBSRC)/routes.o: $(SRC)/dazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
 $(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
-#$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
-%.o: %.c
+$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 #$(NSRC)/%.o: $(NSRC)/%.c $(NSRC)/%.h $(NUTILS)
