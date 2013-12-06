@@ -86,22 +86,25 @@ int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
 int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
 
-        off_t off_value = *off + TLV_SIZEOF_HEADER,
-              off_after = off_value + tlv_get_length(*t),
-              dz_off;
-        int w,
+        int tlen = tlv_get_length(*t),
             len_top = strlen(HTML_TLV_COMPOUND_TOP_FMT),
-            len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT);
+            len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT),
+            w;
+        off_t off_value = *off + TLV_SIZEOF_HEADER,
+              off_after = off_value + tlen,
+              dz_off;
 
         memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_TOP_FMT, len_top);
         *htmlcursor += len_top;
 
-        SET_OFFSET(dz, off_value);
-        *off = off_value;
-        while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
-                if (html_add_tlv(dz, t, &dz_off, html, htmlsize,
-                                        htmlcursor) != 0) {
-                        return -1;
+        if (tlen > 0) {
+                SET_OFFSET(dz, off_value);
+                *off = off_value;
+                while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
+                        if (html_add_tlv(dz, t, &dz_off, html, htmlsize,
+                                                htmlcursor) != 0) {
+                                return -1;
+                        }
                 }
         }
 
@@ -117,7 +120,8 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         struct tm date;
         char *time_iso = NULL,
              *time_txt = NULL;
-        int len = tlv_get_length(*t), w, st;
+        int len = tlv_get_length(*t),
+            st = 0, w;
         off_t off_value = *off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE,
               off_after = *off + TLV_SIZEOF_HEADER + len;
 
@@ -146,10 +150,12 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
         *off = off_value;
 
-        st = dz_tlv_at(&dz, t, *off);
-        st |= html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
-        if (st == -1) {
-                return -1;
+        if (len > 0) {
+                st = dz_tlv_at(&dz, t, *off);
+                st |= html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
+                if (st == -1) {
+                        return -1;
+                }
         }
 
         memcpy(*html+(*htmlcursor), HTML_TLV_DATED_BOTTOM_FMT,
