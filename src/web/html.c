@@ -38,9 +38,11 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 return -1;
         }
         
+        SAVE_OFFSET(dz);
         if (dz_read_tlv(&dz, t, *off) == -1) {
                 return -1;
         }
+        RESTORE_OFFSET(dz);
 
         LOGDEBUG("Adding HTML of text TLV at offset %lu, tlen=%d, len=%d, " \
                         "htmlsize=%d, cursor=%d",
@@ -76,8 +78,7 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
         return 0;
 }
 
-int html_add_pad1padn_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
-                *htmlsize, int *htmlcursor) {
+int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
         int type = tlv_get_type(*t),
             w;
         
@@ -89,11 +90,35 @@ int html_add_pad1padn_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
+        /* TODO */
         return 0;
 }
 
 int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
+        static const char fmt_top[] = "<time datetime=\"%s\">%s</time>\n" \
+                                        "<div class=\"subtlv\">";
+        static const char fmt_bottom[] = "</div>";
+
+        int len = tlv_get_length(*t), w, st;
+        off_t off_value = *off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE,
+              off_after = *off + TLV_SIZEOF_HEADER + len;
+
+        /* TODO read the date and create time_iso & time_txt */
+
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt_top,
+                        time_iso time_txt);
+        *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
+
+        *off = off_value;
+        st = html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
+        if (st == -1) {
+                return -1;
+        }
+
+        memcpy(*html+(*htmlcursor), fmt_bottom, strlen(fmt_bottom));
+
+        *off = off_after;
         return 0;
 }
 
@@ -136,8 +161,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
         switch (tlv_type) {
                 case TLV_PAD1:
                 case TLV_PADN:
-                        st = html_add_pad1padn_tlv(dz, t, dz_off,
-                                        html, htmlsize, htmlcursor);
+                        st = html_add_pad1padn_tlv(t, html, htmlcursor);
                         break;
                 case TLV_TEXT:
                         st = html_add_text_tlv(dz, t, dz_off,

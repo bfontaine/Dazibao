@@ -74,6 +74,7 @@ int html_ensure_length(char **html, int *htmlsize, int *htmlcursor, int len);
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
  * assuming its value is in plain text.
  * @param dz the dazibao
+ * @param t a pointer to the TLV with its type and length
  * @param off a pointer to the TLV's offset in the dazibao
  * @param html a pointer to an HTML string
  * @param htmlsize a pointer to the size of the HTML string
@@ -87,6 +88,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
  * assuming its value is a PNG or JP(E)G image.
  * @param dz the dazibao
+ * @param t a pointer to the TLV with its type and length
  * @param off a pointer to the TLV's offset in the dazibao
  * @param html a pointer to an HTML string
  * @param htmlsize a pointer to the size of the HTML string
@@ -99,20 +101,18 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 /**
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
  * assuming it's a Pad1 or PadN
- * @param dz the dazibao
- * @param off a pointer to the TLV's offset in the dazibao
+ * @param t a pointer to the TLV with its type and length
  * @param html a pointer to an HTML string
- * @param htmlsize a pointer to the size of the HTML string
  * @param htmlcursor the current cursor in the HTML string
  * @return 0 on success
  **/
-int html_add_pad1padn_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
-                *htmlsize, int *htmlcursor);
+int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor);
 
 /**
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
  * assuming it's a compound one
  * @param dz the dazibao
+ * @param t a pointer to the TLV with its type and length
  * @param off a pointer to the TLV's offset in the dazibao
  * @param html a pointer to an HTML string
  * @param htmlsize a pointer to the size of the HTML string
@@ -126,6 +126,7 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
  * assuming it's a dated one
  * @param dz the dazibao
+ * @param t a pointer to the TLV with its type and length
  * @param off a pointer to the TLV's offset in the dazibao
  * @param html a pointer to an HTML string
  * @param htmlsize a pointer to the size of the HTML string
