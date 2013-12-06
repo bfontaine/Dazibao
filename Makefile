@@ -53,10 +53,10 @@ all: check $(TARGETS)
 $(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.o $(NSRC)/notification-server.o
+$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NCLIENT): $(SRC)/utils.o $(NSRC)/notifutils.o $(NSRC)/notification-client.o
+$(NCLIENT): $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
@@ -75,7 +75,7 @@ $(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
 #$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
-%.o: %.c %.h
+%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 #$(NSRC)/%.o: $(NSRC)/%.c $(NSRC)/%.h $(NUTILS)

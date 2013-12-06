@@ -29,6 +29,7 @@
 
 #include "utils.h"
 #include "notifutils.h"
+#include "hash.h"
 
 #define MAX_CLIENTS 10
 #define RELIABLE_DEFAULT 1

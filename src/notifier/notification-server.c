@@ -83,7 +83,7 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 		goto CLOSE;
 	}
 	
-	hash = qhashmurmur3_32(buf, st.st_size);
+	hash = SuperFastHash(buf, st.st_size);
 
 	if (*old_hash == 0) {
 		*old_hash = hash;
