@@ -44,6 +44,6 @@ int cmd_dump(int argc, char ** argv, char * daz);
 int action_dump(char *daz, int flag_debug, int flag_depth);
 int cmd_compact(int argc, char ** argv, char * daz);
 int cmd_create(int argc, char ** argv, char * daz);
-void print_usage();
+void print_usage(char *exec);
 
 #endif
