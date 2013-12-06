@@ -121,7 +121,7 @@ tlv_t tlv_get_value_ptr(tlv_t tlv);
  * @param fd file descriptor where tlv is written
  * @return 0 on success, -1 on error
  **/
-int tlv_write(tlv_t tlv, int fd);
+int tlv_fwrite(tlv_t tlv, int fd);
 
 /**
  * Read a TLV value.
@@ -129,7 +129,7 @@ int tlv_write(tlv_t tlv, int fd);
  * @param fd file descriptor from which value is read
  * @return 0 on success, -1 on error
  **/
-int tlv_read(tlv_t *tlv, int fd);
+int tlv_fread(tlv_t *tlv, int fd);
 
 /**
  * Write a whole TLV in a file
@@ -137,7 +137,7 @@ int tlv_read(tlv_t *tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same as write(2)
  **/
-int dump_tlv(tlv_t tlv, int fd);
+int tlv_fdump(tlv_t tlv, int fd);
 
 
 /**
@@ -146,7 +146,7 @@ int dump_tlv(tlv_t tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same value as as write(2)
  **/
-int dump_tlv_value(tlv_t tlv, int fd);
+int tlv_fdump_value(tlv_t tlv, int fd);
 
 /**
  * Return a string representation for a TLV type

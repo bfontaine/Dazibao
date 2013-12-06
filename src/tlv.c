@@ -82,7 +82,7 @@ char *tlv_get_value_ptr(tlv_t tlv) {
 }
 
 
-int tlv_write(tlv_t tlv, int fd) {
+int tlv_fwrite(tlv_t tlv, int fd) {
 	unsigned int to_write = TLV_SIZEOF(tlv);
         int status = write_all(fd, tlv, to_write);
 	if (status == -1 || (unsigned int)status != to_write) {
@@ -91,7 +91,7 @@ int tlv_write(tlv_t tlv, int fd) {
 	return 0;
 }
 
-int tlv_read(tlv_t *tlv, int fd) {
+int tlv_fread(tlv_t *tlv, int fd) {
 
 	int len = tlv_get_length(*tlv);
 	
@@ -109,11 +109,11 @@ int tlv_read(tlv_t *tlv, int fd) {
 }
 
 
-int dump_tlv(tlv_t tlv, int fd) {
+int tlv_fdump(tlv_t tlv, int fd) {
 	return write(fd, tlv, TLV_SIZEOF(tlv));
 }
 
-int dump_tlv_value(tlv_t tlv, int fd) {
+int tlv_fdump_value(tlv_t tlv, int fd) {
 	return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
