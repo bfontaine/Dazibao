@@ -274,24 +274,8 @@ int cmd_compact(int argc , char ** argv, char * daz) {
 
 }
 
-void print_usage() {
-        printf("Usage:\n\t.dazibao <cmd> <option and args> <dazibao>\n");
-        printf("Cmd :\n");
-        printf("\tcreate  : create a empty dazibao or \
-        dazibao merges into arguments\n\tcmd : create [-m or --merge ] \
-        <dazibao args to merge> <dazibao>>\n\t option create:\n\
-        \t\t-m or --merge :(todo)\n");
-        printf("\t- add : add TLV \n\tcmd : add [-d or --date ]\
-        [-c or --compound ] <tlv args> <dazibao>\n\tadd option:\n\
-        \t\t\t-d or --date : (todo)\n\t\t\t-c or --compound :(todo)\n\t\t\t\
-        -C or --dazibao\n");
-        printf("\t- rm  : remove TLV\ncmd : rm <offset> <dazibao>\n");
-        printf("\t- dump : dump Dazibaio\ncmd : dump [-d or --debug ]\
-        [-D or --depth] <number depth> <dazibao>\n\tdump option :\n\
-        \t\t-D or --depth : (todo)\n\t\t-d or --debug :(todo)\n");
-        printf("\t- compact : compact dazibao\ncmd : compact [-r or\
-        --recusive] <dazibao>\n\tcompact option :\n\
-        \t\t-r or -- recursive :(todo)\n)");
+void print_usage(char *name) {
+        printf(CLI_USAGE_FMT, name);
 }
 
 int main(int argc, char **argv) {
@@ -302,11 +286,11 @@ int main(int argc, char **argv) {
         }
 
         if (argc < 3) {
-                print_usage();
+                print_usage(argv[0]);
                 exit(EXIT_FAILURE);
         }
 	cmd = argv[1];
-        daz = argv[argc -1];
+        daz = argv[argc - 1];
 
         /* recover tab option and args */
         int argc_cmd = argc - 3;
@@ -344,7 +328,7 @@ int main(int argc, char **argv) {
                         exit(EXIT_FAILURE);
                 }
 	} else {
-                print_usage();
+                print_usage(argv[0]);
                 exit(EXIT_FAILURE);
         }
 
