@@ -1,16 +1,9 @@
 #ifndef _DAZIBAO_H
 #define _DAZIBAO_H 1
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <time.h>
 #include "tlv.h"
-#include "utils.h"
 
 /**
  * @file
@@ -82,6 +75,14 @@ int dz_reset(dz_t *d);
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
 /**
+ * Read a date from a dated TLV
+ * @param d the dazibao
+ * @param offset the offset of the date
+ * @return a timestamp, or -1 on error
+ **/
+time_t dz_read_date_at(dz_t *d, off_t offset);
+
+/**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
  * @param d dazibao used for reading
  * @param tlv to be filled
@@ -151,6 +152,10 @@ int dz_compact(dz_t *d);
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
  * @param daz_buf
+ * @param end
+ * @param depth level of depth
+ * @param indent level of indentation
+ * @param flag_debug 'debug' boolean flag
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 

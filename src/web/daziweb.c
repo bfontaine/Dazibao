@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <libgen.h>
+#include <fcntl.h>
 #include "dazibao.h"
 #include "daziweb.h"
 #include "utils.h"
