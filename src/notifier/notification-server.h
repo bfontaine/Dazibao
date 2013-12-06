@@ -29,6 +29,7 @@
 
 #include "utils.h"
 #include "notifutils.h"
+#include "hash.h"
 
 #define MAX_CLIENTS 10
 #define RELIABLE_DEFAULT 1
@@ -87,7 +88,7 @@ void *notify(void *arg);
 
 /**
  * Look for a change in 'ctime' of a file
- * @param file path of file 
+ * @param file path of file
  * @param old_time previous recorded ctime of file (or 0 for initialization)
  * @return 0 if file did not change or on initialization
  * @return 1 if file changed
@@ -98,7 +99,7 @@ int unreliable_watch(char *file, time_t *old_time);
 
 /**
  * Look for a change in hashcode of a file
- * @param file path of file 
+ * @param file path of file
  * @param old_hash previous recorded hashcode of file (or 0 for initialization)
  * @return 0 if file did not change or on initialization
  * @return 1 if file changed

@@ -83,7 +83,7 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 		goto CLOSE;
 	}
 	
-	hash = qhashmurmur3_32(buf, st.st_size);
+	hash = SuperFastHash(buf, st.st_size);
 
 	if (*old_hash == 0) {
 		*old_hash = hash;
@@ -166,7 +166,8 @@ int nsa() {
 
 	for (i = 0; i < conf.nb_files; i++) {
 		pthread_t thread;
-		if (pthread_create(&thread, &attr, watch_file, (void *) (conf.file[i])) != 0) {
+		if (pthread_create(&thread, &attr, watch_file,
+                                (void *) (conf.file[i])) != 0) {
 			PERROR("pthread_create");
 		}
 	}
@@ -196,11 +197,11 @@ int set_up_server() {
 	saddr.sun_family = AF_UNIX;
 
 	if (conf.s_path == NULL) {
-		strncpy(saddr.sun_path, getenv("HOME"), 107);
-		strncat(saddr.sun_path, "/", 107);
-		strncat(saddr.sun_path, ".dazibao-notification-socket", 107);
+		strncpy(saddr.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
+		strncat(saddr.sun_path, "/", UNIX_PATH_MAX - 1);
+		strncat(saddr.sun_path, ".dazibao-notification-socket", UNIX_PATH_MAX - 1);
 	} else {
-		strncpy(saddr.sun_path, conf.s_path, 107);
+		strncpy(saddr.sun_path, conf.s_path, UNIX_PATH_MAX - 1);
 	}
 
 	conf.s_socket = socket(PF_UNIX, SOCK_STREAM, 0);

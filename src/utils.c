@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 #include "utils.h"
 
@@ -24,6 +25,17 @@ int write_all(int fd, char *buff, int len) {
         return wrote;
 }
 
+const char *get_ext(const char *path) {
+        const char *dot;
+        if (path == NULL) {
+                return NULL;
+        }
+
+        if ((dot = strrchr(path, '.')) == NULL) {
+                return NULL;
+        }
+        return dot + 1;
+}
 
 int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 

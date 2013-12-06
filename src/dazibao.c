@@ -9,16 +9,18 @@
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
- * @return offset of the begging of this serie on search succes
- * @return {offset} if search was unsuccessful
+ * @return offset of the beginning of this serie on success, or the given
+ *         offset if there are no pad1/padNs before it.
+ * @see dz_pad_serie_end
  */
 static off_t dz_pad_serie_start(dz_t *d, off_t offset);
 
 /**
  * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
  * starting after the skipped tlv.
- * @return offset of the end of this serie on search succes
- * @return offset of next tlv after {offset} if search was unsuccessful
+ * @return offset of the end of this serie on success, or the offset of the
+ *         next tlv if it's not followed by pad1/padNs.
+ * @see dz_pad_serie_start
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset);
 
@@ -27,7 +29,7 @@ int dz_create(dz_t *daz_buf, char *path) {
 	int fd;
 	char header[DAZIBAO_HEADER_SIZE];
 
-	fd = open(path, O_CREAT | O_EXCL, 0644);
+	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
 
 	if (fd == -1) {
 		ERROR("open", -1);
@@ -512,7 +514,7 @@ OUT:
         return status;
 }
 
-int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
+int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
 
 	tlv_t tlv = malloc(sizeof(*tlv)*TLV_SIZEOF_HEADER);
         off_t off;
@@ -533,10 +535,14 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
 
                 tlv_type = tlv_get_type(tlv);
                 len = tlv_type == TLV_PAD1 ? 0 : tlv_get_length(tlv);
-                tlv_str = tlv_type2str((char) tlv_type);
 
-                printf("[%9d] TLV %8s | %8d |\n",
+                tlv_str = tlv_type2str((char) tlv_type);
+                /* for option debug print pad n and pad1 only debug = 1 */
+                if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
+                        || (flag_debug == 1)) {
+                        printf("[%9d] TLV %8s | %8d |\n",
                                 (int)off, tlv_str, len);
+                }
 
                 switch (tlv_type) {
                         case TLV_COMPOUND:
@@ -544,8 +550,9 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                         off_t current = GET_OFFSET(*daz_buf);
                                         SET_OFFSET(*daz_buf, off
                                                 + TLV_SIZEOF_HEADER);
-                                        if (dz_dump_compound(daz_buf,current,
-                                                (depth-1), (indent+1))) {
+                                        if (dz_dump(daz_buf,current,
+                                                (depth-1), (indent+1),
+                                                flag_debug)) {
                                                 ERROR(NULL,-1);
                                         }
                                         SET_OFFSET(*daz_buf, current);
@@ -557,8 +564,9 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
                                         off_t current = GET_OFFSET(*daz_buf);
                                         SET_OFFSET(*daz_buf, off
                                         + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE);
-                                        if (dz_dump_compound(daz_buf,current,
-                                              (depth-1), (indent+1))) {
+                                        if (dz_dump(daz_buf,current,
+                                              (depth-1), (indent+1),
+                                              flag_debug)) {
                                                 ERROR(NULL,-1);
                                         }
                                         SET_OFFSET(*daz_buf, current);
@@ -572,10 +580,6 @@ int dz_dump_compound(dz_t *daz_buf, off_t end, int depth, int indent) {
         }
 	free(tlv);
         return 0;
-}
-
-int dz_dump(dz_t *daz_buf) {
-        return dz_dump_compound(daz_buf, EOD, 0,0);
 }
 
 #undef BUFFLEN
