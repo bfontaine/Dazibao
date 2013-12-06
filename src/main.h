@@ -5,6 +5,7 @@
  * Main program used for the command-line interface
  **/
 
+/** format of the help text */
 #define CLI_USAGE_FMT \
         "Usage:\n" \
         "    %s <cmd> <option and args> <dazibao>\n\n" \
@@ -37,13 +38,58 @@
         "        options:\n" \
         "            -r, --recursive: (todo)\n"
 
-int cmd_add(int argc, char ** argv, char * daz);
+/**
+ * @param argc arguments count
+ * @param argv arguments array
+ * @param daz
+ **/
+int cmd_add(int argc, char **argv, char *daz);
+
+/**
+ * @param daz
+ * @param type
+ **/
 int action_add(char *daz, unsigned char type);
-int cmd_rm(int argc, char ** argv, char * daz);
-int cmd_dump(int argc, char ** argv, char * daz);
+
+/**
+ * @param argc arguments count
+ * @param argv arguments array
+ * @param daz
+ **/
+int cmd_rm(int argc, char **argv, char *daz);
+
+/**
+ * @param argc arguments count
+ * @param argv arguments array
+ * @param daz
+ **/
+int cmd_dump(int argc, char **argv, char *daz);
+
+/**
+ * @param daz
+ * @param flag_debug
+ * @param flag_depth
+ **/
 int action_dump(char *daz, int flag_debug, int flag_depth);
-int cmd_compact(int argc, char ** argv, char * daz);
-int cmd_create(int argc, char ** argv, char * daz);
+
+/**
+ * @param argc arguments count
+ * @param argv arguments array
+ * @param daz
+ **/
+int cmd_compact(int argc, char **argv, char *daz);
+
+/**
+ * @param argc arguments count
+ * @param argv arguments array
+ * @param daz
+ **/
+int cmd_create(int argc, char **argv, char *daz);
+
+/**
+ * print the help text
+ * @param exec the name of the executable
+ **/
 void print_usage(char *exec);
 
 #endif

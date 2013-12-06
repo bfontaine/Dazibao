@@ -37,25 +37,46 @@
 /** code for memory errors */
 #define DZ_MEMORY_ERROR       -16
 
-/** use 'perror' and exit */
+/**
+ * use 'perror' and exit with EXIT_FAILURE
+ * @param str the string to use with perror
+ * @see PERROR
+ * @see ERROR
+ **/
 #define PANIC(str) {                        \
                 PERROR((str));              \
                 exit(EXIT_FAILURE);         \
         }
 
-/** print the current file and line, and use 'perror' */
+/**
+ * print the current file and line, and use 'perror'
+ * @param str the string to use with perror
+ * @see PANIC
+ **/
 #define PERROR(str) {							\
 		fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
 		perror((str));						\
 	}
 
-/** use 'perror' and return a value */
+/**
+ * print the current file and line, use 'perror' and return a value
+ * @param str the string to use with perror
+ * @param i the value to return
+ * @see PERROR
+ **/
 #define ERROR(str, i) {							\
 		PERROR((str));						\
 		return (i);						\
         }
 
-/** Close a file descriptor, use 'perror' and return a value */
+/**
+ * Close a file descriptor, use 'perror' and return a value
+ * @param fd file descriptor
+ * @param msg the string to use with perror
+ * @param i the value to return
+ * @see PANIC
+ * @see ERROR
+ **/
 #define CLOSE_AND_ERROR(fd, msg, i) {       \
                 if(close((fd)) == -1) {     \
                         PANIC("close");     \
@@ -70,7 +91,7 @@
  * of the function (i.e. right after the variables declarations). They use
  * a '__s' variable to save the offset, so please don't use this variable
  * in your function (this is very unlikely).
- * @param the dazibao (not a pointer)
+ * @param d the dazibao (not a pointer)
  **/
 #define SAVE_OFFSET(d)                                          \
                 off_t __s;                                      \
@@ -78,7 +99,7 @@
                 if (__s < 0) { perror("[save offset] lseek"); } \
 
 /**
- * @param the dazibao (not a pointer)
+ * @param d the dazibao (not a pointer)
  * @see SAVE_OFFSET
  */
 #define RESTORE_OFFSET(d)                                 \
@@ -86,10 +107,19 @@
                         perror("[restore offset] lseek"); \
                 }                                         \
 
-/** Return the current offset in a file */
+/**
+ * Return the current offset in a file
+ * @param fd file descriptor
+ * @see SET_OFFSET
+ **/
 #define GET_OFFSET(fd) (lseek(fd, 0, SEEK_CUR))
 
-/** Change the current offset in a file */
+/**
+ * Change the current offset in a file
+ * @param fd file descriptor
+ * @param o new offset
+ * @see GET_OFFSET
+ **/
 #define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_SET))
 
 #ifdef DEBUG
@@ -100,7 +130,10 @@
 #define PDEBUG(fmt, ...) 0
 #endif
 
-/** free a pointer and set it to NULL */
+/**
+ * free a pointer and set it to NULL
+ * @param p the pointer
+ **/
 #define NFREE(p) { free(p);(p) = NULL; }
 
 /**
@@ -123,7 +156,7 @@ int write_all(int fd, char *buff, int len);
 
 /**
  * Return the extension of a file.
- * @param filename
+ * @param path path of the file (filename)
  * @return a pointer to the part of the filename which represents the
  *         extension, or NULL if there's none. If you want to do some things
  *         with the extension while being able to free the original pointer,
@@ -140,8 +173,8 @@ const char *get_ext(const char *path);
 #define _STR(x) #x
 
 /**
- * make a string of a #define'd litteral number
- * @param x the #define'd litteral number
+ * make a string of a define'd litteral number
+ * @param x the define'd litteral number
  **/
 #define STR(x) _STR(x)
 

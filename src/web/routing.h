@@ -51,8 +51,8 @@ int add_route(char mth, char *path_suffix, route_handler route);
  * Return a route handler for a method and a path.
  * @param mth the method
  * @param path the path
- * @status if not NULL and the route handler cannot be found, it'll be filled
- * with either ROUTING_WRONG_MTH (good path but wrong method) or
+ * @param status if not NULL and the route handler cannot be found, it'll be
+ * filled with either ROUTING_WRONG_MTH (good path but wrong method) or
  * ROUTING_WRONG_PATH (wrong path).
  * @return the route handler if there's one, or NULL
  **/

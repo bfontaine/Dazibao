@@ -150,6 +150,10 @@ int dz_compact(dz_t *d);
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
  * @param daz_buf
+ * @param end
+ * @param depth level of depth
+ * @param indent level of indentation
+ * @param flag_debug 'debug' boolean flag
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
