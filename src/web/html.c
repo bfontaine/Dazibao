@@ -37,7 +37,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         if (html_ensure_length(html, htmlsize, htmlcursor, len) == -1) {
                 return -1;
         }
-        
+
         SAVE_OFFSET(dz);
         if (dz_read_tlv(&dz, t, *off) == -1) {
                 return -1;
@@ -73,7 +73,7 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt, *off, ext);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
-         
+
         free(ext);
         return 0;
 }
@@ -81,7 +81,7 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
         int type = tlv_get_type(*t),
             w;
-        
+
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, "(%s)",
                         type == TLV_PAD1 ? "pad1" : "padN");
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
@@ -97,27 +97,52 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
         static const char fmt_top[] = "<time datetime=\"%s\">%s</time>\n" \
-                                        "<div class=\"subtlv\">";
-        static const char fmt_bottom[] = "</div>";
+                                        "<ol class=\"subtlv\">";
+        static const char fmt_bottom[] = "</ol>";
 
+        time_t time;
+        struct tm date;
+        char *time_iso = NULL,
+             *time_txt = NULL;
         int len = tlv_get_length(*t), w, st;
         off_t off_value = *off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE,
               off_after = *off + TLV_SIZEOF_HEADER + len;
 
-        /* TODO read the date and create time_iso & time_txt */
+        time = dz_read_date_at(&dz, *off + TLV_SIZEOF_HEADER);
+
+        /* FIXME check for wrong dates */
+
+        time_iso = (char*)malloc(sizeof(char)*HTML_MAX_DATE_SIZE);
+        time_txt = (char*)malloc(sizeof(char)*HTML_MAX_DATE_SIZE);
+
+        if (time_iso == NULL || time_txt == NULL) {
+                NFREE(time_iso);
+                NFREE(time_txt);
+                return -1;
+        }
+
+        memset(&date, 0, sizeof(date));
+        gmtime_r(&time, &date);
+
+        strftime(time_iso, HTML_MAX_DATE_SIZE, HTML_RFC_DATE, &date);
+        strftime(time_txt, HTML_MAX_DATE_SIZE, HTML_TXT_DATE, &date);
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt_top,
-                        time_iso time_txt);
+                        time_iso, time_txt);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
         *off = off_value;
-        st = html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
+
+        st = dz_tlv_at(&dz, t, *off);
+        st |= html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
         if (st == -1) {
                 return -1;
         }
 
         memcpy(*html+(*htmlcursor), fmt_bottom, strlen(fmt_bottom));
 
+        free(time_iso);
+        free(time_txt);
         *off = off_after;
         return 0;
 }
@@ -175,6 +200,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                 case TLV_DATED:
                         st = html_add_dated_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
+                        break;
                 case TLV_COMPOUND:
                         st = html_add_compound_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
@@ -217,7 +243,7 @@ int dz2html(dz_t dz, char **html) {
             htmlcursor = 0,
             written = 0,
             html_bottom_len;
-        
+
         if (dz < 0 || html == NULL || tlv_init(t) < 0) {
                 tlv_destroy(t);
                 LOGERROR("dz<0 or html==NULL or tlv_init failed");

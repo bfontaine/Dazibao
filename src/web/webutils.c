@@ -14,10 +14,12 @@ int get_image_tlv_type(const char *path) {
         if (path == NULL || ext == NULL) {
                 return -1;
         }
-        if (strcasecmp(ext, PNG_EXT) == 0) {
+        LOGDEBUG("Determining the TLV type of ext '%s'...", ext);
+
+        if (strcasecmp(ext, PNG_EXT + 1) == 0) {
                 return TLV_PNG;
         }
-        if (strcasecmp(ext, JPEG_EXT) == 0) {
+        if (strcasecmp(ext, JPEG_EXT + 1) == 0) {
                 return TLV_JPEG;
         }
         return -1;

@@ -18,6 +18,12 @@
 /** maximum length of a Dazibao filename in an HTML page */
 #define HTML_DZ_MAX_NAME_LENGTH 64
 
+/** maximum size of a date string */
+#define HTML_MAX_DATE_SIZE 64
+
+#define HTML_RFC_DATE "%FT%T"
+#define HTML_TXT_DATE "%F, %T"
+
 /** Format used for the HTML top of a dazibao */
 #define HTML_DZ_TOP_FMT \
                   "<!doctype html>\n" \
