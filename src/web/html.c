@@ -24,15 +24,10 @@ int html_ensure_length(char **html, int *htmlsize, int *htmlcursor, int len) {
 
 int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
-        static const char fmt[] = "<blockquote>%.*s</blockquote>";
-        static int fmtlen = 0;
         int w, tlen, len;
-        if (fmtlen == 0) {
-                fmtlen = strlen(fmt) - 4;
-        }
 
         tlen = tlv_get_length(*t);
-        len = tlen + fmtlen + 1;
+        len = tlen + (strlen(HTML_TLV_TEXT_FMT) - 4) + 1;
 
         if (html_ensure_length(html, htmlsize, htmlcursor, len) == -1) {
                 return -1;
@@ -47,7 +42,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         LOGDEBUG("Adding HTML of text TLV at offset %lu, tlen=%d, len=%d, " \
                         "htmlsize=%d, cursor=%d",
                         *off, tlen, len, *htmlsize, *htmlcursor);
-        w = snprintf(*html+(*htmlcursor), len, fmt,
+        w = snprintf(*html+(*htmlcursor), len, HTML_TLV_TEXT_FMT,
                         tlen, tlv_get_value_ptr(*t));
         *htmlcursor += MIN(w, len);
         return 0;
@@ -55,7 +50,6 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor) {
-        static const char fmt[] = "<img src=\"/tlv/%lu%s\" />";
         int type = tlv_get_type(*t), w;
         char *ext;
 
@@ -71,7 +65,8 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                         break;
         }
 
-        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt, *off, ext);
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
+                        HTML_TLV_IMG_FMT, *off, ext);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
         free(ext);
@@ -90,16 +85,34 @@ int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
 
 int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
-        /* TODO */
+
+        off_t off_value = *off + TLV_SIZEOF_HEADER,
+              off_after = off_value + tlv_get_length(*t),
+              dz_off;
+        int w,
+            len_top = strlen(HTML_TLV_COMPOUND_TOP_FMT),
+            len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT);
+
+        memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_TOP_FMT, len_top);
+        *htmlcursor += len_top;
+
+        SET_OFFSET(dz, off_value);
+        *off = off_value;
+        while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
+                if (html_add_tlv(dz, t, &dz_off, html, htmlsize,
+                                        htmlcursor) != 0) {
+                        return -1;
+                }
+        }
+
+        memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_BOTTOM_FMT, len_bottom);
+        *htmlcursor += len_bottom;
+        *off = off_after;
         return 0;
 }
 
 int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
-        static const char fmt_top[] = "<time datetime=\"%s\">%s</time>\n" \
-                                        "<ol class=\"subtlv\">";
-        static const char fmt_bottom[] = "</ol>";
-
         time_t time;
         struct tm date;
         char *time_iso = NULL,
@@ -127,8 +140,8 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         strftime(time_iso, HTML_MAX_DATE_SIZE, HTML_RFC_DATE, &date);
         strftime(time_txt, HTML_MAX_DATE_SIZE, HTML_TXT_DATE, &date);
 
-        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt_top,
-                        time_iso, time_txt);
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
+                        HTML_TLV_DATED_TOP_FMT, time_iso, time_txt);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
         *off = off_value;
@@ -139,7 +152,8 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 return -1;
         }
 
-        memcpy(*html+(*htmlcursor), fmt_bottom, strlen(fmt_bottom));
+        memcpy(*html+(*htmlcursor), HTML_TLV_DATED_BOTTOM_FMT,
+                        strlen(HTML_TLV_DATED_BOTTOM_FMT));
 
         free(time_iso);
         free(time_txt);

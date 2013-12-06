@@ -54,6 +54,20 @@
                   "  </body>\n" \
                   "</html>\n"
 
+/** HTML format for a text TLV */
+#define HTML_TLV_TEXT_FMT "<blockquote>%.*s</blockquote>"
+/** HTML format for an image TLV */
+#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%lu%s\" />"
+/** HTML format for the top of a dated TLV */
+#define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>\n" \
+                                 "<ol class=\"subtlv\">"
+/** HTML format for the bottom of a dated TLV */
+#define HTML_TLV_DATED_BOTTOM_FMT "</ol>"
+/** HTML format for the top of a compound TLV */
+#define HTML_TLV_COMPOUND_TOP_FMT "<ol class=\"subtlvs\">"
+/** HTML format for the bottom of a compound TLV */
+#define HTML_TLV_COMPOUND_BOTTOM_FMT "</ol>"
+
 /** maximum size of the HTML top of a TLV */
 #define HTML_TLV_TOP_MAX_LENGTH (strlen(HTML_TLV_TOP_FMT) + 64)
 
