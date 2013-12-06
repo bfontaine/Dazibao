@@ -6,6 +6,236 @@
 
 /** @file */
 
+int html_ensure_length(char **html, int *htmlsize, int *htmlcursor, int len) {
+        if (*htmlcursor + len < *htmlsize) {
+                return 0;
+        }
+
+        *htmlsize = *htmlcursor + len + HTML_CHUNK_SIZE;
+        *html = (char*)safe_realloc(*html, sizeof(char)*(*htmlsize));
+        if (*html == NULL) {
+                perror("realloc");
+                LOGERROR("cannot allocate enough memory to fit the HTML");
+                return -1;
+        }
+
+        return 0;
+}
+
+int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
+                *htmlsize, int *htmlcursor) {
+        static const char fmt[] = "<blockquote>%.*s</blockquote>";
+        static int fmtlen = 0;
+        int w, tlen, len;
+        if (fmtlen == 0) {
+                fmtlen = strlen(fmt) - 4;
+        }
+
+        tlen = tlv_get_length(*t);
+        len = tlen + fmtlen + 1;
+
+        if (html_ensure_length(html, htmlsize, htmlcursor, len) == -1) {
+                return -1;
+        }
+        
+        if (dz_read_tlv(&dz, t, *off) == -1) {
+                return -1;
+        }
+
+        LOGDEBUG("Adding HTML of text TLV at offset %lu, tlen=%d, len=%d, " \
+                        "htmlsize=%d, cursor=%d",
+                        *off, tlen, len, *htmlsize, *htmlcursor);
+        w = snprintf(*html+(*htmlcursor), len, fmt,
+                        tlen, tlv_get_value_ptr(*t));
+        *htmlcursor += MIN(w, len);
+        return 0;
+}
+
+int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
+                int *htmlcursor) {
+        static const char fmt[] = "<img src=\"/tlv/%lu%s\" />";
+        int type = tlv_get_type(*t), w;
+        char *ext;
+
+        switch (type) {
+                case TLV_PNG:
+                        ext = strdup(PNG_EXT);
+                        break;
+                case TLV_JPEG:
+                        ext = strdup(JPEG_EXT);
+                        break;
+                default:
+                        ext = strdup(DEFAULT_EXT);
+                        break;
+        }
+
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, fmt, *off, ext);
+        *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
+         
+        free(ext);
+        return 0;
+}
+
+int html_add_pad1padn_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
+                *htmlsize, int *htmlcursor) {
+        return 0;
+}
+
+int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
+                *htmlsize, int *htmlcursor) {
+        return 0;
+}
+
+int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
+                *htmlsize, int *htmlcursor) {
+        return 0;
+}
+
+int dz2html(dz_t dz, char **html) {
+        tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
+        off_t dz_off;
+        int htmlsize = 0,
+            htmlcursor = 0,
+            written = 0,
+            html_bottom_len;
+        
+        if (dz < 0 || html == NULL || tlv_init(t) < 0) {
+                tlv_destroy(t);
+                LOGERROR("dz<0 or html==NULL or tlv_init failed");
+                return -1;
+        }
+
+        /* We allocate more memory to avoid repetitive 'realloc' calls */
+        htmlsize = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
+                        + strlen(HTML_DZ_BOTTOM) + 2 * HTML_CHUNK_SIZE;
+        htmlcursor = 0;
+
+        *html = (char*)malloc(sizeof(char)*htmlsize);
+        if (*html == NULL) {
+                perror("malloc");
+                tlv_destroy(t);
+                LOGERROR("cannot preallocate enough memory to fit the HTML");
+                return -1;
+        }
+
+        written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
+                        HTML_DZ_TOP_FMT, WSERVER.dzname);
+        if (written > htmlsize) {
+                perror("snprintf");
+                tlv_destroy(t);
+                NFREE(*html);
+                LOGERROR("HTML top snprintf failed, written=%d", written);
+                return -1;
+        }
+        htmlcursor += written;
+
+        while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
+                int tlv_type = tlv_get_type(*t),
+                    st = 0;
+                
+                if (!TLV_VALID_TYPE(tlv_type)) {
+                        LOGDEBUG("Unknown TLV type: %d", tlv_type);
+                        continue;
+                }
+
+                if (TLV_IS_EMPTY_PAD(tlv_type) && !WSERVER.debug) {
+                        LOGDEBUG("Skipping Pad1/PadN at offset %lu", dz_off);
+                        continue;
+                }
+
+                if (html_ensure_length(html, &htmlsize, &htmlcursor,
+                                        HTML_TLV_MIN_SIZE) == -1) {
+                        tlv_destroy(t);
+                        LOGERROR("Cannot preallocate enough memory to " \
+                                        "fit a TLV");
+                        return -1;
+                }
+
+                written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
+                                HTML_TLV_TOP_FMT,
+                                dz_off, tlv_get_length(*t) , tlv_type,
+                                tlv_type2str(tlv_type));
+                if (written > htmlsize) {
+                        perror("snprintf");
+                        tlv_destroy(t);
+                        NFREE(*html);
+                        LOGERROR("snprintf of TLV top failed");
+                        return -1;
+                }
+                htmlcursor += written;
+
+                switch (tlv_type) {
+                        case TLV_PAD1:
+                        case TLV_PADN:
+                                st = html_add_pad1padn_tlv(dz, t, &dz_off,
+                                                html, &htmlsize, &htmlcursor);
+                                break;
+                        case TLV_TEXT:
+                                st = html_add_text_tlv(dz, t, &dz_off,
+                                                html, &htmlsize, &htmlcursor);
+                                break;
+                        case TLV_PNG:
+                        case TLV_JPEG:
+                                st = html_add_img_tlv(dz, t, &dz_off,
+                                                html, &htmlsize, &htmlcursor);
+                                break;
+                        case TLV_DATED:
+                                st = html_add_dated_tlv(dz, t, &dz_off,
+                                                html, &htmlsize, &htmlcursor);
+                        case TLV_COMPOUND:
+                                st = html_add_compound_tlv(dz, t, &dz_off,
+                                                html, &htmlsize, &htmlcursor);
+                                break;
+                };
+
+                if (st != 0) {
+                        free(*html);
+                        tlv_destroy(t);
+                        LOGERROR("Something went wrong with a html_add_*");
+                        return -1;
+                }
+
+                if (html_ensure_length(html, &htmlsize, &htmlcursor,
+                                strlen(HTML_TLV_BOTTOM)) == -1) {
+                        tlv_destroy(t);
+                        LOGERROR("Cannot preallocate enough memory to fit " \
+                                        "the HTML bottom of a TLV");
+                        return -1;
+                }
+
+                /* TODO memcpy here? */
+                written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
+                                HTML_TLV_BOTTOM);
+                if (written > htmlsize) {
+                        perror("snprintf");
+                        tlv_destroy(t);
+                        NFREE(*html);
+                        LOGERROR("snprintf of TLV bottom failed");
+                        return -1;
+                }
+                htmlcursor += written - 1;
+        }
+
+        tlv_destroy(t);
+
+        html_bottom_len = strlen(HTML_DZ_BOTTOM);
+
+        if (html_ensure_length(html, &htmlsize, &htmlcursor,
+                                html_bottom_len + 1) == -1) {
+                tlv_destroy(t);
+                LOGERROR("cannot allocate enough memory to fit the " \
+                                "HTML bottom");
+                return -1;
+        }
+
+        strncpy(*html+htmlcursor, HTML_DZ_BOTTOM, html_bottom_len + 1);
+        LOGDEBUG("Generated %d chars of HTML", htmlcursor);
+
+        return 0;
+}
+
+#if 0
+/* -- OLD -- */
 int text_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html) {
         char fmt[] = HTML_TLV_FMT("<blockquote>%.*s</blockquote>");
@@ -13,7 +243,6 @@ int text_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
         return snprintf(html, HTML_TLV_SIZE, fmt, off, tlv_type2str(type),
                         type, len, len, tlv_get_value_ptr(*t));
 }
-
 int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html, const char *ext) {
         char fmt[] = HTML_TLV_FMT("<img src=\"/tlv/%li%s\" />");
@@ -21,22 +250,6 @@ int img_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
         return snprintf(html, HTML_TLV_SIZE, fmt, off,
                         tlv_type2str(type), type, len, off, ext);
 }
-
-int dated_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
-                char *html) {
-        /* TODO HTML to dated TLVs */
-        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(dated)"), off,
-                        tlv_type2str(type), type, len);
-        return -1;
-}
-int compound_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
-                char *html) {
-        /* TODO HTML to compound TLVs */
-        snprintf(html, HTML_TLV_SIZE, HTML_TLV_FMT("(compound)"), off,
-                        tlv_type2str(type), type, len);
-        return -1;
-}
-
 int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
                 char *html) {
         char fmt[] = HTML_TLV_FMT("<span>(empty)</span>");
@@ -44,145 +257,4 @@ int empty_pad_tlv2html(tlv_t *t, int type, unsigned int len, off_t off,
         return snprintf(html, HTML_TLV_SIZE, fmt, off,
                         tlv_type2str(type), type, len);
 }
-
-int tlv2html(dz_t dz, tlv_t *t, off_t off, char **html) {
-        int st, type, len;
-        char text_fmt[] = HTML_TLV_FMT("");
-
-        if (dz_read_tlv(&dz, t, off) < 0) {
-                LOGERROR("Cannot read TLV at offset %li", off);
-                return -1;
-        }
-
-        *html = (char*)malloc(sizeof(char)*HTML_TLV_SIZE);
-
-        if (*html == NULL) {
-                LOGERROR("Cannot malloc enough to generate HTML " \
-                                "for the TLV at %li", off);
-                perror("malloc");
-                return -1;
-        }
-
-        type = tlv_get_type(*t);
-        len  = type == TLV_PAD1 ? 0 : tlv_get_length(*t);
-
-        switch (type) {
-                case TLV_PAD1:
-                case TLV_PADN:
-                        st = empty_pad_tlv2html(t, type, len, off, *html);
-                        break;
-                case TLV_TEXT:
-                        st = text_tlv2html(t, type, len, off, *html);
-                        break;
-                case TLV_PNG:
-                        st = img_tlv2html(t, type, len, off, *html, PNG_EXT);
-                        break;
-                case TLV_JPEG:
-                        st = img_tlv2html(t, type, len, off, *html, JPEG_EXT);
-                        break;
-                case TLV_DATED:
-                        st = dated_tlv2html(t, type, len, off, *html);
-                        break;
-                case TLV_COMPOUND:
-                        st = compound_tlv2html(t, type, len, off, *html);
-                        break;
-                default:
-                        st = snprintf(*html, HTML_TLV_SIZE, text_fmt, off,
-                                        tlv_type2str(type), type, len);
-        }
-
-        if (st > HTML_TLV_SIZE) {
-                LOGWARN("sprintf of TLV at %lu failed (truncated)", off);
-        }
-
-        return 0;
-}
-
-int dz2html(dz_t dz, char **html) {
-        char **tlv_html = (char**)malloc(sizeof(char*));
-        off_t tlv_off;
-        int html_len,
-            tlv_html_len,
-            preallocated_len;
-
-        tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
-
-        if (tlv_html == NULL || t == NULL || tlv_init(t) < 0) {
-                LOGERROR("Cannot initialize TLV");
-                free(t);
-                free(tlv_html);
-                return -1;
-        }
-        *tlv_html = NULL;
-
-        html_len = strlen(HTML_DZ_TOP_FMT) + HTML_DZ_MAX_NAME_LENGTH \
-                        + strlen(HTML_DZ_BOTTOM);
-
-        /* preallocating more memory to avoid repetitive 'realloc' calls */
-        preallocated_len = html_len + 2 * HTML_TLV_SIZE;
-
-        *html = (char*)malloc(sizeof(char)*preallocated_len);
-        if (*html == NULL) {
-                LOGERROR("Cannot allocate enough memory for the dazibao");
-                perror("malloc");
-                free(t);
-                free(tlv_html);
-                return -1;
-        }
-        if (snprintf(*html, html_len, HTML_DZ_TOP_FMT, \
-                                WSERVER.dzname) > html_len) {
-                LOGDEBUG("Dazibao name truncated.");
-        }
-
-        while ((tlv_off = dz_next_tlv(&dz, t)) > 0) {
-                int tlv_type = tlv_get_type(*t);
-                if (!WSERVER.debug && TLV_IS_EMPTY_PAD(tlv_type)) {
-                        LOGDEBUG("TLV at %li is a pad1/padN, skipping.",
-                                        tlv_off);
-                        continue;
-                }
-
-                NFREE(*tlv_html);
-                if (tlv2html(dz, t, tlv_off, tlv_html) < 0) {
-                        LOGWARN("Error while reading TLV at %li, skipping.",
-                                        tlv_off);
-                        continue;
-                }
-
-                tlv_html_len = strlen(*tlv_html);
-                html_len += tlv_html_len;
-
-                LOGDEBUG("Called tlv2html on offset %lu, got %d chars",
-                                tlv_off, tlv_html_len);
-
-                if (html_len > preallocated_len) {
-                        char *tmp_ptr = (char*)realloc(*html, html_len);
-
-                        if (tmp_ptr == NULL) {
-                                LOGWARN("Cannot realloc, skipping tlv %lu",
-                                                tlv_off);
-                                perror("realloc");
-                                continue;
-                        }
-                        *html = tmp_ptr;
-                } else {
-                        LOGDEBUG("Enough preallocated memory for this TLV");
-                }
-
-                strncat(*html, *tlv_html, tlv_html_len);
-
-                /*tlv_destroy(t);
-                t = NULL;*/
-        }
-        if (tlv_off == -1) {
-                LOGERROR("got an error when reading dazibao with next_tlv");
-        }
-
-        tlv_destroy(t);
-        NFREE(*tlv_html);
-        NFREE(tlv_html);
-
-        strncat(*html, HTML_DZ_BOTTOM, strlen(HTML_DZ_BOTTOM));
-
-        return tlv_off == -1 ? -1 : 0;
-}
+#endif

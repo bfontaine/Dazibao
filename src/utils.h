@@ -69,10 +69,18 @@
                 }                                         \
 
 /** Return the current offset in a file */
-#define GET_OFFSET(fd) (lseek(fd, 0, SEEK_CUR))
+#define GET_OFFSET(fd) (lseek((fd), 0, SEEK_CUR))
 
 /** Change the current offset in a file */
 #define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_SET))
+
+/**
+ * wrapper to save and restore the current offset in a dazibao after a piece
+ * of code
+ * @param d the dazibao
+ * @param code the code to wrap
+ **/
+#define PRESERVE_OFFSET(d,code) {SAVE_OFFSET(d);{code};RESTORE_OFFSET(d);}
 
 #ifdef DEBUG
 /** wrapper around printf */

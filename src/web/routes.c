@@ -23,6 +23,7 @@ int route_get_index(dz_t dz, struct http_request req,
         }
 
         if (req.method != HTTP_M_HEAD) {
+                LOGDEBUG("Generating the HTML of the dazibao...");
                 if (dz2html(dz, resp->body) < 0) {
                         LOGERROR("Error while making dazibao's HTML");
                         return -1;

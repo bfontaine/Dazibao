@@ -88,7 +88,8 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
 
 /**
- * Fill tlv with type and length information
+ * Fill tlv with type and length information. On success, the dazibao cursor is
+ * set to the next TLV.
  * @param d dazibao used for reading
  * @param tlv to be filled
  * @param offset position of the tlv wanted in d
