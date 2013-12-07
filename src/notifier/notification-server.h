@@ -25,31 +25,31 @@
 
 /** general config of notification server */
 struct ns_config {
-	
+
         /** max number of clients */
-	int client_max;
+        int client_max;
         /** number of files watched by server */
-	int nb_files;
+        int nb_files;
         /** path of the socket used to accept clients */
-	char *s_path;
+        char *s_path;
         /** pathes of files watched */
-	char **file;
+        char **file;
         /** flag enabling or disabling reliable mode */
-	char reliable;
-	
-	/* sockets */
+        char reliable;
+
+        /* sockets */
         /** file descriptor of server */
-	int s_socket;
+        int s_socket;
         /** file descriptors of clients */
-	int *c_socket;
-	
-	/* waiting time */
+        int *c_socket;
+
+        /* waiting time */
         /** minimum interval between two file check */
-	int w_sleep_min;
+        int w_sleep_min;
         /** default interval between two file check */
-	int w_sleep_default;
+        int w_sleep_default;
         /** maximum interval between two file check */
-	int w_sleep_max;
+        int w_sleep_max;
 };
 
 

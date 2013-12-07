@@ -75,7 +75,7 @@ int cmd_add(int argc, char **argv, char * daz) {
 
 
 int action_add(char *daz, unsigned char type) {
-	dz_t daz_buf;
+        dz_t daz_buf;
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
@@ -122,7 +122,7 @@ int action_add(char *daz, unsigned char type) {
 }
 
 int cmd_rm(int argc , char ** argv, char * daz) {
-	dz_t daz_buf;
+        dz_t daz_buf;
 
         if (argc != 1) {
                 printf("expected offset\n");
@@ -155,7 +155,7 @@ int cmd_rm(int argc , char ** argv, char * daz) {
         return 0;
 }
 int action_dump(char *daz, int flag_debug, int flag_depth) {
-	dz_t daz_buf;
+        dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY)) {
                 printf("open dazibao failed\n");
                 exit(EXIT_FAILURE);
@@ -238,7 +238,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
 }
 
 int cmd_create(int argc , char ** argv, char * daz) {
-	dz_t daz_buf;
+        dz_t daz_buf;
         if (argc > 0) {
                 printf("no argument for commande create\n");
                 return -1;
@@ -257,7 +257,7 @@ int cmd_create(int argc , char ** argv, char * daz) {
 
 }
 int cmd_compact(int argc , char ** argv, char * daz) {
-	dz_t daz_buf;
+        dz_t daz_buf;
         if (argc > 0) {
                 printf("no argument for commande compact\n");
                 return -1;
@@ -284,7 +284,7 @@ void print_usage(char *name) {
 }
 
 int main(int argc, char **argv) {
-	char *cmd, *daz;
+        char *cmd, *daz;
 
         if (setlocale(LC_ALL, "") == NULL) {
                 PERROR("setlocale");
@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
         }
-	cmd = argv[1];
+        cmd = argv[1];
         daz = argv[argc - 1];
 
         /* recover tab option and args */
@@ -307,32 +307,32 @@ int main(int argc, char **argv) {
         /*
         TODO : management error write request
         */
-	if ( !strcmp(cmd, "add")) {
+        if ( !strcmp(cmd, "add")) {
                 if (cmd_add(argc_cmd, argv_cmd, daz) == -1) {
                         printf("cmd_add failed\n");
                         exit(EXIT_FAILURE);
                 }
-	} else if (!strcmp(cmd, "rm")) {
+        } else if (!strcmp(cmd, "rm")) {
                 if (cmd_rm(argc_cmd, argv_cmd, daz) == -1) {
                         printf("cmd_rm failed\n");
                         exit(EXIT_FAILURE);
                 }
-	} else if (!strcmp(cmd, "dump")) {
+        } else if (!strcmp(cmd, "dump")) {
                 if (cmd_dump(argc_cmd, argv_cmd, daz)) {
                         printf("cmd_dump failed\n");
                         exit(EXIT_FAILURE);
                 }
-	} else if (!strcmp(cmd, "create")) {
+        } else if (!strcmp(cmd, "create")) {
                 if (cmd_create(argc_cmd, argv_cmd, daz)) {
                         printf("cmd_create failed\n");
                         exit(EXIT_FAILURE);
                 }
-	} else if (!strcmp(cmd, "compact")) {
+        } else if (!strcmp(cmd, "compact")) {
                 if (cmd_compact(argc_cmd, argv_cmd, daz)) {
                         printf("cmd_compact failed\n");
                         exit(EXIT_FAILURE);
                 }
-	} else {
+        } else {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
         }

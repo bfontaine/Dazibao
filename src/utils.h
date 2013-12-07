@@ -53,10 +53,10 @@
  * @param str the string to use with perror
  * @see PANIC
  **/
-#define PERROR(str) {							\
-		fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
-		perror((str));						\
-	}
+#define PERROR(str) {                                                        \
+                fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
+                perror((str));                                               \
+        }
 
 /**
  * print the current file and line, use 'perror' and return a value
@@ -64,9 +64,9 @@
  * @param i the value to return
  * @see PERROR
  **/
-#define ERROR(str, i) {							\
-		PERROR((str));						\
-		return (i);						\
+#define ERROR(str, i) {        \
+                PERROR((str)); \
+                return (i);    \
         }
 
 /**
@@ -77,11 +77,11 @@
  * @see PANIC
  * @see ERROR
  **/
-#define CLOSE_AND_ERROR(fd, msg, i) {       \
-                if(close((fd)) == -1) {     \
-                        PANIC("close");     \
-                }                           \
-                ERROR((msg), (i));          \
+#define CLOSE_AND_ERROR(fd, msg, i) {   \
+                if(close((fd)) == -1) { \
+                        PANIC("close"); \
+                }                       \
+                ERROR((msg), (i));      \
         }
 
 /**
@@ -95,7 +95,7 @@
  **/
 #define SAVE_OFFSET(d)                                          \
                 off_t __s;                                      \
-                __s = lseek((d), 0, SEEK_CUR);               \
+                __s = lseek((d), 0, SEEK_CUR);                  \
                 if (__s < 0) { perror("[save offset] lseek"); } \
 
 /**
@@ -112,7 +112,7 @@
  * @param fd file descriptor
  * @see SET_OFFSET
  **/
-#define GET_OFFSET(fd) (lseek(fd, 0, SEEK_CUR))
+#define GET_OFFSET(fd) (lseek((fd), 0, SEEK_CUR))
 
 /**
  * Change the current offset in a file
@@ -129,14 +129,6 @@
  * @param code the code to wrap
  **/
 #define PRESERVE_OFFSET(d,code) {SAVE_OFFSET(d);{code};RESTORE_OFFSET(d);}
-
-#ifdef DEBUG
-/** wrapper around printf */
-#define PDEBUG(fmt, ...) printf(fmt, ##__VA_ARGS__)
-#else
-/** 0 */
-#define PDEBUG(fmt, ...) 0
-#endif
 
 /**
  * free a pointer and set it to NULL
@@ -188,28 +180,28 @@ const char *get_ext(const char *path);
 
 /** type of a command-line argument */
 enum arg_type {
-	ARG_TYPE_INT,
-	ARG_TYPE_STRING
+        ARG_TYPE_INT,
+        ARG_TYPE_STRING
 };
 
 /** command-line option */
 struct s_option {
         /** name */
-	char *name;
+        char *name;
         /** type of the option's value */
-	enum arg_type type;
+        enum arg_type type;
         /** value of the option */
-	void *value;
+        void *value;
 };
 
 /** command-line arguments */
 struct s_args {
         /** arguments count */
-	int *argc;
+        int *argc;
         /** arguments */
-	char ***argv;
+        char ***argv;
         /** options */
-	struct s_option *options;
+        struct s_option *options;
 };
 
 /**

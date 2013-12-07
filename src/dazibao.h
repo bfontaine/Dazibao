@@ -59,13 +59,6 @@ int dz_open(dz_t *d, char *path, int flags);
 int dz_close(dz_t *d);
 
 /**
- * Reset the cursor of a dazibao for further readings.
- * @param d the dazibao to reset
- * @return 0 on success
- **/
-int dz_reset(dz_t *d);
-
-/**
  * Fill tlv value
  * @param d dazibao used for reading
  * @param tlv tlv to be filled
