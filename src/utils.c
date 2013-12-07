@@ -43,24 +43,29 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 
         while (next_arg < argc) {
                 char is_opt = 0;
-                int i;
-                for (i = 0; i < nb_opt; i++) {
-                        if (strcmp(argv[next_arg], res->options[i].name) == 0) {
+                for (int i = 0; i < nb_opt; i++) {
+                        if (strcmp(argv[next_arg],
+                                                res->options[i].name) == 0) {
                                 if (next_arg > argc - 2) {
-                                        fprintf(stderr, "\"%s\" parameter is missing.\n",
-                                                res->options[i].name);
+                                        fprintf(stderr,"'%s' parameter "
+                                                        "is missing.\n",
+                                                        res->options[i].name);
                                         return -1;
                                 }
                                 is_opt = 1;
                                 switch (res->options[i].type) {
                                 case ARG_TYPE_INT:
-                                        *((int *)res->options[i].value) = strtol(argv[next_arg + 1], NULL, 10);
+                                        *((int *)res->options[i].value) =
+                                                strtol(argv[next_arg + 1],
+                                                                NULL, 10);
                                         break;
                                 case ARG_TYPE_STRING:
-                                        res->options[i].value = argv[next_arg + 1];
+                                        res->options[i].value =
+                                                argv[next_arg + 1];
                                         break;
                                 default:
-                                        fprintf(stderr, "Unkown arg type, doing nothing.\n");
+                                        fprintf(stderr, "Unknown arg type, "
+                                                        "doing nothing.\n");
                                         return -1;
                                 }
 
