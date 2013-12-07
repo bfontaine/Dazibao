@@ -55,27 +55,30 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 
         switch (type) {
                 case TLV_PNG:
-                        ext = strdup(PNG_EXT);
+                        ext = PNG_EXT;
                         break;
                 case TLV_JPEG:
-                        ext = strdup(JPEG_EXT);
+                        ext = JPEG_EXT;
                         break;
                 default:
-                        ext = strdup(DEFAULT_EXT);
+                        ext = DEFAULT_EXT;
                         break;
         }
+
+        LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %lu.", ext, *off);
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
                         HTML_TLV_IMG_FMT, *off, ext);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
-        free(ext);
         return 0;
 }
 
 int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
         int type = tlv_get_type(*t),
             w;
+
+        LOGDEBUG("Adding HTML of pad1/padN (type=%d)", type);
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, "(%s)",
                         type == TLV_PAD1 ? "pad1" : "padN");
@@ -96,6 +99,9 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_TOP_FMT, len_top);
         *htmlcursor += len_top;
 
+        LOGDEBUG("Adding a TLV compound of length=%d at offset %lu", tlen,
+                        *off);
+
         if (tlen > 0) {
                 SET_OFFSET(dz, off_value);
                 *off = off_value;
@@ -110,6 +116,7 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_BOTTOM_FMT, len_bottom);
         *htmlcursor += len_bottom;
         *off = off_after;
+        /*SET_OFFSET(dz, off_after);*/
         return 0;
 }
 
