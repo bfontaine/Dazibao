@@ -3,3 +3,70 @@
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
+html, body {
+    margin: 0;
+    background-color: #eef;
+    font-family: helvetica, arial, sans-serif;
+}
+
+ol, ul {
+    list-style: none;
+}
+
+body > .tlvs {
+    max-width: 800px;
+    margin:auto;
+}
+
+.tlv {
+    background-color: #fff;
+    margin: 40px 0;
+}
+
+.tlv .type {
+    display: none;
+}
+
+.subtlvs {
+    border-left: 4px #AAA solid;
+    padding-right: 4px;
+}
+
+.value {
+    text-align: center;
+    padding: 10px;
+}
+
+p, blockquote {
+    text-align: left;
+}
+
+blockquote {
+    font-size: 1.2em;
+    font-family: georgia, serif;
+    margin: 0;
+    padding: 8px 14px;
+}
+blockquote .author {
+    display: block;
+    text-align: right;
+}
+blockquote .author span {
+    text-align: left;
+}
+blockquote .sep {
+    opacity: 0.2;
+}
+
+/* Actions bars */
+.actions {
+    visibility: hidden;
+}
+
+.tlv:hover > .actions {
+    visibility: visible;
+}
+
+.actions li {
+    cursor: pointer;
+}
