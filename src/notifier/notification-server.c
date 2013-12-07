@@ -1,3 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#include <time.h>
+#include <fcntl.h>
+#include "utils.h"
+#include "notifutils.h"
+#include "hash.h"
 #include "notification-server.h"
 
 static struct ns_config conf;

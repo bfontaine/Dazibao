@@ -1,35 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#ifndef _NOTIFICATION_SERVER_H
+#define _NOTIFICATION_SERVER_H 1
+
+#include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-#include <pthread.h>
-#include <fcntl.h>
 
 /** @file
  * A notifications server
  */
 
+#ifndef MAP_ANONYMOUS
 /**
  * MAP_ANONYMOUS is undefined on Mac OS X
- * but MAP_ANON (which is deprecated by posix) is
+ * but MAP_ANON (which is deprecated by POSIX) is
  */
-#ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
-
-#include "utils.h"
-#include "notifutils.h"
-#include "hash.h"
 
 #define MAX_CLIENTS 10
 #define RELIABLE_DEFAULT 1
@@ -144,3 +129,4 @@ int accept_client(void);
  * @return -1 on error
  */
 int parse_arg(int argc, char **argv);
+#endif
