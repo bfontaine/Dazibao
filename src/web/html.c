@@ -88,8 +88,7 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
         int tlen = tlv_get_length(*t),
             len_top = strlen(HTML_TLV_COMPOUND_TOP_FMT),
-            len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT),
-            w;
+            len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT);
         off_t off_value = *off + TLV_SIZEOF_HEADER,
               off_after = off_value + tlen,
               dz_off;
@@ -121,7 +120,7 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         char *time_iso = NULL,
              *time_txt = NULL;
         int len = tlv_get_length(*t),
-            st = 0, w;
+            len_bottom, w;
         off_t off_value = *off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE,
               off_after = *off + TLV_SIZEOF_HEADER + len;
 
@@ -151,15 +150,16 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         *off = off_value;
 
         if (len > 0) {
-                st = dz_tlv_at(&dz, t, *off);
+                int st = dz_tlv_at(&dz, t, *off);
                 st |= html_add_tlv(dz, t, off, html, htmlsize, htmlcursor);
                 if (st == -1) {
                         return -1;
                 }
         }
 
-        memcpy(*html+(*htmlcursor), HTML_TLV_DATED_BOTTOM_FMT,
-                        strlen(HTML_TLV_DATED_BOTTOM_FMT));
+        len_bottom = strlen(HTML_TLV_DATED_BOTTOM_FMT);
+        memcpy(*html+(*htmlcursor), HTML_TLV_DATED_BOTTOM_FMT, len_bottom);
+        (*htmlcursor) += len_bottom;
 
         free(time_iso);
         free(time_txt);
@@ -170,7 +170,8 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                 int *htmlcursor) {
         int tlv_type = tlv_get_type(*t),
-            st = 0, written;
+            st = 0, written,
+            len_bottom;
 
         if (!TLV_VALID_TYPE(tlv_type)) {
                 LOGDEBUG("Unknown TLV type: %d", tlv_type);
@@ -242,17 +243,9 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                 return -1;
         }
 
-        /* TODO memcpy here? */
-        written = snprintf(*html+(*htmlcursor), *htmlsize-(*htmlcursor),
-                        HTML_TLV_BOTTOM);
-        if (written > *htmlsize) {
-                perror("snprintf");
-                tlv_destroy(t);
-                NFREE(*html);
-                LOGERROR("snprintf of TLV bottom failed");
-                return -1;
-        }
-        *htmlcursor += written - 1;
+        len_bottom = strlen(HTML_TLV_BOTTOM);
+        memcpy(*html+(*htmlcursor), HTML_TLV_BOTTOM, len_bottom);
+        *htmlcursor += len_bottom;
         return 0;
 }
 
