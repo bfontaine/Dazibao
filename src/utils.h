@@ -36,6 +36,10 @@
 #define DZ_NULL_POINTER_ERROR  -8
 /** code for memory errors */
 #define DZ_MEMORY_ERROR       -16
+/** code for wrong headers in dazibaos/tlvs */
+#define DZ_WRONG_HEADER_ERROR -32
+/** code for wrong offsets */
+#define DZ_OFFSET_ERROR       -64
 
 /**
  * use 'perror' and exit with EXIT_FAILURE

@@ -26,11 +26,6 @@
 #define MAGIC_NUMBER 53
 
 /**
- * This code is returned by dz_open if the file has a wrong header.
- **/
-#define DZ_ERR_WRONG_HEADER -2
-
-/**
  * The type of a Dazibao
  **/
 typedef int dz_t;
@@ -63,6 +58,14 @@ int dz_open(dz_t *d, char *path, int flags);
  * @return 0 on success
  **/
 int dz_close(dz_t *d);
+
+/**
+ * Return the size of a dazibao. This function doesn't preserve the current
+ * cursor.
+ * @param d a pointer to the dazibao
+ * @return the offset of the dazibao's length
+ **/
+off_t dz_get_size(dz_t *d);
 
 /**
  * Fill tlv value
@@ -128,6 +131,18 @@ int dz_add_tlv(dz_t *d, tlv_t tlv);
  * @return 0 on success, -1 on error
  **/
 int dz_rm_tlv(dz_t *d, off_t offset);
+
+/**
+ * Check that a Dazibao contains a TLV of a known type at a given offset. This
+ * verifies that this TLV is either a top-level TLV or contained in a
+ * compound/dated one.  @param d a pointer to a Dazibao opened at least with
+ * the rights to read in it
+ * @param offset the offset of the TLV
+ * @param type the type of the TLV. If this is -1, it'll won't be verified, and
+ * any known TLV will work.
+ * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ **/
+int dz_check_tlv_at(dz_t *d, off_t offset, int type);
 
 /**
  * Empty a part of a dazibao.The part is filled with padN/pad1

@@ -91,7 +91,7 @@ int dz_open(dz_t *d, char *path, int flags) {
                 if (close(fd) == -1) {
                         perror("close");
                 }
-                return DZ_ERR_WRONG_HEADER;
+                return DZ_WRONG_HEADER_ERROR;
         }
 
         *d = fd;
@@ -111,6 +111,13 @@ int dz_close(dz_t *d) {
         }
 
         return 0;
+}
+
+off_t dz_get_size(dz_t *d) {
+        if (d == NULL) {
+                return (off_t)-1;
+        }
+        return lseek(*d, 0, SEEK_END);
 }
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
@@ -373,6 +380,82 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
         status = dz_do_empty(d, off_start, off_end - off_start);
         /* RESTORE_OFFSET(*d); */
         return status;
+}
+
+/**
+ * Helper for dz_check_tlv_at with two additional arguments for the start and
+ * the end of the search.
+ * @param offset the offset of the TLV
+ * @param type the type of the TLV. If this is -1, it'll won't be verified, and
+ * any known TLV will work.
+ * @param start the starting search offset
+ * @param end the end search offset
+ * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ * @see dz_check_tlv_at
+ **/
+static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
+                off_t start, off_t end) {
+
+        tlv_t *t; 
+        off_t next = start;
+        int st = 0,
+            ttype;
+
+        if (start > end || offset < start || end < offset) {
+                /* no such TLV here */
+                return 0;
+        }
+
+        t = (tlv_t*)malloc(sizeof(tlv_t));
+        if (t == NULL || tlv_init(t) < 0) {
+                free(t);
+                return DZ_MEMORY_ERROR;
+        }
+
+        /* at the end of the loop, we'll have 'start < offset < next' */
+        while (next <= offset && (st = dz_tlv_at(d, t, next)) == 0
+                        && next <= end) {
+                start = next;
+                next += TLV_SIZEOF(*t);
+        }
+        if (st < 0) {
+                tlv_destroy(t);
+                return st;
+        }
+        if (next > end) {
+                tlv_destroy(t);
+                return DZ_OFFSET_ERROR;
+        }
+        ttype = tlv_get_type(*t);
+        if (start == offset && (type < 0 || type == ttype)) {
+                tlv_destroy(t);
+                return 1;
+        }
+        if (ttype == TLV_COMPOUND) {
+                start += TLV_SIZEOF_HEADER;
+                tlv_destroy(t);
+                return dz_limited_check_tlv_at(d, offset, type, start, next);
+        }
+        if (ttype == TLV_DATED) {
+                start += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                tlv_destroy(t);
+                return dz_limited_check_tlv_at(d, offset, type, start, next);
+        }
+
+        tlv_destroy(t);
+        return 0;
+}
+
+int dz_check_tlv_at(dz_t *d, off_t offset, int type) {
+        if (d == NULL) {
+                return -1;
+        }
+        if (offset < DAZIBAO_HEADER_SIZE) {
+                return DZ_OFFSET_ERROR;
+        }
+
+        return dz_limited_check_tlv_at(d, offset, type, DAZIBAO_HEADER_SIZE,
+                        dz_get_size(d));
 }
 
 int dz_do_empty(dz_t *d, off_t start, off_t length) {

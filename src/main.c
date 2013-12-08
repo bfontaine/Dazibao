@@ -154,6 +154,12 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return -1;
         }
 
+        if (dz_check_tlv_at(&daz_buf, off, -1) <= 0) {
+                fprintf(stderr, "no such TLV\n");
+                dz_close(&daz_buf);
+                return -1;
+        }
+
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
