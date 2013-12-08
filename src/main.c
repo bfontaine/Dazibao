@@ -81,7 +81,7 @@ int action_add(char *daz, unsigned char type) {
         unsigned int buff_size = 0;
         int read_size;
 
-        if (dz_open(&daz_buf, daz, O_RDWR)) {
+        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 exit(EXIT_FAILURE);
         }
 
@@ -129,7 +129,7 @@ int cmd_rm(int argc , char ** argv, char * daz) {
                 return -1;
         }
 
-        if (dz_open(&daz_buf, daz, O_RDWR)) {
+        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 printf("Error while opening the dazibao\n");
                 return -1;
         }
@@ -156,7 +156,7 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 }
 int action_dump(char *daz, int flag_debug, int flag_depth) {
         dz_t daz_buf;
-        if (dz_open(&daz_buf, daz, O_RDONLY)) {
+        if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
                 printf("open dazibao failed\n");
                 exit(EXIT_FAILURE);
         }
@@ -263,7 +263,7 @@ int cmd_compact(int argc , char ** argv, char * daz) {
                 return -1;
         }
 
-        if (dz_open(&daz_buf, daz, O_RDWR)) {
+        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 exit(EXIT_FAILURE);
         }
 

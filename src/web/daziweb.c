@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
                                req->method, req->path, req->body_len);
                 LOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
 
-                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) == -1) {
+                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) < 0) {
                         LOGERROR("Cannot open the Dazibao.");
                 }
                 status = route_request(client, dz, req);

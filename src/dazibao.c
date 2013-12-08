@@ -88,11 +88,10 @@ int dz_open(dz_t *d, char *path, int flags) {
         }
 
         if (header[0] != MAGIC_NUMBER || header[1] != 0) {
-                fprintf(stderr, "Wrong dazibao header");
                 if (close(fd) == -1) {
                         perror("close");
                 }
-                return -1;
+                return DZ_ERR_WRONG_HEADER;
         }
 
         *d = fd;

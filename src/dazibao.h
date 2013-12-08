@@ -26,6 +26,11 @@
 #define MAGIC_NUMBER 53
 
 /**
+ * This code is returned by dz_open if the file has a wrong header.
+ **/
+#define DZ_ERR_WRONG_HEADER -2
+
+/**
  * The type of a Dazibao
  **/
 typedef int dz_t;
@@ -47,7 +52,8 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param d dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
- * @return 0 on success, -1 on error
+ * @return 0 on success, or a negative number on error
+ * @see DZ_ERR_WRONG_HEADER
  **/
 int dz_open(dz_t *d, char *path, int flags);
 
