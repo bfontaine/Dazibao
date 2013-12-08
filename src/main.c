@@ -218,8 +218,8 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                 }
                 if (flag_depth > 0) {
                         flag_depth = strtol(argv[flag_depth], NULL, 10);
-                        if (flag_depth >= 0) {
-                                printf("unrecognized depth\n");
+                        if (flag_depth < 0) {
+                                fprintf(stderr, "unrecognized depth\n");
                                 return -1;
                         }
                 }
