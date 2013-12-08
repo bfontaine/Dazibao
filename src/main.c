@@ -124,11 +124,21 @@ int action_add(char *daz, unsigned char type) {
         return 0;
 }
 
-int cmd_rm(int argc , char ** argv, char * daz) {
+int cmd_rm(int argc, char **argv, char *daz) {
         dz_t daz_buf;
+        long off;
 
         if (argc != 1) {
                 fprintf(stderr, "expected offset\n");
+                return -1;
+        }
+
+        /* If the offset doesn't start with '0' or '9', it must be
+         * wrong. The user probably used 'rm <dz> <offset>' instead
+         * of 'rm <offset> <dz>'.
+         */
+        if (argv[argc - 1][0] < 48 || argv[argc - 1][0] > 57) {
+                fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
                 return -1;
         }
 
@@ -137,9 +147,9 @@ int cmd_rm(int argc , char ** argv, char * daz) {
                 return -1;
         }
 
-        long off = strtol(argv[argc - 1], NULL, 10);
+        off = strtol(argv[argc - 1], NULL, 10);
 
-        if (off < DAZIBAO_HEADER_SIZE ) {
+        if (off < DAZIBAO_HEADER_SIZE) {
                 fprintf(stderr, "wrong offset\n");
                 return -1;
         }
