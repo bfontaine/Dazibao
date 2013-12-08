@@ -558,7 +558,7 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                 tlv_str = tlv_type2str((char) tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
-                        || (flag_debug == 1)) {
+                                || flag_debug) {
                         printf("[%9d] TLV %8s | %8d |\n",
                                 (int)off, tlv_str, len);
                 }

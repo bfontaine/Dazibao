@@ -22,11 +22,11 @@ int cmd_add(int argc, char **argv, char * daz) {
 
                 tmp_type = strtol(argv[0], NULL, 10);
                 if (!IN_RANGE(tmp_type, 1, 256)) {
-                        printf("unrecognized type\n");
+                        fprintf(stderr, "unrecognized type\n");
                         exit(EXIT_FAILURE);
                 }
                 if (action_add(daz, tmp_type) == -1) {
-                        printf("add error action_add\n");
+                        fprintf(stderr, "add error action_add\n");
                         exit(EXIT_FAILURE);
                 }
         }
@@ -90,7 +90,7 @@ int action_add(char *daz, unsigned char type) {
                 buff_size += read_size;
 
                 if(buff_size > TLV_MAX_VALUE_SIZE) {
-                        printf("tlv too large\n");
+                        fprintf(stderr, "tlv too large\n");
                         exit(EXIT_FAILURE);
                 }
 
@@ -113,7 +113,10 @@ int action_add(char *daz, unsigned char type) {
         memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
 
         if (dz_add_tlv(&daz_buf, tlv) == -1) {
-                printf("failed adding your tlv\n");
+                fprintf(stderr, "failed adding the tlv\n");
+                free(tlv);
+                free(buff);
+                return -1;
         }
 
         free(tlv);
@@ -125,30 +128,30 @@ int cmd_rm(int argc , char ** argv, char * daz) {
         dz_t daz_buf;
 
         if (argc != 1) {
-                printf("expected offset\n");
+                fprintf(stderr, "expected offset\n");
                 return -1;
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                printf("Error while opening the dazibao\n");
+                fprintf(stderr, "Error while opening the dazibao\n");
                 return -1;
         }
 
         long off = strtol(argv[argc - 1], NULL, 10);
 
         if (off < DAZIBAO_HEADER_SIZE ) {
-                printf("wrong offset\n");
+                fprintf(stderr, "wrong offset\n");
                 return -1;
         }
 
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
-                printf("rm failed\n");
+                fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
                 return -1;
         }
 
         if (dz_close(&daz_buf) < 0) {
-                printf("Error while closing the dazibao\n");
+                fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
 
@@ -157,18 +160,18 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 int action_dump(char *daz, int flag_debug, int flag_depth) {
         dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
-                printf("open dazibao failed\n");
+                fprintf(stderr, "open dazibao failed\n");
                 exit(EXIT_FAILURE);
         }
 
         if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
-                printf("dump failed\n");
+                fprintf(stderr, "dump failed\n");
                 dz_close(&daz_buf);
                 exit(EXIT_FAILURE);
         }
 
         if (dz_close(&daz_buf) < 0) {
-                printf("Error while closing the dazibao\n");
+                fprintf(stderr, "Error while closing the dazibao\n");
                 exit(EXIT_FAILURE);
         }
 
@@ -203,7 +206,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                                         or already use
                                         ERROR
                                 */
-                                printf("[main|cmd_dump] arg failed"
+                                fprintf(stderr, "[main|cmd_dump] arg failed"
                                 ":%s\n",argv[i]);
                                 return -1;
                         }
@@ -213,7 +216,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                         /*
                         error impossible to any flag is activate
                         */
-                        printf("cmd_dump flag failed\n");
+                        fprintf(stderr, "cmd_dump flag failed\n");
                         return -1;
                 }
                 if (flag_depth > 0) {
@@ -226,12 +229,12 @@ int cmd_dump(int argc , char ** argv, char * daz) {
         } else {
                 /* if argc > 4 , too many argument
                 */
-                printf("too many arguments with dump");
+                fprintf(stderr, "too many arguments with dump");
                 return -1;
         }
 
         if (action_dump(daz, flag_debug, flag_depth) == -1) {
-                printf("wrong depth");
+                fprintf(stderr, "wrong depth");
                 return -1;
         }
         return 0;
@@ -240,17 +243,17 @@ int cmd_dump(int argc , char ** argv, char * daz) {
 int cmd_create(int argc , char ** argv, char * daz) {
         dz_t daz_buf;
         if (argc > 0) {
-                printf("no argument for commande create\n");
+                fprintf(stderr, "no argument for commande create\n");
                 return -1;
         }
 
         if (dz_create(&daz_buf, daz)) {
-                printf("error during dazibao creation\n");
+                fprintf(stderr, "error during dazibao creation\n");
                 exit(EXIT_FAILURE);
         }
 
         if (dz_close(&daz_buf) < 0) {
-                printf("Error while closing the dazibao\n");
+                fprintf(stderr, "Error while closing the dazibao\n");
                 exit(EXIT_FAILURE);
         }
         return 0;
@@ -259,7 +262,7 @@ int cmd_create(int argc , char ** argv, char * daz) {
 int cmd_compact(int argc , char ** argv, char * daz) {
         dz_t daz_buf;
         if (argc > 0) {
-                printf("no argument for commande compact\n");
+                fprintf(stderr, "no argument for commande compact\n");
                 return -1;
         }
 
@@ -272,7 +275,7 @@ int cmd_compact(int argc , char ** argv, char * daz) {
         }
 
         if (dz_close(&daz_buf) < 0) {
-                printf("Error while closing the dazibao\n");
+                fprintf(stderr, "Error while closing the dazibao\n");
                 exit(EXIT_FAILURE);
         }
         return 0;
@@ -309,27 +312,27 @@ int main(int argc, char **argv) {
         */
         if ( !strcmp(cmd, "add")) {
                 if (cmd_add(argc_cmd, argv_cmd, daz) == -1) {
-                        printf("cmd_add failed\n");
+                        fprintf(stderr, "cmd_add failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "rm")) {
                 if (cmd_rm(argc_cmd, argv_cmd, daz) == -1) {
-                        printf("cmd_rm failed\n");
+                        fprintf(stderr, "cmd_rm failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "dump")) {
                 if (cmd_dump(argc_cmd, argv_cmd, daz)) {
-                        printf("cmd_dump failed\n");
+                        fprintf(stderr, "cmd_dump failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "create")) {
                 if (cmd_create(argc_cmd, argv_cmd, daz)) {
-                        printf("cmd_create failed\n");
+                        fprintf(stderr, "cmd_create failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "compact")) {
                 if (cmd_compact(argc_cmd, argv_cmd, daz)) {
-                        printf("cmd_compact failed\n");
+                        fprintf(stderr, "cmd_compact failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else {
