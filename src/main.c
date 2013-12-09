@@ -133,9 +133,9 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return -1;
         }
 
-        /* If the offset doesn't start with '0' or '9', it must be
-         * wrong. The user probably used 'rm <dz> <offset>' instead
-         * of 'rm <offset> <dz>'.
+        /* If the offset doesn't start with a character between '0' and '9', it
+         * must be wrong. The user probably used 'rm <dz> <offset>' instead of
+         * 'rm <offset> <dz>'.
          */
         if (argv[argc - 1][0] < 48 || argv[argc - 1][0] > 57) {
                 fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
