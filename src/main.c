@@ -241,7 +241,7 @@ int cmd_dump(int argc , char **argv, char *daz) {
                 return -1;
         }
         if (flag_depth > 0) {
-                flag_depth = str2dec_positive(argv[flag_depth]);
+                flag_depth = str2dec_positive(argv[(unsigned char)flag_depth]);
                 if (flag_depth < 0) {
                         fprintf(stderr, "unrecognized depth\n");
                         return -1;
