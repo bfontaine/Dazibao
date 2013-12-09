@@ -10,9 +10,8 @@
         "Usage:\n" \
         "    %s <cmd> <option and args> <dazibao>\n\n" \
         "cmd:\n" \
-        "    create: create a empty dazibao or dazibao merges into arguments" \
-                                                                         "\n" \
-        "        command: create [--merge] <dazibao args to merge> <dazibao>" \
+        "    create: create an empty dazibao\n" \
+        "        command: create [--merge <dazibao args to merge>] <dazibao>" \
                                                                          "\n" \
         "        options:\n" \
         "            -m, --merge: (todo)\n" \

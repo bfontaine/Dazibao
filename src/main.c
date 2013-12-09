@@ -14,30 +14,25 @@
 #define BUFFSIZE 512
 
 int cmd_add(int argc, char **argv, char * daz) {
+        int flag_date = -1,
+            flag_compound = -1,
+            flag_dazibao = -1,
+            args = 0,
+            i;
         /* if argc = 1 means command it like that
         .dazibao add <number type TLV> daz
         */
         if (argc == 1) {
-                long tmp_type;
-
-                tmp_type = str2dec_positive(argv[0]);
+                long tmp_type = str2dec_positive(argv[0]);
                 if (!IN_RANGE(tmp_type, 1, 256)) {
                         fprintf(stderr, "unrecognized type\n");
-                        return -1;
+                        return DZ_ARGS_ERROR;
                 }
                 if (action_no_option_add(daz, tmp_type) == -1) {
                         fprintf(stderr, "add error action_add\n");
                         return -1;
                 }
         }
-        /* option exist (date , compound or dazibo)*/
-        int flag_date, flag_compound, flag_dazibao;
-        flag_date = -1;
-        flag_compound = -1;
-        flag_dazibao = -1;
-        int args = 0;
-        int tmp_first_args;
-        int i;
         for (i = 0; i < argc; i++) {
                 /* if option date is only option , it need args*/
                 if ((i == argc-1) && (flag_date == 1) &&
@@ -317,9 +312,8 @@ int cmd_dump(int argc , char **argv, char *daz) {
 
 int cmd_create(int argc, char **argv, char *daz) {
         dz_t daz_buf;
-        if (argc > 0) { /* TODO is this line normal? I mean, if argc == 0
-                           there are no arguments, right? */
-                fprintf(stderr, "no argument for command 'create'\n");
+        if (argc > 0) {
+                fprintf(stderr, "'create' doesn't take arguments for now\n");
                 return -1;
         }
 
@@ -335,10 +329,10 @@ int cmd_create(int argc, char **argv, char *daz) {
 
         return 0;
 }
-int cmd_compact(int argc , char ** argv, char * daz) {
+int cmd_compact(int argc , char **argv, char *daz) {
         dz_t daz_buf;
         if (argc > 0) {
-                fprintf(stderr, "no argument for commande compact\n");
+                fprintf(stderr, "'compact' doesn't take any argument\n");
                 return -1;
         }
 
