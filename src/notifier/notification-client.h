@@ -5,19 +5,6 @@
  * A client for the notifications server
  **/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <string.h>
-
-#include "utils.h"
-
 #define BUFFER_SIZE 1024
 
 int check_notifier(void);

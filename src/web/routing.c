@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include "utils.h"
 #include "webutils.h"
 #include "http.h"

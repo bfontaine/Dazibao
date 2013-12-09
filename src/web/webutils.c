@@ -3,30 +3,23 @@
 #include <string.h>
 #include <time.h>
 #include "webutils.h"
+#include "utils.h"
 #include "tlv.h"
 #include "http.h"
 
 /** @file */
 
-int _log_level =
-#ifdef DEBUG
-        LOG_LVL_DEBUG;
-#else
-        LOG_LVL_INFO;
-#endif
-
 int get_image_tlv_type(const char *path) {
-        char *dot;
-        if (path == NULL) {
+        const char *ext = get_ext(path);
+        if (path == NULL || ext == NULL) {
                 return -1;
         }
-        if ((dot = strrchr(path, '.')) == NULL) {
-                return -1;
-        }
-        if (strcasecmp(dot, PNG_EXT) == 0) {
+        LOGDEBUG("Determining the TLV type of ext '%s'...", ext);
+
+        if (strcasecmp(ext, PNG_EXT + 1) == 0) {
                 return TLV_PNG;
         }
-        if (strcasecmp(dot, JPEG_EXT) == 0) {
+        if (strcasecmp(ext, JPEG_EXT + 1) == 0) {
                 return TLV_JPEG;
         }
         return -1;

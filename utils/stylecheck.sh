@@ -25,6 +25,7 @@ function warnfncheck() {
 }
 
 warncheck '.{80,}'  '80+ chars lines'
+warncheck '	'       'hard tabs (instead of 8 spaces)'
 warncheck ' +$'     'trailing spaces'
 warncheck '//'      'C99-style comments'
 warncheck '^ {4}\w' '4-spaces indentation'

@@ -1,34 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#ifndef _NOTIFICATION_SERVER_H
+#define _NOTIFICATION_SERVER_H 1
+
+#include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-#include <pthread.h>
-#include <fcntl.h>
 
 /** @file
  * A notifications server
  */
 
+#ifndef MAP_ANONYMOUS
 /**
  * MAP_ANONYMOUS is undefined on Mac OS X
- * but MAP_ANON (which is deprecated by posix) is
+ * but MAP_ANON (which is deprecated by POSIX) is
  */
-#ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
-
-#include "utils.h"
-#include "notifutils.h"
 
 #define MAX_CLIENTS 10
 #define RELIABLE_DEFAULT 1
@@ -39,31 +25,31 @@
 
 /** general config of notification server */
 struct ns_config {
-	
+
         /** max number of clients */
-	int client_max;
+        int client_max;
         /** number of files watched by server */
-	int nb_files;
+        int nb_files;
         /** path of the socket used to accept clients */
-	char *s_path;
+        char *s_path;
         /** pathes of files watched */
-	char **file;
+        char **file;
         /** flag enabling or disabling reliable mode */
-	char reliable;
-	
-	/* sockets */
+        char reliable;
+
+        /* sockets */
         /** file descriptor of server */
-	int s_socket;
+        int s_socket;
         /** file descriptors of clients */
-	int *c_socket;
-	
-	/* waiting time */
+        int *c_socket;
+
+        /* waiting time */
         /** minimum interval between two file check */
-	int w_sleep_min;
+        int w_sleep_min;
         /** default interval between two file check */
-	int w_sleep_default;
+        int w_sleep_default;
         /** maximum interval between two file check */
-	int w_sleep_max;
+        int w_sleep_max;
 };
 
 
@@ -143,3 +129,4 @@ int accept_client(void);
  * @return -1 on error
  */
 int parse_arg(int argc, char **argv);
+#endif
