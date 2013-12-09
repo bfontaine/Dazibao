@@ -42,7 +42,7 @@
     }, false);
 
     /* quotes in text TLVs */
-    var quote_re = /(.*?)\s*--\s*((?:[^-\.]|-[^-])+)$/;
+    var quote_re = /(.*?)\s*--\s+((?:[^-\.]|-[^-])+)$/;
 
     for (var i=0, l=tlvs.length; i<l; i++) {
         if (+tlvs[i].getAttribute('data-type') != 2) {
