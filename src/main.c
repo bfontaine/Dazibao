@@ -21,7 +21,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         exit(EXIT_FAILURE);
                 }
                 if (action_no_option_add(daz, tmp_type) == -1) {
-                        printf("add error action_add\n");
+                        printf("add error action_not_option_add\n");
                         exit(EXIT_FAILURE);
                 }
         }
@@ -36,7 +36,7 @@ int cmd_add(int argc, char **argv, char * daz) {
         for (i = 0; i < argc; i++) {
                 /* if option date is only option , it need args*/
                 if ((i == argc-1) && (flag_date == 1) &&
-                        (flag_compoud != 1) && (flag_dazibao != 1)) {
+                        (flag_compound != 1) && (flag_dazibao != 1)) {
                         args = 1;
                 }
                 /* check args for dazibao or compound*/
@@ -80,8 +80,8 @@ int cmd_add(int argc, char **argv, char * daz) {
         char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
 
-        if (action_add(args_c, args_v, flag_compoud, flag_dazibao
-                , flag_date) == -1) {
+        if (action_add(args_c, args_v, flag_compound, flag_dazibao,
+                flag_date, daz) == -1) {
                 printf("[main|cmd_dump] error action add");
                 return -1;
         }
@@ -89,18 +89,39 @@ int cmd_add(int argc, char **argv, char * daz) {
         return 0;
 }
 
-// args 3 flag , args_t argc_t, daz
 int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
-, int flag_date, char **daz) {
+        , int flag_date, char *daz) {
+        unsigned char type;
+        unsigned int buff_size = 0;
+        tlv_t *tlv = NULL;;
+        tlv_t *tlv_compound;
+        tlv_t *tlv_date;
         if (flag_compound == 1) {
-                /* TODO create function path -> type
-                                        (path,type) -> tlv
-                                        []tlv -> tlv compound
+                /* read all args fic name, and create create a tlv to it
+                 TODO function int tlv_create(char **path, tlv_t tlv*)
                 */
+                tlv_compound = malloc(TLV_SIZEOF_HEADER + (argc * sizeof(*tlv)));
+                int i;
+                for (i = 0; i < argc; i++) {
+                       /*buff_size += tlv_create_path(argv[i], &tlv);
+                       tlv_compound[i] = tlv;
+                       tlv = NULL;
+
+                        if(buff_size > TLV_MAX_VALUE_SIZE) {
+                                printf("tlv too large\n");
+                                exit(EXIT_FAILURE);
+                        }
+                        */
+                }
+                /* we have all tlv to include to compound in tlv_compound []
+                create function TODO : int
+                tlv_create_compound(tlv[],size_compound)
+                */
+                /*before tlv_compound -> to tlv */
+                free(tlv_compound);
         }
         if (flag_dazibao == 1) {
-                /* TODO create fonction p
-                        ath dazibao -> tlv compound
+                /* TODO create fonction path dazibao -> tlv compound
                 */
         }
         if (flag_date == 1) {
@@ -112,7 +133,7 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
 }
 
 
-int action_add(char *daz, unsigned char type) {
+int action_no_option_add(char *daz, unsigned char type) {
 	dz_t daz_buf;
         char reader[BUFFSIZE],
              *buff = NULL;
@@ -192,6 +213,7 @@ int cmd_rm(int argc , char ** argv, char * daz) {
 
         return 0;
 }
+
 int action_dump(char *daz, int flag_debug, int flag_depth) {
 	dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY)) {
