@@ -69,7 +69,7 @@ static int parse_args(int argc, char **argv, int *port) {
         while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
                 switch (c) {
                 case 'p':
-                        *port = strtol(optarg, NULL, 10);
+                        *port = str2dec_positive(optarg);
                         if (!IN_RANGE(*port, 1, 65535)) {
                                 LOGWARN("Wrong port: '%s'", optarg);
                                 *port = DEFAULT_PORT;

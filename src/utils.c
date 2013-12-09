@@ -25,6 +25,23 @@ int write_all(int fd, char *buff, int len) {
         return wrote;
 }
 
+long str2dec_positive(char *s) {
+        char *p = NULL;
+        long ret;
+
+        if (s == NULL) {
+                return -1;
+        }
+
+        ret = strtol(s, &p, 10);
+
+        if (p != NULL && p[0] != '\0') {
+                return -1;
+        }
+
+        return ret >= 0 ? ret : -1;
+}
+
 const char *get_ext(const char *path) {
         const char *dot;
         if (path == NULL) {
@@ -56,8 +73,8 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                                 switch (res->options[i].type) {
                                 case ARG_TYPE_INT:
                                         *((int *)res->options[i].value) =
-                                                strtol(argv[next_arg + 1],
-                                                                NULL, 10);
+                                                str2dec_positive(
+                                                        argv[next_arg + 1]);
                                         break;
                                 case ARG_TYPE_STRING:
                                         res->options[i].value =

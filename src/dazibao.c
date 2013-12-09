@@ -396,7 +396,7 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
                 off_t start, off_t end) {
 
-        tlv_t *t; 
+        tlv_t *t;
         off_t next = start;
         int st = 0,
             ttype;

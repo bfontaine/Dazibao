@@ -159,6 +159,14 @@ void *safe_realloc(void *ptr, size_t size);
 int write_all(int fd, char *buff, int len);
 
 /**
+ * Wrapper around 'strtol' which tries to parse a string as a positive decimal
+ * number.
+ * @param s a string
+ * @return -1 on error, the parsed number on success
+ **/
+long str2dec_positive(char *s);
+
+/**
  * Return the extension of a file.
  * @param path path of the file (filename)
  * @return a pointer to the part of the filename which represents the

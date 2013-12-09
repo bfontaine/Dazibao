@@ -20,7 +20,7 @@ int cmd_add(int argc, char **argv, char * daz) {
         if (argc == 1) {
                 long tmp_type;
 
-                tmp_type = strtol(argv[0], NULL, 10);
+                tmp_type = str2dec_positive(argv[0]);
                 if (!IN_RANGE(tmp_type, 1, 256)) {
                         fprintf(stderr, "unrecognized type\n");
                         exit(EXIT_FAILURE);
@@ -147,7 +147,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return -1;
         }
 
-        off = strtol(argv[argc - 1], NULL, 10);
+        off = str2dec_positive(argv[argc - 1]);
 
         if (off < DAZIBAO_HEADER_SIZE) {
                 fprintf(stderr, "wrong offset\n");
@@ -236,7 +236,7 @@ int cmd_dump(int argc , char ** argv, char * daz) {
                         return -1;
                 }
                 if (flag_depth > 0) {
-                        flag_depth = strtol(argv[flag_depth], NULL, 10);
+                        flag_depth = str2dec_positive(argv[flag_depth]);
                         if (flag_depth < 0) {
                                 fprintf(stderr, "unrecognized depth\n");
                                 return -1;
