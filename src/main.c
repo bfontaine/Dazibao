@@ -23,11 +23,11 @@ int cmd_add(int argc, char **argv, char * daz) {
                 tmp_type = str2dec_positive(argv[0]);
                 if (!IN_RANGE(tmp_type, 1, 256)) {
                         fprintf(stderr, "unrecognized type\n");
-                        exit(EXIT_FAILURE);
+                        return -1;
                 }
                 if (action_add(daz, tmp_type) == -1) {
                         fprintf(stderr, "add error action_add\n");
-                        exit(EXIT_FAILURE);
+                        return -1;
                 }
         }
         /* option exist (date , compound or dazibo)*/
@@ -177,103 +177,99 @@ int action_dump(char *daz, int flag_debug, int flag_depth) {
         dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
                 fprintf(stderr, "open dazibao failed\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
                 fprintf(stderr, "dump failed\n");
                 dz_close(&daz_buf);
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         return 0;
 }
 
-int cmd_dump(int argc , char ** argv, char * daz) {
-        int flag_debug = -1;
-        int flag_depth = 0 ;
-        if (argc < 4) {
-                int i;
-                int args = 0;
-                for (i = 0; i < argc; i++) {
-                        if (args > 0) {
-                                flag_depth = i;
-                                args--;
-                        } else if ((!strcmp(argv[i],"--depth") ||
-                                !strcmp(argv[i],"-d")) && (flag_depth < 1)) {
-                                flag_depth = 1;
-                                args = 1;
-                        } else if ((!strcmp(argv[i],"--debug") ||
-                                !strcmp(argv[i],"-D")) && (flag_debug != 1)) {
-                                flag_debug = 1;
-                        } else if ((!strcmp(argv[i],"-dD") ||
-                                !strcmp(argv[i],"-Dd")) && (flag_depth < 1)
-                                && (flag_debug)) {
-                                flag_debug = 1;
-                                flag_depth = 1;
-                                args = 1;
-                        } else {
-                                /* TODO args[i] is not option and args
-                                        or already use
-                                        ERROR
-                                */
-                                fprintf(stderr, "[main|cmd_dump] arg failed"
-                                ":%s\n",argv[i]);
-                                return -1;
-                        }
-
-                }
-                if ((flag_depth == 0) && (flag_debug == -1) && (argc != 0)) {
-                        /*
-                        error impossible to any flag is activate
-                        */
-                        fprintf(stderr, "cmd_dump flag failed\n");
-                        return -1;
-                }
-                if (flag_depth > 0) {
-                        flag_depth = str2dec_positive(argv[flag_depth]);
-                        if (flag_depth < 0) {
-                                fprintf(stderr, "unrecognized depth\n");
-                                return -1;
-                        }
-                }
-        } else {
-                /* if argc > 4 , too many argument
-                */
+int cmd_dump(int argc , char **argv, char *daz) {
+        char flag_debug = 0,
+             flag_depth = 0;
+        int args = 0;
+        if (argc >= 4) {
+                /* if argc > 4 , too many argument */
                 fprintf(stderr, "too many arguments with dump");
                 return -1;
         }
+        for (int i = 0; i < argc; i++) {
+                if (args > 0) {
+                        flag_depth = i;
+                        args--;
+                } else if ((!strcmp(argv[i], "--depth") ||
+                                        !strcmp(argv[i], "-d"))
+                                && flag_depth < 1) {
+                        flag_depth = 1;
+                        args = 1;
+                } else if ((!strcmp(argv[i], "--debug") ||
+                        !strcmp(argv[i], "-D")) && !flag_debug) {
+                        flag_debug = 1;
+                /* FIXME this is UGLY code and won't work if we add
+                 * more options */
+                } else if ((!strcmp(argv[i],"-dD") || !strcmp(argv[i],"-Dd"))
+                                && (flag_depth < 1) && !flag_debug) {
+                        flag_debug = 1;
+                        flag_depth = 1;
+                        args = 1;
+                } else {
+                        /* TODO args[i] is not option and args
+                                or already use
+                                ERROR
+                        */
+                        fprintf(stderr, "[main|cmd_dump] arg failed"
+                                ":%s\n", argv[i]);
+                        return -1;
+                }
 
-        if (action_dump(daz, flag_debug, flag_depth) == -1) {
-                fprintf(stderr, "wrong depth");
+        }
+        if (!flag_depth && !flag_debug && argc != 0) {
+                /*
+                error impossible to any flag is activate
+                */
+                fprintf(stderr, "cmd_dump flag failed\n");
                 return -1;
         }
-        return 0;
+        if (flag_depth > 0) {
+                flag_depth = str2dec_positive(argv[flag_depth]);
+                if (flag_depth < 0) {
+                        fprintf(stderr, "unrecognized depth\n");
+                        return -1;
+                }
+        }
+
+        return action_dump(daz, flag_debug, flag_depth);
 }
 
-int cmd_create(int argc , char ** argv, char * daz) {
+int cmd_create(int argc, char **argv, char *daz) {
         dz_t daz_buf;
-        if (argc > 0) {
-                fprintf(stderr, "no argument for commande create\n");
+        if (argc > 0) { /* TODO is this line normal? I mean, if argc == 0
+                           there are no arguments, right? */
+                fprintf(stderr, "no argument for command 'create'\n");
                 return -1;
         }
 
-        if (dz_create(&daz_buf, daz)) {
+        if (dz_create(&daz_buf, daz) != 0) {
                 fprintf(stderr, "error during dazibao creation\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
-        return 0;
 
+        return 0;
 }
 int cmd_compact(int argc , char ** argv, char * daz) {
         dz_t daz_buf;
@@ -283,16 +279,16 @@ int cmd_compact(int argc , char ** argv, char * daz) {
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_compact(&daz_buf)) {
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
-                exit(EXIT_FAILURE);
+                return -1;
         }
         return 0;
 
@@ -303,12 +299,14 @@ void print_usage(char *name) {
 }
 
 int main(int argc, char **argv) {
-        char *cmd, *daz;
+        char *cmd, *daz, **argv_cmd;
+        int argc_cmd;
 
         if (setlocale(LC_ALL, "") == NULL) {
                 PERROR("setlocale");
         }
 
+        /* <executable> <command> <dazibao name>  = 3 args */
         if (argc < 3) {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
@@ -317,22 +315,25 @@ int main(int argc, char **argv) {
         daz = argv[argc - 1];
 
         /* recover tab option and args */
-        int argc_cmd = argc - 3;
-        char **argv_cmd = argv + 2;
-        if (argc_cmd == 0) {
+        argc_cmd = argc - 3;
+        argv_cmd = argv + 2;
+        if (argc == 3) {
                 argc_cmd = 0;
                 argv_cmd = NULL;
+        } else {
+                argc_cmd = argc - 3;
+                argv_cmd = argv + 2;
         }
         /*
         TODO : management error write request
         */
-        if ( !strcmp(cmd, "add")) {
-                if (cmd_add(argc_cmd, argv_cmd, daz) == -1) {
+        if (!strcmp(cmd, "add")) {
+                if (cmd_add(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_add failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "rm")) {
-                if (cmd_rm(argc_cmd, argv_cmd, daz) == -1) {
+                if (cmd_rm(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_rm failed\n");
                         exit(EXIT_FAILURE);
                 }
@@ -342,12 +343,12 @@ int main(int argc, char **argv) {
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "create")) {
-                if (cmd_create(argc_cmd, argv_cmd, daz)) {
+                if (cmd_create(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_create failed\n");
                         exit(EXIT_FAILURE);
                 }
         } else if (!strcmp(cmd, "compact")) {
-                if (cmd_compact(argc_cmd, argv_cmd, daz)) {
+                if (cmd_compact(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_compact failed\n");
                         exit(EXIT_FAILURE);
                 }
