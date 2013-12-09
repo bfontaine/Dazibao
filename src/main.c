@@ -18,6 +18,7 @@ int cmd_add(int argc, char **argv, char * daz) {
             flag_compound = -1,
             flag_dazibao = -1,
             args = 0,
+            tmp_first_args,
             i;
         /* if argc = 1 means command it like that
         .dazibao add <number type TLV> daz
@@ -41,7 +42,12 @@ int cmd_add(int argc, char **argv, char * daz) {
                 }
                 /* check args for dazibao or compound*/
                 if (args > 0) {
-                        if (safe_path(argv[i],0)) {
+                        if (flag_compound == 1 && check_tlv_path (argv[i],0)) {
+                                printf("[main|cmd_dump] arg failed:%s\n",
+                                        argv[i]);
+                                return -1;
+                        }
+                        if (flag_dazibao == 1 && check_dz_path (argv[i],0)) {
                                 printf("[main|cmd_dump] arg failed:%s\n",
                                         argv[i]);
                                 return -1;
@@ -97,29 +103,34 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         tlv_t *tlv_compound;
         tlv_t *tlv_date;
         if (flag_compound == 1) {
-                /* read all args fic name, and create create a tlv to it
-                 TODO function int tlv_create(char **path, tlv_t tlv*)
-                */
-                tlv_compound = malloc(TLV_SIZEOF_HEADER + (argc * sizeof(*tlv)));
+                /* read all args fic name, and create create a tlv to it */
+                tlv_compound = malloc(TLV_SIZEOF_HEADER +
+                        (argc * TLV_SIZEOF_HEADER * sizeof(*tlv)));
                 int i;
                 for (i = 0; i < argc; i++) {
-                       /*buff_size += tlv_create_path(argv[i], &tlv);
-                       tlv_compound[i] = tlv;
-                       tlv = NULL;
+                       buff_size += tlv_create_path(argv[i], &tlv_compound[i]);
 
                         if(buff_size > TLV_MAX_VALUE_SIZE) {
-                                printf("tlv too large\n");
-                                exit(EXIT_FAILURE);
+                                printf("tlv compound too large\n");
+                                int j;
+                                for (j = 0; j < i; j++) {
+                                        tlv_destroy(&tlv_compound[j]);
+                                }
+                                tlv_destroy(&tlv_compound);
+                                return -1;
                         }
-                        */
                 }
                 /* we have all tlv to include to compound in tlv_compound []
                 create function TODO : int
                 tlv_create_compound(tlv[],size_compound)
                 */
                 /*before tlv_compound -> to tlv */
-                free(tlv_compound);
+                for (i = 0; i < argc; i++) {
+                        tlv_destroy(&tlv_compound[i]);
+                }
+                tlv_destroy(&tlv_compound);
         }
+
         if (flag_dazibao == 1) {
                 /* TODO create fonction path dazibao -> tlv compound
                 */
@@ -133,7 +144,7 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
 }
 
 int action_no_option_add(char *daz, unsigned char type) {
-	dz_t daz_buf;
+        dz_t daz_buf;
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
