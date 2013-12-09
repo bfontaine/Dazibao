@@ -50,7 +50,7 @@ CPPCHECK=cppcheck \
 
 all: check $(TARGETS)
 
-$(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o $(NSRC)/notification-server.o
@@ -74,13 +74,8 @@ $(WEBSRC)/routes.o: $(SRC)/dazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
 $(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
-#$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
-%.o: %.c
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
-
-#$(NSRC)/%.o: $(NSRC)/%.c $(NSRC)/%.h $(NUTILS)
-#	$(CC) $(CFLAGS) -o $@ -c $<
-
 
 cleantmp:
 	find . -name "*~" -delete

@@ -1,7 +1,7 @@
 #ifndef _MAIN_H
 #define _MAIN_H 1
 
-#include "dazibao.h"
+#include "mdazibao.h"
 #include <limits.h>
 #include <locale.h>
 

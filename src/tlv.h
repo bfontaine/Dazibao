@@ -77,7 +77,7 @@ int tlv_destroy(tlv_t *t);
  * @param tlv
  * @return type of tlv
  **/
-int tlv_get_type(tlv_t tlv);
+int tlv_get_type(tlv_t *tlv);
 
 /**
  * Set the type of a TLV
@@ -98,21 +98,29 @@ void tlv_set_length(tlv_t *tlv, unsigned int n);
  * @param tlv
  * @return a pointer to the length field of tlv
  **/
-tlv_t tlv_get_length_ptr(tlv_t tlv);
+tlv_t tlv_get_length_ptr(tlv_t *tlv);
 
 /**
  * Get length of a tlv.
  * @param tlv tlv whose length is asked
  * @return value of TLV's length
  **/
-unsigned int tlv_get_length(tlv_t tlv);
+unsigned int tlv_get_length(tlv_t *tlv);
 
 /**
  * Get the adress of a tlv value.
  * @param tlv
  * @return a pointer to the value field of tlv
  **/
-tlv_t tlv_get_value_ptr(tlv_t tlv);
+tlv_t tlv_get_value_ptr(tlv_t *tlv);
+
+/**
+ **/
+int tlv_mwrite(tlv_t *tlv, void *data);
+
+/**
+ **/
+int tlv_mread(tlv_t *tlv, void *data);
 
 /**
  * Write a TLV.

@@ -102,9 +102,9 @@ int action_add(char *daz, unsigned char type) {
         tlv_set_type(&tlv, type);
         tlv_set_length(&tlv, buff_size);
 
-        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+        memcpy(tlv_get_value_ptr(&tlv), buff, buff_size);
 
-        if (dz_add_tlv(&daz_buf, tlv) == -1) {
+        if (dz_add_tlv(&daz_buf, &tlv) == -1) {
                 printf("failed adding your tlv\n");
         }
 
