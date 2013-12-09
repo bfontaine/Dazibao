@@ -193,12 +193,32 @@ const char *tlv_type2str(char tlv_type);
  * @return the tlv style
  **/
 const char *get_tlv_type(const char *path);
+
 /**
+ * Create TLV compound with using tlv board value
+ * @param tlv_compound
+ * @param value
+ * @param buff_size
+ * @return sizeof new tlv create
+ **/
+tlv_t tlv_create_compound(tlv_t value, int buff_size);
+
+/**
+ * Create TLV with using path
  * Return size of new tlv create
  * @param path
  * @param tlv
  * @return sizeof new tlv create
  **/
-int tlv_create_path(char *path, tlv_t *tlv);
+int tlv_create_path(char *path, tlv_t tlv);
+
+/**
+ * Create TLV with using daz for tlv type compound
+ * Return size of value tlv compound
+ * @param path
+ * @param tlv
+ * @return sizeof new tlv create
+ **/
+int tlv_create_daz(char *daz, tlv_t tlv);
 
 #endif
