@@ -71,9 +71,8 @@ static const char *tlv_types_ext[][2] = {
         { "tiff" , "2"},
         { "xml"  , "2"},
         { "zip"  , "2"},
-        { "md"   , "2" }, /* Markdown */
-        { "txt"  , "2" }
-
+        { "md"   , "2"}, /* Markdown */
+        { "txt"  , "2"},
         /* typt png */
         { "png"  , "3"},
         /* typt jpg */
@@ -186,5 +185,20 @@ int dump_tlv_value(tlv_t tlv, int fd);
  * @return a string representation of this type
  **/
 const char *tlv_type2str(char tlv_type);
+
+/**
+ * Return the tlv type for a file from its extension, or NULL if it cannot be
+ * determined. The pointer is statically allocated, strdup it if necessary.
+ * @param path the path of the file
+ * @return the tlv style
+ **/
+const char *get_tlv_type(const char *path);
+/**
+ * Return size of new tlv create
+ * @param path
+ * @param tlv
+ * @return sizeof new tlv create
+ **/
+int tlv_create_path(char *path, tlv_t *tlv);
 
 #endif

@@ -2,6 +2,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include "utils.h"
 #include "tlv.h"
 
@@ -132,81 +136,41 @@ const char *tlv_type2str(char tlv_type) {
         }
 }
 
-int tlv_create_path(char *path, tlv_t *tlv){
-        int buff_size;
-        unsigned char type;
-        
-        /*
-           TODO
-           create function to return type to tlv
-           if tlv is unknown return -1
-                   then tlv type was -> TLV_unknow
-           [HEADER][TLV_PTH(path)/255 - "\0" ][VALUE]
-           type = this function
-        */
+int tlv_create_path(char *path, tlv_t *tlv) {
+        int buff_size, fd;
+        char *type;
+        const char *c_path;
+        const char c_type;
+        struct stat st_path;
+        void *buff;
 
-        /*if type != -1
-          read fic -> to buff
-        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, type);
-        tlv_set_length(&tlv, buff_size);
-
-        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
-
-        else 
-        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, type);
-        tlv_set_length(&tlv, buff_size);
-
-        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
-
-        */
-/*
-	dz_t daz_buf;
-        char reader[BUFFSIZE],
-             *buff = NULL;
-        int read_size;
-        
-        // ouvrir le fichier normalement
-        if (dz_open(&daz_buf, daz, O_RDWR)) {
-                exit(EXIT_FAILURE);
+        c_type = get_tlv_type(path);
+        if (type == NULL) {
+                printf("no type with path %s, no exist standard tlv now",path);
+                return -1;
+        }
+        fd = open(path, O_RDONLY);
+        if (fd < 0) {
+                printf("[tlv_create_path] error open");
+                return -1;
         }
 
-        while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
-
-                buff_size += read_size;
-
-                if(buff_size > TLV_MAX_VALUE_SIZE) {
-                        printf("tlv too large\n");
-                        exit(EXIT_FAILURE);
-                }
-
-                buff = safe_realloc(buff, sizeof(*buff) * buff_size);
-
-                if(!buff) {
-                        PERROR("realloc");
-                        exit(EXIT_FAILURE);
-                }
-
-                memcpy(buff + (buff_size - read_size),
-                                reader, read_size);
+        if (fstat(fd, &st_path)) {
+                printf("[tlv_create_path] error stat");
+                return -1;
         }
 
-        si type == -1 -> rajouter TLV_PATH avant
-        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, type);
-        tlv_set_length(&tlv, buff_size);
+        buff = mmap(NULL, st_path.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (buff == MAP_FAILED) {
+                printf("[tlv_create_path] error mmap");
+                return -1;
+        }
+
+        buff_size = st_path.st_size;
+        tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_set_type(tlv, (char) type);
+        tlv_set_length(tlv, buff_size);
 
         memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
-
-        if (dz_add_tlv(&daz_buf, tlv) == -1) {
-                printf("failed adding your tlv\n");
-        }
-
-        free(tlv);
-        free(buff);
-
-*/
-         
         return buff_size;
 }
