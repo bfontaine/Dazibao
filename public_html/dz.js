@@ -41,5 +41,21 @@
         }
     }, false);
 
+    /* quotes in text TLVs */
+    var quote_re = /(.*?)\s*--\s+((?:[^-\.]|-[^-])+)$/;
+
+    for (var i=0, l=tlvs.length; i<l; i++) {
+        if (+tlvs[i].getAttribute('data-type') != 2) {
+            continue;
+        }
+        var b = tlvs[i].getElementsByTagName('blockquote')[0],
+            res = quote_re.exec(b.innerHTML);
+
+        if (res && res.length == 3) {
+            b.innerHTML = res[1] + '<br/><br/><span class="author">'
+                        + '<span><span class="sep">—</span> '
+                        + res[2] + '</span></span>';
+        }
+    }
 
 })(document.getElementsByTagName('body')[0]);

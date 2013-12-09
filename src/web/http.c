@@ -58,7 +58,9 @@ static const char *headers_strs[] = {
         /* HTTP_H_IFMODIFSINCE   9 */
         "If-Modified-Since",
         /* HTTP_H_LASTMODIF     10 */
-        "Last-Modified"
+        "Last-Modified",
+
+        NULL
 };
 
 char is_crlf(char *s, int c, int len) {

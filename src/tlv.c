@@ -15,12 +15,12 @@
  * @deprecated use tlv_set_length instead
  **/
 static void htod(unsigned int n, char *len) {
-	union {
-		unsigned int i;
-		unsigned char c[4];
-	} tmp;
-	tmp.i = htonl(n);
-	memcpy(len, &tmp.c[1], 3);
+        union {
+                unsigned int i;
+                unsigned char c[4];
+        } tmp;
+        tmp.i = htonl(n);
+        memcpy(len, &tmp.c[1], 3);
 }
 
 /**
@@ -30,8 +30,8 @@ static void htod(unsigned int n, char *len) {
  * @deprecated use get_length
  **/
 static unsigned int dtoh(char *len) {
-	unsigned char *tmp = (unsigned char *)len;
-	return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
+        unsigned char *tmp = (unsigned char *)len;
+        return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
 
 int tlv_init(tlv_t *t) {
@@ -61,7 +61,7 @@ int tlv_get_type(tlv_t *tlv) {
 }
 
 void tlv_set_type(tlv_t *tlv, char t) {
-	(*tlv)[0] = t;
+        (*tlv)[0] = t;
 }
 
 void tlv_set_length(tlv_t *tlv, unsigned int n) {
@@ -122,9 +122,10 @@ int tlv_fread(tlv_t *tlv, int fd) {
 	*tlv = (tlv_t)safe_realloc(*tlv, sizeof(char)
                                                 * (TLV_SIZEOF_HEADER + len));
 
-	if (*tlv == NULL) {
-		ERROR("realloc", -1);
-	}
+        if (*tlv == NULL) {
+                perror("realloc");
+                return DZ_MEMORY_ERROR;
+        }
 
 	if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
 		ERROR("read", -1);

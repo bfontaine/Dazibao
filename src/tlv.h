@@ -26,6 +26,9 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
+/** test that a TLV type is valid */
+#define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 6)
+
 /** size of the date field in a dated TLV */
 #define TLV_SIZEOF_DATE 4
 

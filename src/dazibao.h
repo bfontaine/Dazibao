@@ -1,16 +1,9 @@
 #ifndef _DAZIBAO_H
 #define _DAZIBAO_H 1
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <time.h>
 #include "tlv.h"
-#include "utils.h"
 
 /**
  * @file
@@ -31,6 +24,9 @@
  * The magic number used to identify a Dazibao file
  **/
 #define MAGIC_NUMBER 53
+
+/** string used to show a indentation level in the dump */
+#define DZ_DUMP_INDENT_STR "'-> "
 
 /**
  * The type of a Dazibao
@@ -54,7 +50,8 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param d dazibao to fill with information
  * @param path location where to find the file
  * @param flags flags used with open(2)
- * @return 0 on success, -1 on error
+ * @return 0 on success, or a negative number on error
+ * @see DZ_ERR_WRONG_HEADER
  **/
 int dz_open(dz_t *d, char *path, int flags);
 
@@ -66,11 +63,12 @@ int dz_open(dz_t *d, char *path, int flags);
 int dz_close(dz_t *d);
 
 /**
- * Reset the cursor of a dazibao for further readings.
- * @param d the dazibao to reset
- * @return 0 on success
+ * Return the size of a dazibao. This function doesn't preserve the current
+ * cursor.
+ * @param d a pointer to the dazibao
+ * @return the offset of the dazibao's length
  **/
-int dz_reset(dz_t *d);
+off_t dz_get_size(dz_t *d);
 
 /**
  * Fill tlv value
@@ -82,6 +80,14 @@ int dz_reset(dz_t *d);
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
 /**
+ * Read a date from a dated TLV
+ * @param d the dazibao
+ * @param offset the offset of the date
+ * @return a timestamp, or -1 on error
+ **/
+time_t dz_read_date_at(dz_t *d, off_t offset);
+
+/**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
  * @param d dazibao used for reading
  * @param tlv to be filled
@@ -91,6 +97,8 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
 
 /**
+ * Fill tlv with type and length information. On success, the dazibao cursor is
+ * set to the next TLV.
  * Fill a tlv with its type and its length
  * @param d dazibao used for reading
  * @param tlv to be filled
@@ -128,6 +136,18 @@ int dz_add_tlv(dz_t *d, tlv_t tlv);
 int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
+ * Check that a Dazibao contains a TLV of a known type at a given offset. This
+ * verifies that this TLV is either a top-level TLV or contained in a
+ * compound/dated one.  @param d a pointer to a Dazibao opened at least with
+ * the rights to read in it
+ * @param offset the offset of the TLV
+ * @param type the type of the TLV. If this is -1, it'll won't be verified, and
+ * any known TLV will work.
+ * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ **/
+int dz_check_tlv_at(dz_t *d, off_t offset, int type);
+
+/**
  * Empty a part of a dazibao.The part is filled with padN/pad1
  * @param d the Dazibao
  * @param start starting offset of emptying
@@ -149,6 +169,10 @@ int dz_compact(dz_t *d);
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
  * @param daz_buf
+ * @param end
+ * @param depth level of depth
+ * @param indent level of indentation
+ * @param flag_debug 'debug' boolean flag
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 

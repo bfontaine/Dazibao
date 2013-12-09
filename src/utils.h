@@ -36,31 +36,58 @@
 #define DZ_NULL_POINTER_ERROR  -8
 /** code for memory errors */
 #define DZ_MEMORY_ERROR       -16
+/** code for wrong headers in dazibaos/tlvs */
+#define DZ_WRONG_HEADER_ERROR -32
+/** code for wrong offsets */
+#define DZ_OFFSET_ERROR       -64
+/** code for arguments errors */
+#define DZ_ARGS_ERROR        -128
 
-/** use 'perror' and exit */
+/**
+ * use 'perror' and exit with EXIT_FAILURE
+ * @param str the string to use with perror
+ * @see PERROR
+ * @see ERROR
+ **/
 #define PANIC(str) {                        \
                 PERROR((str));              \
                 exit(EXIT_FAILURE);         \
         }
 
-/** print the current file and line, and use 'perror' */
-#define PERROR(str) {							\
-		fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
-		perror((str));						\
-	}
-
-/** use 'perror' and return a value */
-#define ERROR(str, i) {							\
-		PERROR((str));						\
-		return (i);						\
+/**
+ * print the current file and line, and use 'perror'
+ * @param str the string to use with perror
+ * @see PANIC
+ **/
+#define PERROR(str) {                                                        \
+                fprintf(stderr, "ERROR - %s - l.%d - ", __FILE__, __LINE__); \
+                perror((str));                                               \
         }
 
-/** Close a file descriptor, use 'perror' and return a value */
-#define CLOSE_AND_ERROR(fd, msg, i) {       \
-                if(close((fd)) == -1) {     \
-                        PANIC("close");     \
-                }                           \
-                ERROR((msg), (i));          \
+/**
+ * print the current file and line, use 'perror' and return a value
+ * @param str the string to use with perror
+ * @param i the value to return
+ * @see PERROR
+ **/
+#define ERROR(str, i) {        \
+                PERROR((str)); \
+                return (i);    \
+        }
+
+/**
+ * Close a file descriptor, use 'perror' and return a value
+ * @param fd file descriptor
+ * @param msg the string to use with perror
+ * @param i the value to return
+ * @see PANIC
+ * @see ERROR
+ **/
+#define CLOSE_AND_ERROR(fd, msg, i) {   \
+                if(close((fd)) == -1) { \
+                        PANIC("close"); \
+                }                       \
+                ERROR((msg), (i));      \
         }
 
 /**
@@ -70,15 +97,15 @@
  * of the function (i.e. right after the variables declarations). They use
  * a '__s' variable to save the offset, so please don't use this variable
  * in your function (this is very unlikely).
- * @param the dazibao (not a pointer)
+ * @param d the dazibao (not a pointer)
  **/
 #define SAVE_OFFSET(d)                                          \
                 off_t __s;                                      \
-                __s = lseek((d), 0, SEEK_CUR);               \
+                __s = lseek((d), 0, SEEK_CUR);                  \
                 if (__s < 0) { perror("[save offset] lseek"); } \
 
 /**
- * @param the dazibao (not a pointer)
+ * @param d the dazibao (not a pointer)
  * @see SAVE_OFFSET
  */
 #define RESTORE_OFFSET(d)                                 \
@@ -86,21 +113,33 @@
                         perror("[restore offset] lseek"); \
                 }                                         \
 
-/** Return the current offset in a file */
-#define GET_OFFSET(fd) (lseek(fd, 0, SEEK_CUR))
+/**
+ * Return the current offset in a file
+ * @param fd file descriptor
+ * @see SET_OFFSET
+ **/
+#define GET_OFFSET(fd) (lseek((fd), 0, SEEK_CUR))
 
-/** Change the current offset in a file */
+/**
+ * Change the current offset in a file
+ * @param fd file descriptor
+ * @param o new offset
+ * @see GET_OFFSET
+ **/
 #define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_SET))
 
-#ifdef DEBUG
-/** wrapper around printf */
-#define PDEBUG(fmt, ...) printf(fmt, ##__VA_ARGS__)
-#else
-/** 0 */
-#define PDEBUG(fmt, ...) 0
-#endif
+/**
+ * wrapper to save and restore the current offset in a dazibao after a piece
+ * of code
+ * @param d the dazibao
+ * @param code the code to wrap
+ **/
+#define PRESERVE_OFFSET(d,code) {SAVE_OFFSET(d);{code};RESTORE_OFFSET(d);}
 
-/** free a pointer and set it to NULL */
+/**
+ * free a pointer and set it to NULL
+ * @param p the pointer
+ **/
 #define NFREE(p) { free(p);(p) = NULL; }
 
 /**
@@ -122,8 +161,16 @@ void *safe_realloc(void *ptr, size_t size);
 int write_all(int fd, char *buff, int len);
 
 /**
+ * Wrapper around 'strtol' which tries to parse a string as a positive decimal
+ * number.
+ * @param s a string
+ * @return -1 on error, the parsed number on success
+ **/
+long str2dec_positive(char *s);
+
+/**
  * Return the extension of a file.
- * @param filename
+ * @param path path of the file (filename)
  * @return a pointer to the part of the filename which represents the
  *         extension, or NULL if there's none. If you want to do some things
  *         with the extension while being able to free the original pointer,
@@ -140,35 +187,35 @@ const char *get_ext(const char *path);
 #define _STR(x) #x
 
 /**
- * make a string of a #define'd litteral number
- * @param x the #define'd litteral number
+ * make a string of a define'd litteral number
+ * @param x the define'd litteral number
  **/
 #define STR(x) _STR(x)
 
 /** type of a command-line argument */
 enum arg_type {
-	ARG_TYPE_INT,
-	ARG_TYPE_STRING
+        ARG_TYPE_INT,
+        ARG_TYPE_STRING
 };
 
 /** command-line option */
 struct s_option {
         /** name */
-	char *name;
+        char *name;
         /** type of the option's value */
-	enum arg_type type;
+        enum arg_type type;
         /** value of the option */
-	void *value;
+        void *value;
 };
 
 /** command-line arguments */
 struct s_args {
         /** arguments count */
-	int *argc;
+        int *argc;
         /** arguments */
-	char ***argv;
+        char ***argv;
         /** options */
-	struct s_option *options;
+        struct s_option *options;
 };
 
 /**

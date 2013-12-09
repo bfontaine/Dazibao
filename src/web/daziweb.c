@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <libgen.h>
+#include <fcntl.h>
 #include "dazibao.h"
 #include "daziweb.h"
 #include "utils.h"
@@ -68,7 +69,7 @@ static int parse_args(int argc, char **argv, int *port) {
         while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
                 switch (c) {
                 case 'p':
-                        *port = strtol(optarg, NULL, 10);
+                        *port = str2dec_positive(optarg);
                         if (!IN_RANGE(*port, 1, 65535)) {
                                 LOGWARN("Wrong port: '%s'", optarg);
                                 *port = DEFAULT_PORT;
@@ -245,7 +246,7 @@ int main(int argc, char **argv) {
                         if (close(client) == -1) {
                             perror("close");
                         }
-                        if (dz > 0 && dz_close(&dz) == -1) {
+                        if (dz > 0 && dz_close(&dz) < 0) {
                                 LOGERROR("Cannot close the Dazibao.");
                         }
                         continue;
@@ -254,7 +255,7 @@ int main(int argc, char **argv) {
                                req->method, req->path, req->body_len);
                 LOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
 
-                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) == -1) {
+                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) < 0) {
                         LOGERROR("Cannot open the Dazibao.");
                 }
                 status = route_request(client, dz, req);
