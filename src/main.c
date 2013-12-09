@@ -1,7 +1,4 @@
 #include "main.h"
-#include "dazibao.h"
-#include <limits.h>
-#include <locale.h>
 
 /** @file */
 
