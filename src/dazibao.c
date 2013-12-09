@@ -401,6 +401,7 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
          * delete the last TLV of a compound one which is at the end of
          * the Dazibao: it truncates the file without updating the
          * length field of the compound TLV
+         * See #104
         if (off_end == off_eof) { / * end of file reached * /
                 if (ftruncate(*d, off_start) == -1) {
                         perror("ftruncate");
@@ -639,10 +640,11 @@ int dz_compact(dz_t *d) {
         }
 
         if (writing != -1) {
-            if (ftruncate(*d, writing) < 0) {
-                    perror("ftruncate");
-                    status = -1;
-            }
+                /* this truncate is unsafe, see #104
+                if (ftruncate(*d, writing) < 0) {
+                        perror("ftruncate");
+                        status = -1;
+                }*/
         }
 
 OUT:
