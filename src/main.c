@@ -63,13 +63,13 @@ int cmd_add(int argc, char **argv, char * daz) {
 
 
 int action_add(char *daz, unsigned char type) {
-        dz_t daz_buf;
+        mdz_t daz_buf;
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
         int read_size, st;
 
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+        if (mdz_open(&daz_buf, daz, O_RDWR) < 0) {
                 exit(EXIT_FAILURE);
         }
 
@@ -113,7 +113,7 @@ int action_add(char *daz, unsigned char type) {
 }
 
 int cmd_rm(int argc, char **argv, char *daz) {
-        dz_t daz_buf;
+        mdz_t daz_buf;
         long off;
 
         if (argc != 1) {
@@ -130,7 +130,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return DZ_ARGS_ERROR;
         }
 
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+        if (mdz_open(&daz_buf, daz, O_RDWR) < 0) {
                 fprintf(stderr, "Error while opening the dazibao\n");
                 return -1;
         }
@@ -144,17 +144,17 @@ int cmd_rm(int argc, char **argv, char *daz) {
 
         if (dz_check_tlv_at(&daz_buf, off, -1) <= 0) {
                 fprintf(stderr, "no such TLV\n");
-                dz_close(&daz_buf);
+                mdz_close(&daz_buf);
                 return DZ_OFFSET_ERROR;
         }
 
-        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
+        if (mdz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
-                dz_close(&daz_buf);
+                mdz_close(&daz_buf);
                 return -1;
         }
 
-        if (dz_close(&daz_buf) < 0) {
+        if (mdz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
@@ -162,19 +162,19 @@ int cmd_rm(int argc, char **argv, char *daz) {
         return 0;
 }
 int action_dump(char *daz, int flag_debug, int flag_depth) {
-        dz_t daz_buf;
-        if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
+        mdz_t daz_buf;
+        if (mdz_open(&daz_buf, daz, O_RDONLY) < 0) {
                 fprintf(stderr, "open dazibao failed\n");
                 return -1;
         }
 
-        if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
+        if (mdz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
                 fprintf(stderr, "dump failed\n");
-                dz_close(&daz_buf);
+                mdz_close(&daz_buf);
                 return -1;
         }
 
-        if (dz_close(&daz_buf) < 0) {
+        if (mdz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
@@ -232,18 +232,18 @@ int cmd_dump(int argc , char **argv, char *daz) {
 }
 
 int cmd_create(int argc, char **argv, char *daz) {
-        dz_t daz_buf;
+        mdz_t daz_buf;
         if (argc > 0) {
                 fprintf(stderr, "'create' doesn't take options\n");
                 return DZ_ARGS_ERROR;
         }
 
-        if (dz_create(&daz_buf, daz) != 0) {
+        if (mdz_create(&daz_buf, daz) != 0) {
                 fprintf(stderr, "error during dazibao creation\n");
                 return -1;
         }
 
-        if (dz_close(&daz_buf) < 0) {
+        if (mdz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
@@ -251,21 +251,21 @@ int cmd_create(int argc, char **argv, char *daz) {
         return 0;
 }
 int cmd_compact(int argc , char **argv, char *daz) {
-        dz_t daz_buf;
+        mdz_t daz_buf;
         if (argc > 0) {
                 fprintf(stderr, "'compact' doesn't take any option\n");
                 return DZ_ARGS_ERROR;
         }
 
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+        if (mdz_open(&daz_buf, daz, O_RDWR) < 0) {
                 return -1;
         }
 
-        if (dz_compact(&daz_buf)) {
+        if (mdz_compact(&daz_buf)) {
                 return -1;
         }
 
-        if (dz_close(&daz_buf) < 0) {
+        if (mdz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }

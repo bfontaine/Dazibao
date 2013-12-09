@@ -37,11 +37,11 @@
  * The type of a Dazibao
  **/
 typedef struct {
-	int fd;
-	size_t len;
-	size_t offset;
-	char *data;
-} dz_t;
+        int fd;
+        size_t len;
+        size_t offset;
+        char *data;
+} mdz_t;
 
 /**
  * Create a new dazibao in a file at a given location.
@@ -53,7 +53,7 @@ typedef struct {
  *        the directories before it must exist.
  * @return 0 on success, -1 on error
  **/
-int dz_create(dz_t *daz_buf, char *path);
+int mdz_create(mdz_t *daz_buf, char *path);
 
 /**
  * Open a dazibao.
@@ -62,21 +62,21 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param flags flags used with open(2)
  * @return 0 on success, -1 on error
  **/
-int dz_open(dz_t *d, char *path, int flags);
+int mdz_open(mdz_t *d, char *path, int flags);
 
 /**
  * Close a dazibao
  * @param d the dazibao to close
  * @return 0 on success
  **/
-int dz_close(dz_t *d);
+int mdz_close(mdz_t *d);
 
 /**
  * Reset the cursor of a dazibao for further readings.
  * @param d the dazibao to reset
  * @return 0 on success
  **/
-int dz_reset(dz_t *d);
+int mdz_reset(mdz_t *d);
 
 /**
  * Fill tlv value
@@ -85,7 +85,7 @@ int dz_reset(dz_t *d);
  * @param offset off wanted tlv
  * @return 0 on success, -1 on error
  **/
-int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
+int mdz_read_tlv(mdz_t *d, tlv_t *tlv, off_t offset);
 
 /**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
@@ -94,7 +94,7 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
  * @return the offset on success, EOD if the end of file has been reached, or
  *         -1 on error
  **/
-off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
+off_t mdz_next_tlv(mdz_t *d, tlv_t *tlv);
 
 /**
  * Fill a tlv with its type and its length
@@ -103,7 +103,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv);
  * @param offset position of the tlv wanted in d
  * @return 0 on success, -1 on error
  **/
-int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
+int mdz_tlv_at(mdz_t *d, tlv_t *tlv, off_t offset);
 
 /**
  * Write a tlv in a dazibao at a given offset
@@ -112,7 +112,7 @@ int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
  * @param offset the offset to write at
  * @return 0 on success
  **/
-int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
+int mdz_write_tlv_at(mdz_t *d, tlv_t *tlv, off_t offset);
 
 /**
  * Add a TLV at the end of a dazibao. If the dazibao ends with a sequence of
@@ -122,7 +122,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset);
  * @param tlv to add
  * @return 0 on success
  **/
-int dz_add_tlv(dz_t *d, tlv_t *tlv);
+int mdz_add_tlv(mdz_t *d, tlv_t *tlv);
 
 /**
  * Erase a tlv. If tlv is surrounded by pad1/padNs, they will be concatened. If
@@ -131,7 +131,7 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv);
  * @param offset offset of the tlv to remove
  * @return 0 on success, -1 on error
  **/
-int dz_rm_tlv(dz_t *d, off_t offset);
+int mdz_rm_tlv(mdz_t *d, off_t offset);
 
 /**
  * Empty a part of a dazibao.The part is filled with padN/pad1
@@ -140,7 +140,7 @@ int dz_rm_tlv(dz_t *d, off_t offset);
  * @param length number of bytes to be erased
  * @return 0 on success, -1 on error
  **/
-int dz_do_empty(dz_t *d, off_t start, off_t length);
+int mdz_do_empty(mdz_t *d, off_t start, off_t length);
 
 /**
  * Compact a Dazibao file. The file must have been opened in read/write mode,
@@ -149,13 +149,13 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
  * @return number of bytes saved by the compacting operation on success, or -1
  *         on error
  **/
-int dz_compact(dz_t *d);
+int mdz_compact(mdz_t *d);
 
 /**
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
  * @param daz_buf
  */
-int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
+int mdz_dump(mdz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
 #endif /* _DAZIBAO_H */

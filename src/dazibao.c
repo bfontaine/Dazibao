@@ -157,7 +157,7 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
         }
 
 
-	st = tlv_fread(tlv, *d);
+        st = tlv_fread(tlv, *d);
 
         RESTORE_OFFSET(*d);
 
@@ -241,9 +241,9 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
                 ERROR("lseek", -1);
         }
 
-	if (tlv_fwrite(tlv, *d) == -1) {
-		ERROR("tlv_fwrite", -1);
-	}
+        if (tlv_fwrite(tlv, *d) == -1) {
+                ERROR("tlv_fwrite", -1);
+        }
 
         /* RESTORE_OFFSET(*d); */
         return 0;
