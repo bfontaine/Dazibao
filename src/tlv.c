@@ -131,3 +131,82 @@ const char *tlv_type2str(char tlv_type) {
                         return "unknown";
         }
 }
+
+int tlv_create_path(char *path, tlv_t *tlv){
+        int buff_size;
+        unsigned char type;
+        
+        /*
+           TODO
+           create function to return type to tlv
+           if tlv is unknown return -1
+                   then tlv type was -> TLV_unknow
+           [HEADER][TLV_PTH(path)/255 - "\0" ][VALUE]
+           type = this function
+        */
+
+        /*if type != -1
+          read fic -> to buff
+        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_set_type(&tlv, type);
+        tlv_set_length(&tlv, buff_size);
+
+        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+
+        else 
+        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_set_type(&tlv, type);
+        tlv_set_length(&tlv, buff_size);
+
+        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+
+        */
+/*
+	dz_t daz_buf;
+        char reader[BUFFSIZE],
+             *buff = NULL;
+        int read_size;
+        
+        // ouvrir le fichier normalement
+        if (dz_open(&daz_buf, daz, O_RDWR)) {
+                exit(EXIT_FAILURE);
+        }
+
+        while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
+
+                buff_size += read_size;
+
+                if(buff_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv too large\n");
+                        exit(EXIT_FAILURE);
+                }
+
+                buff = safe_realloc(buff, sizeof(*buff) * buff_size);
+
+                if(!buff) {
+                        PERROR("realloc");
+                        exit(EXIT_FAILURE);
+                }
+
+                memcpy(buff + (buff_size - read_size),
+                                reader, read_size);
+        }
+
+        si type == -1 -> rajouter TLV_PATH avant
+        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_set_type(&tlv, type);
+        tlv_set_length(&tlv, buff_size);
+
+        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+
+        if (dz_add_tlv(&daz_buf, tlv) == -1) {
+                printf("failed adding your tlv\n");
+        }
+
+        free(tlv);
+        free(buff);
+
+*/
+         
+        return buff_size;
+}
