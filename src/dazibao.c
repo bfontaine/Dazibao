@@ -636,11 +636,14 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
         off_t off;
         char *ind;
         if (indent > 0) {
-                ind = malloc(sizeof(char)*(indent+1));
-                memset(ind, '\t', indent);
-                ind[indent]='\0';
+                ind = (char*)malloc(sizeof(char)*(2*indent+1));
+                memset(ind, '>', indent);
+                memset(ind+indent, ' ', indent);
+                ind[2*indent] = '\0';
         } else {
                 ind = strdup("");
+                printf("   offset |     type |   length\n");
+                printf("----------+----------+---------\n");
         }
 
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
@@ -656,7 +659,7 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
                                 || flag_debug) {
-                        printf("[%9d] TLV %8s | %8d |\n",
+                        printf("%9d | %8s | %8d\n",
                                 (int)off, tlv_str, len);
                 }
 
@@ -669,11 +672,12 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                                         if (dz_dump(daz_buf,current,
                                                 (depth-1), (indent+1),
                                                 flag_debug)) {
+                                                free(ind);
                                                 return -1;
                                         }
                                         SET_OFFSET(*daz_buf, current);
-                                        break;
                                 }
+                                break;
                         case TLV_DATED:
                                 if (depth > 0) {
                                         /* TODO function to print date */
@@ -683,17 +687,17 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                                         if (dz_dump(daz_buf,current,
                                               (depth-1), (indent+1),
                                               flag_debug)) {
+                                                free(ind);
                                                 return -1;
                                         }
                                         SET_OFFSET(*daz_buf, current);
                                 }
+                                break;
                         default: break;
                 }
 
         }
-        if (indent < 0) {
-                free(ind);
-        }
+        free(ind);
         free(tlv);
         return 0;
 }
