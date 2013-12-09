@@ -28,7 +28,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         fprintf(stderr, "unrecognized type\n");
                         return DZ_ARGS_ERROR;
                 }
-                if (action_add(daz, tmp_type) == -1) {
+                if (action_add(daz, tmp_type) < 0) {
                         fprintf(stderr, "action_add error\n");
                         return -1;
                 }
@@ -75,7 +75,7 @@ int action_add(char *daz, unsigned char type) {
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
-        int read_size;
+        int read_size, st;
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 exit(EXIT_FAILURE);
@@ -92,13 +92,12 @@ int action_add(char *daz, unsigned char type) {
 
                 buff = safe_realloc(buff, sizeof(*buff) * buff_size);
 
-                if(!buff) {
-                        PERROR("realloc");
-                        exit(EXIT_FAILURE);
+                if(buff == NULL) {
+                        perror("realloc");
+                        return DZ_MEMORY_ERROR;
                 }
 
-                memcpy(buff + (buff_size - read_size),
-                                reader, read_size);
+                memcpy(buff + (buff_size - read_size), reader, read_size);
         }
 
 
@@ -108,11 +107,12 @@ int action_add(char *daz, unsigned char type) {
 
         memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
 
-        if (dz_add_tlv(&daz_buf, tlv) == -1) {
+        st = dz_add_tlv(&daz_buf, tlv);
+        if (st < 0) {
                 fprintf(stderr, "failed adding the tlv\n");
                 free(tlv);
                 free(buff);
-                return -1;
+                return st;
         }
 
         free(tlv);
@@ -126,7 +126,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
 
         if (argc != 1) {
                 fprintf(stderr, "expected offset\n");
-                return -1;
+                return DZ_ARGS_ERROR;
         }
 
         /* If the offset doesn't start with a character between '0' and '9', it
@@ -135,7 +135,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
          */
         if (argv[argc - 1][0] < 48 || argv[argc - 1][0] > 57) {
                 fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
-                return -1;
+                return DZ_ARGS_ERROR;
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
@@ -147,13 +147,13 @@ int cmd_rm(int argc, char **argv, char *daz) {
 
         if (off < DAZIBAO_HEADER_SIZE) {
                 fprintf(stderr, "wrong offset\n");
-                return -1;
+                return DZ_OFFSET_ERROR;
         }
 
         if (dz_check_tlv_at(&daz_buf, off, -1) <= 0) {
                 fprintf(stderr, "no such TLV\n");
                 dz_close(&daz_buf);
-                return -1;
+                return DZ_OFFSET_ERROR;
         }
 
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
@@ -195,9 +195,8 @@ int cmd_dump(int argc , char **argv, char *daz) {
              flag_depth = 0;
         int args = 0;
         if (argc >= 4) {
-                /* if argc > 4 , too many argument */
                 fprintf(stderr, "too many arguments with dump");
-                return -1;
+                return DZ_ARGS_ERROR;
         }
         for (int i = 0; i < argc; i++) {
                 if (args > 0) {
@@ -223,24 +222,17 @@ int cmd_dump(int argc , char **argv, char *daz) {
                                 or already use
                                 ERROR
                         */
-                        fprintf(stderr, "[main|cmd_dump] arg failed"
-                                ":%s\n", argv[i]);
+                        fprintf(stderr, "[main|cmd_dump] arg failed:%s\n",
+                                        argv[i]);
                         return -1;
                 }
 
-        }
-        if (!flag_depth && !flag_debug && argc != 0) {
-                /*
-                error impossible to any flag is activate
-                */
-                fprintf(stderr, "cmd_dump flag failed\n");
-                return -1;
         }
         if (flag_depth > 0) {
                 flag_depth = str2dec_positive(argv[(unsigned char)flag_depth]);
                 if (flag_depth < 0) {
                         fprintf(stderr, "unrecognized depth\n");
-                        return -1;
+                        return DZ_ARGS_ERROR;
                 }
         }
 
@@ -250,8 +242,8 @@ int cmd_dump(int argc , char **argv, char *daz) {
 int cmd_create(int argc, char **argv, char *daz) {
         dz_t daz_buf;
         if (argc > 0) {
-                fprintf(stderr, "'create' doesn't take arguments for now\n");
-                return -1;
+                fprintf(stderr, "'create' doesn't take options\n");
+                return DZ_ARGS_ERROR;
         }
 
         if (dz_create(&daz_buf, daz) != 0) {
@@ -269,8 +261,8 @@ int cmd_create(int argc, char **argv, char *daz) {
 int cmd_compact(int argc , char **argv, char *daz) {
         dz_t daz_buf;
         if (argc > 0) {
-                fprintf(stderr, "'compact' doesn't take any argument\n");
-                return -1;
+                fprintf(stderr, "'compact' doesn't take any option\n");
+                return DZ_ARGS_ERROR;
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
@@ -298,7 +290,7 @@ int main(int argc, char **argv) {
         int argc_cmd;
 
         if (setlocale(LC_ALL, "") == NULL) {
-                PERROR("setlocale");
+                perror("setlocale");
         }
 
         /* <executable> <command> <dazibao name>  = 3 args */
@@ -310,8 +302,6 @@ int main(int argc, char **argv) {
         daz = argv[argc - 1];
 
         /* recover tab option and args */
-        argc_cmd = argc - 3;
-        argv_cmd = argv + 2;
         if (argc == 3) {
                 argc_cmd = 0;
                 argv_cmd = NULL;

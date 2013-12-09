@@ -86,7 +86,8 @@ int tlv_write(tlv_t tlv, int fd) {
         unsigned int to_write = TLV_SIZEOF(tlv);
         int status = write_all(fd, tlv, to_write);
         if (status == -1 || (unsigned int)status != to_write) {
-                ERROR("write", -1);
+                perror("write");
+                return DZ_WRITE_ERROR;
         }
         return 0;
 }
@@ -99,11 +100,13 @@ int tlv_read(tlv_t *tlv, int fd) {
                                                 * (TLV_SIZEOF_HEADER + len));
 
         if (*tlv == NULL) {
-                ERROR("realloc", -1);
+                perror("realloc");
+                return DZ_MEMORY_ERROR;
         }
 
         if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
-                ERROR("read", -1);
+                perror("read");
+                return DZ_READ_ERROR;
         }
         return 0;
 }
