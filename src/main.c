@@ -97,6 +97,7 @@ int cmd_add(int argc, char **argv, char * daz) {
 
 int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         , int flag_date, char *daz) {
+        dz_t daz_buf;
         unsigned int buff_size = 0;
         tlv_t tlv = NULL;;
         tlv_t buff;
@@ -124,14 +125,24 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         }
 
         if (flag_dazibao == 1) {
-                /* TODO create fonction path dazibao -> tlv compound
-                */
+                buff_size = tlv_create_daz(argv[argc-1], buff);
+                tlv = tlv_create_compound(buff, buff_size);
+                tlv_destroy(&buff);
         }
         if (flag_date == 1) {
                 /* TODO create function tlv -> tlv -> date */
         }
 
+        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+                exit(EXIT_FAILURE);
+        }
+
         /* add le tlv restant */
+        if (dz_add_tlv(&daz_buf, tlv) == -1) {
+                fprintf(stderr, "failed adding the tlv\n");
+                tlv_destroy(&tlv);
+                return -1;
+        }
         tlv_destroy(&tlv);
         return 0;
 }
