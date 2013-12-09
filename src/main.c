@@ -97,38 +97,30 @@ int cmd_add(int argc, char **argv, char * daz) {
 
 int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         , int flag_date, char *daz) {
-        unsigned char type;
         unsigned int buff_size = 0;
-        tlv_t *tlv = NULL;;
-        tlv_t *tlv_compound;
-        tlv_t *tlv_date;
+        tlv_t tlv = NULL;;
+        tlv_t buff;
         if (flag_compound == 1) {
                 /* read all args fic name, and create create a tlv to it */
-                tlv_compound = malloc(TLV_SIZEOF_HEADER +
-                        (argc * TLV_SIZEOF_HEADER * sizeof(*tlv)));
                 int i;
+                int size_tlv = 0;
                 for (i = 0; i < argc; i++) {
-                       buff_size += tlv_create_path(argv[i], &tlv_compound[i]);
-
+                        size_tlv += tlv_create_path(argv[i], tlv);
+                        buff_size += size_tlv;
                         if(buff_size > TLV_MAX_VALUE_SIZE) {
                                 printf("tlv compound too large\n");
-                                int j;
-                                for (j = 0; j < i; j++) {
-                                        tlv_destroy(&tlv_compound[j]);
-                                }
-                                tlv_destroy(&tlv_compound);
+                                tlv_destroy(&tlv);
+                                tlv_destroy(&buff);
                                 return -1;
                         }
+                        memcpy(buff + (buff_size - size_tlv),
+                                tlv, buff_size);
+                        tlv_destroy(&tlv);
                 }
-                /* we have all tlv to include to compound in tlv_compound []
-                create function TODO : int
-                tlv_create_compound(tlv[],size_compound)
-                */
+                /* we have all tlv to include to compound in tlv_compound []*/
+                tlv = tlv_create_compound(buff, buff_size);
                 /*before tlv_compound -> to tlv */
-                for (i = 0; i < argc; i++) {
-                        tlv_destroy(&tlv_compound[i]);
-                }
-                tlv_destroy(&tlv_compound);
+                tlv_destroy(&buff);
         }
 
         if (flag_dazibao == 1) {
@@ -140,6 +132,7 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         }
 
         /* add le tlv restant */
+        tlv_destroy(&tlv);
         return 0;
 }
 
