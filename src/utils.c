@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "tlv.h"
 #include "utils.h"
 
 /** @file */
@@ -8,7 +9,7 @@ int safe_path(const char * path, int flag_access) {
                 printf("[utils.c|safe_path]file %s not exist\n",path);
                 return -1;
         }
-        if(stat(path, f_path) == -1) {
+        if(stat(path, &f_path) == -1) {
                 printf("[utils.c|safe_path] error stat \n");
                 return -1;
         }
