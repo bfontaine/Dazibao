@@ -145,10 +145,21 @@
 #define NFREE(p) { free(p);(p) = NULL; }
 
 /**
- * Check if path exist file , regular file
- * and is not to large
+ * Check path is a good tlv args,test : 
+ *      - exist file  
+ *      - regular file
+ *      - not to large
  **/
-int safe_path(const char * path, int flag_access);
+int check_tlv_path(const char * path, int flag_access);
+
+/**
+ * Check path is a good dazibao args,test : 
+ *      - exist file  
+ *      - regular file
+ *      - not to large
+ **/
+int check_dz_path(const char * path, int flag_access);
+
 /**
  * Wrapper around realloc(3) which frees the original pointer if the request
  * fails. See #35.
