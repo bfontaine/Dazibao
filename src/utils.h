@@ -40,6 +40,8 @@
 #define DZ_WRONG_HEADER_ERROR -32
 /** code for wrong offsets */
 #define DZ_OFFSET_ERROR       -64
+/** code for arguments errors */
+#define DZ_ARGS_ERROR        -128
 
 /**
  * use 'perror' and exit with EXIT_FAILURE
