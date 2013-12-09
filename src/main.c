@@ -34,6 +34,7 @@ int cmd_add(int argc, char **argv, char * daz) {
         int tmp_first_args;
         int i;
         for (i = 0; i < argc; i++) {
+                /* if option date is only option , it need args*/
                 if ((i == argc-1) && (flag_date == 1) &&
                         (flag_compoud != 1) && (flag_dazibao != 1)) {
                         args = 1;
@@ -76,18 +77,21 @@ int cmd_add(int argc, char **argv, char * daz) {
                 return -1;
         }
 
-        if (action_add() == -1) {
+        char **args_v = argv + tmp_first_args + 1;
+        int args_c = argc - tmp_first_args - 1;
+
+        if (action_add(args_c, args_v, flag_compoud, flag_dazibao
+                , flag_date) == -1) {
                 printf("[main|cmd_dump] error action add");
                 return -1;
         }
-        char **args_t = argv + tmp_first_args;
-        int argc_t = argc - tmp_first_args - 1;
 
         return 0;
 }
 
 // args 3 flag , args_t argc_t, daz
-int action_add() {
+int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
+, int flag_date, char **daz) {
         if (flag_compound == 1) {
                 /* TODO create function path -> type
                                         (path,type) -> tlv
