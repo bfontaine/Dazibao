@@ -55,6 +55,35 @@
 /** maximum size of a whole TLV */
 #define TLV_MAX_SIZE ((TLV_SIZEOF_HEADER)+(TLV_MAX_VALUE_SIZE))
 
+/** Known tlv extention types **/
+static const char *tlv_types_ext[][2] = {
+        /* type text */
+        { "html" , "2"},
+        { "css"  , "2"},
+        { "js"   , "2"},
+        { "csv"  , "2"},
+        { "gif"  , "2"},
+        { "gzip" , "2"},
+        { "json" , "2"},
+        { "pdf"  , "2"},
+        { "rss"  , "2"},
+        { "svg"  , "2"},
+        { "tiff" , "2"},
+        { "xml"  , "2"},
+        { "zip"  , "2"},
+        { "md"   , "2" }, /* Markdown */
+        { "txt"  , "2" }
+
+        /* typt png */
+        { "png"  , "3"},
+        /* typt jpg */
+        { "jpeg" , "4"},
+        { "jpg"  , "4"},
+};
+
+/** Number of registered tlv types **/
+#define TLV_TYPES_COUNT (sizeof(tlv_types_ext)/sizeof(char*[2]))
+
 /**
  * The type of a TLV
  **/
