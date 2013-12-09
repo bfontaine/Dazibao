@@ -55,6 +55,10 @@
 /** maximum size of a whole TLV */
 #define TLV_MAX_SIZE ((TLV_SIZEOF_HEADER)+(TLV_MAX_VALUE_SIZE))
 
+/** arbitrary TLV depth limit. This is NOT a hard limit, but some functions
+ * need to have a limit */
+#define TLV_MAX_DEPTH 16
+
 /**
  * The type of a TLV
  **/
