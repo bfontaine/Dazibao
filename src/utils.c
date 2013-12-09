@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "tlv.h"
 #include "utils.h"
+#include "dazibao.h"
 
 /** @file */
 const char *get_tlv_type(const char *path) {
@@ -18,7 +19,7 @@ const char *get_tlv_type(const char *path) {
         for (unsigned int i=0; i<TLV_TYPES_COUNT; i++) {
                 if (strcasecmp(tlv_types_ext[i][0], ext) == 0) {
                         printf("no extension = no type tlv");
-                        return type_types_ext[i][1];
+                        return tlv_types_ext[i][1];
                 }
         }
         return NULL;

@@ -144,17 +144,18 @@
  **/
 #define NFREE(p) { free(p);(p) = NULL; }
 
+const char *get_tlv_type(const char *path);
 /**
- * Check path is a good tlv args,test : 
- *      - exist file  
+ * Check path is a good tlv args,test :
+ *      - exist file
  *      - regular file
  *      - not to large
  **/
 int check_tlv_path(const char * path, int flag_access);
 
 /**
- * Check path is a good dazibao args,test : 
- *      - exist file  
+ * Check path is a good dazibao args,test :
+ *      - exist file
  *      - regular file
  *      - not to large
  **/
