@@ -20,20 +20,29 @@
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
+ * @param d a pointer to the dazibao
+ * @param offset
+ * @param min_offset the minimum offset. The returned offset won't be below
+ *                   this offset.
  * @return offset of the beginning of this serie on success, or the given
  *         offset if there are no pad1/padNs before it.
  * @see dz_pad_serie_end
  */
-static off_t dz_pad_serie_start(dz_t *d, off_t offset);
+static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
 
 /**
  * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
  * starting after the skipped tlv.
+ * @param d a pointer to the dazibao
+ * @param offset
+ * @param max_offset the maximum offset to check The returned offset will never
+ *        be higher than this one. If this parameter is set to 0, it won't be
+ *        used. This is useful when you don't care about the maximum offset.
  * @return offset of the end of this serie on success, or the offset of the
  *         next tlv if it's not followed by pad1/padNs.
  * @see dz_pad_serie_start
  */
-static off_t dz_pad_serie_end(dz_t *d, off_t offset);
+static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
 int dz_create(dz_t *daz_buf, char *path) {
 
@@ -252,7 +261,7 @@ int dz_add_tlv(dz_t *d, tlv_t tlv) {
         }
 
         /* find offset of pad serie leading to EOF */
-        pad_off = dz_pad_serie_start(d, eof_off);
+        pad_off = dz_pad_serie_start(d, eof_off, 0);
 
         /* set new position if needed (already is EOF offset) */
         if (pad_off != eof_off && SET_OFFSET(*d, pad_off) == -1) {
@@ -275,7 +284,7 @@ int dz_add_tlv(dz_t *d, tlv_t tlv) {
         return 0;
 }
 
-off_t dz_pad_serie_start(dz_t *d, off_t offset) {
+off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
         off_t off_start, off_tmp;
 
         tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
@@ -286,7 +295,7 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
         /* SAVE_OFFSET(*d); */
 
-        if (SET_OFFSET(*d, DAZIBAO_HEADER_SIZE) == -1) {
+        if (SET_OFFSET(*d, MAX(min_offset, DAZIBAO_HEADER_SIZE)) == -1) {
                 free(buf);
                 ERROR("lseek", -1);
         }
@@ -324,35 +333,40 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
 }
 
-off_t dz_pad_serie_end(dz_t *d, off_t offset) {
+off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         off_t off_stop;
-        tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
+        tlv_t buf;
+
+        if (max_offset > 0 && max_offset < offset) {
+                return DZ_OFFSET_ERROR;
+        }
 
         /* SAVE_OFFSET(*d); */
 
         if(SET_OFFSET(*d, offset) == -1) {
-                free(buf);
                 ERROR("lseek", -1);
         }
+        buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
 
         /* skip current tlv */
         off_stop = dz_next_tlv(d, &buf);
 
         /* look for the first tlv which is not a pad */
-        while (off_stop != EOD
-                && (off_stop = dz_next_tlv(d, &buf)) > 0) {
-                if (tlv_get_type(buf) != TLV_PAD1
-                                && tlv_get_type(buf) != TLV_PADN) {
-                        /* tlv found */
-                        break;
-                }
-        }
+        while (off_stop != EOD && (off_stop = dz_next_tlv(d, &buf)) > 0
+                        && (max_offset > 0 && off_stop < max_offset)
+                        && TLV_IS_EMPTY_PAD(tlv_get_type(buf)));
 
+        if (max_offset > 0 && off_stop > max_offset) {
+                /* off_stop must be <= max_offset */
+                free(buf);
+                return DZ_OFFSET_ERROR;
+        }
         if (off_stop == EOD) {
                 off_stop = lseek(*d, 0, SEEK_END);
                 if (off_stop < 0) {
+                        perror("lseek");
                         free(buf);
-                        ERROR("lseek", -1);
+                        return DZ_OFFSET_ERROR;
                 }
         }
 
@@ -365,12 +379,8 @@ off_t dz_pad_serie_end(dz_t *d, off_t offset) {
 int dz_rm_tlv(dz_t *d, off_t offset) {
 
         off_t off_start, off_end, off_eof;
-        int status;
 
         /* SAVE_OFFSET(*d); */
-
-        off_start = dz_pad_serie_start(d, offset);
-        off_end   = dz_pad_serie_end(d, offset);
 
         off_eof = lseek(*d, 0, SEEK_END);
 
@@ -379,17 +389,27 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
                 return DZ_OFFSET_ERROR;
         }
 
-        if (off_end == off_eof) { /* end of file reached */
+        if ((off_start = dz_pad_serie_start(d, offset, 0)) < 0) {
+                return -1;
+        }
+
+        if ((off_end = dz_pad_serie_end(d, offset, 0)) < 0) {
+                return -1;
+        }
+
+        /* This is commented for now because it breaks dazibaos when we
+         * delete the last TLV of a compound one which is at the end of
+         * the Dazibao: it truncates the file without updating the
+         * length field of the compound TLV
+        if (off_end == off_eof) { / * end of file reached * /
                 if (ftruncate(*d, off_start) == -1) {
                         perror("ftruncate");
                 }
-                /* RESTORE_OFFSET(*d); */
                 return 0;
         }
+         */
 
-        status = dz_do_empty(d, off_start, off_end - off_start);
-        /* RESTORE_OFFSET(*d); */
-        return status;
+        return dz_do_empty(d, off_start, off_end - off_start);
 }
 
 /**
