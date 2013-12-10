@@ -39,6 +39,7 @@
  **/
 typedef struct {
 	int fd;
+	int fflags;
 	size_t len;
 	size_t offset;
 	size_t space;
