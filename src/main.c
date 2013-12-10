@@ -137,7 +137,9 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "failed open the dazibao\n");
+                tlv_destroy(&tlv);
+                return -1;
         }
 
         /* add le tlv restant */
@@ -146,7 +148,13 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                 tlv_destroy(&tlv);
                 return -1;
         }
+
         tlv_destroy(&tlv);
+
+        if (dz_close(&daz_buf) < 0) {
+                fprintf(stderr, "failed closing the dazibao\n");
+                return -1;
+        }
         return 0;
 }
 
