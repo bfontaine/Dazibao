@@ -30,7 +30,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         return DZ_ARGS_ERROR;
                 }
 
-                if (action_add(daz, tmp_type) < 0) {
+                if (action_no_option_add(daz, tmp_type) < 0) {
                         fprintf(stderr, "action_add error\n");
                         return -1;
                 }
@@ -43,12 +43,14 @@ int cmd_add(int argc, char **argv, char * daz) {
                 }
                 /* check args for dazibao or compound*/
                 if (args > 0) {
-                        if (flag_compound == 1 && check_tlv_path (argv[i],0)) {
+                        if (flag_compound == 1 &&
+                                check_tlv_path (argv[i], R_OK) < 0) {
                                 printf("[main|cmd_dump] arg failed:%s\n",
                                         argv[i]);
                                 return -1;
                         }
-                        if (flag_dazibao == 1 && check_dz_path (argv[i],0)) {
+                        if (flag_dazibao == 1 &&
+                                check_dz_path (argv[i], R_OK) < 0) {
                                 printf("[main|cmd_dump] arg failed:%s\n",
                                         argv[i]);
                                 return -1;
