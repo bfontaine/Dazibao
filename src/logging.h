@@ -2,6 +2,7 @@
 #define _LOGGING_H 1
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -35,8 +36,9 @@ extern int _log_level;
         char h[16]; \
         localtime_r(&t, &ts); \
         strftime(h, 16, "%T", &ts); \
-        fprintf(stderr, "[%5s][%8s] %s\n %-17s:%03d] " fmt "\n", \
-                        s, h, __func__, __FILE__, __LINE__, ##__VA_ARGS__); }}
+        fprintf(stderr, "[%5s][%4d][%8s] %s\n  \t%-17s:%03d] " fmt "\n", \
+                        s, getpid(), h, __func__, __FILE__, __LINE__, \
+                        ##__VA_ARGS__); }}
 
 /* Use these instead.
  * Examples:

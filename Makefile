@@ -15,7 +15,7 @@ CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
 DOXYGEN=doxygen
 DOXYFLAGS=
 
-UTILS=$(SRC)/tlv.h $(SRC)/utils.h
+UTILS=$(SRC)/tlv.h $(SRC)/utils.h $(SRC)/logging.h
 WUTILS=$(SRC)/logging.h $(WEBSRC)/webutils.h $(WEBSRC)/http.h
 NUTILS=$(SRC)/logging.h $(NOTIFSRC)/notifutils.h
 
