@@ -99,7 +99,7 @@ int action_add(char *daz, unsigned char type) {
 
         memcpy(tlv_get_value_ptr(&tlv), buff, buff_size);
 
-        st = dz_add_tlv(&daz_buf, tlv);
+        st = dz_add_tlv(&daz_buf, &tlv);
         if (st < 0) {
                 fprintf(stderr, "failed adding the tlv\n");
                 free(tlv);
@@ -141,13 +141,13 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 fprintf(stderr, "wrong offset\n");
                 return DZ_OFFSET_ERROR;
         }
-
+/*
         if (dz_check_tlv_at(&daz_buf, off, -1) <= 0) {
                 fprintf(stderr, "no such TLV\n");
                 dz_close(&daz_buf);
                 return DZ_OFFSET_ERROR;
         }
-
+*/
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
@@ -168,7 +168,7 @@ int action_dump(char *daz, int flag_debug, int flag_depth) {
                 return -1;
         }
 
-        if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
+        if (dz_dump(&daz_buf, EOD, flag_depth, 0, flag_debug)) {
                 fprintf(stderr, "dump failed\n");
                 dz_close(&daz_buf);
                 return -1;
