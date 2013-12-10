@@ -25,6 +25,9 @@
  **/
 #define MAGIC_NUMBER 53
 
+/** string used to show a indentation level in the dump */
+#define DZ_DUMP_INDENT_STR "'-> "
+
 /**
  * The type of a Dazibao
  **/

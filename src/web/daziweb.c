@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
                         if (close(client) == -1) {
                             perror("close");
                         }
-                        if (dz > 0 && dz_close(&dz) == -1) {
+                        if (dz > 0 && dz_close(&dz) < 0) {
                                 LOGERROR("Cannot close the Dazibao.");
                         }
                         continue;

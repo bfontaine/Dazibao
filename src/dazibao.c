@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 #include "utils.h"
 #include "dazibao.h"
 
@@ -19,20 +20,29 @@
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
+ * @param d a pointer to the dazibao
+ * @param offset
+ * @param min_offset the minimum offset. The returned offset won't be below
+ *                   this offset.
  * @return offset of the beginning of this serie on success, or the given
  *         offset if there are no pad1/padNs before it.
  * @see dz_pad_serie_end
  */
-static off_t dz_pad_serie_start(dz_t *d, off_t offset);
+static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
 
 /**
  * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
  * starting after the skipped tlv.
+ * @param d a pointer to the dazibao
+ * @param offset
+ * @param max_offset the maximum offset to check The returned offset will never
+ *        be higher than this one. If this parameter is set to 0, it won't be
+ *        used. This is useful when you don't care about the maximum offset.
  * @return offset of the end of this serie on success, or the offset of the
  *         next tlv if it's not followed by pad1/padNs.
  * @see dz_pad_serie_start
  */
-static off_t dz_pad_serie_end(dz_t *d, off_t offset);
+static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
 int dz_create(dz_t *daz_buf, char *path) {
 
@@ -42,18 +52,25 @@ int dz_create(dz_t *daz_buf, char *path) {
         fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
 
         if (fd == -1) {
-                ERROR("open", -1);
+                perror("open");
+                if (errno == EACCES) {
+                        return DZ_RIGHTS_ERROR;
+                }
+                return -1;
         }
 
         if (flock(fd, LOCK_SH) == -1) {
-                CLOSE_AND_ERROR(fd, "flock", -1);
+                close(fd);
+                perror("flock");
+                return -1;
         }
 
         header[0] = MAGIC_NUMBER;
         header[1] = 0;
 
         if (write(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
-                ERROR("write", -1);
+                perror("write");
+                return DZ_WRITE_ERROR;
         }
 
         *daz_buf = fd;
@@ -76,15 +93,20 @@ int dz_open(dz_t *d, char *path, int flags) {
         } else if (flags == O_RDONLY || flags == O_RDWR) {
                 lock = LOCK_SH;
         } else {
-                CLOSE_AND_ERROR(fd, "bad flags", -1);
+                close(fd);
+                return -1;
         }
 
         if (flock(fd, lock) == -1) {
-                CLOSE_AND_ERROR(fd, "flock", -1);
+                perror("flock");
+                close(fd);
+                return -1;
         }
 
         if (read(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
-                CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+                perror("read");
+                close(fd);
+                return DZ_READ_ERROR;
         }
 
         if (header[0] != MAGIC_NUMBER || header[1] != 0) {
@@ -130,7 +152,8 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
          */
 
         if (SET_OFFSET(*d, offset + TLV_SIZEOF_HEADER) == -1) {
-                ERROR("lseek", -1);
+                perror("lseek");
+                return DZ_OFFSET_ERROR;
         }
 
         st = tlv_read(tlv, *d);
@@ -159,14 +182,12 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
         /*
          * Precondition: *tlv have to be (at least) TLV_SIZEOF_HEADER long
          */
-        if (sizeof(*tlv) < TLV_SIZEOF_HEADER) {
-                return -1;
-        }
 
         off_init = GET_OFFSET(*d);
 
         if (off_init == -1) {
-                ERROR("lseek", -1);
+                perror("lseek");
+                return DZ_OFFSET_ERROR;
         }
 
         /* try to read regular header (TLV_SIZEOF_HEADER) */
@@ -184,8 +205,6 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
                 if (SET_OFFSET(*d, (off_init + TLV_SIZEOF_TYPE)) == -1) {
                         ERROR(NULL, -1);
                 }
-        } else if (size_read < TLV_SIZEOF_HEADER) {
-                /* TODO: loop waiting for read effectively read a whole tlv */
         } else {
                 if (SET_OFFSET(*d, (off_init + TLV_SIZEOF(*tlv))) == -1) {
                         ERROR(NULL, -1);
@@ -220,7 +239,7 @@ int dz_write_tlv_at(dz_t *d, tlv_t tlv, off_t offset) {
                 ERROR("lseek", -1);
         }
 
-        if (tlv_write(tlv, *d) == -1) {
+        if (tlv_write(tlv, *d) < 0) {
                 ERROR("tlv_write", -1);
         }
 
@@ -242,7 +261,7 @@ int dz_add_tlv(dz_t *d, tlv_t tlv) {
         }
 
         /* find offset of pad serie leading to EOF */
-        pad_off = dz_pad_serie_start(d, eof_off);
+        pad_off = dz_pad_serie_start(d, eof_off, 0);
 
         /* set new position if needed (already is EOF offset) */
         if (pad_off != eof_off && SET_OFFSET(*d, pad_off) == -1) {
@@ -265,7 +284,7 @@ int dz_add_tlv(dz_t *d, tlv_t tlv) {
         return 0;
 }
 
-off_t dz_pad_serie_start(dz_t *d, off_t offset) {
+off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
         off_t off_start, off_tmp;
 
         tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
@@ -276,7 +295,7 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
         /* SAVE_OFFSET(*d); */
 
-        if (SET_OFFSET(*d, DAZIBAO_HEADER_SIZE) == -1) {
+        if (SET_OFFSET(*d, MAX(min_offset, DAZIBAO_HEADER_SIZE)) == -1) {
                 free(buf);
                 ERROR("lseek", -1);
         }
@@ -314,35 +333,40 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
 }
 
-off_t dz_pad_serie_end(dz_t *d, off_t offset) {
+off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         off_t off_stop;
-        tlv_t buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
+        tlv_t buf;
+
+        if (max_offset > 0 && max_offset < offset) {
+                return DZ_OFFSET_ERROR;
+        }
 
         /* SAVE_OFFSET(*d); */
 
         if(SET_OFFSET(*d, offset) == -1) {
-                free(buf);
                 ERROR("lseek", -1);
         }
+        buf = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
 
         /* skip current tlv */
         off_stop = dz_next_tlv(d, &buf);
 
         /* look for the first tlv which is not a pad */
-        while (off_stop != EOD
-                && (off_stop = dz_next_tlv(d, &buf)) > 0) {
-                if (tlv_get_type(buf) != TLV_PAD1
-                                && tlv_get_type(buf) != TLV_PADN) {
-                        /* tlv found */
-                        break;
-                }
-        }
+        while (off_stop != EOD && (off_stop = dz_next_tlv(d, &buf)) > 0
+                        && (max_offset > 0 && off_stop < max_offset)
+                        && TLV_IS_EMPTY_PAD(tlv_get_type(buf)));
 
+        if (max_offset > 0 && off_stop > max_offset) {
+                /* off_stop must be <= max_offset */
+                free(buf);
+                return DZ_OFFSET_ERROR;
+        }
         if (off_stop == EOD) {
                 off_stop = lseek(*d, 0, SEEK_END);
                 if (off_stop < 0) {
+                        perror("lseek");
                         free(buf);
-                        ERROR("lseek", -1);
+                        return DZ_OFFSET_ERROR;
                 }
         }
 
@@ -355,31 +379,38 @@ off_t dz_pad_serie_end(dz_t *d, off_t offset) {
 int dz_rm_tlv(dz_t *d, off_t offset) {
 
         off_t off_start, off_end, off_eof;
-        int status;
 
         /* SAVE_OFFSET(*d); */
-
-        off_start = dz_pad_serie_start(d, offset);
-        off_end   = dz_pad_serie_end(d, offset);
 
         off_eof = lseek(*d, 0, SEEK_END);
 
         if (off_eof == -1) {
                 /* RESTORE_OFFSET(*d); */
-                ERROR(NULL, -1);
+                return DZ_OFFSET_ERROR;
         }
 
-        if (off_end == off_eof) { /* end of file reached */
+        if ((off_start = dz_pad_serie_start(d, offset, 0)) < 0) {
+                return -1;
+        }
+
+        if ((off_end = dz_pad_serie_end(d, offset, 0)) < 0) {
+                return -1;
+        }
+
+        /* This is commented for now because it breaks dazibaos when we
+         * delete the last TLV of a compound one which is at the end of
+         * the Dazibao: it truncates the file without updating the
+         * length field of the compound TLV
+         * See #104
+        if (off_end == off_eof) { / * end of file reached * /
                 if (ftruncate(*d, off_start) == -1) {
                         perror("ftruncate");
                 }
-                /* RESTORE_OFFSET(*d); */
                 return 0;
         }
+         */
 
-        status = dz_do_empty(d, off_start, off_end - off_start);
-        /* RESTORE_OFFSET(*d); */
-        return status;
+        return dz_do_empty(d, off_start, off_end - off_start);
 }
 
 /**
@@ -448,7 +479,7 @@ static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
 
 int dz_check_tlv_at(dz_t *d, off_t offset, int type) {
         if (d == NULL) {
-                return -1;
+                return DZ_NULL_POINTER_ERROR;
         }
         if (offset < DAZIBAO_HEADER_SIZE) {
                 return DZ_OFFSET_ERROR;
@@ -461,11 +492,13 @@ int dz_check_tlv_at(dz_t *d, off_t offset, int type) {
 int dz_do_empty(dz_t *d, off_t start, off_t length) {
 
         tlv_t buff = (tlv_t)calloc(length, sizeof(char));
-        int status = 0;
+        int status = 0,
+            min_padn_length = TLV_SIZEOF_HEADER + 2;
         char pad1s[TLV_SIZEOF_HEADER-1];
 
         if (buff == NULL) {
-                ERROR("calloc", -1);
+                perror("calloc");
+                return DZ_MEMORY_ERROR;
         }
 
         /* SAVE_OFFSET(*d); */
@@ -485,8 +518,8 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 goto OUT;
         }
 
-        while (length > (TLV_SIZEOF_HEADER+2)) {
-                int tmp = length;
+        while (length > min_padn_length) {
+                int tmp = length, st;
                 if (length > TLV_MAX_SIZE) {
                         length = TLV_MAX_SIZE;
                 }
@@ -495,13 +528,14 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 /* set length */
                 tlv_set_length(&buff, length - TLV_SIZEOF_HEADER);
 
-                if(dz_write_tlv_at(d, buff, start) == -1) {
+                st = dz_write_tlv_at(d, buff, start);
+                if (st < 0) {
                         free(buff);
-                        ERROR(NULL, -1);
+                        return st;
                 }
+
                 start = start + length;
                 length = tmp - length;
-
         }
 
 
@@ -554,11 +588,12 @@ int dz_compact(dz_t *d) {
                         }
                 } else{
                         if (writing != -1) {
-                                if (SET_OFFSET(*d, (reading +
-                                    TLV_SIZEOF_HEADER)) == -1) {
-                                    PERROR("lseek");
-                                    status = -1;
-                                    goto OUT;
+                                if (SET_OFFSET(*d,
+                                        (reading + TLV_SIZEOF_HEADER)) == -1) {
+
+                                        PERROR("lseek");
+                                        status = -1;
+                                        goto OUT;
                                 }
 
                                 int len = tlv_get_length(tlv);
@@ -581,7 +616,7 @@ int dz_compact(dz_t *d) {
                                     goto OUT;
                                 }
 
-                                if (dz_write_tlv_at(d, tlv, writing) == -1) {
+                                if (dz_write_tlv_at(d, tlv, writing) < 0) {
                                     PERROR("realloc");
                                     status = -1;
                                     goto OUT;
@@ -595,7 +630,7 @@ int dz_compact(dz_t *d) {
                                 }
 
                                 if (SET_OFFSET(*d, (reading +
-                                    TLV_SIZEOF(tlv))) == -1) {
+                                            TLV_SIZEOF(tlv))) == -1) {
                                     PERROR("realloc");
                                     status = -1;
                                     goto OUT;
@@ -605,10 +640,11 @@ int dz_compact(dz_t *d) {
         }
 
         if (writing != -1) {
-            if (ftruncate(*d, writing) < 0) {
-                    perror("ftruncate");
-                    status = -1;
-            }
+                /* this truncate is unsafe, see #104
+                if (ftruncate(*d, writing) < 0) {
+                        perror("ftruncate");
+                        status = -1;
+                }*/
         }
 
 OUT:
@@ -622,11 +658,14 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
         off_t off;
         char *ind;
         if (indent > 0) {
-                ind = malloc(sizeof(char)*(indent+1));
-                memset(ind, '\t', indent);
-                ind[indent]='\0';
+                ind = (char*)malloc(sizeof(char)*(2*indent+1));
+                memset(ind, '>', indent);
+                memset(ind+indent, ' ', indent);
+                ind[2*indent] = '\0';
         } else {
                 ind = strdup("");
+                printf("   offset |     type |   length\n");
+                printf("----------+----------+---------\n");
         }
 
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
@@ -642,7 +681,7 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
                                 || flag_debug) {
-                        printf("[%9d] TLV %8s | %8d |\n",
+                        printf("%9d | %8s | %8d\n",
                                 (int)off, tlv_str, len);
                 }
 
@@ -655,11 +694,12 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                                         if (dz_dump(daz_buf,current,
                                                 (depth-1), (indent+1),
                                                 flag_debug)) {
-                                                ERROR(NULL,-1);
+                                                free(ind);
+                                                return -1;
                                         }
                                         SET_OFFSET(*daz_buf, current);
-                                        break;
                                 }
+                                break;
                         case TLV_DATED:
                                 if (depth > 0) {
                                         /* TODO function to print date */
@@ -669,17 +709,17 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                                         if (dz_dump(daz_buf,current,
                                               (depth-1), (indent+1),
                                               flag_debug)) {
-                                                ERROR(NULL,-1);
+                                                free(ind);
+                                                return -1;
                                         }
                                         SET_OFFSET(*daz_buf, current);
                                 }
+                                break;
                         default: break;
                 }
 
         }
-        if (indent < 0) {
-                free(ind);
-        }
+        free(ind);
         free(tlv);
         return 0;
 }

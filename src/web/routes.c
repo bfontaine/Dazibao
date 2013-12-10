@@ -53,7 +53,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         }
 
         tlv = (tlv_t*)malloc(sizeof(tlv_t));
-        if (tlv_init(tlv) == -1) {
+        if (tlv_init(tlv) < 0) {
                 LOGERROR("Cannot allocate memory for a TLV");
                 tlv_destroy(tlv);
                 return -1;
@@ -79,7 +79,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        if (dz_tlv_at(&dz, tlv, off) == -1) {
+        if (dz_tlv_at(&dz, tlv, off) < 0) {
                 LOGERROR("Cannot read TLV at offset %lu", off);
                 tlv_destroy(tlv);
                 return -1;
@@ -99,7 +99,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         LOGDEBUG("TLV is of type %d, with length %d", tlv_type,
                         resp->body_len);
 
-        if (dz_read_tlv(&dz, tlv, off) == -1) {
+        if (dz_read_tlv(&dz, tlv, off) < 0) {
                 LOGERROR("Cannot read TLV at offset %lu", off);
                 tlv_destroy(tlv);
                 return -1;
@@ -156,7 +156,7 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        if (dz_rm_tlv(&dz, off) == -1) {
+        if (dz_rm_tlv(&dz, off) < 0) {
                 LOGERROR("Cannot delete TLV at offset %lu", off);
                 return -1;
         }

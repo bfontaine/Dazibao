@@ -34,7 +34,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         }
 
         SAVE_OFFSET(dz);
-        if (dz_read_tlv(&dz, t, *off) == -1) {
+        if (dz_read_tlv(&dz, t, *off) < 0) {
                 return -1;
         }
         RESTORE_OFFSET(dz);
