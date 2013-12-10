@@ -456,24 +456,33 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug) {
                 }
 
                 switch (tlv_type) {
-                        case TLV_DATED:
-				/* TODO function to print date */
-                        case TLV_COMPOUND:
-                                if (depth > 0) {
-                                        off_t current = daz_buf->offset;
-					daz_buf->offset = off +
-						TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
-                                        if (dz_dump(daz_buf, current,
-                                              (depth-1), (indent+1),
-                                              flag_debug)) {
-                                                LOGERROR("dz_dump failed");
-						return -1;
-                                        }
-					daz_buf->offset = current;
-                                }
-				break;
-                        default:
-				break;
+		case TLV_DATED:
+			if (depth > 0) {
+				off_t current = daz_buf->offset;
+				daz_buf->offset = off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+				if (dz_dump(daz_buf, current, (depth - 1),
+						(indent + 1), flag_debug)) {
+					LOGERROR("dz_dump failed");
+					return -1;
+				}
+				daz_buf->offset = current;
+			}
+			break;
+			/* TODO function to print date */
+		case TLV_COMPOUND:
+			if (depth > 0) {
+				off_t current = daz_buf->offset;
+				daz_buf->offset = off + TLV_SIZEOF_HEADER;
+				if (dz_dump(daz_buf, current, (depth - 1),
+						(indent + 1), flag_debug)) {
+					LOGERROR("dz_dump failed");
+					return -1;
+				}
+				daz_buf->offset = current;
+			}
+			break;
+		default:
+			break;
                 }
         }
         if (indent < 0) {
