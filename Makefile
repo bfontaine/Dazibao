@@ -10,7 +10,7 @@ VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
 	 --show-reachable=yes
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -lm -I$(SRC)
 
 DOXYGEN=doxygen
 DOXYFLAGS=
@@ -51,7 +51,7 @@ CPPCHECK=cppcheck \
 all: check $(TARGETS)
 
 $(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(CFLAGS)
 
 $(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
