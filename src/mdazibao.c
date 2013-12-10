@@ -118,6 +118,7 @@ int dz_open(dz_t *d, char *path, int flags) {
                 return -1;
 	}
 
+	LOGDEBUG("On opening: d->len:%d, d->offset:%d", (int)d->len, (int)d->offset);
 	return 0;
 }
 
@@ -147,7 +148,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 	if (d->len == d->offset) {
 		return EOD;
 	} else if (d->len < d->offset + TLV_SIZEOF_TYPE) {
-		LOGERROR("Corrupted Dazibao");
+		LOGERROR("d->len:%d, d->offset:%d", (int)d->len, (int)d->offset);
 		return -1;
 	} else {
 		tlv_set_type(tlv, d->data[d->offset]);
@@ -155,7 +156,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 	}
 
 	if (d->len < d->offset + TLV_SIZEOF_LENGTH) {
-		LOGERROR("Corrupted Dazibao");
+		LOGERROR("d->len:%d, d->offset:%d", (int)d->len, (int)d->offset);
 		return -1;
 	}
 	
@@ -196,6 +197,8 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 	/* find offset of pad serie leading to EOF */
 	pad_off = dz_pad_serie_start(d, eof_off);
 
+	LOGDEBUG("Room:%d, TLV Size:%d", (int)(d->len - pad_off), (int)TLV_SIZEOF(tlv));
+
 	/* write */
 	if (dz_write_tlv_at(d, tlv, pad_off) < 0) {
 		ERROR(NULL, -1);
@@ -209,14 +212,13 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 }
 
 off_t dz_pad_serie_start(dz_t *d, off_t offset) {
-	off_t off_start, off_tmp;
 
-	
+	off_t off_start, off_tmp;
         tlv_t buf;
 
 	tlv_init(&buf);
 
-	dz_t tmp = {0, d->len - offset, DAZIBAO_HEADER_SIZE, d->data};
+	dz_t tmp = {0, offset, DAZIBAO_HEADER_SIZE, d->data};
 
 	off_start = -1;
 	
