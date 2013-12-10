@@ -76,21 +76,6 @@
         }
 
 /**
- * Close a file descriptor, use 'perror' and return a value
- * @param fd file descriptor
- * @param msg the string to use with perror
- * @param i the value to return
- * @see PANIC
- * @see ERROR
- **/
-#define CLOSE_AND_ERROR(fd, msg, i) {   \
-                if(close((fd)) == -1) { \
-                        PANIC("close"); \
-                }                       \
-                ERROR((msg), (i));      \
-        }
-
-/**
  * SAVE_OFFSET/1 and RESTORE_OFFSET/1 macros can be used together to save
  * the current offset of a dazibao and restore it later. They MUST occur
  * in the same function, and SAVE_OFFSET MUST be called at the very beginning
