@@ -26,39 +26,91 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset);
 
-int dz_create(dz_t *daz_buf, char *path) {
+int sync_file(dz_t *d){
+	if(ftruncate(d->fd, d->len) == -1) {
+		perror("ftuncate");
+		LOGERROR("frtuncate failed");
+		return -1;
+	}
+	if (msync(d->data, d->len, MS_SYNC | MS_INVALIDATE)) {
+		LOGERROR("msync failed");
+		return -1;
+	}
+	return 0;
+}
 
-	int fd;
+int dz_mmap_data(dz_t *d, size_t t) {
+
+	size_t page_size = (size_t) sysconf(_SC_PAGESIZE);
+	size_t real_size = (size_t) (ceil(t/page_size) * page_size);
+
+	d->data = (char *)mmap(NULL, DAZIBAO_HEADER_SIZE,
+				PROT_WRITE, MAP_PRIVATE, d->fd, 0);
+
+	if (d->data == MAP_FAILED) {
+		LOGERROR("mmap failed");
+		return 1;
+	}
+
+	d->space = real_size;
+	d->len = t;
+	return 0;
+}
+
+int dz_remap(dz_t *d, size_t t) {
+	if (sync_file(d) == -1) {
+		LOGERROR("Unable to remap.");
+		return -1;
+	}
+	
+	if (munmap(d->data, d->len) == -1) {
+		LOGERROR("munmap failed");
+		return -1;
+	}
+
+	if (dz_mmap_data(d, t) == -1) {
+		LOGERROR("dz_mmap_data");
+		return -1;
+	}
+
+	return 0;
+}
+
+int dz_create(dz_t *d, char *path) {
+
 	char header[DAZIBAO_HEADER_SIZE];
 
-	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
+	d->fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
 
-	if (fd == -1) {
+	if (d->fd == -1) {
 		ERROR("open", -1);
 	}
 
-	if (flock(fd, LOCK_SH) == -1) {
-		CLOSE_AND_ERROR(fd, "flock", -1);
+	if (flock(d->fd, LOCK_SH) == -1) {
+		PERROR("flock");
+		goto PANIC;
 	}
 	
 	header[0] = MAGIC_NUMBER;
 	header[1] = 0;
 
-	if (write(fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
+	if (write(d->fd, header, DAZIBAO_HEADER_SIZE) < DAZIBAO_HEADER_SIZE) {
 		ERROR("write", -1);
 	}
 
-	daz_buf->data = (char *)mmap(NULL, DAZIBAO_HEADER_SIZE,
-				PROT_WRITE, MAP_PRIVATE, fd, 0);
-
-	if (daz_buf->data == MAP_FAILED) {
-		ERROR("mmap", -1);
+	if (dz_mmap_data(d, DAZIBAO_HEADER_SIZE)) {
+		LOGERROR("dz_mmap_data");
+		return -1;
 	}
 
-	daz_buf->len = DAZIBAO_HEADER_SIZE;
-	daz_buf->offset = DAZIBAO_HEADER_SIZE;
-	daz_buf->fd = fd;
-	
+	goto OUT;	
+PANIC:
+	if (close(d->fd) == -1) {
+		PERROR("close");
+	}
+	return -1;
+
+OUT:
 	return 0;
 }
 
@@ -69,11 +121,11 @@ int dz_open(dz_t *d, char *path, int flags) {
 	 * clean before exiting on failure
 	 */
 
-	int fd, lock;
+	int lock;
 	char header[DAZIBAO_HEADER_SIZE];
 
-	fd = open(path, flags);
-	if (fd == -1) {
+	d->fd = open(path, flags);
+	if (d->fd == -1) {
 		ERROR("open", -1);
 	}
 
@@ -82,21 +134,24 @@ int dz_open(dz_t *d, char *path, int flags) {
 	} else if (flags == O_RDONLY) {
 		lock = LOCK_SH;
 	} else {
-		CLOSE_AND_ERROR(fd, "bad flags", -1);
+		LOGERROR("bad flags");
+		goto PANIC;
 	}
 
-	if (flock(fd, lock) == -1) {
-		CLOSE_AND_ERROR(fd, "flock", -1);
+	if (flock(d->fd, lock) == -1) {
+		PERROR("flock");
+		goto PANIC;
 	}
 
 	struct stat st;
 
-	if (fstat(fd, &st) < 0) {
+	if (fstat(d->fd, &st) < 0) {
 		ERROR("fstat", -1);
 	}
 
 	if (st.st_size < DAZIBAO_HEADER_SIZE) {
-		CLOSE_AND_ERROR(fd, "not a dazibao", -1);
+		LOGERROR("Size is too small: not a dazibao");
+		goto PANIC;
 	}
 
 
@@ -104,7 +159,7 @@ int dz_open(dz_t *d, char *path, int flags) {
 	d->len = st.st_size;
 	d->data = (char *)mmap(NULL, st.st_size, PROT_READ |
 			(lock == LOCK_EX ? PROT_WRITE : 0),
-			MAP_PRIVATE, fd, 0);
+			MAP_PRIVATE, d->fd, 0);
 	
 	if (d->data == MAP_FAILED) {
 		ERROR("mmap", -1);
@@ -112,13 +167,17 @@ int dz_open(dz_t *d, char *path, int flags) {
 
 	if (d->data[0] != MAGIC_NUMBER || d->data[1] != 0) {
 		LOGERROR("Wrong dazibao header");
-                if (close(fd) == -1) {
-                        perror("close");
-                }
-                return -1;
+		goto PANIC;
 	}
 
-	LOGDEBUG("On opening: d->len:%d, d->offset:%d", (int)d->len, (int)d->offset);
+	goto OUT;
+PANIC:
+	if (close(d->fd) == -1) {
+		PERROR("close");
+	}
+	return -1;
+OUT:
+	LOGDEBUG("On opening: d->fd:% d->len:%d, d->offset:%d", d->fd, (int)d->len, (int)d->offset);
 	return 0;
 }
 
@@ -132,6 +191,11 @@ int dz_close(dz_t *d) {
 	if (flock(d->fd, LOCK_UN) == -1) {
                 perror("flock");
                 return -1;
+	}
+
+	if (close(d->fd) == -1) {
+		PERROR("close");
+		return -1;
 	}
 
 	return 0;
@@ -180,7 +244,7 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 }
 
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
-	dz_t tmp = {0, d->len - offset, 0, d->data + offset};
+	dz_t tmp = {0, d->len - offset, 0, d->space - offset, d->data + offset};
 	return dz_next_tlv(&tmp, tlv);
 }
 
@@ -197,7 +261,14 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 	/* find offset of pad serie leading to EOF */
 	pad_off = dz_pad_serie_start(d, eof_off);
 
-	LOGDEBUG("Room:%d, TLV Size:%d", (int)(d->len - pad_off), (int)TLV_SIZEOF(tlv));
+	if ((d->len - pad_off) < (unsigned int)TLV_SIZEOF(tlv)) {
+		dz_remap(d, d->len + (TLV_SIZEOF(tlv) - pad_off));
+		/**
+		 * TODO: Add space (re-mmap) to add a TLV
+		 */
+		LOGERROR("Not enough room to store TLV");
+		return -1;
+	}
 
 	/* write */
 	if (dz_write_tlv_at(d, tlv, pad_off) < 0) {
@@ -218,7 +289,7 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
 
 	tlv_init(&buf);
 
-	dz_t tmp = {0, offset, DAZIBAO_HEADER_SIZE, d->data};
+	dz_t tmp = {0, offset, DAZIBAO_HEADER_SIZE, d->space, d->data};
 
 	off_start = -1;
 	
@@ -255,7 +326,7 @@ off_t dz_pad_serie_end(dz_t *d, off_t offset) {
         tlv_t buf;
 	tlv_init(&buf);
 		
-	dz_t tmp = {0, d->len - offset, offset, d->data};
+	dz_t tmp = {0, d->len - offset, offset, d->space, d->data};
 
 	/* skip current tlv */
 	off_stop = dz_next_tlv(&tmp, &buf);

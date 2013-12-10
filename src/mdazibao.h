@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <math.h>
 #include "tlv.h"
 #include "utils.h"
 
@@ -40,8 +41,18 @@ typedef struct {
 	int fd;
 	size_t len;
 	size_t offset;
+	size_t space;
 	char *data;
 } dz_t;
+
+
+
+int sync_file(dz_t *d);
+
+int dz_mmap_data(dz_t *d, size_t t);
+
+int dz_remap(dz_t *d, size_t t);
+
 
 /**
  * Create a new dazibao in a file at a given location.
