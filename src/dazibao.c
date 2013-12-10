@@ -380,15 +380,17 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
         off_t off_start_parent = 0,
               off_end_parent = 0,
+              off_parent,
               off_start,
               off_end,
               off_eof;
-        off_t *parents;
+        off_t *parents = NULL;
 
         /* SAVE_OFFSET(*d); */
 
         if (dz_check_tlv_at(d, offset, -1, &parents) <= 0
                         || parents[0] != offset) {
+                free(parents);
                 return DZ_OFFSET_ERROR;
         }
 
@@ -396,12 +398,37 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
         if (off_eof == -1) {
                 /* RESTORE_OFFSET(*d); */
+                free(parents);
                 return DZ_OFFSET_ERROR;
         }
 
-        /* TODO set off_start_parent to the beginning of the value of the
-         * parent, and off_end_parent to the end of the value of the parent,
-         * if there's one. If not, set both of them to 0 */
+        off_parent = parents[1];
+        free(parents);
+
+        if (off_parent != 0) {
+                /* the rm-ed TLV is a child one */
+                tlv_t t = NULL;
+                int type, st;
+                st = tlv_init(&t);
+
+                if (st < 0) {
+                        return st;
+                }
+
+                if ((st = dz_tlv_at(d, &t, off_parent)) < 0) {
+                        return st;
+                }
+
+                type = tlv_get_type(t);
+                off_start_parent = off_parent + TLV_SIZEOF_HEADER;
+                off_end_parent = off_parent + TLV_SIZEOF(t);
+
+                if (type == TLV_DATED) {
+                        off_start_parent += TLV_SIZEOF_DATE;
+                } else if (type != TLV_COMPOUND) {
+                        return DZ_TLV_TYPE_ERROR;
+                }
+        }
 
         off_start = dz_pad_serie_start(d, offset, off_start_parent);
         if (off_start < 0) {
@@ -412,18 +439,14 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
                 return -1;
         }
 
-        /* This is commented for now because it breaks dazibaos when we
-         * delete the last TLV of a compound one which is at the end of
-         * the Dazibao: it truncates the file without updating the
-         * length field of the compound TLV
-         * See #104
-        if (off_end == off_eof) { / * end of file reached * /
+        if (off_end == off_eof && off_parent == 0) {
+                /* truncate the end of the file if the rm-ed TLV is a top-level
+                 * one */
                 if (ftruncate(*d, off_start) == -1) {
                         perror("ftruncate");
                 }
                 return 0;
         }
-         */
 
         return dz_do_empty(d, off_start, off_end - off_start);
 }
@@ -437,7 +460,7 @@ static void push_offset(off_t *arr, off_t off) {
         if (arr == NULL) {
                 return;
         }
-        for (; i<TLV_MAX_DEPTH && arr[i+1] != (off_t)0; i++);
+        for (; i<TLV_MAX_DEPTH && arr[i] != (off_t)0; i++);
         if (i == TLV_MAX_DEPTH) {
                 return;
         }
@@ -462,8 +485,6 @@ static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
         off_t next = start;
         int st = 0,
             ttype;
-
-        /* TODO: set parents */
 
         if (start > end || offset < start || end < offset) {
                 /* no such TLV here */

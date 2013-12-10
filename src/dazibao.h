@@ -128,7 +128,8 @@ int dz_add_tlv(dz_t *d, tlv_t tlv);
 
 /**
  * Erase a tlv. If tlv is surrounded by pad1/padNs, they will be concatened. If
- * it leaves pad1/padN at the end of dazibao, it will be truncated.
+ * it leaves pad1/padN at the end of dazibao, it will be truncated. The current
+ * offset in the file is not preserved.
  * @param d dazibao from which remove this TLV
  * @param offset offset of the tlv to remove
  * @return 0 on success, -1 on error
