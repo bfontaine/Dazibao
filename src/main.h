@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include "utils.h"
 #include "main.h"
-#include "dazibao.h"
+#include "mdazibao.h"
 /** @file
  * Main program used for the command-line interface
  **/
