@@ -46,8 +46,6 @@ typedef struct {
 	char *data;
 } dz_t;
 
-
-
 int sync_file(dz_t *d);
 
 int dz_mmap_data(dz_t *d, size_t t);
