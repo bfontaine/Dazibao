@@ -332,6 +332,8 @@ int parse_arg(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
+	int i;
+
         _log_level = LOG_LVL_DEBUG;
 
         memset(&conf, 0, sizeof(conf));
@@ -352,7 +354,16 @@ int main(int argc, char **argv) {
                 ERROR("malloc", -1);
         }
 
-        memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
+	conf.c_mtx = malloc(sizeof(*conf.c_mtx) * conf.client_max);
+
+        if (conf.c_mtx == NULL) {
+                ERROR("malloc", -1);
+        }
+
+	for (i = 0; i < conf.client_max; i++) {
+		conf.c_socket[i] = -1;
+		conf.c_mtx[i] = PTHREAD_MUTEX_INITIALIZER;
+	}
 
         if (set_up_server() == -1) {
                 PERROR("set_up_server");
