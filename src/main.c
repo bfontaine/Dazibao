@@ -242,13 +242,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return DZ_OFFSET_ERROR;
         }
 
-        if (dz_check_tlv_at(&daz_buf, off, -1) <= 0) {
-                fprintf(stderr, "no such TLV\n");
-                dz_close(&daz_buf);
-                return DZ_OFFSET_ERROR;
-        }
-
-        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
+        if (dz_rm_tlv(&daz_buf, (off_t)off) < 0) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
                 return -1;

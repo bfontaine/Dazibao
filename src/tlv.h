@@ -82,6 +82,9 @@ static const char *tlv_types_ext[][2] = {
 
 /** Number of registered tlv types **/
 #define TLV_TYPES_COUNT (sizeof(tlv_types_ext)/sizeof(char*[2]))
+/** arbitrary TLV depth limit. This is NOT a hard limit, but some functions
+ * need to have a limit */
+#define TLV_MAX_DEPTH 16
 
 /**
  * The type of a TLV
