@@ -150,6 +150,8 @@ int main(int argc, char **argv) {
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
 
+        LOGDEBUG("Parsing arguments...");
+
         if (parse_args(argc, argv, &port) != 0) {
                 if (dz > 0) {
                         dz_close(&dz);
@@ -163,6 +165,8 @@ int main(int argc, char **argv) {
         }
         init_wserver_infos();
 
+        LOGDEBUG("Setting up signals traps...");
+
         memset(&sig, 0, sizeof(sig));
         sig.sa_handler = clean_close;
         sig.sa_flags = 0;
@@ -175,6 +179,8 @@ int main(int argc, char **argv) {
                 perror("sigaction");
                 LOGWARN("Cannot intercept SIGSEGV");
         }
+
+        LOGDEBUG("Opening a socket...");
 
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (listening_sock == -1) {
@@ -204,6 +210,8 @@ int main(int argc, char **argv) {
                 clean_close(0);
         }
 
+        LOGDEBUG("Listening on it...");
+
         if (listen(listening_sock, MAX_QUEUE) == -1) {
                 perror("listen");
                 close(listening_sock);
@@ -220,8 +228,9 @@ int main(int argc, char **argv) {
         LOGINFO("Listening on port %d...", port);
         LOGINFO("Press ^C to interrupt.");
 
-        register_routes();
+        LOGDEBUG("Initializing routes & request struct...");
 
+        register_routes();
         req = create_http_request();
 
         while (1) {
@@ -233,6 +242,7 @@ int main(int argc, char **argv) {
                         perror("accept");
                         continue;
                 }
+
                 LOGINFO("Got a connection.");
                 status = parse_request(client, req);
                 if (status != 0) {
@@ -255,9 +265,14 @@ int main(int argc, char **argv) {
                                req->method, req->path, req->body_len);
                 LOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
 
+                /* opening the dazibao for use in responses */
+
                 if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) < 0) {
                         LOGERROR("Cannot open the Dazibao.");
                 }
+
+                /* <routing+response>  */
+
                 status = route_request(client, dz, req);
                 dz_close(&dz);
                 dz = -1;
@@ -268,6 +283,8 @@ int main(int argc, char **argv) {
                                 LOGERROR("404 error response failed");
                         }
                 }
+
+                /* </routing+response> */
 
                 LOGINFO("Connection closed.");
                 if (close(client) == -1) {
