@@ -4,7 +4,7 @@
 #include "routes.h"
 #include "webutils.h"
 #include "routing.h"
-#include "dazibao.h"
+#include "mdazibao.h"
 #include "tlv.h"
 #include "http.h"
 #include "html.h"
@@ -15,10 +15,10 @@
 int route_get_index(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
-        if (strcmp(req.path, "/index.html") != 0 || dz <= 0) {
+        if (strcmp(req.path, "/index.html") != 0 || dz.fd <= 0) {
                 LOGERROR("get_index - got wrong path '%s' and/or wrong " \
-                                "dz=%d and/or wrong method %d.",
-                                req.path, dz, req.method);
+                                "dz.fd=%d and/or wrong method %d.",
+                                req.path, dz.fd, req.method);
                 return -1;
         }
 
@@ -46,9 +46,9 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
 
-        if (dz <= 0) {
-                LOGERROR("got wrong dz or method (dz=%d, m=%d)",
-                                dz, req.method);
+        if (dz.fd <= 0) {
+                LOGERROR("got wrong dz or method (dz.fd=%d, m=%d)",
+                                dz.fd, req.method);
                 return -1;
         }
 
@@ -85,7 +85,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        tlv_real_type = tlv_get_type(*tlv);
+        tlv_real_type = tlv_get_type(tlv);
         if (tlv_real_type != tlv_type) {
                 LOGERROR("Wrong TLV type. Expected %d, got %d",
                                 tlv_type, tlv_real_type);
@@ -94,7 +94,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         }
 
         if (req.method != HTTP_M_HEAD) {
-                resp->body_len = tlv_get_length(*tlv);
+                resp->body_len = tlv_get_length(tlv);
         }
         LOGDEBUG("TLV is of type %d, with length %d", tlv_type,
                         resp->body_len);
@@ -115,7 +115,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                         return -1;
                 }
 
-                memcpy(*resp->body, tlv_get_value_ptr(*tlv), resp->body_len);
+                memcpy(*resp->body, tlv_get_value_ptr(tlv), resp->body_len);
         }
 
         tlv_destroy(tlv);
@@ -137,9 +137,9 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
 
         unsigned long off = -1;
 
-        if (dz <= 0) {
+        if (dz.fd <= 0) {
                 LOGERROR("got wrong dz or method (dz=%d, m=%d)",
-                                dz, req.method);
+                                dz.fd, req.method);
                 return -1;
         }
 
@@ -149,7 +149,7 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
         }
 
         LOGDEBUG("Trying to remove TLV at offset %lu in dazibao fd=%d",
-                        off, dz);
+                        off, dz.fd);
 
         if (off < DAZIBAO_HEADER_SIZE) {
                 LOGERROR("Wrong offset (%lu < dz header size)", off);

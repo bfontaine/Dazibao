@@ -1,6 +1,6 @@
 #include <string.h>
 #include "html.h"
-#include "dazibao.h"
+#include "mdazibao.h"
 #include "tlv.h"
 #include "webutils.h"
 
@@ -26,7 +26,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
         int w, tlen, len;
 
-        tlen = tlv_get_length(*t);
+        tlen = tlv_get_length(t);
         len = tlen + (strlen(HTML_TLV_TEXT_FMT) - 4) + 1;
 
         if (html_ensure_length(html, htmlsize, htmlcursor, len) == -1) {
@@ -43,14 +43,14 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                         "htmlsize=%d, cursor=%d",
                         *off, tlen, len, *htmlsize, *htmlcursor);
         w = snprintf(*html+(*htmlcursor), len, HTML_TLV_TEXT_FMT,
-                        tlen, tlv_get_value_ptr(*t));
+                        tlen, tlv_get_value_ptr(t));
         *htmlcursor += MIN(w, len);
         return 0;
 }
 
 int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor) {
-        int type = tlv_get_type(*t), w;
+        int type = tlv_get_type(t), w;
         char *ext;
 
         switch (type) {
@@ -75,7 +75,7 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 }
 
 int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
-        int type = tlv_get_type(*t),
+        int type = tlv_get_type(t),
             w;
 
         LOGDEBUG("Adding HTML of pad1/padN (type=%d)", type);
@@ -89,7 +89,7 @@ int html_add_pad1padn_tlv(tlv_t *t, char **html, int *htmlcursor) {
 int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
 
-        int tlen = tlv_get_length(*t),
+        int tlen = tlv_get_length(t),
             len_top = strlen(HTML_TLV_COMPOUND_TOP_FMT),
             len_bottom = strlen(HTML_TLV_COMPOUND_BOTTOM_FMT);
         off_t off_value = *off + TLV_SIZEOF_HEADER,
@@ -126,7 +126,7 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         struct tm date;
         char *time_iso = NULL,
              *time_txt = NULL;
-        int len = tlv_get_length(*t),
+        int len = tlv_get_length(t),
             len_bottom, w;
         off_t off_value = *off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE,
               off_after = *off + TLV_SIZEOF_HEADER + len;
@@ -176,7 +176,7 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                 int *htmlcursor) {
-        int tlv_type = tlv_get_type(*t),
+        int tlv_type = tlv_get_type(t),
             st = 0, written,
             len_bottom;
 
@@ -200,7 +200,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
 
         written = snprintf(*html+(*htmlcursor), *htmlsize - (*htmlcursor),
                         HTML_TLV_TOP_FMT,
-                        *dz_off, tlv_get_length(*t), tlv_type,
+                        *dz_off, tlv_get_length(t), tlv_type,
                         tlv_type2str(tlv_type));
         if (written > *htmlsize) {
                 perror("snprintf");
@@ -264,7 +264,7 @@ int dz2html(dz_t dz, char **html) {
             written = 0,
             html_bottom_len;
 
-        if (dz < 0 || html == NULL || tlv_init(t) < 0) {
+        if (dz.fd < 0 || html == NULL || tlv_init(t) < 0) {
                 tlv_destroy(t);
                 LOGERROR("dz<0 or html==NULL or tlv_init failed");
                 return -1;

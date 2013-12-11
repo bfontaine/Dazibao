@@ -78,21 +78,6 @@
         }
 
 /**
- * Close a file descriptor, use 'perror' and return a value
- * @param fd file descriptor
- * @param msg the string to use with perror
- * @param i the value to return
- * @see PANIC
- * @see ERROR
- **/
-#define CLOSE_AND_ERROR(fd, msg, i) {   \
-                if(close((fd)) == -1) { \
-                        PANIC("close"); \
-                }                       \
-                ERROR((msg), (i));      \
-        }
-
-/**
  * SAVE_OFFSET/1 and RESTORE_OFFSET/1 macros can be used together to save
  * the current offset of a dazibao and restore it later. They MUST occur
  * in the same function, and SAVE_OFFSET MUST be called at the very beginning
@@ -101,26 +86,22 @@
  * in your function (this is very unlikely).
  * @param d the dazibao (not a pointer)
  **/
-#define SAVE_OFFSET(d)                                          \
-                off_t __s;                                      \
-                __s = lseek((d), 0, SEEK_CUR);                  \
-                if (__s < 0) { perror("[save offset] lseek"); } \
+#define SAVE_OFFSET(d) \
+                off_t __s = (d).offset
 
 /**
  * @param d the dazibao (not a pointer)
  * @see SAVE_OFFSET
  */
-#define RESTORE_OFFSET(d)                                 \
-                if (lseek((d), __s, SEEK_SET) < 0) {   \
-                        perror("[restore offset] lseek"); \
-                }                                         \
+#define RESTORE_OFFSET(d) \
+                (d).offset = __s
 
 /**
  * Return the current offset in a file
  * @param fd file descriptor
  * @see SET_OFFSET
  **/
-#define GET_OFFSET(fd) (lseek((fd), 0, SEEK_CUR))
+#define GET_OFFSET(d) ((d).offset)
 
 /**
  * Change the current offset in a file
@@ -128,7 +109,7 @@
  * @param o new offset
  * @see GET_OFFSET
  **/
-#define SET_OFFSET(fd,o) (lseek((fd),(o),SEEK_SET))
+#define SET_OFFSET(d,o) ((d).offset=o)
 
 /**
  * wrapper to save and restore the current offset in a dazibao after a piece

@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <libgen.h>
 #include <fcntl.h>
-#include "dazibao.h"
+#include "mdazibao.h"
 #include "daziweb.h"
 #include "utils.h"
 #include "webutils.h"
@@ -41,7 +41,7 @@ static void clean_close(int s) {
         if (listening_sock >= 0 && close(listening_sock) == -1) {
             perror("close");
         }
-        if (dz > 0) {
+        if (dz.fd > 0) {
                 dz_close(&dz);
         }
         destroy_wserver_infos();
@@ -62,7 +62,7 @@ static void clean_close(int s) {
 static int parse_args(int argc, char **argv, int *port) {
         char c;
 
-        dz = -1;
+        dz.fd = -1;
         WSERVER.dzname = NULL;
         WSERVER.dzpath = NULL;
         WSERVER.debug = 0;
@@ -77,13 +77,13 @@ static int parse_args(int argc, char **argv, int *port) {
                         WSERVER.port = *port;
                         break;
                 case 'd':
-                        if (dz == -1) {
+                        if (dz.fd < 0) {
                                 if (dz_open(&dz,  optarg,  O_RDWR) < 0) {
                                         LOGFATAL("Cannot open '%s'", optarg);
                                         return -1;
                                 }
                                 dz_close(&dz);
-                                dz = -2;
+                                dz.fd = -2;
                                 WSERVER.dzpath = strdup(optarg);
                                 WSERVER.dzname = strdup(basename(optarg));
                         }
@@ -153,13 +153,13 @@ int main(int argc, char **argv) {
         LOGDEBUG("Parsing arguments...");
 
         if (parse_args(argc, argv, &port) != 0) {
-                if (dz > 0) {
+                if (dz.fd > 0) {
                         dz_close(&dz);
                 }
                 exit(EXIT_FAILURE);
         }
 
-        if (dz == -1) {
+        if (dz.fd == -1) {
                 LOGFATAL("Starting with no dazibao");
                 return -1;
         }
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (listening_sock == -1) {
                 perror("socket");
-                if (dz > 0) {
+                if (dz.fd > 0) {
                         dz_close(&dz);
                 }
                 destroy_wserver_infos();
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
         if (listen(listening_sock, MAX_QUEUE) == -1) {
                 perror("listen");
                 close(listening_sock);
-                if (dz > 0) {
+                if (dz.fd > 0) {
                         dz_close(&dz);
                 }
                 exit(EXIT_FAILURE);
@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
                         if (close(client) == -1) {
                             perror("close");
                         }
-                        if (dz > 0 && dz_close(&dz) < 0) {
+                        if (dz.fd > 0 && dz_close(&dz) < 0) {
                                 LOGERROR("Cannot close the Dazibao.");
                         }
                         continue;
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
 
                 /* opening the dazibao for use in responses */
 
-                if (dz < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) < 0) {
+                if (dz.fd < 0 && dz_open(&dz, WSERVER.dzpath, O_RDWR) < 0) {
                         LOGERROR("Cannot open the Dazibao.");
                 }
 
@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
 
                 status = route_request(client, dz, req);
                 dz_close(&dz);
-                dz = -1;
+                dz.fd = -1;
 
                 if (status != 0) {
                         LOGWARN("route error, status=%d", status);

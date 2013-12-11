@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <locale.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include "utils.h"
 #include "main.h"
-#include "dazibao.h"
 
 /** @file */
 
@@ -105,9 +97,9 @@ int action_add(char *daz, unsigned char type) {
         tlv_set_type(&tlv, type);
         tlv_set_length(&tlv, buff_size);
 
-        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+        memcpy(tlv_get_value_ptr(&tlv), buff, buff_size);
 
-        st = dz_add_tlv(&daz_buf, tlv);
+        st = dz_add_tlv(&daz_buf, &tlv);
         if (st < 0) {
                 fprintf(stderr, "failed adding the tlv\n");
                 free(tlv);
@@ -170,7 +162,7 @@ int action_dump(char *daz, int flag_debug, int flag_depth) {
                 return -1;
         }
 
-        if (dz_dump(&daz_buf, EOD, flag_depth,0,flag_debug)) {
+        if (dz_dump(&daz_buf, EOD, flag_depth, 0, flag_debug)) {
                 fprintf(stderr, "dump failed\n");
                 dz_close(&daz_buf);
                 return -1;

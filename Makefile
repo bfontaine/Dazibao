@@ -50,36 +50,32 @@ CPPCHECK=cppcheck \
 
 all: check $(TARGETS)
 
-$(TARGET): $(SRC)/main.o $(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+	$(CC) -o $@ $^ $(CFLAGS)
+
+$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/hash.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o $(NSRC)/notification-server.o
-	$(CC) $(CFLAGS) -o $@ $^
-
-$(NCLIENT): $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/notification-client.o
+$(NCLIENT): $(SRC)/utils.o $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
 		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
 		$(WEBSRC)/html.o $(WEBSRC)/response.o $(WEBSRC)/mime.o \
-		$(SRC)/dazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
+		$(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(WEBSRC)/$(WSERVER).o: $(SRC)/dazibao.o $(WEBSRC)/request.o \
+$(WEBSRC)/$(WSERVER).o: $(SRC)/mdazibao.o $(WEBSRC)/request.o \
 			$(WEBSRC)/routing.o $(WEBSRC)/routes.o
-$(WEBSRC)/html.o: $(SRC)/dazibao.o $(SRC)/tlv.o
+$(WEBSRC)/html.o: $(SRC)/mdazibao.o $(SRC)/tlv.o
 $(WEBSRC)/request.o: $(WEBSRC)/http.o
-$(WEBSRC)/routes.o: $(SRC)/dazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
+$(WEBSRC)/routes.o: $(SRC)/mdazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
 			$(WEBSRC)/html.o
 $(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
-$(SRC)/%.o: $(SRC)/%.c $(SRC)/%.h $(UTILS)
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
-
-#$(NSRC)/%.o: $(NSRC)/%.c $(NSRC)/%.h $(NUTILS)
-#	$(CC) $(CFLAGS) -o $@ -c $<
-
 
 cleantmp:
 	find . -name "*~" -delete
