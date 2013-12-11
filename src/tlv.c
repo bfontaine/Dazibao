@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <time.h>
 #include "utils.h"
 #include "tlv.h"
 #include "dazibao.h"
@@ -146,6 +147,20 @@ int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
         tlv_set_length(tlv_c, buff_size);
 
         memcpy(tlv_get_value_ptr(*tlv_c), *value, buff_size);
+        return 0;
+}
+
+int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
+        unsigned int tlv_size ;
+        time_t real_time;
+        time(&real_time);
+
+        *tlv_d = malloc((TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE + value_size)
+                * sizeof(tlv_t));
+        tlv_set_type(tlv_d, (char) TLV_DATE );
+        tlv_set_length(tlv_d, value_size);
+        /* TODO insert real_time to field date to tlv*/
+        memcpy(tlv_get_value_ptr(*tlv_d), *value, buff_size);
         return 0;
 }
 
