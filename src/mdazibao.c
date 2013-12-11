@@ -61,7 +61,7 @@ int dz_mmap_data(dz_t *d, size_t t) {
 
 	if (d->data == MAP_FAILED) {
 		LOGERROR("mmap failed");
-		return 1;
+		return -1;
 	}
 
 	d->space = real_size;
@@ -140,20 +140,21 @@ int dz_open(dz_t *d, char *path, int flags) {
 	char header[DAZIBAO_HEADER_SIZE];
 	struct stat st;
 
-	if (d->fd == -1) {
-		ERROR("open", -1);
-	}
-
 	if (flags == O_RDWR) {
 		lock = LOCK_EX;
 	} else if (flags == O_RDONLY) {
 		lock = LOCK_SH;
 	} else {
 		LOGERROR("Bad flags: use O_RDWR or O_RDONLY");
-		goto PANIC;
+		return -1;
 	}
 	
-	d->fd = open(path, O_RDWR);
+	d->fd = open(path, flags);
+
+	if (d->fd == -1) {
+                LOGERROR("open");
+                return -1;
+	}
 
 	if (flock(d->fd, lock) == -1) {
 		PERROR("flock");
