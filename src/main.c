@@ -132,8 +132,8 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         }
 
         if (flag_dazibao == 1) {
-                buff_size = tlv_create_daz(argv[argc-1], &buff);
-                tlv_create_compound(&tlv, &buff, buff_size);
+                buff_size = tlv_create_daz(argv[argc-1], buff);
+                tlv_create_compound(tlv, buff, buff_size);
                 tlv_destroy(buff);
         }
         if (flag_date == 1) {
@@ -142,13 +142,12 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 fprintf(stderr, "failed open the dazibao\n");
-                NFREE(tlv);
-                        tlv_destroy(tlv);
+                tlv_destroy(tlv);
                 return -1;
         }
 
         /* add le tlv restant */
-        if (dz_add_tlv(&daz_buf, tlv) == -1) {
+        if (dz_add_tlv(&daz_buf, *tlv) == -1) {
                 fprintf(stderr, "failed adding the tlv\n");
                 tlv_destroy(tlv);
                 return -1;
@@ -242,7 +241,13 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return DZ_OFFSET_ERROR;
         }
 
-        if (dz_rm_tlv(&daz_buf, (off_t)off) < 0) {
+        if (dz_check_tlv_at(&daz_buf, off, -1,NULL) <= 0) {
+                fprintf(stderr, "no such TLV\n");
+                dz_close(&daz_buf);
+                return DZ_OFFSET_ERROR;
+        }
+
+        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
                 return -1;
