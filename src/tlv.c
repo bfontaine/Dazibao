@@ -176,6 +176,14 @@ int tlv_create_path(char *path, tlv_t *tlv) {
                 return -1;
         }
 
+        /* with map
+        tlv_init(tlv);
+        tlv_set_type(tlv, (char) *c_type);
+        tlv_set_length(tlv, st_path.st_size);
+        tlv_ size = tlv_mread(tlv, buff);
+        close(fd);
+        return tlv_size;
+        */
         buff_size = st_path.st_size;
         *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
         tlv_set_type(tlv, (char) *c_type);
