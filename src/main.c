@@ -137,7 +137,23 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                 tlv_destroy(buff);
         }
         if (flag_date == 1) {
-                /* TODO create function tlv -> tlv -> date */
+                /*
+                  if only flag is activate date
+                        tlv to include date is oath argv[argc -1]
+                  else he exist tlv compound type to var tlv
+                */
+                if (flag_compound == flag_dazibao) {
+                        buff_size = tlv_create_path(argv[argc-1], buff);
+                        tlv_create_date(tlv, buff, buff_size);
+                        tlv_destroy(buff);
+                }
+                else {
+                        buff = tlv;
+                        tlv = NULL;
+                        tlv_create_date(tlv, buff, buff_size);
+                        tlv_destroy(buff);
+
+                }
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
