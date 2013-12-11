@@ -45,9 +45,15 @@ void *notify(void *arg) {
         str[len - 1] = '\n';
 
         for (i = 0; i < conf.client_max; i++) {
+		if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+			LOGERROR("pthread_mutex_lock() failed.");
+		}
                 if (conf.c_socket[i] != -1) {
                         send_message(i, str, len);
                 }
+		if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+			LOGERROR("pthread_mutex_unlock() failed.");
+		}
         }
 
         free(str);
@@ -270,28 +276,39 @@ int accept_client() {
 
         struct sockaddr_un caddr;
         socklen_t len = sizeof(caddr);
-        int i;
+        int i, s;
+
+	s = accept(conf.s_socket, (struct sockaddr*)&caddr, &len);
+	if (s == -1) {
+		if (errno == EINTR) {
+			sleep(1);
+			return accept_client();
+		}
+		ERROR("accept", -1);
+	}
 
         for (i = 0; i < conf.client_max; i++) {
+		if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+			LOGERROR("pthread_mutex_lock() failed.");
+		}
                 if (conf.c_socket[i] == -1) {
-                        conf.c_socket[i] =
-                                accept(conf.s_socket,
-                                        (struct sockaddr*)&caddr,
-                                        &len);
-                        if (conf.c_socket[i] == -1) {
-                                if (errno == EINTR) {
-                                        sleep(1);
-                                        return accept_client();
-                                }
-                                ERROR("accept", -1);
-                        }
-                        LOGINFO("New client connected");
-                        break;
-                }
-        }
-
+			conf.c_socket[i] = s;
+			if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+				LOGERROR("pthread_mutex_unlock() failed.");
+			}
+			LOGINFO("New client connected");
+			break;
+		}
+		if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+			LOGERROR("pthread_mutex_unlock() failed.");
+		}
+	}
+	
         if (i == conf.client_max) {
                 LOGWARN("Server is full");
+		if (close(s) == -1) {
+			LOGERROR("close() failed");
+		}
                 return -1;
         }
 
@@ -362,18 +379,21 @@ int main(int argc, char **argv) {
 
 	for (i = 0; i < conf.client_max; i++) {
 		conf.c_socket[i] = -1;
-		conf.c_mtx[i] = PTHREAD_MUTEX_INITIALIZER;
+		if (pthread_mutex_init(&(conf.c_mtx[i]), PTHREAD_MUTEX_NORMAL) != 0) {
+			LOGERROR("pthread_mutex_init");
+			goto OUT;
+		}
 	}
 
         if (set_up_server() == -1) {
-                PERROR("set_up_server");
+                LOGERROR("set_up_server");
                 goto OUT;
         }
 
         LOGINFO("Server set up");
 
         if(nsa() != 0) {
-                PERROR("nsa");
+                LOGERROR("nsa");
                 goto OUT;
         }
 
@@ -385,6 +405,7 @@ int main(int argc, char **argv) {
         }
 OUT:
         free(conf.c_socket);
+        free(conf.c_mtx);
 
         return 0;
 }
