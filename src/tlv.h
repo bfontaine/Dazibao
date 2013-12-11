@@ -111,7 +111,7 @@ int tlv_destroy(tlv_t *t);
  * @param tlv
  * @return type of tlv
  **/
-int tlv_get_type(tlv_t tlv);
+int tlv_get_type(tlv_t *tlv);
 
 /**
  * Set the type of a TLV
@@ -132,21 +132,29 @@ void tlv_set_length(tlv_t *tlv, unsigned int n);
  * @param tlv
  * @return a pointer to the length field of tlv
  **/
-tlv_t tlv_get_length_ptr(tlv_t tlv);
+tlv_t tlv_get_length_ptr(tlv_t *tlv);
 
 /**
  * Get length of a tlv.
  * @param tlv tlv whose length is asked
  * @return value of TLV's length
  **/
-unsigned int tlv_get_length(tlv_t tlv);
+unsigned int tlv_get_length(tlv_t *tlv);
 
 /**
  * Get the adress of a tlv value.
  * @param tlv
  * @return a pointer to the value field of tlv
  **/
-tlv_t tlv_get_value_ptr(tlv_t tlv);
+tlv_t tlv_get_value_ptr(tlv_t *tlv);
+
+/**
+ **/
+int tlv_mwrite(tlv_t *tlv, void *data);
+
+/**
+ **/
+int tlv_mread(tlv_t *tlv, void *data);
 
 /**
  * Write a TLV.
@@ -155,7 +163,7 @@ tlv_t tlv_get_value_ptr(tlv_t tlv);
  * @param fd file descriptor where tlv is written
  * @return 0 on success, -1 on error
  **/
-int tlv_write(tlv_t tlv, int fd);
+int tlv_fwrite(tlv_t tlv, int fd);
 
 /**
  * Read a TLV value.
@@ -163,7 +171,7 @@ int tlv_write(tlv_t tlv, int fd);
  * @param fd file descriptor from which value is read
  * @return 0 on success, -1 on error
  **/
-int tlv_read(tlv_t *tlv, int fd);
+int tlv_fread(tlv_t *tlv, int fd);
 
 /**
  * Write a whole TLV in a file
@@ -171,7 +179,7 @@ int tlv_read(tlv_t *tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same as write(2)
  **/
-int dump_tlv(tlv_t tlv, int fd);
+int tlv_fdump(tlv_t tlv, int fd);
 
 
 /**
@@ -180,7 +188,7 @@ int dump_tlv(tlv_t tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same value as as write(2)
  **/
-int dump_tlv_value(tlv_t tlv, int fd);
+int tlv_fdump_value(tlv_t tlv, int fd);
 
 /**
  * Return a string representation for a TLV type

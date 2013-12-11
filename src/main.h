@@ -1,6 +1,15 @@
 #ifndef _MAIN_H
 #define _MAIN_H 1
 
+#include "mdazibao.h"
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "utils.h"
+#include "main.h"
+#include "mdazibao.h"
 /** @file
  * Main program used for the command-line interface
  **/
@@ -49,7 +58,6 @@ int cmd_add(int argc, char **argv, char *daz);
  **/
 int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         , int flag_date, char *daz);
-
 
 /**
  * @param daz

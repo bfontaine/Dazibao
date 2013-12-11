@@ -46,7 +46,7 @@ int tlv_init(tlv_t *t) {
                 return -1;
         }
 
-        *t = (tlv_t)malloc(sizeof(char)*TLV_SIZEOF_HEADER);
+        *t = (tlv_t)malloc(sizeof(**t) * TLV_SIZEOF_HEADER);
         if (*t == NULL) {
                 return -1;
         }
@@ -60,12 +60,11 @@ int tlv_destroy(tlv_t *t) {
         if (*t != NULL) {
                 NFREE(*t);
         }
-        free(t);
         return 0;
 }
 
-int tlv_get_type(tlv_t tlv) {
-        return tlv[0];
+int tlv_get_type(tlv_t *tlv) {
+        return (*tlv)[0];
 }
 
 void tlv_set_type(tlv_t *tlv, char t) {
@@ -73,34 +72,58 @@ void tlv_set_type(tlv_t *tlv, char t) {
 }
 
 void tlv_set_length(tlv_t *tlv, unsigned int n) {
-        htod(n, tlv_get_length_ptr(*tlv));
+        htod(n, tlv_get_length_ptr(tlv));
 }
 
-char *tlv_get_length_ptr(tlv_t tlv) {
-        return tlv + TLV_SIZEOF_TYPE * sizeof(char);
+char *tlv_get_length_ptr(tlv_t *tlv) {
+        return *tlv + TLV_SIZEOF_TYPE;
 }
 
-unsigned int tlv_get_length(tlv_t tlv) {
-        return dtoh(tlv_get_length_ptr(tlv));
+unsigned int tlv_get_length(tlv_t *tlv) {
+        return tlv_get_type(tlv) == TLV_PAD1 ?
+                0 : dtoh(tlv_get_length_ptr(tlv));
 }
 
-char *tlv_get_value_ptr(tlv_t tlv) {
-        return tlv + TLV_SIZEOF_HEADER * sizeof(char);
+char *tlv_get_value_ptr(tlv_t *tlv) {
+        return *tlv + TLV_SIZEOF_HEADER;
 }
 
-
-int tlv_write(tlv_t tlv, int fd) {
-        unsigned int to_write = TLV_SIZEOF(tlv);
-        int status = write_all(fd, tlv, to_write);
-        if (status == -1 || (unsigned int)status != to_write) {
-                perror("write");
-                return DZ_WRITE_ERROR;
-        }
+int tlv_mwrite(tlv_t *tlv, void *dst) {
+        memcpy(dst, *tlv, TLV_SIZEOF(tlv));
         return 0;
 }
 
-int tlv_read(tlv_t *tlv, int fd) {
+int tlv_mread(tlv_t *tlv, void *src) {
 
+        int len = tlv_get_length(tlv);
+
+        if (tlv_get_type(tlv) == TLV_PAD1
+                || tlv_get_type(tlv) == TLV_PADN ) {
+                return len;
+        }
+        *tlv = (tlv_t)safe_realloc(*tlv, sizeof(**tlv)
+                                                * (TLV_SIZEOF_HEADER + len));
+        if (*tlv == NULL) {
+                ERROR("realloc", -1);
+        }
+
+        memcpy(tlv_get_value_ptr(tlv), src, len);
+        return len;
+}
+
+int tlv_fwrite(tlv_t tlv, int fd) {
+/*
+        unsigned int to_write = TLV_SIZEOF(tlv);
+        int status = write_all(fd, tlv, to_write);
+        if (status == -1 || (unsigned int)status != to_write) {
+                ERROR("write", -1);
+        }
+*/
+        return 0;
+}
+
+int tlv_fread(tlv_t *tlv, int fd) {
+/*
         int len = tlv_get_length(*tlv);
 
         *tlv = (tlv_t)safe_realloc(*tlv, sizeof(char)
@@ -112,19 +135,25 @@ int tlv_read(tlv_t *tlv, int fd) {
         }
 
         if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
-                perror("read");
-                return DZ_READ_ERROR;
+                ERROR("read", -1);
         }
+*/
         return 0;
 }
 
 
-int dump_tlv(tlv_t tlv, int fd) {
+int tlv_fdump(tlv_t tlv, int fd) {
+/*
         return write(fd, tlv, TLV_SIZEOF(tlv));
+*/
+        return 0;
 }
 
-int dump_tlv_value(tlv_t tlv, int fd) {
-        return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+int tlv_fdump_value(tlv_t tlv, int fd) {
+/*
+  return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+*/
+        return 0;
 }
 
 const char *tlv_type2str(char tlv_type) {
