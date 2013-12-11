@@ -25,8 +25,6 @@ int _log_level;
 
 void send_message(int s_index, char *str, int len) {
 
-        LOGDEBUG("Sending message at client n°%d", s_index);
-
         if (write(conf.c_socket[s_index], str, len) < len) {
                 if (errno == EPIPE) {
                         conf.c_socket[s_index] = -1;
@@ -334,7 +332,6 @@ int parse_arg(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
-        int client_max = 10;
         _log_level = LOG_LVL_DEBUG;
 
         memset(&conf, 0, sizeof(conf));
@@ -349,7 +346,7 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
 
-        conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
+        conf.c_socket = malloc(sizeof(*conf.c_socket) * conf.client_max);
 
         if (conf.c_socket == NULL) {
                 ERROR("malloc", -1);
