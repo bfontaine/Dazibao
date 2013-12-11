@@ -1,4 +1,4 @@
-# Dazibao - 2013
+# ![Dazibao Logo](docs/img/dazibao_log.png) Dazibao - 2013
 
 A project by Baptiste Fontaine, David Galichet and Julien Sagot.
 

@@ -1,4 +1,4 @@
-# Dazibao
+# ![Dazibao Logo](docs/img/dazibao_log.png) Dazibao
 
 This is a school project for the [System Programming class][jch-ens] at Paris
 Diderot University.
