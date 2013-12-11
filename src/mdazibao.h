@@ -37,12 +37,12 @@
  * The type of a Dazibao
  **/
 typedef struct {
-	int fd;
-	int fflags;
-	size_t len;
-	size_t offset;
-	size_t space;
-	char *data;
+        int fd;
+        int fflags;
+        size_t len;
+        size_t offset;
+        size_t space;
+        char *data;
 } dz_t;
 
 int sync_file(dz_t *d);
@@ -95,6 +95,8 @@ int dz_reset(dz_t *d);
  * @return 0 on success, -1 on error
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
+
+time_t dz_read_date_at(dz_t *d, off_t offset);
 
 /**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao

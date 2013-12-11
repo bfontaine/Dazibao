@@ -125,8 +125,8 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 return 0;
         }
 
-        if (dz < 0) {
-                LOGWARN("Routing a request with no dazibao (%d)", dz);
+        if (dz.fd < 0) {
+                LOGWARN("Routing a request with no dazibao (%d)", dz.fd);
         }
 
         rh = get_route_handler(req->method, req->path, &route_status);
