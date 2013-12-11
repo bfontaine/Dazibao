@@ -140,17 +140,16 @@ const char *tlv_type2str(char tlv_type) {
         }
 }
 
-tlv_t tlv_create_compound(tlv_t value, int buff_size) {
-        tlv_t tlv_compound;
-        tlv_compound = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(tlv_t));
-        tlv_set_type(&tlv_compound, (char) TLV_COMPOUND );
-        tlv_set_length(&tlv_compound, buff_size);
+int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
+        *tlv_c = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(tlv_t));
+        tlv_set_type(tlv_c, (char) TLV_COMPOUND );
+        tlv_set_length(tlv_c, buff_size);
 
-        memcpy(tlv_get_value_ptr(tlv_compound), &value, buff_size);
-        return tlv_compound;
+        memcpy(tlv_get_value_ptr(*tlv_c), *value, buff_size);
+        return 0;
 }
 
-int tlv_create_path(char *path, tlv_t tlv) {
+int tlv_create_path(char *path, tlv_t *tlv) {
         tlv_t buff;
         int buff_size, fd;
         const char *c_type;
@@ -178,18 +177,18 @@ int tlv_create_path(char *path, tlv_t tlv) {
         }
 
         buff_size = st_path.st_size;
-        tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, (char) *c_type);
-        tlv_set_length(&tlv, buff_size);
+        *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
+        tlv_set_type(tlv, (char) *c_type);
+        tlv_set_length(tlv, buff_size);
 
-        memcpy(tlv_get_value_ptr(tlv), buff, buff_size);
+        memcpy(tlv_get_value_ptr(*tlv), buff, buff_size);
         close(fd);
 
         return buff_size;
 }
 
 
-int tlv_create_daz(char *daz, tlv_t tlv) {
+int tlv_create_daz(char *daz, tlv_t *tlv) {
         dz_t daz_buf;
         tlv_t buff;
         int buff_size;
@@ -211,13 +210,13 @@ int tlv_create_daz(char *daz, tlv_t tlv) {
         }
 
         buff_size = st_path.st_size - DAZIBAO_HEADER_SIZE;
-        tlv = malloc(buff_size * sizeof(*tlv));
+        *tlv = malloc(buff_size * sizeof(*tlv));
 
-        memcpy(tlv, tlv_get_value_ptr(buff), buff_size);
+        memcpy(*tlv, tlv_get_value_ptr(buff), buff_size);
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
+                free(buff);
                 return -1;
         }
-
         return buff_size;
 }
