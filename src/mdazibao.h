@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <math.h>
 #include "tlv.h"
 #include "utils.h"
 

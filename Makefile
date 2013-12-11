@@ -10,7 +10,7 @@ VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
 	 --show-reachable=yes
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -lm -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
 
 DOXYGEN=doxygen
 DOXYFLAGS=

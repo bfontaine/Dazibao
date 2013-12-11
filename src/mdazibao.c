@@ -46,8 +46,8 @@ int dz_mmap_data(dz_t *d, size_t t) {
 	int prot;
 	
 	page_size = (size_t) sysconf(_SC_PAGESIZE);
-	real_size = (size_t) (ceil(((float)t)/((float)page_size)) * page_size);
-	
+	real_size = (size_t) page_size
+                * (t/page_size + (t % page_size == 0 ? 0 : 1));
 
 	if(d->fflags == O_RDWR && ftruncate(d->fd, real_size) == -1) {
 		PERROR("ftruncate");
