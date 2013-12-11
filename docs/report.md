@@ -1,4 +1,4 @@
-# ![Dazibao Logo](docs/img/dazibao_log.png) Dazibao - 2013
+# ![Dazibao Logo](https://raw.github.com/bfontaine/Dazibao/master/docs/img/dazibao_logo.png?token=1826552__eyJzY29wZSI6IlJhd0Jsb2I6YmZvbnRhaW5lL0RhemliYW8vbWFzdGVyL2RvY3MvaW1nL2RhemliYW9fbG9nby5wbmciLCJleHBpcmVzIjoxMzg3NDA1NjcyfQ%3D%3D--bedd766f31b11b064da158a2976f517639529038) Dazibao - 2013
 
 A project by Baptiste Fontaine, David Galichet and Julien Sagot.
 
