@@ -136,17 +136,11 @@ int tlv_fread(tlv_t *tlv, int fd) {
 
 
 int tlv_fdump(tlv_t tlv, int fd) {
-/*
         return write(fd, tlv, TLV_SIZEOF(tlv));
-*/
-        return 0;
 }
 
 int tlv_fdump_value(tlv_t tlv, int fd) {
-/*
-  return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
-*/
-        return 0;
+        return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
 const char *tlv_type2str(char tlv_type) {
