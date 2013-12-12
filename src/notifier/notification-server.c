@@ -160,7 +160,7 @@ void *watch_file(void *arg) {
                 if (changed == 1) {
                         sleeping_time =
                                 MAX(MIN(sleeping_time / 2,
-                                                        conf.w_sleep_default),
+                                                conf.w_sleep_default),
                                         conf.w_sleep_min);
                         notify(path);
                 } else if (changed == 0) {
@@ -192,7 +192,7 @@ int nsa() {
         for (i = 0; i < conf.nb_files; i++) {
                 pthread_t thread;
                 if (pthread_create(&thread, &attr, watch_file,
-                                (void *) (conf.file[i])) != 0) {
+                                        (void *) (conf.file[i])) != 0) {
                         PERROR("pthread_create");
                 }
         }
@@ -225,7 +225,7 @@ int set_up_server() {
                 strncpy(saddr.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
                 strncat(saddr.sun_path, "/", UNIX_PATH_MAX - 1);
                 strncat(saddr.sun_path, ".dazibao-notification-socket",
-                                UNIX_PATH_MAX - 1);
+                        UNIX_PATH_MAX - 1);
         } else {
                 strncpy(saddr.sun_path, conf.s_path, UNIX_PATH_MAX - 1);
         }
@@ -238,14 +238,14 @@ int set_up_server() {
         }
 
         if (bind(conf.s_socket, (struct sockaddr*)&saddr,
-                                sizeof(saddr))  == -1) {
+                        sizeof(saddr))  == -1) {
                 if (errno != EADDRINUSE) {
                         ERROR("bind", -1);
                 }
                 if (connect(conf.s_socket, (struct sockaddr*)&saddr,
                                 sizeof(saddr)) == -1) {
                         LOGINFO("Removing old socket at \"%s\"",
-                                        saddr.sun_path);
+                                saddr.sun_path);
                         if (unlink(saddr.sun_path) == -1) {
                                 ERROR("unlink", -1);
                         }
@@ -258,7 +258,7 @@ int set_up_server() {
                                 ERROR("close", -1);
                         }
                         LOGERROR("Socket at \"%s\" already in use",
-                                        saddr.sun_path);
+                                saddr.sun_path);
                         return -1;
                 }
         }
@@ -305,7 +305,13 @@ int accept_client() {
 	}
 	
         if (i == conf.client_max) {
+
                 LOGWARN("Server is full");
+                if (write(s, NS_ERR_FULL, strlen(NS_ERR_FULL))
+                        < strlen(NS_ERR_FULL)) {
+                        PERROR("write");
+                }
+
 		if (close(s) == -1) {
 			LOGERROR("close() failed");
 		}

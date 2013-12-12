@@ -43,6 +43,7 @@ int notify(char *title, char *msg) {
 int read_notifications(char *buf, int len) {
 
         while (1) {
+                char *msg;
                 char *p = memchr(buf, '\n', len);
                 if (p == NULL) {
                         if (len >= BUFFER_SIZE) {
@@ -52,15 +53,23 @@ int read_notifications(char *buf, int len) {
                         return len;
                 }
 
-                if (buf[0] == 'C') {
-                        char *msg;
+                switch (buf[0]) {
+
+                case 'C':
                         msg = calloc(sizeof(*msg), p - buf);
                         strncpy(msg, buf + 1, p - buf - 1);
                         notify("Dazibao changed", msg);
                         free(msg);
-                } else {
+                        break;
+                case 'E':
+                        msg = calloc(sizeof(*msg), p - buf);
+                        strncpy(msg, buf + 1, p - buf - 1);
+                        notify("Error", msg);
+                        free(msg);
+                        break;
+                default:
                         fprintf(stderr, "Unknown notification type: %c.\n",
-                                        buf[0]);
+                                buf[0]);
                 }
 
                 if (p + 1 >= buf + len) {
@@ -123,7 +132,7 @@ int main(int argc, char **argv) {
                 if (argc == 5) {
                         if (strcmp(argv[3], "--path") == 0) {
                                 strncpy(sun.sun_path, argv[4],
-                                                UNIX_PATH_MAX - 1);
+                                        UNIX_PATH_MAX - 1);
                         } else if (strcmp(argv[3], "--notifier") == 0) {
                                 notifier = argv[4];
                         }
@@ -134,7 +143,7 @@ int main(int argc, char **argv) {
                 strncpy(sun.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, "/", UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, ".dazibao-notification-socket",
-                                UNIX_PATH_MAX - 1);
+                        UNIX_PATH_MAX - 1);
         }
 
         notifier_enabled = check_notifier();
