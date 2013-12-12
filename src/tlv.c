@@ -39,7 +39,7 @@ int tlv_init(tlv_t *t) {
                 return -1;
         }
 
-        *t = (tlv_t)malloc(sizeof(**t) * TLV_SIZEOF_HEADER);
+        *t = (tlv_t)malloc(sizeof(char) * TLV_SIZEOF_HEADER);
         if (*t == NULL) {
                 return -1;
         }
@@ -73,8 +73,8 @@ char *tlv_get_length_ptr(tlv_t *tlv) {
 }
 
 unsigned int tlv_get_length(tlv_t *tlv) {
-        return tlv_get_type(tlv) == TLV_PAD1 ?
-                0 : dtoh(tlv_get_length_ptr(tlv));
+        return tlv_get_type(tlv) == TLV_PAD1
+                ? 0 : dtoh(tlv_get_length_ptr(tlv));
 }
 
 char *tlv_get_value_ptr(tlv_t *tlv) {
@@ -90,7 +90,7 @@ int tlv_mread(tlv_t *tlv, void *src) {
 
         int len = tlv_get_length(tlv);
 
-        if (TLV_IS_EMPTY_PAD(tlv_get_type(tlv))) {
+        if (tlv_get_type(tlv) == TLV_PAD1) {
                 return len;
         }
         *tlv = (tlv_t)safe_realloc(*tlv, sizeof(**tlv)

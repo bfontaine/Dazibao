@@ -343,23 +343,26 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         off_t off_stop;
         tlv_t buf;
 
-        dz_t tmp = {0, d->fflags, d->len - offset, offset, d->space, d->data};
-
-        tlv_init(&buf);
-
-        /* skip current tlv */
-        off_stop = dz_next_tlv(&tmp, &buf);
-
-        /* look for the first tlv which is not a pad */
-        while (off_stop != EOD
-                && (off_stop = dz_next_tlv(&tmp, &buf)) > 0) {
-                if (tlv_get_type(&buf) != TLV_PAD1
-                                && tlv_get_type(&buf) != TLV_PADN) {
-                        /* tlv found */
-                        break;
-                }
+        if (max_offset > 0 && max_offset < offset) {
+                return DZ_OFFSET_ERROR;
         }
 
+        tlv_init(&buf);
+        d->offset = offset;
+
+        /* skip current tlv */
+        off_stop = dz_next_tlv(d, &buf);
+
+        /* look for the first tlv which is not a pad */
+        while (off_stop != EOD && (off_stop = dz_next_tlv(d, &buf)) > 0
+                        && (max_offset > 0 && off_stop < max_offset)
+                        && TLV_IS_EMPTY_PAD(tlv_get_type(&buf)));
+
+        if (max_offset > 0 && off_stop > max_offset) {
+                /* off_stop must be <= max_offset */
+                tlv_destroy(&buf);
+                return DZ_OFFSET_ERROR;
+        }
         if (off_stop == EOD) {
                 off_stop = d->len;
         }
@@ -399,15 +402,17 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
         if (off_parent != 0) {
                 /* the rm-ed TLV is a child one */
-                tlv_t t = NULL;
+                tlv_t t;
                 int type, st;
                 st = tlv_init(&t);
 
                 if (st < 0) {
+                        tlv_destroy(&t);
                         return st;
                 }
 
                 if ((st = dz_tlv_at(d, &t, off_parent)) < 0) {
+                        tlv_destroy(&t);
                         return st;
                 }
 
@@ -418,8 +423,11 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
                 if (type == TLV_DATED) {
                         off_start_parent += TLV_SIZEOF_DATE;
                 } else if (type != TLV_COMPOUND) {
+                        tlv_destroy(&t);
                         return DZ_TLV_TYPE_ERROR;
                 }
+
+                tlv_destroy(&t);
         }
 
         off_start = dz_pad_serie_start(d, offset, off_start_parent);
@@ -437,7 +445,7 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
                 d->len = off_start;
         }
 
-        return 0;
+        return dz_do_empty(d, off_start, off_end - off_start);
 }
 
 /**
@@ -563,7 +571,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         char *b_val;
 
         len = MIN(length, TLV_MAX_VALUE_SIZE);
-        b_val = calloc(len, sizeof(*b_val));
+        b_val = calloc(len, sizeof(char));
 
         if (b_val == NULL) {
                 status = -1;
@@ -571,6 +579,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         }
 
         tlv_init(&buff);
+        tlv_set_type(&buff, TLV_PADN);
         tlv_set_length(&buff, len);
         tlv_mread(&buff, b_val);
         status = 0;
@@ -597,6 +606,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 /* set length */
                 tlv_set_length(&buff, length - TLV_SIZEOF_HEADER);
 
+                /* XXX the TLV's length is 4 */
                 if(dz_write_tlv_at(d, &buff, start) == -1) {
                         status = -1;
                         goto OUT;
@@ -615,6 +625,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         }
 
 OUT:
+        tlv_destroy(&buff);
         free(b_val);
         return status;
 }
@@ -708,16 +719,14 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                 int tlv_type, len;
                 const char *tlv_str;
 
-                printf("%s", ind);
-
                 tlv_type = tlv_get_type(&tlv);
                 len = tlv_get_length(&tlv);
 
                 tlv_str = tlv_type2str((char) tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (!TLV_IS_EMPTY_PAD(tlv_type) || flag_debug) {
-                        printf("%9li | %8s | %8d\n",
-                                (long)off, tlv_str, len);
+                        printf("%s%9li | %8s | %8d\n",
+                                ind, (long)off, tlv_str, len);
                 }
 
                 switch (tlv_type) {
