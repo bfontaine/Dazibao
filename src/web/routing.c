@@ -247,7 +247,7 @@ int file_response(int sock, struct http_request *req) {
         map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
         if (map == MAP_FAILED) {
-                LOGERROR("Cannot mmap with size=%lu", st.st_size);
+                LOGERROR("Cannot mmap with size=%li", (long)st.st_size);
                 perror("mmap");
                 close(fd);
                 return -1;

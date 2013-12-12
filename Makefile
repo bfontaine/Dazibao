@@ -1,6 +1,8 @@
 # Dazibao Makefile
 #
 
+OS=$(shell uname -s)
+
 SRC=src
 WEBSRC=$(SRC)/web
 NSRC=$(SRC)/notifier
@@ -10,7 +12,12 @@ VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
 	 --show-reachable=yes
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -pthread -I$(SRC)
+CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
+
+ifneq ($(OS),Darwin)
+	# OS X has POSIX threads in libc
+	CFLAGS+= -pthread
+endif
 
 DOXYGEN=doxygen
 DOXYFLAGS=

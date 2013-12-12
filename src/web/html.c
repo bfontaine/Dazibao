@@ -39,9 +39,9 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         }
         RESTORE_OFFSET(dz);
 
-        LOGDEBUG("Adding HTML of text TLV at offset %lu, tlen=%d, len=%d, " \
+        LOGDEBUG("Adding HTML of text TLV at offset %li, tlen=%d, len=%d, " \
                         "htmlsize=%d, cursor=%d",
-                        *off, tlen, len, *htmlsize, *htmlcursor);
+                        (long)*off, tlen, len, *htmlsize, *htmlcursor);
         w = snprintf(*html+(*htmlcursor), len, HTML_TLV_TEXT_FMT,
                         tlen, tlv_get_value_ptr(t));
         *htmlcursor += MIN(w, len);
@@ -65,10 +65,11 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                         break;
         }
 
-        LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %lu.", ext, *off);
+        LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %li.", ext,
+                        (long)*off);
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                        HTML_TLV_IMG_FMT, *off, ext);
+                        HTML_TLV_IMG_FMT, (long)*off, ext);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
         return 0;
@@ -99,8 +100,8 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_TOP_FMT, len_top);
         *htmlcursor += len_top;
 
-        LOGDEBUG("Adding a TLV compound of length=%d at offset %lu", tlen,
-                        *off);
+        LOGDEBUG("Adding a TLV compound of length=%d at offset %li", tlen,
+                        (long)*off);
 
         if (tlen > 0) {
                 SET_OFFSET(dz, off_value);
@@ -186,7 +187,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
         }
 
         if (TLV_IS_EMPTY_PAD(tlv_type) && !WSERVER.debug) {
-                LOGDEBUG("Skipping Pad1/PadN at offset %lu", *dz_off);
+                LOGDEBUG("Skipping Pad1/PadN at offset %li", (long)*dz_off);
                 return 0;
         }
 
@@ -200,7 +201,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
 
         written = snprintf(*html+(*htmlcursor), *htmlsize - (*htmlcursor),
                         HTML_TLV_TOP_FMT,
-                        *dz_off, tlv_get_length(t), tlv_type,
+                        (long)*dz_off, tlv_get_length(t), tlv_type,
                         tlv_type2str(tlv_type));
         if (written > *htmlsize) {
                 perror("snprintf");

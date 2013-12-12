@@ -74,13 +74,14 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
         if (off < DAZIBAO_HEADER_SIZE) {
-                LOGERROR("Wrong offset (%lu < dazibao header size)", off);
+                LOGERROR("Wrong offset (%li < dazibao header size)",
+                                (long)off);
                 tlv_destroy(tlv);
                 return -1;
         }
 
         if (dz_tlv_at(&dz, tlv, off) < 0) {
-                LOGERROR("Cannot read TLV at offset %lu", off);
+                LOGERROR("Cannot read TLV at offset %li", (long)off);
                 tlv_destroy(tlv);
                 return -1;
         }
@@ -100,7 +101,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                         resp->body_len);
 
         if (dz_read_tlv(&dz, tlv, off) < 0) {
-                LOGERROR("Cannot read TLV at offset %lu", off);
+                LOGERROR("Cannot read TLV at offset %li", (long)off);
                 tlv_destroy(tlv);
                 return -1;
         }
@@ -148,16 +149,16 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        LOGDEBUG("Trying to remove TLV at offset %lu in dazibao fd=%d",
-                        off, dz.fd);
+        LOGDEBUG("Trying to remove TLV at offset %li in dazibao fd=%d",
+                        (long)off, dz.fd);
 
         if (off < DAZIBAO_HEADER_SIZE) {
-                LOGERROR("Wrong offset (%lu < dz header size)", off);
+                LOGERROR("Wrong offset (%li < dz header size)", (long)off);
                 return -1;
         }
 
         if (dz_rm_tlv(&dz, off) < 0) {
-                LOGERROR("Cannot delete TLV at offset %lu", off);
+                LOGERROR("Cannot delete TLV at offset %li", (long)off);
                 return -1;
         }
 
