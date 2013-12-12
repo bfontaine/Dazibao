@@ -170,4 +170,6 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
  **/
 const char *tlv_type2str(char tlv_type);
 
+int tlv_str2type(char *tlv_type);
+
 #endif

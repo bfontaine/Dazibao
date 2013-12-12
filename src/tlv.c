@@ -155,3 +155,16 @@ const char *tlv_type2str(char tlv_type) {
         default:           return "unknown";
         }
 }
+
+
+int tlv_str2type(char *tlv_type) {
+        if (strcasecmp(tlv_type, "text") == 0) {
+                return TLV_TEXT;
+        } else if (strcasecmp(tlv_type, "png") == 0) {
+                return TLV_PNG;
+        } else if (strcasecmp(tlv_type, "jpg") == 0) {
+                return TLV_JPEG;
+        } else {
+                return -1;
+        }
+}
