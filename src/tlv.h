@@ -152,7 +152,7 @@ int tlv_fread(tlv_t *tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same as write(2)
  **/
-int tlv_fdump(tlv_t tlv, int fd);
+int tlv_fdump(tlv_t *tlv, int fd);
 
 
 /**
@@ -161,7 +161,7 @@ int tlv_fdump(tlv_t tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same value as as write(2)
  **/
-int tlv_fdump_value(tlv_t tlv, int fd);
+int tlv_fdump_value(tlv_t *tlv, int fd);
 
 /**
  * Return a string representation for a TLV type
