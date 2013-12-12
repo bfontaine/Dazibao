@@ -24,35 +24,38 @@ int cmd_add(int argc, char **argv, char * daz) {
         }
 
         for (i = 0; i < argc; i++) {
+                if (!strcmp(argv[i],"--type")) {
+                        f_type = 0;
+                        /* recupérer la chaine type*/
+                } else if (!strcmp(argv[i],"--date")) {
+                        f_date = 0;
+                } else if (!strcmp(argv[i],"--dazibao")) {
+                        f_dz = i;
+                        args = 1;
+                } else if (!strcmp(argv[i],"--compound")) {
+                        f_compound = i;
+                        args = argc - i -1;
+                } else if (!strcmp(argv[i],"-")) {
+                        f_input = i;
                 /* check args for dazibao or compound*/
-                if (args_dz > 0) {
+                } else if (args_dz > 0) {
+                        /* TODO renvoyer la taille du fichier 
+                            et la fonction doit vérifier si dz valide
+                             -> if HEADER is ok
+                            */
                         if (check_dz_path (argv[i], R_OK) < 0) {
                                 printf("[cmd_add] check path arg failed :%s\n",
                                         argv[i]);
                                 return -1;
                         }
                 } else if (args_co > 0) {
+                        /* TODO renvoyer la taille du fichier 
+                        */
                         if (check_tlv_path (argv[i], R_OK) < 0) {
                                 printf("[cmd_add] check dz arg failed :%s\n",
                                         argv[i]);
                                 return -1;
                         }
-                } else if (!strcmp(argv[i],"--type")) {
-                        f_type = 0;
-                } else if (!strcmp(argv[i],"--date")) {
-                        f_date = 0;
-                } else if (!strcmp(argv[i],"--dazibao")) {
-                        f_dz = 0;
-                        /* add check to args fic tlv */
-                        /*tmp_first_args = i;
-                        args = 1;*/
-                } else if (!strcmp(argv[i],"--compound")) {
-                        f_compound = 0;
-                        /* add check to args fic dazibao */
-                        /*tmp_first_args = i;
-                        args = argc - i -1;*/
-                } else if (!strcmp(argv[i],"-")) {
-                        f_input = 0;
                 } else {
                         /* TODO args[i] is not option valide
                                 or path
