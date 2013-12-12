@@ -1,5 +1,7 @@
 #include "cli.h"
 
+int _log_level = LOG_LVL_DEBUG;
+
 int add(int argc, char **argv) {
         int date = 0;
         int compound = 0;
@@ -17,11 +19,23 @@ int add(int argc, char **argv) {
         struct s_args args = {&argc, &argv, opt};
 
         if (jparse_args(argc, argv, &args, 3) != 0) {
-                ERROR("parse_args", EXIT_FAILURE);
+                LOGERROR("jparse_args failed");
+                return EXIT_FAILURE;
+        }
+
+        int nb_ext = argc - 1;
+        int nb_comma = nb_ext - 1;
+
+        while (nb_comma --> 0) {
+                if (strchr(type, DZCLI_TYPE_SEPARATOR) == NULL) {
+                        LOGERROR("Wrong number of types");
+                        return EXIT_FAILURE;
+                }
         }
 
         return EXIT_SUCCESS;
 }
+
 
 int main(int argc, char **argv) {
 

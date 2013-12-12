@@ -46,6 +46,9 @@
         "        options:\n" \
         "            -r, --recursive: (todo)\n"
 
+#define DZCLI_TYPE_SEPARATOR ','
+
+
 int add(int, char**);
 
 #endif
