@@ -329,7 +329,7 @@ int parse_arg(int argc, char **argv) {
         conf.reliable = RELIABLE_DEFAULT;
 
         struct s_option options[] = {
-                {"--path", ARG_TYPE_STRING, (void *)conf.s_path},
+                {"--path", ARG_TYPE_STRING, (void *)&(conf.s_path)},
                 {"--max", ARG_TYPE_INT, (void *)&(conf.client_max)},
                 {"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
                 {"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
@@ -362,7 +362,7 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
 
-        if (parse_arg(argc, argv) == -1) {
+        if (parse_arg(argc - 1, &argv[1]) == -1) {
                 LOGFATAL("Wrong arguments, see documentation for details");
                 exit(EXIT_FAILURE);
         }
