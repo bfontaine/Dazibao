@@ -207,7 +207,7 @@ int tlv_create_path(char *path, tlv_t *tlv) {
         const char *c_type;
         struct stat st_path;
 
-        c_type = get_tlv_type(path);
+        c_type = TLV_PADN;
         if (c_type == NULL) {
                 printf("no type with path %s, no exist standard tlv now",path);
                 return -1;
