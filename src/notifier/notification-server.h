@@ -44,7 +44,7 @@ struct ns_config {
         int s_socket;
         /** file descriptors of clients */
         int *c_socket;
-	pthread_mutex_t *c_mtx;
+        pthread_mutex_t *c_mtx;
 
         /* waiting time */
         /** minimum interval between two file check */
