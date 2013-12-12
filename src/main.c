@@ -26,6 +26,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         fprintf(stderr, "action_add error\n");
                         return -1;
                 }
+                return 0;
         }
         for (i = 0; i < argc; i++) {
                 /* if option date is only option , it need args*/
@@ -77,6 +78,8 @@ int cmd_add(int argc, char **argv, char * daz) {
                 "same time\n");
                 return -1;
         }
+        printf("flag C : %d | D : %d | date : %d\n",flag_compound,flag_dazibao,
+                flag_date);
 
         char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
@@ -86,7 +89,6 @@ int cmd_add(int argc, char **argv, char * daz) {
                 printf("[main|cmd_dump] error action add");
                 return -1;
         }
-
         return 0;
 }
 
@@ -94,39 +96,36 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         , int flag_date, char *daz) {
         dz_t daz_buf;
         unsigned int buff_size = 0;
-        tlv_t *tlv;
-        tlv_t *buff;
+        tlv_t tlv;
+        tlv_t buff;
         if (flag_compound == 1) {
                 /* read all args fic name, and create create a tlv to it */
                 int i;
                 int size_tlv = 0;
                 for (i = 0; i < argc; i++) {
-                        size_tlv += tlv_create_path(argv[i], tlv);
+                        size_tlv += tlv_create_path(argv[i], &tlv);
                         buff_size += size_tlv;
                         if(buff_size > TLV_MAX_VALUE_SIZE) {
                                 printf("tlv compound too large\n");
-                                tlv_destroy(tlv);
-                                tlv_destroy(buff);
+                                tlv_destroy(&tlv);
+                                tlv_destroy(&buff);
                                 return -1;
                         }
-                        /* TODO FIX memory leak
-                                realloc
-                                memcpy
-                        */
                         buff = realloc(&buff, buff_size * sizeof(tlv_t));
                         memcpy(buff + (buff_size - size_tlv),
                                 tlv, size_tlv);
-                        tlv_destroy(tlv);
+                        tlv_destroy(&tlv);
                 }
                 /* we have all tlv to include to compound in tlv_compound []*/
-                tlv_create_compound(tlv, buff, buff_size);
-                tlv_destroy(buff);
+                tlv_create_compound(&tlv, &buff, buff_size);
+                tlv_destroy(&buff);
         }
 
         if (flag_dazibao == 1) {
-                buff_size = tlv_create_daz(argv[argc-1], buff);
-                tlv_create_compound(tlv, buff, buff_size);
-                tlv_destroy(buff);
+                buff_size = tlv_create_daz(argv[argc-1], &buff);
+                printf("length dz :%u\n",buff_size);
+                tlv_create_compound(&tlv, &buff, buff_size);
+                tlv_destroy(&buff);
         }
         if (flag_date == 1) {
                 /*
@@ -135,33 +134,33 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                   else he exist tlv compound type to var tlv
                 */
                 if (flag_compound == flag_dazibao) {
-                        buff_size = tlv_create_path(argv[argc-1], buff);
-                        tlv_create_date(tlv, buff, buff_size);
-                        tlv_destroy(buff);
+                        buff_size = tlv_create_path(argv[argc-1], &buff);
+                        tlv_create_date(&tlv, &buff, buff_size);
+                        tlv_destroy(&buff);
                 }
                 else {
                         buff = tlv;
                         tlv = NULL;
-                        tlv_create_date(tlv, buff, buff_size);
-                        tlv_destroy(buff);
+                        tlv_create_date(&tlv, &buff, buff_size);
+                        tlv_destroy(&buff);
 
                 }
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 fprintf(stderr, "failed open the dazibao\n");
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
         /* add le tlv restant */
-        if (dz_add_tlv(&daz_buf, *tlv) == -1) {
+        if (dz_add_tlv(&daz_buf, &tlv) == -1) {
                 fprintf(stderr, "failed adding the tlv\n");
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
-        tlv_destroy(tlv);
+        tlv_destroy(&tlv);
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "failed closing the dazibao\n");
                 return -1;
