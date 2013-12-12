@@ -22,6 +22,8 @@
 #define WATCH_SLEEP_DEFAULT 10
 #define WATCH_SLEEP_MAX 60
 
+#define NS_ERR_FULL "EServer is full\n"
+
 
 /** general config of notification server */
 struct ns_config {
