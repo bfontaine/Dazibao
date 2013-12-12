@@ -6,87 +6,66 @@
 #define BUFFSIZE 512
 
 int cmd_add(int argc, char **argv, char * daz) {
-        int flag_date = -1,
-            flag_compound = -1,
-            flag_dazibao = -1,
-            args = 0,
-            tmp_first_args,
+        int f_date = -1,
+            f_compound = -1,
+            f_dz = -1,
+            f_type = -1,
+            f_input = -1,
+            args_co = 0,   /*number of compound args*/
+            args_dz = 0,
+            tmp_date_size = 0,
+            tmp_compound_size = 0,
+            tmp_first_args = 0,
             i;
-        /* if argc = 1 means command it like that
-        .dazibao add <number type TLV> daz
-        */
-        if (argc == 1) {
-                long tmp_type = str2dec_positive(argv[0]);
-                if (!IN_RANGE(tmp_type, 1, 256)) {
-                        fprintf(stderr, "unrecognized type\n");
-                        return DZ_ARGS_ERROR;
-                }
 
-                if (action_no_option_add(daz, tmp_type) < 0) {
-                        fprintf(stderr, "action_add error\n");
-                        return -1;
-                }
-                return 0;
-        }
-        for (i = 0; i < argc; i++) {
-                /* if option date is only option , it need args*/
-                if ((i == argc-1) && (flag_date == 1) &&
-                        (flag_compound != 1) && (flag_dazibao != 1)) {
-                        args = 1;
-                }
-                /* check args for dazibao or compound*/
-                if (args > 0) {
-                        if (flag_compound == 1 &&
-                                check_tlv_path (argv[i], R_OK) < 0) {
-                                printf("[main|cmd_dump] arg failed:%s\n",
-                                        argv[i]);
-                                return -1;
-                        }
-                        if (flag_dazibao == 1 &&
-                                check_dz_path (argv[i], R_OK) < 0) {
-                                printf("[main|cmd_dump] arg failed:%s\n",
-                                        argv[i]);
-                                return -1;
-                        }
-                } else if ((!strcmp(argv[i],"--date") ||
-                        !strcmp(argv[i],"-d")) && (flag_date != 1)) {
-                        flag_date = 1;
-                } else if ((!strcmp(argv[i],"--dazibao") ||
-                        !strcmp(argv[i],"-D")) && (flag_dazibao != 1)) {
-                        flag_dazibao = 1;
-                        /* add check to args fic tlv */
-                        tmp_first_args = i;
-                        args = 1;
-                } else if ((!strcmp(argv[i],"--compound") ||
-                        !strcmp(argv[i],"-c")) && (flag_compound != 1)) {
-                        flag_compound = 1;
-                        /* add check to args fic dazibao */
-                        tmp_first_args = i;
-                        args = argc - i -1;
-                } else {
-                        /* TODO args[i] is not option and args
-                                or already use
-                                ERROR
-                        */
-                        printf("[main|cmd_dump] arg failed:%s\n",argv[i]);
-                        return -1;
-                }
-        }
-        if ((flag_dazibao == 1) && (flag_compound == 1)) {
-                /* help message 2 flag not it the same time*/
-                printf("[main|cmd_dump] flag compound and dazibao not at the"
-                "same time\n");
+        if (argc < 0) {
+                printf("[cmd_add] error no args for add\n");
                 return -1;
         }
-        printf("flag C : %d | D : %d | date : %d\n",flag_compound,flag_dazibao,
-                flag_date);
 
+        for (i = 0; i < argc; i++) {
+                /* check args for dazibao or compound*/
+                if (args_dz > 0) {
+                        if (check_dz_path (argv[i], R_OK) < 0) {
+                                printf("[cmd_add] check path arg failed :%s\n",
+                                        argv[i]);
+                                return -1;
+                        }
+                } else if (args_co > 0) {
+                        if (check_tlv_path (argv[i], R_OK) < 0) {
+                                printf("[cmd_add] check dz arg failed :%s\n",
+                                        argv[i]);
+                                return -1;
+                        }
+                } else if (!strcmp(argv[i],"--type")) {
+                        f_type = 0;
+                } else if (!strcmp(argv[i],"--date")) {
+                        f_date = 0;
+                } else if (!strcmp(argv[i],"--dazibao")) {
+                        f_dz = 0;
+                        /* add check to args fic tlv */
+                        /*tmp_first_args = i;
+                        args = 1;*/
+                } else if (!strcmp(argv[i],"--compound")) {
+                        f_compound = 0;
+                        /* add check to args fic dazibao */
+                        /*tmp_first_args = i;
+                        args = argc - i -1;*/
+                } else if (!strcmp(argv[i],"-")) {
+                        f_input = 0;
+                } else {
+                        /* TODO args[i] is not option valide
+                                or path
+                        */
+                        printf("[cmd_add] arg failed:%s\n",argv[i]);
+                        return -1;
+                }
+        }
         char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
 
-        if (action_add(args_c, args_v, flag_compound, flag_dazibao,
-                flag_date, daz) == -1) {
-                printf("[main|cmd_dump] error action add");
+        if (action_add(args_c, args_v, f_compound, f_dz,f_date, daz) == -1) {
+                printf("[cmd_add] error action add");
                 return -1;
         }
         return 0;
