@@ -99,11 +99,20 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         tlv_t tlv;
         tlv_t buff;
         if (flag_compound == 1) {
-                /* read all args fic name, and create create a tlv to it */
+                /* read all args fic name, and create create a tlv to it
                 int i;
                 int size_tlv = 0;
+                if (tlv_init(&tlv) < 0) {
+                        printf("[tlv_create_path] error to init tlv");
+                        return -1;
+                }
+                tlv_set_type(&tlv, (char) TLV_COMPOUND);
                 for (i = 0; i < argc; i++) {
-                        size_tlv += tlv_create_path(argv[i], &tlv);
+                        if (tlv_init(&tlv) < 0) {
+                                printf("[tlv_create_path] error to init tlv");
+                                return -1;
+                        }
+                        size_tlv += tlv_create_path(argv[i], &buff);
                         buff_size += size_tlv;
                         if(buff_size > TLV_MAX_VALUE_SIZE) {
                                 printf("tlv compound too large\n");
@@ -111,14 +120,8 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                                 tlv_destroy(&buff);
                                 return -1;
                         }
-                        buff = realloc(&buff, buff_size * sizeof(tlv_t));
-                        memcpy(buff + (buff_size - size_tlv),
-                                tlv, size_tlv);
-                        tlv_destroy(&tlv);
-                }
-                /* we have all tlv to include to compound in tlv_compound []*/
-                tlv_create_compound(&tlv, &buff, buff_size);
-                tlv_destroy(&buff);
+                        tlv_destroy(&buff);
+                }*/
         }
 
         if (flag_dazibao == 1) {
@@ -154,7 +157,6 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                 return -1;
         }
 
-        /* add le tlv restant */
         if (dz_add_tlv(&daz_buf, &tlv) == -1) {
                 fprintf(stderr, "failed adding the tlv\n");
                 tlv_destroy(&tlv);
