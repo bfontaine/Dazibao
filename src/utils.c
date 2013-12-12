@@ -5,26 +5,6 @@
 #include "mdazibao.h"
 
 /** @file */
-const char *get_tlv_type(const char *path) {
-        const char *ext;
-        if (path == NULL) {
-                return NULL;
-        }
-
-        if ((ext = get_ext(path)) == NULL) {
-                printf("no extension = no type tlv");
-                return NULL;
-        }
-
-        for (unsigned int i=0; i<TLV_TYPES_COUNT; i++) {
-                if (strcasecmp(tlv_types_ext[i][0], ext) == 0) {
-                        return tlv_types_ext[i][1];
-                }
-        }
-        printf("no extension = no type tlv");
-        return NULL;
-}
-
 int check_tlv_path(const char * path, int flag_access) {
         struct stat st_path;
         if (access(path,F_OK | flag_access) < 0) {
