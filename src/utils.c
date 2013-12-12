@@ -63,7 +63,6 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 for (int i = 0; i < nb_opt; i++) {
                         if (strcmp(argv[next_arg],
                                         res->options[i].name) == 0) {
-                                printf("found %s\n", res->options[i].name);
                                 is_opt = 1;
                                 switch (res->options[i].type) {
                                 case ARG_TYPE_INT:
