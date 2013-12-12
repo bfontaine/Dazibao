@@ -95,7 +95,7 @@ int tlv_mwrite(tlv_t *tlv, void *dst) {
 
 int tlv_mread(tlv_t *tlv, void *src) {
 
-        unsigned int len = tlv_get_length(tlv);
+        int len = tlv_get_length(tlv);
 
         if (tlv_get_type(tlv) == TLV_PAD1
                 || tlv_get_type(tlv) == TLV_PADN ) {
@@ -171,8 +171,7 @@ const char *tlv_type2str(char tlv_type) {
         }
 }
 
-unsigned int tlv_create_compound(tlv_t *tlv_c, tlv_t *value,
-                unsigned int buff_size) {
+int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
         unsigned int tlv_size;
         if (tlv_init(tlv_c) < 0) {
                 printf("[tlv_create_compound] error to init tlv");
@@ -184,8 +183,7 @@ unsigned int tlv_create_compound(tlv_t *tlv_c, tlv_t *value,
         return tlv_size;
 }
 
-unsigned int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv,
-                unsigned  int value_size) {
+int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         unsigned int tlv_size ;
         int real_time = htonl(time(NULL));
 
@@ -203,7 +201,7 @@ unsigned int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv,
         return tlv_size;
 }
 
-unsigned int tlv_create_path(char *path, tlv_t *tlv) {
+int tlv_create_path(char *path, tlv_t *tlv) {
         tlv_t buff;
         int tlv_size, fd;
         const char *c_type;
@@ -242,24 +240,3 @@ unsigned int tlv_create_path(char *path, tlv_t *tlv) {
 }
 
 
-unsigned int tlv_create_daz(char *daz, tlv_t *tlv) {
-        dz_t daz_buf;
-        unsigned int buff_size;
-
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                fprintf(stderr, "Error while opening the dazibao\n");
-                return -1;
-        }
-
-        buff_size = daz_buf.len - DAZIBAO_HEADER_SIZE;
-        *tlv = malloc(buff_size * sizeof(tlv_t));
-
-        memcpy(*tlv, tlv_get_value_ptr(&daz_buf.data), buff_size);
-
-        if (dz_close(&daz_buf) < 0) {
-                fprintf(stderr, "Error while closing the dazibao\n");
-                return -1;
-        }
-
-        return buff_size;
-}

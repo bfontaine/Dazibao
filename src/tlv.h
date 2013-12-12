@@ -212,8 +212,7 @@ const char *get_tlv_type(const char *path);
  * @param buff_size
  * @return sizeof new tlv create
  **/
-unsigned int tlv_create_compound(tlv_t *tlv_c, tlv_t *value,
-                unsigned int buff_size);
+int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size);
 
 /**
  * Create TLV dated with using tlv board value
@@ -222,8 +221,7 @@ unsigned int tlv_create_compound(tlv_t *tlv_c, tlv_t *value,
  * @param buff_size
  * @return sizeof new tlv create
  **/
-unsigned int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv,
-                unsigned int value_size);
+int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size);
 
 /**
  * Create TLV with using path
@@ -232,15 +230,6 @@ unsigned int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv,
  * @param tlv
  * @return sizeof new tlv create
  **/
-unsigned int tlv_create_path(char *path, tlv_t *tlv);
-
-/**
- * Create TLV with using daz for tlv type compound
- * Return size of value tlv compound
- * @param path
- * @param tlv
- * @return sizeof new tlv create
- **/
-unsigned int tlv_create_daz(char *daz, tlv_t *tlv);
+int tlv_create_path(char *path, tlv_t *tlv);
 
 #endif
