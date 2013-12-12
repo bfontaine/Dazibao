@@ -3,12 +3,14 @@
 int add(int argc, char **argv) {
         int date = 0;
         int compound = 0;
-        char *type = "gringo";
+        char *type = "";
+        char *dazibao = "";
 
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
                 {"--compound", ARG_TYPE_FLAG, (void *)&compound},
-                {"--type", ARG_TYPE_STRING, (void *)&type}
+                {"--type", ARG_TYPE_STRING, (void *)&type},
+                {"--dazibao", ARG_TYPE_STRING, (void *)&dazibao}
         };
 
 
