@@ -157,7 +157,7 @@ const char *tlv_type2str(char tlv_type) {
 }
 
 
-int tlv_str2type(char *tlv_type) {
+char tlv_str2type(char *tlv_type) {
         if (strcasecmp(tlv_type, "text") == 0) {
                 return TLV_TEXT;
         } else if (strcasecmp(tlv_type, "png") == 0) {
