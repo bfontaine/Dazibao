@@ -228,10 +228,6 @@ int tlv_create_path(char *path, tlv_t *tlv) {
                 return -1;
         }
 
-        if (tlv_init(tlv) < 0) {
-                printf("[tlv_create_path] error to init tlv");
-                return -1;
-        }
         tlv_set_type(tlv, (char) *c_type);
         tlv_set_length(tlv, st_path.st_size);
         tlv_size = tlv_mread(tlv, buff);
