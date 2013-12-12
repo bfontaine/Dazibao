@@ -13,7 +13,7 @@ VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
 	 --show-reachable=yes
 
 CC=gcc
-CFLAGS=-g -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
+CFLAGS=-g3 -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
 ifneq ($(OS),Darwin)
 	# OS X has POSIX threads in libc

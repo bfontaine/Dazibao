@@ -136,6 +136,25 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv);
 int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
+ * Check that a Dazibao contains a TLV of a known type at a given offset. This
+ * verifies that this TLV is either a top-level TLV or contained in a
+ * compound/dated one.
+ * @param d a pointer to a Dazibao opened at least with the rights to read in
+ * it
+ * @param offset the offset of the TLV
+ * @param type the type of the TLV. If this is -1, it'll won't be verified, and
+ * any known TLV will work.
+ * @param parents if not null, will be filled with an array of offsets for the
+ * TLVs containing the checked TLV. If it's a top-level TLV, this array will
+ * only contain its offset. If it's a child of a top-level TLV, it'll contain
+ * the offset of the checked TLV followed by the offset of the top-level TLV,
+ * etc. This array will contain at most TLV_MAX_DEPTH elements. If it contains
+ * less than TLV_MAX_DEPTH offsets, the other ones are set to (off_t)0.
+ * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ **/
+int dz_check_tlv_at(dz_t *d, off_t offset, int type, off_t **parents);
+
+/**
  * Empty a part of a dazibao.The part is filled with padN/pad1
  * @param d the Dazibao
  * @param start starting offset of emptying

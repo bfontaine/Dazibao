@@ -299,12 +299,12 @@ int accept_client() {
                         LOGERROR("pthread_mutex_unlock() failed.");
                 }
         }
-        
+
         if (i == conf.client_max) {
 
                 LOGWARN("Server is full");
                 if (write(s, NS_ERR_FULL, strlen(NS_ERR_FULL))
-                        < strlen(NS_ERR_FULL)) {
+                        < (int)strlen(NS_ERR_FULL)) {
                         PERROR("write");
                 }
 
@@ -381,7 +381,8 @@ int main(int argc, char **argv) {
 
         for (i = 0; i < conf.client_max; i++) {
                 conf.c_socket[i] = -1;
-                if (pthread_mutex_init(&(conf.c_mtx[i]), PTHREAD_MUTEX_NORMAL) != 0) {
+                if (pthread_mutex_init(&(conf.c_mtx[i]),
+                                        PTHREAD_MUTEX_NORMAL) != 0) {
                         LOGERROR("pthread_mutex_init");
                         goto OUT;
                 }

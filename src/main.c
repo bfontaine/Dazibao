@@ -293,6 +293,8 @@ int main(int argc, char **argv) {
                 argv_cmd = NULL;
         } else {
                 argc_cmd = argc - 3;
+                /* shift argv to the right to remove the program name and the
+                 * command */
                 argv_cmd = argv + 2;
         }
         /*
