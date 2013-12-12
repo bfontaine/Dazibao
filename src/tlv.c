@@ -90,8 +90,7 @@ int tlv_mread(tlv_t *tlv, void *src) {
 
         int len = tlv_get_length(tlv);
 
-        if (tlv_get_type(tlv) == TLV_PAD1
-                || tlv_get_type(tlv) == TLV_PADN ) {
+        if (TLV_IS_EMPTY_PAD(tlv_get_type(tlv))) {
                 return len;
         }
         *tlv = (tlv_t)safe_realloc(*tlv, sizeof(**tlv)
