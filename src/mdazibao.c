@@ -518,18 +518,22 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                 int flag_debug) {
 
         tlv_t tlv;
+        off_t off;
+        char *ind;
+
         if (tlv_init(&tlv) == -1) {
                 return -1;
         }
 
-        off_t off;
-        char *ind;
         if (indent > 0) {
-                ind = malloc(sizeof(*ind) * (indent + 1));
-                memset(ind, '\t', indent);
-                ind[indent] = '\0';
+                ind = (char*)malloc(sizeof(char)*(2*indent+1));
+                memset(ind, '>', indent);
+                memset(ind+indent, ' ', indent);
+                ind[2*indent] = '\0';
         } else {
-                ind = "";
+                ind = strdup("");
+                printf("   offset |     type |   length\n");
+                printf("----------+----------+---------\n");
         }
 
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
@@ -544,10 +548,9 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
 
                 tlv_str = tlv_type2str((char) tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
-                if (((tlv_type != TLV_PADN) && (tlv_type != TLV_PAD1))
-                        || (flag_debug == 1)) {
-                        printf("[%9d] TLV %8s | %8d |\n",
-                                (int)off, tlv_str, len);
+                if (!TLV_IS_EMPTY_PAD(tlv_type) || flag_debug) {
+                        printf("%9li | %8s | %8d\n",
+                                (long)off, tlv_str, len);
                 }
 
                 switch (tlv_type) {
@@ -558,30 +561,28 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                                         + TLV_SIZEOF_DATE;
                                 if (dz_dump(daz_buf, current, (depth - 1),
                                                 (indent + 1), flag_debug)) {
+                                        free(ind);
                                         return -1;
                                 }
                                 daz_buf->offset = current;
                         }
                         break;
-                        /* TODO function to print date */
                 case TLV_COMPOUND:
                         if (depth > 0) {
                                 off_t current = daz_buf->offset;
                                 daz_buf->offset = off + TLV_SIZEOF_HEADER;
                                 if (dz_dump(daz_buf, current, (depth - 1),
                                                 (indent + 1), flag_debug)) {
+                                        free(ind);
                                         return -1;
                                 }
                                 daz_buf->offset = current;
                         }
                         break;
-                default:
-                        break;
                 }
         }
-        if (indent < 0) {
-                free(ind);
-        }
+
+        free(ind);
         tlv_destroy(&tlv);
         return 0;
 }
