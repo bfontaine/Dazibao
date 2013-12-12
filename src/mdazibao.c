@@ -62,8 +62,7 @@ int dz_mmap_data(dz_t *d, size_t t) {
         int prot;
 
         page_size = (size_t) sysconf(_SC_PAGESIZE);
-        real_size = (size_t) page_size
-                * (t/page_size + (t % page_size == 0 ? 0 : 1));
+        real_size = (size_t) page_size * (((t+page_size-1)/page_size)+1);
 
         if(d->fflags == O_RDWR && ftruncate(d->fd, real_size) == -1) {
                 PERROR("ftruncate");
@@ -86,18 +85,12 @@ int dz_mmap_data(dz_t *d, size_t t) {
 int dz_remap(dz_t *d, size_t t) {
 
         if (d->fflags == O_RDONLY) {
-                return -1;
+                return DZ_RIGHTS_ERROR;
         }
 
-        if (sync_file(d) == -1) {
-                return -1;
-        }
-
-        if (munmap(d->data, d->len) == -1) {
-                return -1;
-        }
-
-        if (dz_mmap_data(d, t) == -1) {
+        if (sync_file(d) == -1
+                        || munmap(d->data, d->len) == -1
+                        || dz_mmap_data(d, t) == -1) {
                 return -1;
         }
 
@@ -225,6 +218,7 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
+        /* TODO ensure that the date is in big endian */
         time_t t = 0;
         memcpy(&t, d->data + offset, TLV_SIZEOF_DATE);
         return t;
@@ -273,20 +267,24 @@ int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
+        printf("%d\n", (int)offset);
         return tlv_mwrite(tlv, d->data + offset);
 }
 
 int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 
         off_t pad_off, eof_off;
+        unsigned int tlv_size = TLV_SIZEOF(tlv);
+        unsigned int available;
 
         eof_off = d->len;
 
         /* find offset of pad serie leading to EOF */
         pad_off = dz_pad_serie_start(d, eof_off, 0);
+        available = d->len - pad_off;
 
-        if ((d->len - pad_off) < (unsigned int)TLV_SIZEOF(tlv)) {
-                if (dz_remap(d, d->len + (TLV_SIZEOF(tlv) - pad_off)) == -1) {
+        if (available < tlv_size) {
+                if (dz_remap(d, d->len + (tlv_size - available)) == -1) {
                         return -1;
                 }
         }
@@ -735,6 +733,7 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                                 off_t current = daz_buf->offset;
                                 daz_buf->offset = off + TLV_SIZEOF_HEADER
                                         + TLV_SIZEOF_DATE;
+                                /* TODO add a function to print a date */
                                 if (dz_dump(daz_buf, current, (depth - 1),
                                                 (indent + 1), flag_debug)) {
                                         free(ind);
