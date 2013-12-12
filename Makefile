@@ -6,6 +6,7 @@ OS=$(shell uname -s)
 SRC=src
 WEBSRC=$(SRC)/web
 NSRC=$(SRC)/notifier
+DCSRC=$(SRC)/cli
 
 VALGRIND=valgrind
 VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
@@ -30,7 +31,8 @@ TARGET=dazibao
 NSERVER=notification-server
 NCLIENT=notification-client
 WSERVER=daziweb
-TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER)
+DAZICLI=dazicli
+TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
 ifndef UNUSED
 #ifndef STRICT
@@ -58,6 +60,9 @@ CPPCHECK=cppcheck \
 all: check $(TARGETS)
 
 $(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+	$(CC) -o $@ $^ $(CFLAGS)
+
+$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/hash.o $(NSRC)/notification-server.o
