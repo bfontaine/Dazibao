@@ -577,4 +577,9 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         return 0;
 }
 
+
+int dz_check_tlv_at(dz_t *daz_buf, off_t off, int type, off_t **parent) {
+        return 1;
+}
+
 #undef BUFFLEN

@@ -169,4 +169,8 @@ int dz_compact(dz_t *d);
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
+/**
+ *
+ */
+int dz_check_tlv_at(dz_t *daz_buf, off_t off, int type, off_t **parent);
 #endif /* _DAZIBAO_H */
