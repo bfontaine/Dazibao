@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include "utils.h"
 #include "tlv.h"
-#include "dazibao.h"
+#include "mdazibao.h"
 
 /** @file */
 
@@ -95,7 +95,7 @@ int tlv_mwrite(tlv_t *tlv, void *dst) {
 
 int tlv_mread(tlv_t *tlv, void *src) {
 
-        int len = tlv_get_length(tlv);
+        unsigned int len = tlv_get_length(tlv);
 
         if (tlv_get_type(tlv) == TLV_PAD1
                 || tlv_get_type(tlv) == TLV_PADN ) {
@@ -171,32 +171,41 @@ const char *tlv_type2str(char tlv_type) {
         }
 }
 
-int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
-        *tlv_c = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(tlv_t));
-        tlv_set_type(tlv_c, (char) TLV_COMPOUND );
+unsigned int tlv_create_compound(tlv_t *tlv_c, tlv_t *value,
+                unsigned int buff_size) {
+        unsigned int tlv_size;
+        if (tlv_init(tlv_c) < 0) {
+                printf("[tlv_create_compound] error to init tlv");
+                return -1;
+        }
+        tlv_set_type(tlv_c, (char) TLV_COMPOUND);
         tlv_set_length(tlv_c, buff_size);
-
-        memcpy(tlv_get_value_ptr(*tlv_c), *value, buff_size);
-        return 0;
+        tlv_size = tlv_mread(tlv_c, value);
+        return tlv_size;
 }
 
-int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
+unsigned int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv,
+                unsigned  int value_size) {
         unsigned int tlv_size ;
         int real_time = htonl(time(NULL));
 
         tlv_size = TLV_SIZEOF_DATE + value_size;
         *tlv_d = malloc((TLV_SIZEOF_HEADER + tlv_size) * sizeof(tlv_t));
+        if (*tlv_d == NULL) {
+                printf("[tlv_create_date] error to init tlv");
+                return -1;
+        }
         tlv_set_type(tlv_d, (char) TLV_DATED );
         tlv_set_length(tlv_d, tlv_size);
-        char *t = tlv_get_value_ptr(*tlv_d);
+        char *t = tlv_get_value_ptr(tlv_d);
         memcpy(t, &real_time, TLV_SIZEOF_DATE);
         memcpy(t + TLV_SIZEOF_DATE * sizeof(tlv_t), *value_tlv, value_size);
-        return 0;
+        return tlv_size;
 }
 
-int tlv_create_path(char *path, tlv_t *tlv) {
+unsigned int tlv_create_path(char *path, tlv_t *tlv) {
         tlv_t buff;
-        int buff_size, fd;
+        int tlv_size, fd;
         const char *c_type;
         struct stat st_path;
 
@@ -221,55 +230,36 @@ int tlv_create_path(char *path, tlv_t *tlv) {
                 return -1;
         }
 
-        /* with map
-        tlv_init(tlv);
+        if (tlv_init(tlv) < 0) {
+                printf("[tlv_create_path] error to init tlv");
+                return -1;
+        }
         tlv_set_type(tlv, (char) *c_type);
         tlv_set_length(tlv, st_path.st_size);
-        tlv_ size = tlv_mread(tlv, buff);
+        tlv_size = tlv_mread(tlv, buff);
         close(fd);
         return tlv_size;
-        */
-        buff_size = st_path.st_size;
-        *tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(tlv, (char) *c_type);
-        tlv_set_length(tlv, buff_size);
-
-        memcpy(tlv_get_value_ptr(*tlv), buff, buff_size);
-        close(fd);
-
-        return buff_size;
 }
 
 
-int tlv_create_daz(char *daz, tlv_t *tlv) {
+unsigned int tlv_create_daz(char *daz, tlv_t *tlv) {
         dz_t daz_buf;
-        tlv_t buff;
-        int buff_size;
-        struct stat st_path;
+        unsigned int buff_size;
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 fprintf(stderr, "Error while opening the dazibao\n");
                 return -1;
         }
-        if (fstat(daz_buf, &st_path)) {
-                printf("[tlv_create_path] error stat");
-                return -1;
-        }
 
-        buff = mmap(NULL, st_path.st_size, PROT_READ, MAP_PRIVATE, daz_buf, 0);
-        if (buff == MAP_FAILED) {
-                printf("[tlv_create_path] error mmap");
-                return -1;
-        }
+        buff_size = daz_buf.len - DAZIBAO_HEADER_SIZE;
+        *tlv = malloc(buff_size * sizeof(tlv_t));
 
-        buff_size = st_path.st_size - DAZIBAO_HEADER_SIZE;
-        *tlv = malloc(buff_size * sizeof(*tlv));
+        memcpy(*tlv, tlv_get_value_ptr(&daz_buf.data), buff_size);
 
-        memcpy(*tlv, tlv_get_value_ptr(buff), buff_size);
         if (dz_close(&daz_buf) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
-                free(buff);
                 return -1;
         }
+
         return buff_size;
 }
