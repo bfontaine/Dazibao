@@ -25,7 +25,7 @@ int check_tlv_path(const char * path, int flag_access) {
                 printf("[utils.c|check_tlv_path]file %s is to large\n",path);
                 return -1;
         }
-        return 0;
+        return st_path.st_size;
 }
 
 int check_dz_path(const char * path, int flag_access) {
@@ -48,7 +48,7 @@ int check_dz_path(const char * path, int flag_access) {
                 printf("[utils.c|check_dz_path]file %s is to large\n",path);
                 return -1;
         }
-        return 0;
+        return st_path.st_size;
 }
 
 void *safe_realloc(void *ptr, size_t size) {
