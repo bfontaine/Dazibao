@@ -578,6 +578,26 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
 }
 
 
+int dz2tlv(char *d, tlv_t *tlv) {
+        dz_t dz;
+
+        if (dz_open(&dz, d, O_RDWR) < 0) {
+                fprintf(stderr, "Error while opening the dazibao\n");
+                return -1;
+        }
+
+        tlv_set_type(tlv, (char) TLV_COMPOUND);
+        tlv_set_length(tlv, dz.len);
+        tlv_mread(tlv, dz.data + DAZIBAO_HEADER_SIZE );
+
+        if (dz_close(&dz) < 0) {
+                fprintf(stderr, "Error while closing the dazibao\n");
+                return -1;
+        }
+
+        return tlv_get_length(tlv);
+}
+
 int dz_check_tlv_at(dz_t *daz_buf, off_t off, int type, off_t **parent) {
         return 1;
 }
