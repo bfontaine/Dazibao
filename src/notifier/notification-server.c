@@ -280,12 +280,9 @@ int accept_client() {
 
 	s = accept(conf.s_socket, (struct sockaddr*)&caddr, &len);
 	if (s == -1) {
-		if (errno == EINTR) {
-			sleep(1);
-			return accept_client();
-		}
 		ERROR("accept", -1);
 	}
+        LOGDEBUG("cilent connected");
 
         for (i = 0; i < conf.client_max; i++) {
 		if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
@@ -334,7 +331,7 @@ int parse_arg(int argc, char **argv) {
 
         struct s_option options[] = {
                 {"--path", ARG_TYPE_STRING, (void *)conf.s_path},
-                {"--max", ARG_TYPE_STRING, (void *)&(conf.client_max)},
+                {"--max", ARG_TYPE_INT, (void *)&(conf.client_max)},
                 {"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
                 {"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
                 {"--wtimedef", ARG_TYPE_INT, (void *)&(conf.w_sleep_default)},
