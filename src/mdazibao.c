@@ -234,12 +234,12 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
                 d->offset += TLV_SIZEOF_TYPE;
         }
 
-        if (d->len < d->offset + TLV_SIZEOF_LENGTH) {
-                return -1;
-        }
-
         if (tlv_get_type(tlv) == TLV_PAD1) {
                 return off_init;
+        }
+
+        if (d->len < d->offset + TLV_SIZEOF_LENGTH) {
+                return -1;
         }
 
         memcpy(tlv_get_length_ptr(tlv), d->data + d->offset,
@@ -266,7 +266,6 @@ int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
         return tlv_mwrite(tlv, d->data + offset);
 }
-
 
 int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 
@@ -323,17 +322,12 @@ off_t dz_pad_serie_start(dz_t *d, off_t offset) {
                 }
         }
 
-        if (off_tmp == -1) {
-                ERROR("", -1);
-        }
-
-        if(off_start == -1) {
+        if (off_tmp == -1 || off_start == -1) {
                 off_start = offset;
         }
 
         tlv_destroy(&buf);
         return off_start;
-
 }
 
 off_t dz_pad_serie_end(dz_t *d, off_t offset) {
@@ -373,6 +367,10 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
         off_start = dz_pad_serie_start(d, offset);
         off_end   = dz_pad_serie_end(d, offset);
+
+        if (off_start < 0) {
+                off_start = offset;
+        }
 
         off_eof = d->len;
 
