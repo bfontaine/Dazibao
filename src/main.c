@@ -122,10 +122,11 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
         }
 
         if (flag_dazibao == 1) {
-                buff_size = tlv_create_daz(argv[argc-1], &buff);
-                printf("length dz :%u\n",buff_size);
-                tlv_create_compound(&tlv, &buff, buff_size);
-                tlv_destroy(&buff);
+                if (tlv_init(&tlv) < 0) {
+                        printf("[action_add] error to init tlv");
+                        return -1;
+                }
+                buff_size = dz2tlv(argv[argc-1], &tlv);
         }
         if (flag_date == 1) {
                 /*
