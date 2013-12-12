@@ -66,7 +66,7 @@ int dz_mmap_data(dz_t *d, size_t t) {
         d->data = (char *)mmap(NULL, real_size, prot, MAP_SHARED, d->fd, 0);
 
         if (d->data == MAP_FAILED) {
-                perror("mmap");
+                PERROR("mmap");
                 return -1;
         }
 
