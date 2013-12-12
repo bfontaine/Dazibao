@@ -11,10 +11,11 @@ int cmd_add(int argc, char **argv, char * daz) {
             f_dz = -1,
             f_type = -1,
             f_input = -1,
-            args_co = 0,   /*number of compound args*/
+            args = 0,
             args_dz = 0,
-            tmp_date_size = 0,
-            tmp_compound_size = 0,
+            date_size = 0,
+            compound_size = 0,
+            tmp_size = 0,
             tmp_first_args = 0,
             i;
 
@@ -31,7 +32,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                         f_date = 0;
                 } else if (!strcmp(argv[i],"--dazibao")) {
                         f_dz = i;
-                        args = 1;
+                        args_dz = 1;
                 } else if (!strcmp(argv[i],"--compound")) {
                         f_compound = i;
                         args = argc - i -1;
@@ -39,19 +40,16 @@ int cmd_add(int argc, char **argv, char * daz) {
                         f_input = i;
                 /* check args for dazibao or compound*/
                 } else if (args_dz > 0) {
-                        /* TODO renvoyer la taille du fichier 
-                            et la fonction doit vérifier si dz valide
+                        /* TODO la fonction doit vérifier si dz valide
                              -> if HEADER is ok
                             */
-                        if (check_dz_path (argv[i], R_OK) < 0) {
+                        if ((tmp_size = check_dz_path (argv[i], R_OK)) < 0) {
                                 printf("[cmd_add] check path arg failed :%s\n",
                                         argv[i]);
                                 return -1;
                         }
-                } else if (args_co > 0) {
-                        /* TODO renvoyer la taille du fichier 
-                        */
-                        if (check_tlv_path (argv[i], R_OK) < 0) {
+                } else if (args > 0) {
+                        if ((tmp_size = check_tlv_path (argv[i], R_OK)) < 0) {
                                 printf("[cmd_add] check dz arg failed :%s\n",
                                         argv[i]);
                                 return -1;
@@ -63,6 +61,26 @@ int cmd_add(int argc, char **argv, char * daz) {
                         printf("[cmd_add] arg failed:%s\n",argv[i]);
                         return -1;
                 }
+
+                /* check size of tlv */
+                if (f_compound) {
+                        compound_size += tmp_size;
+                } else {
+                       /* if compound not activate if date is activate
+                                it only one file */
+                        date_size = 0;
+                }
+                if (f_date) {
+                        date_size += tmp_size;
+                }
+
+                if ((compound_size > TLV_MAX_VALUE_SIZE) ||
+                        (date_size > (TLV_MAX_VALUE_SIZE - TLV_SIZEOF_DATE)) ||
+                        (tmp_size > TLV_MAX_VALUE_SIZE)) {
+                        printf("[cmd_add] tlv too large\n");
+                        return -1;
+                }
+                tmp_size = 0;
         }
         char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
