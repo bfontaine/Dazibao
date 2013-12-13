@@ -267,7 +267,6 @@ int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
-        printf("%d\n", (int)offset);
         return tlv_mwrite(tlv, d->data + offset);
 }
 
@@ -304,17 +303,16 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 
 static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
 
-        off_t off_start, off_tmp;
+        off_t off_start, off_tmp, off_prev;
         tlv_t buf;
-
-        dz_t tmp = {0, d->fflags, offset, DAZIBAO_HEADER_SIZE,
-                d->space, d->data};
 
         tlv_init(&buf);
 
+        off_prev = d->offset;
+        d->offset = DAZIBAO_HEADER_SIZE;
         off_start = -1;
 
-        while ((off_tmp = dz_next_tlv(&tmp, &buf)) != -1
+        while ((off_tmp = dz_next_tlv(d, &buf)) != -1
                 && off_tmp != EOD
                 && off_tmp < offset) {
                 if (tlv_get_type(&buf) == TLV_PAD1
@@ -334,6 +332,7 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
         }
 
         tlv_destroy(&buf);
+        d->offset = off_prev;
         return off_start;
 }
 
