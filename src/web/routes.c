@@ -118,6 +118,9 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                         return -1;
                 }
 
+                /* FIXME get_value_ptr gives a pointer on the type of the TLV
+                 * here, so we're serving the whole TLV, including its header
+                 */
                 memcpy(*resp->body, tlv_get_value_ptr(&tlv), resp->body_len);
         }
 
