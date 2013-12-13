@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "logging.h"
 #include "webutils.h"
 #include "http.h"
 #include "routing.h"

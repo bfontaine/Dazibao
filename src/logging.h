@@ -16,6 +16,9 @@
  **/
 extern int _log_level;
 
+/* set this to 0 to get each log entry on one line instead of two */
+extern char _log_newline;
+
 /** "debug" log level */
 #define LOG_LVL_DEBUG  50
 /** "info" log level */
@@ -32,11 +35,12 @@ extern int _log_level;
         if ((lvl) <= (_log_level)) { \
         struct tm ts; \
         time_t t = time(NULL); \
-        char h[16]; \
+        char h[16], nl = _log_newline?'\n':' '; \
         localtime_r(&t, &ts); \
         strftime(h, 16, "%T", &ts); \
-        fprintf(stderr, "[%5s][%8s] %s\n %-17s:%03d] " fmt "\n", \
-                        s, h, __func__, __FILE__, __LINE__, ##__VA_ARGS__); }}
+        fprintf(stderr, "[%5s][%8s] %s%c %-17s:%03d] " fmt "\n", \
+                        s, h, __func__, nl, __FILE__, __LINE__, \
+                        ##__VA_ARGS__); }}
 
 /* Use these instead.
  * Examples:

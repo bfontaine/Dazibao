@@ -11,6 +11,7 @@
 
 #include "utils.h"
 #include "tlv.h"
+#include "logging.h"
 
 /** @file */
 

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "request.h"
+#include "logging.h"
 #include "http.h"
 #include "webutils.h"
 #include "utils.h"

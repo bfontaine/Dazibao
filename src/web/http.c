@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "http.h"
 #include "utils.h"
+#include "logging.h"
 #include "webutils.h"
 
 /** @file */

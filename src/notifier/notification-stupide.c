@@ -20,43 +20,43 @@ int main() {
         strncat(sun.sun_path, ".dazibao-notification-socket", 107);
 
         fd = socket(PF_UNIX, SOCK_STREAM, 0);
-        if(fd < 0) {
+        if (fd < 0) {
                 perror("socket");
                 exit(1);
         }
 
         rc = connect(fd, (struct sockaddr*)&sun, sizeof(sun));
-        if(rc < 0) {
+        if (rc < 0) {
                 perror("connect");
                 exit(1);
         }
 
         bufptr = 0;
-        while(1) {
+        while (1) {
                 char *p;
                 rc = read(fd, buf + bufptr, BUFFER_SIZE - bufptr);
-                if(rc < 0) {
-                        if(errno == EINTR)
+                if (rc < 0) {
+                        if (errno == EINTR)
                                 continue;
                         perror("read");
                         exit(1);
                 }
 
-                if(rc == 0)
+                if (rc == 0)
                         break;
 
                 bufptr += rc;
 
                 p = memchr(buf, '\n', bufptr);
-                if(p == NULL) {
-                        if(bufptr >= BUFFER_SIZE) {
+                if (p == NULL) {
+                        if (bufptr >= BUFFER_SIZE) {
                                 fprintf(stderr, "Notification too long!\n");
                                 exit(1);
                         }
                         continue;
                 }
 
-                if(buf[0] == 'C') {
+                if (buf[0] == 'C') {
                         printf("Dazibao changed: ");
                         fwrite(buf, 1, p - buf, stdout);
                         printf("\n");
@@ -66,7 +66,7 @@ int main() {
                                         buf[0]);
                 }
 
-                if(p + 1 >= buf + bufptr) {
+                if (p + 1 >= buf + bufptr) {
                         bufptr = 0;
                 } else {
                         memmove(buf, p + 1, buf + bufptr - (p + 1));

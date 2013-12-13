@@ -4,6 +4,7 @@
 #include <time.h>
 #include "webutils.h"
 #include "utils.h"
+#include "logging.h"
 #include "tlv.h"
 #include "http.h"
 

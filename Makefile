@@ -62,13 +62,14 @@ all: check $(TARGETS)
 $(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(NSRC)/hash.o $(NSRC)/notification-server.o
+$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(SRC)/logging.o \
+		$(NSRC)/hash.o $(NSRC)/notification-server.o
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NCLIENT): $(SRC)/utils.o $(NSRC)/notification-client.o
+$(NCLIENT): $(SRC)/utils.o $(SRC)/logging.o $(NSRC)/notification-client.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \

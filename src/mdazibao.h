@@ -28,18 +28,35 @@
  * The type of a Dazibao
  **/
 typedef struct {
+        /** file descriptor */
         int fd;
+        /** flag used to open the file */
         int fflags;
+        /** length of the dazibao */
         size_t len;
+        /** current offset */
         size_t offset;
+        /** actual length of the file */
         size_t space;
+        /** mmaped region */
         char *data;
 } dz_t;
 
-int sync_file(dz_t *d);
+/**
+ * @param d the dazibao
+ **/
+int dz_sync(dz_t *d);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_mmap_data(dz_t *d, size_t t);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_remap(dz_t *d, size_t t);
 
 
@@ -82,11 +99,17 @@ int dz_reset(dz_t *d);
  * Fill tlv value
  * @param d dazibao used for reading
  * @param tlv tlv to be filled
- * @param offset off wanted tlv
+ * @param offset offset of the TLV
  * @return 0 on success, -1 on error
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
+/**
+ * Read a 4-bytes date in a dazibao
+ * @param d the dazibao
+ * @param offset offset of the date
+ * @return a timestamp
+ **/
 time_t dz_read_date_at(dz_t *d, off_t offset);
 
 /**
@@ -165,8 +188,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
 
 /**
  * Compact a Dazibao file. The file must have been opened in read/write mode,
- * and the Dazibao is NOT closed by the function. Also, the dazibao offset is
- * NOT preserved.
+ * and the Dazibao is NOT closed by the function.
  * @return number of bytes saved by the compacting operation on success, or -1
  *         on error
  **/

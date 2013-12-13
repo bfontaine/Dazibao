@@ -44,6 +44,8 @@
 #define DZ_ARGS_ERROR        -128
 /** code for TLV types errors */
 #define DZ_TLV_TYPE_ERROR    -256
+/** code for mmap-related errors */
+#define DZ_MMAP_ERROR        -512
 
 /**
  * use 'perror' and exit with EXIT_FAILURE
@@ -160,9 +162,6 @@ long str2dec_positive(char *s);
  *         call strdup on it to be sure to have a new pointer.
  **/
 const char *get_ext(const char *path);
-
-/* = Logging = */
-#include "logging.h"
 
 /* = other utilities = */
 
