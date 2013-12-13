@@ -43,7 +43,7 @@ int route_get_index(dz_t dz, struct http_request req,
 int route_get_image_tlv(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
-        tlv_t *tlv;
+        tlv_t tlv;
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
 
@@ -53,10 +53,9 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                 return -1;
         }
 
-        tlv = (tlv_t*)malloc(sizeof(tlv_t));
-        if (tlv_init(tlv) < 0) {
+        if (tlv_init(&tlv) < 0) {
                 LOGERROR("Cannot allocate memory for a TLV");
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
@@ -64,7 +63,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
 
         if (tlv_type == -1) {
                 LOGERROR("Cannot get the TLV type from '%s'", req.path);
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
@@ -72,39 +71,40 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
          * .jpg (not .jpeg) */
         if (sscanf(req.path, "/tlv/%16lu.%*3s", &off) == 0) {
                 LOGERROR("Cannot parse the request path");
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
         if (off < DAZIBAO_HEADER_SIZE) {
                 LOGERROR("Wrong offset (%li < dazibao header size)",
                                 (long)off);
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
-        if (dz_tlv_at(&dz, tlv, off) < 0) {
+        if (dz_tlv_at(&dz, &tlv, off) < 0) {
                 LOGERROR("Cannot read TLV at offset %li", (long)off);
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
-        tlv_real_type = tlv_get_type(tlv);
+        tlv_real_type = tlv_get_type(&tlv);
         if (tlv_real_type != tlv_type) {
                 LOGERROR("Wrong TLV type. Expected %d, got %d",
                                 tlv_type, tlv_real_type);
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
         if (req.method != HTTP_M_HEAD) {
-                resp->body_len = tlv_get_length(tlv);
+                resp->body_len = tlv_get_length(&tlv);
         }
         LOGDEBUG("TLV is of type %d, with length %d", tlv_type,
                         resp->body_len);
 
-        if (dz_read_tlv(&dz, tlv, off) < 0) {
+        LOGDEBUG("Reading the TLV at offset %lu", (long)off);
+        if (dz_read_tlv(&dz, &tlv, off) < 0) {
                 LOGERROR("Cannot read TLV at offset %li", (long)off);
-                tlv_destroy(tlv);
+                tlv_destroy(&tlv);
                 return -1;
         }
 
@@ -114,14 +114,14 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                         perror("malloc");
                         LOGERROR("Cannot alloc memory to store the " \
                                         "TLV's value");
-                        tlv_destroy(tlv);
+                        tlv_destroy(&tlv);
                         return -1;
                 }
 
-                memcpy(*resp->body, tlv_get_value_ptr(tlv), resp->body_len);
+                memcpy(*resp->body, tlv_get_value_ptr(&tlv), resp->body_len);
         }
 
-        tlv_destroy(tlv);
+        tlv_destroy(&tlv);
         resp->status = HTTP_S_OK;
         return 0;
 }

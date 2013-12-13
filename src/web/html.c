@@ -260,15 +260,15 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
 }
 
 int dz2html(dz_t dz, char **html) {
-        tlv_t *t = (tlv_t*)malloc(sizeof(tlv_t));
+        tlv_t t;
         off_t dz_off;
         int htmlsize = 0,
             htmlcursor = 0,
             written = 0,
             html_bottom_len;
 
-        if (dz.fd < 0 || html == NULL || tlv_init(t) < 0) {
-                tlv_destroy(t);
+        if (dz.fd < 0 || html == NULL || tlv_init(&t) < 0) {
+                tlv_destroy(&t);
                 LOGERROR("dz<0 or html==NULL or tlv_init failed");
                 return -1;
         }
@@ -281,36 +281,35 @@ int dz2html(dz_t dz, char **html) {
         *html = (char*)malloc(sizeof(char)*htmlsize);
         if (*html == NULL) {
                 perror("malloc");
-                tlv_destroy(t);
+                tlv_destroy(&t);
                 LOGERROR("cannot preallocate enough memory to fit the HTML");
                 return -1;
         }
 
-        written = snprintf(*html+htmlcursor, htmlsize-htmlcursor,
+        written = snprintf(*html + htmlcursor, htmlsize - htmlcursor,
                         HTML_DZ_TOP_FMT, WSERVER.dzname);
         if (written > htmlsize) {
                 perror("snprintf");
-                tlv_destroy(t);
+                tlv_destroy(&t);
                 NFREE(*html);
                 LOGERROR("HTML top snprintf failed, written=%d", written);
                 return -1;
         }
         htmlcursor += written;
 
-        while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
-                if (html_add_tlv(dz, t, &dz_off, html, &htmlsize,
+        while ((dz_off = dz_next_tlv(&dz, &t)) > 0) {
+                if (html_add_tlv(dz, &t, &dz_off, html, &htmlsize,
                                         &htmlcursor) != 0) {
                         return -1;
                 }
         }
 
-        tlv_destroy(t);
+        tlv_destroy(&t);
 
         html_bottom_len = strlen(HTML_DZ_BOTTOM);
 
         if (html_ensure_length(html, &htmlsize, &htmlcursor,
                                 html_bottom_len + 1) == -1) {
-                tlv_destroy(t);
                 LOGERROR("cannot allocate enough memory to fit the " \
                                 "HTML bottom");
                 return -1;
