@@ -36,6 +36,7 @@ warncheck '}else'   'no spaces between "}" and "else"'
 warncheck 'if\('    'no spaces between "if" and "("'
 warncheck 'while\(' 'no spaces between "while" and "("'
 warncheck 'switch\(' 'no spaces between "which" and "("'
+warncheck ' --;'    'spaces before a "--" operator'
 
 warnfncheck 'sprintf' 'snprintf'
 warnfncheck 'atoi'    'strtol'
