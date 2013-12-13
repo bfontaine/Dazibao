@@ -2,6 +2,7 @@
 #include "html.h"
 #include "mdazibao.h"
 #include "tlv.h"
+#include "logging.h"
 #include "webutils.h"
 
 /** @file */
@@ -25,6 +26,7 @@ int html_ensure_length(char **html, int *htmlsize, int *htmlcursor, int len) {
 int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 *htmlsize, int *htmlcursor) {
         int w, tlen, len;
+        off_t prev;
 
         tlen = tlv_get_length(t);
         len = tlen + (strlen(HTML_TLV_TEXT_FMT) - 4) + 1;
@@ -33,11 +35,11 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
                 return -1;
         }
 
-        SAVE_OFFSET(dz);
+        prev = dz.offset;
         if (dz_read_tlv(&dz, t, *off) < 0) {
                 return -1;
         }
-        RESTORE_OFFSET(dz);
+        dz.offset = prev;
 
         LOGDEBUG("Adding HTML of text TLV at offset %li, tlen=%d, len=%d, " \
                         "htmlsize=%d, cursor=%d",

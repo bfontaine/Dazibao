@@ -9,13 +9,13 @@
 #include <sys/wait.h>
 #include <string.h>
 #include "utils.h"
+#include "logging.h"
 #include "notifutils.h"
 #include "notification-client.h"
 
 static char notifier_enabled = 1;
 static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
 static char cmd[BUFFER_SIZE*2];
-int _log_level = LOG_LVL_DEBUG;
 
 int check_notifier(void) {
         LOGINFO("Looking for %s", notifier);
@@ -120,6 +120,7 @@ int main(int argc, char **argv) {
         struct sockaddr_un sun;
         int fd;
 
+        _log_level = LOG_LVL_DEBUG;
         memset(&sun, 0, sizeof(sun));
         sun.sun_family = AF_UNIX;
 

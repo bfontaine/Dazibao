@@ -163,9 +163,6 @@ long str2dec_positive(char *s);
  **/
 const char *get_ext(const char *path);
 
-/* = Logging = */
-#include "logging.h"
-
 /* = other utilities = */
 
 /** helper for STR macro */

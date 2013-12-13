@@ -12,6 +12,7 @@
 #include "mdazibao.h"
 #include "daziweb.h"
 #include "utils.h"
+#include "logging.h"
 #include "webutils.h"
 #include "request.h"
 #include "routing.h"

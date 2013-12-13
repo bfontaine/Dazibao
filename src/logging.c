@@ -6,3 +6,5 @@ int _log_level =
 #else
         LOG_LVL_INFO;
 #endif
+
+char _log_newline = 1;

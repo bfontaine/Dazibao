@@ -16,6 +16,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "logging.h"
 #include "notifutils.h"
 #include "hash.h"
 #include "notification-server.h"
