@@ -281,10 +281,10 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 
         /* find offset of pad serie leading to EOF */
         pad_off = dz_pad_serie_start(d, eof_off, 0);
-        available = d->len - pad_off;
+        available = d->space - pad_off;
 
         if (available < tlv_size) {
-                if (dz_remap(d, d->len + (tlv_size - available)) == -1) {
+                if (dz_remap(d, d->space + (tlv_size - available)) == -1) {
                         return -1;
                 }
         }
