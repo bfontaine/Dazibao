@@ -73,18 +73,18 @@ int action_add(char *daz, unsigned char type) {
                 exit(EXIT_FAILURE);
         }
 
-        while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
+        while ((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
 
                 buff_size += read_size;
 
-                if(buff_size > TLV_MAX_VALUE_SIZE) {
+                if (buff_size > TLV_MAX_VALUE_SIZE) {
                         fprintf(stderr, "tlv too large\n");
                         exit(EXIT_FAILURE);
                 }
 
                 buff = safe_realloc(buff, sizeof(*buff) * buff_size);
 
-                if(buff == NULL) {
+                if (buff == NULL) {
                         perror("realloc");
                         return DZ_MEMORY_ERROR;
                 }

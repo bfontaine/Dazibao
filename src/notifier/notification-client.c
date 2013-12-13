@@ -149,12 +149,12 @@ int main(int argc, char **argv) {
         notifier_enabled = check_notifier();
 
         fd = socket(PF_UNIX, SOCK_STREAM, 0);
-        if(fd < 0) {
+        if (fd < 0) {
                 PERROR("socket");
                 exit(1);
         }
 
-        if(connect(fd, (struct sockaddr*)&sun, sizeof(sun)) < 0) {
+        if (connect(fd, (struct sockaddr*)&sun, sizeof(sun)) < 0) {
                 PERROR("connect");
                 exit(1);
         }

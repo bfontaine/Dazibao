@@ -232,7 +232,7 @@ int set_up_server() {
 
         conf.s_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 
-        if(conf.s_socket < 0) {
+        if (conf.s_socket < 0) {
                 PERROR("socket");
                 exit(1);
         }
@@ -395,7 +395,7 @@ int main(int argc, char **argv) {
 
         LOGINFO("Server set up");
 
-        if(nsa() != 0) {
+        if (nsa() != 0) {
                 LOGERROR("nsa");
                 goto OUT;
         }
