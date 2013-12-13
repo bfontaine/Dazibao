@@ -225,19 +225,22 @@ time_t dz_read_date_at(dz_t *d, off_t offset) {
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
-        int rc;
+        int type;
         int off_init = d->offset;
 
         if (d->len == d->offset) {
                 return EOD;
-        } else if (d->len < d->offset + TLV_SIZEOF_TYPE) {
+        }
+        if (d->len < d->offset + TLV_SIZEOF_TYPE) {
                 return -1;
-        } else {
-                tlv_set_type(tlv, d->data[d->offset]);
-                d->offset += TLV_SIZEOF_TYPE;
         }
 
-        if (tlv_get_type(tlv) == TLV_PAD1) {
+        type = d->data[d->offset];
+
+        tlv_set_type(tlv, type);
+        d->offset += TLV_SIZEOF_TYPE;
+
+        if (type == TLV_PAD1) {
                 return off_init;
         }
 
@@ -248,15 +251,8 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
         memcpy(tlv_get_length_ptr(tlv), d->data + d->offset,
                         TLV_SIZEOF_LENGTH);
 
-        d->offset += TLV_SIZEOF_LENGTH;
+        d->offset += TLV_SIZEOF_LENGTH + tlv_get_length(tlv);
 
-        rc = tlv_mread(tlv, d->data + d->offset);
-
-        if (rc < 0) {
-                return -1;
-        }
-
-        d->offset += rc;
         return off_init;
 }
 
