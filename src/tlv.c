@@ -14,7 +14,7 @@
  * @param tlv tlv receiving length
  * @deprecated use tlv_set_length instead
  **/
-static void htod(unsigned int n, char *len) {
+void htod(unsigned int n, char *len) {
         union {
                 unsigned int i;
                 unsigned char c[4];
@@ -104,22 +104,19 @@ int tlv_mread(tlv_t *tlv, void *src) {
 }
 
 int tlv_fwrite(tlv_t tlv, int fd) {
-/*
         unsigned int to_write = TLV_SIZEOF(tlv);
         int status = write_all(fd, tlv, to_write);
         if (status == -1 || (unsigned int)status != to_write) {
                 ERROR("write", -1);
         }
-*/
         return 0;
 }
 
 int tlv_fread(tlv_t *tlv, int fd) {
-/*
         int len = tlv_get_length(*tlv);
 
-        *tlv = (tlv_t)safe_realloc(*tlv, sizeof(char)
-                                                * (TLV_SIZEOF_HEADER + len));
+        *tlv = (tlv_t)safe_realloc(*tlv,
+                                sizeof(**tlv) * (TLV_SIZEOF_HEADER + len));
 
         if (*tlv == NULL) {
                 perror("realloc");
@@ -129,10 +126,47 @@ int tlv_fread(tlv_t *tlv, int fd) {
         if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
                 ERROR("read", -1);
         }
-*/
         return 0;
 }
 
+int tlv_from_file(tlv_t *tlv, char *path, char type) {
+        /* TODO:
+         * - lock file
+         */
+        struct stat st;
+        int status;
+        int fd = open(path, O_RDONLY);
+
+        if (fd == -1) {
+                ERROR("open", -1);
+        }
+
+        if (fstat(fd, &st) == -1) {
+                PERROR("fstat");
+                status = -1;
+                goto OUT;
+        }
+
+        if (st.st_size > TLV_MAX_VALUE_SIZE) {
+                LOGERROR("File too large to fit in a TLV.");
+                status = -1;
+                goto OUT;
+        }
+
+        tlv_set_type(tlv, type)
+        tlv_set_length(st.st_size);
+        if (tlv_fread(tlv, fd) != 0) {
+                LOGERROR("tlv_fread failed.");
+                status = -1;
+        }
+
+OUT:
+        if (close(fd) == -1) {
+                PERROR("close");
+        }
+
+        return status;
+}
 
 int tlv_fdump(tlv_t *tlv, int fd) {
         return write(fd, tlv, TLV_SIZEOF(tlv));

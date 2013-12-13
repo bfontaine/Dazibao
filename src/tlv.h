@@ -64,6 +64,8 @@
  **/
 typedef char* tlv_t;
 
+void htod(unsigned int n, char *len);
+
 /**
  * Initialize a TLV. If the TLV was previously initialized/filled, call
  * tlv_destroy on it before calling this function.
