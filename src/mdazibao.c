@@ -208,13 +208,7 @@ int dz_close(dz_t *d) {
 }
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
-        off_t prev = d->offset;
-        int st;
-
-        d->offset = offset;
-        st = tlv_mread(tlv, d->data);
-        d->offset = prev;
-        return st;
+        return tlv_mread(tlv, d->data + offset);
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
