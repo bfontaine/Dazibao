@@ -58,8 +58,8 @@ int dz_mmap_data(dz_t *d, size_t t) {
         size_t page_size, real_size;
         int prot;
 
-        page_size = (size_t) sysconf(_SC_PAGESIZE);
-        real_size = (size_t) page_size * (((t+page_size-1)/page_size)+1);
+        page_size = (size_t)sysconf(_SC_PAGESIZE);
+        real_size = (size_t)(page_size * (t/page_size + MIN(1, t%page_size)));
 
         if (d->fflags == O_RDWR && ftruncate(d->fd, real_size) == -1) {
                 PERROR("ftruncate");
@@ -68,7 +68,7 @@ int dz_mmap_data(dz_t *d, size_t t) {
 
         prot = PROT_READ | (d->fflags == O_RDWR ? PROT_WRITE : 0);
 
-        d->data = (char *)mmap(NULL, real_size, prot, MAP_SHARED, d->fd, 0);
+        d->data = (char*)mmap(NULL, real_size, prot, MAP_SHARED, d->fd, 0);
 
         if (d->data == MAP_FAILED) {
                 PERROR("mmap");
@@ -257,8 +257,14 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 }
 
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
-        dz_t tmp = {0, d->fflags, d->len - offset, 0, d->space - offset,
-                d->data + offset};
+        dz_t tmp = {
+                0,
+                d->fflags,
+                d->len - offset,
+                0,
+                d->space - offset,
+                d->data + offset
+        };
         return dz_next_tlv(&tmp, tlv);
 }
 
@@ -333,7 +339,7 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
 }
 
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
-        off_t off_stop;
+        off_t off_stop, off_prev;
         tlv_t buf;
 
         if (max_offset > 0 && max_offset < offset) {
@@ -341,6 +347,7 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         }
 
         tlv_init(&buf);
+        off_prev = d->offset;
         d->offset = offset;
 
         /* skip current tlv */
@@ -361,6 +368,7 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         }
 
         tlv_destroy(&buf);
+        d->offset = off_prev;
         return off_stop;
 }
 
@@ -562,6 +570,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         tlv_t buff;
         char pad1s[TLV_SIZEOF_HEADER-1];
         char *b_val;
+        off_t prev = d->offset;
 
         len = MIN(length, TLV_MAX_VALUE_SIZE);
         b_val = calloc(len, sizeof(char));
@@ -619,6 +628,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
 OUT:
         tlv_destroy(&buff);
         free(b_val);
+        d->offset = prev;
         return status;
 }
 

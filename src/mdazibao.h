@@ -99,7 +99,7 @@ int dz_reset(dz_t *d);
  * Fill tlv value
  * @param d dazibao used for reading
  * @param tlv tlv to be filled
- * @param offset off wanted tlv
+ * @param offset offset of the TLV
  * @return 0 on success, -1 on error
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
@@ -188,8 +188,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
 
 /**
  * Compact a Dazibao file. The file must have been opened in read/write mode,
- * and the Dazibao is NOT closed by the function. Also, the dazibao offset is
- * NOT preserved.
+ * and the Dazibao is NOT closed by the function.
  * @return number of bytes saved by the compacting operation on success, or -1
  *         on error
  **/
