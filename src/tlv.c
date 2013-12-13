@@ -2,6 +2,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "utils.h"
 #include "tlv.h"
 
@@ -103,9 +110,9 @@ int tlv_mread(tlv_t *tlv, void *src) {
         return len;
 }
 
-int tlv_fwrite(tlv_t tlv, int fd) {
+int tlv_fwrite(tlv_t *tlv, int fd) {
         unsigned int to_write = TLV_SIZEOF(tlv);
-        int status = write_all(fd, tlv, to_write);
+        int status = write_all(fd, *tlv, to_write);
         if (status == -1 || (unsigned int)status != to_write) {
                 ERROR("write", -1);
         }
@@ -113,7 +120,7 @@ int tlv_fwrite(tlv_t tlv, int fd) {
 }
 
 int tlv_fread(tlv_t *tlv, int fd) {
-        int len = tlv_get_length(*tlv);
+        int len = tlv_get_length(tlv);
 
         *tlv = (tlv_t)safe_realloc(*tlv,
                                 sizeof(**tlv) * (TLV_SIZEOF_HEADER + len));
@@ -123,7 +130,7 @@ int tlv_fread(tlv_t *tlv, int fd) {
                 return DZ_MEMORY_ERROR;
         }
 
-        if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
+        if (read(fd, tlv_get_value_ptr(tlv), len) < len) {
                 ERROR("read", -1);
         }
         return 0;
@@ -153,8 +160,8 @@ int tlv_from_file(tlv_t *tlv, char *path, char type) {
                 goto OUT;
         }
 
-        tlv_set_type(tlv, type)
-        tlv_set_length(st.st_size);
+        tlv_set_type(tlv, type);
+        tlv_set_length(tlv, st.st_size);
         if (tlv_fread(tlv, fd) != 0) {
                 LOGERROR("tlv_fread failed.");
                 status = -1;

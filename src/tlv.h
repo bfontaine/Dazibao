@@ -138,7 +138,7 @@ int tlv_mread(tlv_t *tlv, void *data);
  * @param fd file descriptor where tlv is written
  * @return 0 on success, -1 on error
  **/
-int tlv_fwrite(tlv_t tlv, int fd);
+int tlv_fwrite(tlv_t *tlv, int fd);
 
 /**
  * Read a TLV value.
@@ -173,5 +173,7 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
 const char *tlv_type2str(char tlv_type);
 
 char tlv_str2type(char *tlv_type);
+
+int tlv_from_file(tlv_t *tlv, char *path, char type);
 
 #endif

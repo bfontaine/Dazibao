@@ -1,5 +1,5 @@
-#ifndef _MAIN_H
-#define _MAIN_H 1
+#ifndef _CLI_H
+#define _CLI_H 1
 
 #include "mdazibao.h"
 #include <limits.h>
@@ -7,9 +7,16 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <time.h>
+#include <arpa/inet.h>
+
 #include "utils.h"
 #include "main.h"
 #include "mdazibao.h"
+#include "tlv.h"
 /** @file
  * Main program used for the command-line interface
  **/
@@ -46,9 +53,9 @@
         "        options:\n" \
         "            -r, --recursive: (todo)\n"
 
-#define DZCLI_TYPE_SEPARATOR ','
-
+#define DZCLI_TYPE_SEPARATOR ","
 
 int add(int, char**);
+int mk_tlv(int argc, char **argv, int out);
 
 #endif
