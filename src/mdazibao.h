@@ -28,18 +28,35 @@
  * The type of a Dazibao
  **/
 typedef struct {
+        /** file descriptor */
         int fd;
+        /** flag used to open the file */
         int fflags;
+        /** length of the dazibao */
         size_t len;
+        /** current offset */
         size_t offset;
+        /** actual length of the file */
         size_t space;
+        /** mmaped region */
         char *data;
 } dz_t;
 
-int sync_file(dz_t *d);
+/**
+ * @param d the dazibao
+ **/
+int dz_sync(dz_t *d);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_mmap_data(dz_t *d, size_t t);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_remap(dz_t *d, size_t t);
 
 
@@ -87,6 +104,12 @@ int dz_reset(dz_t *d);
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
+/**
+ * Read a 4-bytes date in a dazibao
+ * @param d the dazibao
+ * @param offset offset of the date
+ * @return a timestamp
+ **/
 time_t dz_read_date_at(dz_t *d, off_t offset);
 
 /**

@@ -44,16 +44,13 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
-int sync_file(dz_t *d) {
-        if(ftruncate(d->fd, d->len) == -1) {
+int dz_sync(dz_t *d) {
+        if (ftruncate(d->fd, d->len) == -1) {
                 PERROR("ftruncate");
                 return -1;
         }
 
-        if (msync(d->data, d->len, MS_SYNC) == -1) {
-                return -1;
-        }
-        return 0;
+        return msync(d->data, d->len, MS_SYNC);
 }
 
 int dz_mmap_data(dz_t *d, size_t t) {
@@ -64,7 +61,7 @@ int dz_mmap_data(dz_t *d, size_t t) {
         page_size = (size_t) sysconf(_SC_PAGESIZE);
         real_size = (size_t) page_size * (((t+page_size-1)/page_size)+1);
 
-        if(d->fflags == O_RDWR && ftruncate(d->fd, real_size) == -1) {
+        if (d->fflags == O_RDWR && ftruncate(d->fd, real_size) == -1) {
                 PERROR("ftruncate");
                 return -1;
         }
@@ -88,7 +85,7 @@ int dz_remap(dz_t *d, size_t t) {
                 return DZ_RIGHTS_ERROR;
         }
 
-        if (sync_file(d) == -1
+        if (dz_sync(d) < 0
                         || munmap(d->data, d->len) == -1
                         || dz_mmap_data(d, t) == -1) {
                 return -1;
@@ -130,7 +127,7 @@ PANIC:
         return -1;
 
 OUT:
-        if (sync_file(d) == -1) {
+        if (dz_sync(d) < 0) {
                 return -1;
         }
         return 0;
@@ -182,21 +179,18 @@ int dz_open(dz_t *d, char *path, int flags) {
                 goto PANIC;
         }
 
-        goto OUT;
+        return 0;
 PANIC:
         if (close(d->fd) == -1) {
                 PERROR("close");
         }
         return -1;
-OUT:
-        return 0;
-
 }
 
 int dz_close(dz_t *d) {
 
-        if (d->fflags == O_RDWR && sync_file(d) == -1) {
-                return -1;
+        if (d->fflags == O_RDWR && dz_sync(d) < 0) {
+                return DZ_MMAP_ERROR;
         }
 
         if (flock(d->fd, LOCK_UN) == -1) {
@@ -205,7 +199,7 @@ int dz_close(dz_t *d) {
         }
 
         if (close(d->fd) == -1) {
-                PERROR("close");
+                perror("close");
                 return -1;
         }
 
@@ -214,7 +208,13 @@ int dz_close(dz_t *d) {
 }
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
-        return tlv_mread(tlv, d->data);
+        off_t prev = d->offset;
+        int st;
+
+        d->offset = offset;
+        st = tlv_mread(tlv, d->data);
+        d->offset = prev;
+        return st;
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
@@ -291,7 +291,7 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
                 ERROR(NULL, -1);
         }
 
-        if (sync_file(d) == -1) {
+        if (dz_sync(d) < 0) {
                 return -1;
         }
         return 0;
@@ -599,8 +599,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 /* set length */
                 tlv_set_length(&buff, length - TLV_SIZEOF_HEADER);
 
-                /* XXX the TLV's length is 4 */
-                if(dz_write_tlv_at(d, &buff, start) == -1) {
+                if (dz_write_tlv_at(d, &buff, start) == -1) {
                         status = -1;
                         goto OUT;
                 }
@@ -623,66 +622,144 @@ OUT:
         return status;
 }
 
+/**
+ * Helper for 'inner_compact'. This is a wrapper around memmove to copy some
+ * data between two offsets in a dazibao. If the offsets are the same, the
+ * function avoid a call to memmove. It increments the offsets of the number of
+ * copied bytes.
+ * @param d the dazibao
+ * @param reader pointer on the offset we need to copy from
+ * @param writer pointer on the offset we need to copy to
+ * @param count number of bytes to copy
+ * @return 0
+ **/
+static int dz_memmove(dz_t *d, off_t *reader, off_t *writer, int count) {
+        if (*reader == *writer) {
+                /* nothing to copy here */
+                *reader += count;
+                *writer += count;
+                return 0;
+        }
+        memmove(d->data + *writer, d->data + *reader, count);
+        *writer += count;
+        *reader += count;
+        return 0;
+}
+
+/**
+ * Helper for dz_compact. Compact a TLV at offset '*reader' and write it at
+ * offset '*writer' in the current TLV.
+ * @param d the dazibao
+ * @param reader the offset we need to write at
+ * @param writer the offset we need to read at
+ * @param max_off the maximum offset we need to read to
+ * @return the saved bytes count
+ **/
+static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
+                off_t max_off) {
+
+        /* XXX this works only a dazibao with no padN/pad1, which is not quite
+         * we're expecting */
+
+        int type = -1,
+            len = 0,
+            saved = 0,
+            is_dz = 0,
+            bytescount;
+        tlv_t t;
+        off_t tlv_off,   /* offset where the TLV is written */
+              value_off; /* offset of the beginning of the value */
+
+        if (*reader > max_off || *reader < 0 || *writer < 0) {
+                return 0;
+        }
+
+        if (*reader == max_off) {
+                return 0;
+        }
+
+        /* We're in a Dazibao, which is almost the same as in a
+           compound except that we don't have to update the length. */
+        is_dz = (*reader == 0);
+
+        if (!is_dz) {
+                tlv_init(&t);
+                dz_tlv_at(d, &t, *reader);
+
+                type = tlv_get_type(&t);
+                len  = tlv_get_length(&t);
+        } else {
+                *reader += DAZIBAO_HEADER_SIZE;
+                *writer += DAZIBAO_HEADER_SIZE;
+        }
+
+        switch (type) {
+        case TLV_PAD1:
+                saved = TLV_SIZEOF_TYPE;
+                *reader += saved;
+                goto EOCOMPACT;
+        case TLV_PADN:
+                saved = TLV_SIZEOF_HEADER + len;
+                *reader += saved;
+                goto EOCOMPACT;
+        case TLV_DATED:
+                tlv_off = *writer;
+                /* copy the type */
+                dz_memmove(d, reader, writer, TLV_SIZEOF_TYPE);
+                /* don't copy the length now, we'll set it later because it
+                   may change */
+                *writer += TLV_SIZEOF_LENGTH;
+                *reader += TLV_SIZEOF_LENGTH;
+                /* value (date + inner TLV) */
+                value_off = *writer;
+                dz_memmove(d, reader, writer, TLV_SIZEOF_DATE);
+                len -= TLV_SIZEOF_DATE;
+                saved = compact_helper(d, reader, writer, *reader + len);
+                len = *writer - value_off; /* new length */
+                tlv_set_length(&t, len);
+                memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
+                                t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
+                goto EOCOMPACT;
+        case -1:
+        case TLV_COMPOUND:
+                tlv_off = *writer;
+                if (!is_dz) {
+                        /* copy the type */
+                        dz_memmove(d, reader, writer, TLV_SIZEOF_TYPE);
+                        /* don't copy the length of now, we'll set it later
+                         * because it may change */
+                        *writer += TLV_SIZEOF_LENGTH;
+                        *reader += TLV_SIZEOF_LENGTH;
+                }
+                while (*reader < max_off) {
+                        saved += compact_helper(d, reader, writer, max_off);
+                }
+                if (is_dz) {
+                        d->len = *writer;
+                } else {
+                        len = *writer - (tlv_off + TLV_SIZEOF_HEADER);
+                        tlv_set_length(&t, len);
+                        memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
+                                t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
+
+                }
+                goto EOCOMPACT;
+        default: /* other TLVs */
+                dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+        }
+
+EOCOMPACT:
+        if (!is_dz) {
+                tlv_destroy(&t);
+        }
+        return saved;
+}
 
 int dz_compact(dz_t *d) {
-        tlv_t tlv;
-        tlv_init(&tlv);
-        off_t reading = DAZIBAO_HEADER_SIZE,
-              writing = -1;
+        off_t reader = 0,
+              writer = 0;
 
-        int status = 0;
-
-        char buff[BUFFLEN];
-
-        if (d == NULL) {
-                status = -1;
-                goto OUT;
-        }
-
-        d->offset = reading;
-
-        while ((reading = dz_next_tlv(d, &tlv)) != EOD) {
-                int type = tlv_get_type(&tlv);
-
-                if ((type == TLV_PAD1) || (type == TLV_PADN)) {
-                        if (writing == -1) {
-                                writing = reading;
-                        }
-                } else {
-                        if (writing != -1) {
-                                d->offset = (reading + TLV_SIZEOF_HEADER);
-
-                                int len = tlv_get_length(&tlv);
-
-                                if (tlv_mread(&tlv, d->data + d->offset)) {
-                                        status = -1;
-                                        goto OUT;
-                                }
-
-                                if (dz_write_tlv_at(d, &tlv, writing) == -1) {
-                                    PERROR("realloc");
-                                    status = -1;
-                                    goto OUT;
-                                }
-
-                                writing = d->offset;
-                                d->offset = reading + TLV_SIZEOF(&tlv);
-                        }
-                }
-        }
-
-        if (writing != -1) {
-            if (ftruncate(d->fd, writing) < 0) {
-                    perror("ftruncate");
-                    status = -1;
-                    goto OUT;
-            }
-            d->len = writing;
-        }
-
-OUT:
-        tlv_destroy(&tlv);
-        return status;
+        return compact_helper(d, &reader, &writer, d->len);
 }
 
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
