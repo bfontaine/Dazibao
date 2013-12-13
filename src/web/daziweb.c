@@ -151,6 +151,7 @@ int main(int argc, char **argv) {
         socklen_t len = sizeof(struct sockaddr_in);
         struct sigaction sig;
 
+        _log_newline = 0;
         LOGDEBUG("Parsing arguments...");
 
         if (parse_args(argc, argv, &port) != 0) {
