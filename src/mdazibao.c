@@ -116,7 +116,7 @@ int dz_create(dz_t *d, char *path) {
         }
 
         d->data[0] = MAGIC_NUMBER;
-        d->data[1] = 0;
+        memset(d->data + 1, 0, DAZIBAO_HEADER_SIZE - 1);
         d->len = DAZIBAO_HEADER_SIZE;
 
         goto OUT;
