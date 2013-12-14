@@ -51,14 +51,32 @@ static void clean_close(int s) {
         exit(EXIT_SUCCESS);
 }
 
+/**
+ * Print the help text on STDERR
+ * @param exec
+ **/
+static void print_usage(char *exec) {
+        fprintf(stderr,
+                "Usage:\n"
+                "\n"
+                "\t%s [-vD] -d <dazibao> [-p <port>]\n"
+                "\n"
+                "Options:\n"
+                "\t-d <dazibao> specify the path of the dazibao\n"
+                "\t-p <port>    specify the port to use (default is 3437)\n"
+                "\t-v           verbose mode. Multiple -v options increase\n"
+                "\t             the verbosity.\n"
+                "\t-D           debug mode. Display pad1s and padNs.\n"
+                , exec);
+}
 
 /**
  * parse command-line arguments, and fill relevant fields in WSERVER.
- * `-d <dazibao path> [-p <port>] [-v[v...]]`
  * @return 0 on success, -1 on error
  * @param argc the number of arguments (as received by main)
  * @param argv arguments (as received by main)
  * @param port result variable, will be filled with the port number
+ * @see print_usage
  **/
 static int parse_args(int argc, char **argv, int *port) {
         char c;
@@ -67,7 +85,7 @@ static int parse_args(int argc, char **argv, int *port) {
         WSERVER.dzname = NULL;
         WSERVER.dzpath = NULL;
         WSERVER.debug = 0;
-        while ((c = getopt(argc, argv, "l:p:d:vD")) != -1) {
+        while ((c = getopt(argc, argv, "p:d:vDh")) != -1) {
                 switch (c) {
                 case 'p':
                         *port = str2dec_positive(optarg);
@@ -100,6 +118,9 @@ static int parse_args(int argc, char **argv, int *port) {
                         return -1;
                 case '?':
                         LOGWARN("Unrecognized option: '-%c'", optopt);
+                case 'h':
+                        print_usage(argv[0]);
+                        exit(EXIT_SUCCESS);
                 }
         }
         return 0;
@@ -155,9 +176,6 @@ int main(int argc, char **argv) {
         LOGDEBUG("Parsing arguments...");
 
         if (parse_args(argc, argv, &port) != 0) {
-                if (dz.fd > 0) {
-                        dz_close(&dz);
-                }
                 exit(EXIT_FAILURE);
         }
 
