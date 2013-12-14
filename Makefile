@@ -23,9 +23,11 @@ endif
 DOXYGEN=doxygen
 DOXYFLAGS=
 
-UTILS=$(SRC)/tlv.h $(SRC)/utils.h
-WUTILS=$(SRC)/logging.h $(WEBSRC)/webutils.h $(WEBSRC)/http.h
-NUTILS=$(SRC)/logging.h $(NOTIFSRC)/notifutils.h
+UTILS=$(SRC)/logging.o $(SRC)/utils.o
+WUTILS=$(SRC)/logging.o $(SRC)/utils.o $(WEBSRC)/webutils.o $(WEBSRC)/http.o
+NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o
+NCUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h
+DCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 
 TARGET=dazibao
 NSERVER=notification-server
@@ -59,23 +61,22 @@ CPPCHECK=cppcheck \
 
 all: check $(TARGETS)
 
-$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o
+$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(UTILS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
+$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(DCUTILS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-$(NSERVER): $(NSRC)/$(NSERVER).o $(SRC)/utils.o $(SRC)/logging.o \
-		$(NSRC)/hash.o $(NSRC)/notification-server.o
+$(NSERVER): $(NSRC)/$(NSERVER).o $(NSRC)/notification-server.o $(NSUTILS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(NCLIENT): $(SRC)/utils.o $(SRC)/logging.o $(NSRC)/notification-client.o
+$(NCLIENT): $(NSRC)/notification-client.o $(NCUTILS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WSERVER): $(WEBSRC)/$(WSERVER).o $(WEBSRC)/request.o $(WEBSRC)/routing.o \
-		$(WEBSRC)/routes.o $(WEBSRC)/http.o $(WEBSRC)/webutils.o \
+		$(WEBSRC)/routes.o $(WEBSRC)/http.o \
 		$(WEBSRC)/html.o $(WEBSRC)/response.o $(WEBSRC)/mime.o \
-		$(SRC)/mdazibao.o $(SRC)/tlv.o $(SRC)/utils.o $(SRC)/logging.o
+		$(SRC)/mdazibao.o $(SRC)/tlv.o $(WUTILS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(WEBSRC)/$(WSERVER).o: $(SRC)/mdazibao.o $(WEBSRC)/request.o \
