@@ -137,17 +137,70 @@ int tlv_fread(tlv_t *tlv, int fd) {
         return 0;
 }
 
-int tlv_from_file(tlv_t *tlv, char *path, char type) {
+int tlv_from_file(tlv_t *tlv, int fd) {
+        
+        int status;
+        struct stat st;
+
+        if (fstat(fd, &st) == -1) {
+                PERROR("fstat");
+                status = -1;
+                goto OUT;
+        }
+
+        if (st.st_size < TLV_SIZEOF_HEADER) {
+                LOGERROR("File too small to be a TLV (%d).", (int)st.st_size);
+                status = -1;
+                goto OUT;
+        }
+
+        LOGERROR("File is %d bytes long", (int)st.st_size);
+
+        char *buff = malloc(sizeof(*buff) * st.st_size);
+
+        if (buff == NULL) {
+                LOGERROR("malloc failed");
+                status = -1;
+                goto OUT;
+        }
+
+        if (read(fd, buff, st.st_size) < st.st_size) {
+                LOGERROR("read failed");
+                status = -1;
+                goto OUT;
+        }
+
+        memcpy(*tlv, buff, TLV_SIZEOF_HEADER);
+
+        LOGERROR("[0]:%d", buff[0]);
+
+        // tlv_set_type(tlv, buff[0]);
+        
+        LOGERROR("Type:%d", tlv_get_type(tlv));
+
+        // tlv_set_length(tlv, dtoh(&buff[1]));
+
+        LOGERROR("Length:%d", tlv_get_length(tlv));
+
+        if (tlv_mread(tlv, &buff[4]) == -1) {
+                LOGERROR("tlv_mread failed.");
+                status = -1;
+                goto OUT;
+        }
+
+OUT:
+
+        LOGERROR("KIKI");
+        
+        return status;
+}
+
+int tlv_file2tlv(tlv_t *tlv, int fd, char type) {
         /* TODO:
          * - lock file
          */
         struct stat st;
         int status;
-        int fd = open(path, O_RDONLY);
-
-        if (fd == -1) {
-                ERROR("open", -1);
-        }
 
         if (fstat(fd, &st) == -1) {
                 PERROR("fstat");
@@ -177,7 +230,7 @@ OUT:
 }
 
 int tlv_fdump(tlv_t *tlv, int fd) {
-        return write(fd, tlv, TLV_SIZEOF(tlv));
+        return write(fd, *tlv, TLV_SIZEOF(tlv));
 }
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {

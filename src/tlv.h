@@ -174,6 +174,8 @@ const char *tlv_type2str(char tlv_type);
 
 char tlv_str2type(char *tlv_type);
 
-int tlv_from_file(tlv_t *tlv, char *path, char type);
+int tlv_from_file(tlv_t *tlv, int fd);
+
+int tlv_file2tlv(tlv_t *tlv, int fd, char type);
 
 #endif
