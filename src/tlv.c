@@ -154,7 +154,6 @@ int tlv_from_file(tlv_t *tlv, int fd) {
                 goto OUT;
         }
 
-        LOGERROR("File is %d bytes long", (int)st.st_size);
 
         char *buff = malloc(sizeof(*buff) * st.st_size);
 
@@ -167,38 +166,26 @@ int tlv_from_file(tlv_t *tlv, int fd) {
         if (read(fd, buff, st.st_size) < st.st_size) {
                 LOGERROR("read failed");
                 status = -1;
-                goto OUT;
+                goto FREEBUFF;
         }
 
         memcpy(*tlv, buff, TLV_SIZEOF_HEADER);
 
-        LOGERROR("[0]:%d", buff[0]);
-
-        // tlv_set_type(tlv, buff[0]);
-        
-        LOGERROR("Type:%d", tlv_get_type(tlv));
-
-        // tlv_set_length(tlv, dtoh(&buff[1]));
-
-        LOGERROR("Length:%d", tlv_get_length(tlv));
-
         if (tlv_mread(tlv, &buff[4]) == -1) {
                 LOGERROR("tlv_mread failed.");
                 status = -1;
-                goto OUT;
+                goto FREEBUFF;
         }
 
-OUT:
+FREEBUFF:
+        free(buff);
 
-        LOGERROR("KIKI");
-        
+OUT:
         return status;
 }
 
 int tlv_file2tlv(tlv_t *tlv, int fd, char type) {
-        /* TODO:
-         * - lock file
-         */
+
         struct stat st;
         int status;
 
