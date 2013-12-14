@@ -1,3 +1,12 @@
+#include "mdazibao.h"
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include "utils.h"
+#include "mdazibao.h"
 #include "main.h"
 
 /** @file */
@@ -43,11 +52,12 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                         ad_tmp ++;
                         count_args++;
                 } else {
-                        /* if argv[i] if no args to option
+                        /* if argv[i] if no option and no args option
                            check if is a path to tlv */
                         if (ad_tmp >= 0) {
                                 argv[ad_tmp] = argv[i];
                                 ad_tmp++;
+                                count_args++;
                         }
                 }
                 printf(" f_da: %2d| f_dz: %2d| f_ty:%2d | f_co: %2d |f_in :%2d"
@@ -55,6 +65,31 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 *f_d,*f_dz,*f_ty,*f_co,*f_in,args_co,args_dz,args_ty,ad_tmp);
         }
         return count_args;
+}
+
+int check_args_op_type(int argc, char **argv, char **type_args, int f_ty) {
+        char *type = argv[f_ty];
+        char *tmp = strtok(type,'.');
+        if (f_ty < (argc -1)) {
+                argv[f_ty] = argv[f_ty + 1];
+        }
+        argc --;
+        /* to move it in argv to check all type */
+        int i = 1;
+        while (1) {
+                if ( tmp == NULL) {
+                } else if (strcmp( tmp , "") == 0) {
+                } else if (strcmp( tmp , "") == 0) {
+                } else if (strcmp( tmp , "") == 0) {
+                } else if (strcmp( tmp , "") == 0) {
+                }
+                tmp = strtok(NULL,',');
+                i++;
+        }
+
+
+
+        return 0;
 }
 
 int cmd_add(int argc, char **argv, char * daz) {
@@ -76,24 +111,16 @@ int cmd_add(int argc, char **argv, char * daz) {
         }
 
         argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
-        &f_type, &f_input);
+                        &f_type, &f_input);
+        /* create tab to type args from type_args to --type option*/
+        /* argc  = check_arg_type(argc,argv,type_args,f_dz);*/
+
         for (i = 0; i < argc; i++) {
                 printf("arg %d : %s\n",i,argv[i]);
         }
-
-        /*for (i = 0; i < argc; i++) {
-                if (!strcmp(argv[i],"--type")) {
-                        f_type = 0;
-                        args_ty = 1;
-                } else if (strcmp(argv[i],"--date") == 0) {
-                        f_date = i;
-                } else if (strcmp(argv[i],"--dazibao") == 0) {
-                        f_dz = i;
-                        args_dz = 1;
-                } else if (strcmp(argv[i],"--compound") == 0) {
-                        f_compound = i;
-                        args_co = argc - i -1;
-                } else if (strcmp(argv[i],"-") == 0) {
+        /*
+        for (i = 0; i < argc; i++) {
+                if (strcmp(argv[i],"-") == 0) {
                         f_input = i;
                 } else if (args_ty > 0) {
                         type_args = argv[i];
@@ -150,13 +177,13 @@ int cmd_add(int argc, char **argv, char * daz) {
                         return -1;
                 }
                 tmp_size = 0;
-        }*/
+        }
 
         printf("AF f_da: %2d| f_dz: %2d| f_ty:%2d | f_co: %2d | f_in : %2d |"
         "(s_d: %6d|s_co: %6d| s_tmp: %6d) | argc :%d\n",
         f_date,f_dz,f_type,f_compound,f_input,date_size,compound_size,
         tmp_size,argc);
-        /*char **args_v = argv + tmp_first_args + 1;
+        char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
 
         if (action_add(args_c, args_v, f_compound, f_dz,f_date, daz) == -1) {
