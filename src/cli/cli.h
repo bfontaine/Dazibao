@@ -1,22 +1,6 @@
 #ifndef _CLI_H
 #define _CLI_H 1
 
-#include "mdazibao.h"
-#include <limits.h>
-#include <locale.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
-#include <arpa/inet.h>
-
-#include "utils.h"
-#include "main.h"
-#include "mdazibao.h"
-#include "tlv.h"
 /** @file
  * Main program used for the command-line interface
  **/
@@ -55,7 +39,7 @@
 
 #define DZCLI_TYPE_SEPARATOR ","
 
-int add(int, char**);
-int mk_tlv(int argc, char **argv, int out);
+int add(char *file, int in);
+int mk_tlv(int argc, char **argv, int in, int out);
 
 #endif

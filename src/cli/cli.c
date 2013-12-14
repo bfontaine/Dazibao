@@ -1,165 +1,123 @@
-#include "cli.h"
+#include <locale.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdio.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/mman.h>
 
-int _log_level = LOG_LVL_DEBUG;
+#include "utils.h"
+#include "logging.h"
+#include "tlv.h"
+#include "cli.h"
+#include "mdazibao.h"
 
-static int check_types(int argc, char *types) {
-        while (argc --> 0) {
-                if (strchr(types, ',') == NULL) {
-                        LOGERROR("Wrong number of types");
-                        return -1;
-                }
+int add(char *file, int in) {
+
+        dz_t dz;
+        tlv_t tlv;
+        int status = 0;
+
+        if (dz_open(&dz, file, O_RDWR) != 0) {
+                LOGERROR("Failed opening %s.", file);
+                return -1;
         }
-        return 0;
+
+        if (tlv_init(&tlv) != 0) {
+                LOGERROR("Failed initializing TLV.");
+                status = -1;
+                goto CLOSE;
+        }
+
+        if (tlv_from_file(&tlv, in) == -1) {
+                LOGERROR("tlv_from_file failed.");
+                status = -1;
+                goto CLOSE;
+        }
+
+        
+        LOGERROR("Inserting TLV type: %d, size:%d",
+                tlv_get_type(&tlv), tlv_get_length(&tlv));
+
+        if (dz_add_tlv(&dz, &tlv) != 0) {
+                LOGERROR("Failed adding TLV.");
+                status = -1;
+                goto DESTROY;
+        }
+
+DESTROY:
+        tlv_destroy(&tlv);
+
+CLOSE:
+        if (dz_close(&dz) == -1) {
+                LOGERROR("Failed closing dazibao.");
+                status = -1;
+        }
+
+        return status;
 }
 
 
-static int get_total_size(int argc, char **argv) {
-        int i, sum = 0;
-        struct stat st;
-        for (i = 0; i < argc; i++) {
-                if (stat(argv[i], &st) == -1) {
-                        ERROR("stat", -1);
-                }
-                sum += st.st_size + TLV_SIZEOF_HEADER;
-        }
-        return sum;
-}
-
-int add(int argc, char **argv) {
-        int date = 0;
-        int compound = 0;
-        char *types = "";
-        char *dazibao = "";
-
-        struct s_option opt[] = {
-                {"--date", ARG_TYPE_FLAG, (void *)&date},
-                {"--compound", ARG_TYPE_FLAG, (void *)&compound},
-                {"--type", ARG_TYPE_STRING, (void *)&types},
-                {"--dazibao", ARG_TYPE_STRING, (void *)&dazibao}
-        };
-
-
-        struct s_args args = {&argc, &argv, opt};
-
-        if (jparse_args(argc, argv, &args, 3) != 0) {
-                LOGERROR("jparse_args failed");
-                return EXIT_FAILURE;
-        }
-
-        if (check_types(argc - 2, types) == -1) {
-                return EXIT_FAILURE;
-        }
-
-        return EXIT_SUCCESS;
-}
-
-
-int mk_tlv(int argc, char **argv, int out) {
-
-        /**
-         * TODO: lock file to avoid them
-         * being modified before copied
-         */
+int mk_tlv(int argc, char **argv, int in, int out) {
 
         int date = 0;
-        int compound = 0;
-        char *types = "";
-        int tlv_size = 0;
-
+        char *type = "";
+	struct stat st;
+	int status;
+	char type_code;
+        tlv_t tlv;
+	
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
-                {"--type", ARG_TYPE_STRING, (void *)&types},
+                {"--type", ARG_TYPE_STRING, (void *)&type},
         };
 
-        struct s_args args = {&argc, &argv, opt};
+        struct s_args args = {NULL, NULL, opt};
 
-        if (jparse_args(argc, argv, &args, 1) != 0) {
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
                 LOGERROR("jparse_args failed");
-                return -1;
+                status = -1;
         }
 
-        if (check_types(argc - 2, types) == -1) {
-                return -1;
+	type_code = tlv_str2type(type);
+
+	if (type_code == -1) {
+                LOGERROR("Undefined type: %s", type);
+                status = -1;
+                goto OUT;
+	}
+
+        if (tlv_init(&tlv) == -1) {
+                LOGERROR("tlv_init failed");
+                status = -1;
+                goto DESTROY;
         }
 
-        tlv_size += get_total_size(argc, argv);
-
-        if (tlv_size < 0) {
-                LOGERROR("Failed to compute TLV size.");
-                return -1;
+        if (tlv_file2tlv(&tlv, in, type_code)) {
+                LOGERROR("tlv_file2tlv failed");
+                status = -1;
+                goto DESTROY;
         }
 
-        if (date) {
-                tlv_size += TLV_SIZEOF_DATE;
+        if (tlv_fdump(&tlv, out) == -1) {
+                LOGERROR("tlv_fdump failed");
+                status = -1;
+                goto DESTROY;
         }
 
-        if (argc > 1) {
-                compound = 1;
-                tlv_size += TLV_SIZEOF_HEADER;
+DESTROY:
+        if (tlv_destroy(&tlv) == -1) {
+                LOGERROR("tlv_destroy failed");
+                status = -1;
+                goto OUT;
         }
 
-        if (tlv_size > TLV_MAX_SIZE) {
-                LOGERROR("Too large to fit in a TLV.");
-                return -1;
-        }
-
-
-        int buff_size = (date ? TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE : 0)
-                + (compound ? TLV_SIZEOF_HEADER : 0);
-
-        if (buff_size == 0) {
-                goto NODATENOCOMP;
-        }
-
-        char *buff = malloc(sizeof(*buff) * buff_size);
-        int i = 0;
-
-        if (date) {
-                time_t tim;
-                if (time(&tim) == (time_t)-1) {
-                        free(buff);
-                        ERROR("time", -1);
-                }
-                uint32_t t = hotnl((uint32_t)tim);
-                
-                memcpy(buff, &t, sizeof(t));
-                i += sizeof(t);
-        }
-        
-        if (compound) {
-                htod(tlv_size, buff + i);
-                i += TLV_SIZEOF_HEADER;
-        }
-        
-        if (write(out, buff, buff_size) == -1) {
-                free(buff);
-                return -1;
-        }
-
-        free(buff);
-
-NODATENOCOMP:
-        
-        for (i = 0; i < argc; i++) {
-                char *type = "text";//strtok(types, &DZCLI_TYPE_SEPARATOR);
-                tlv_t tlv;
-                tlv_init(&tlv);
-                
-                if (tlv_from_file(&tlv, argv[i], tlv_str2type(type)) == -1) {
-                        goto FAIL;
-                }
-                
-                if (tlv_fwrite(&tlv, out) == -1) {
-                        goto FAIL;
-                }
-                tlv_destroy(&tlv);
-        }
-        return 0;
-
-FAIL:
-        return -1;
+OUT:
+	return status;	
 }
 
 
@@ -179,9 +137,17 @@ int main(int argc, char **argv) {
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
-                return add(argc - 2, &argv[2]);
+                if (add(argv[2], STDIN_FILENO) != 0) {
+                        LOGERROR("TLV addition failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
         } else if (strcmp(cmd, "mk_tlv") == 0) {
-                return mk_tlv(argc - 2, &argv[2], STDOUT_FILENO);
+                if (mk_tlv(argc - 2, &argv[2], STDIN_FILENO, STDOUT_FILENO) == -1) {
+                        LOGERROR("TLV making failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
         } else {
                 return EXIT_FAILURE;
         }
