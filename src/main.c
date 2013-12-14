@@ -67,24 +67,27 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
         return count_args;
 }
 
-int check_args_op_type(int argc, char **argv, char **type_args, int f_ty) {
-        char *type = argv[f_ty];
-        char *tmp = strtok(type,'.');
-        if (f_ty < (argc -1)) {
-                argv[f_ty] = argv[f_ty + 1];
-        }
-        argc --;
-        /* to move it in argv to check all type */
+int check_args_op_type(int argc, char *type_args, char *op_type, int f_dz) {
+        char delim = ',';
+        char *tmp = strtok(op_type, &delim);
         int i = 1;
         while (1) {
                 if ( tmp == NULL) {
-                } else if (strcmp( tmp , "") == 0) {
-                } else if (strcmp( tmp , "") == 0) {
-                } else if (strcmp( tmp , "") == 0) {
-                } else if (strcmp( tmp , "") == 0) {
+                        break;
+                } else if (strcmp( tmp , "text") == 0) {
+                        type_args[i] = TLV_TEXT;
+                } else if (strcmp( tmp , "jpg") == 0) {
+                        type_args[i] = TLV_JPEG;
+                } else if (strcmp( tmp , "png") == 0) {
+                        type_args[i] = TLV_PNG;
                 }
-                tmp = strtok(NULL,',');
+                tmp = strtok(NULL, &delim);
                 i++;
+        }
+
+        if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
+                printf("args to option --type too large of type\n");
+                return -1;
         }
 
 
@@ -113,6 +116,19 @@ int cmd_add(int argc, char **argv, char * daz) {
         argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
                         &f_type, &f_input);
         /* create tab to type args from type_args to --type option*/
+        if (f_type >= 0) {
+                type_args = malloc(sizeof(char*)* argc);
+                char *tmp = argv[f_type];
+                if (f_type < (argc -1)) {
+                        argv[f_type] = argv[f_type + 1];
+                }
+                argc --;
+                if (check_args_op_type(argc, type_args, tmp, f_dz) < 0) {
+                        printf("check_args_no_op failed\n");
+                        free(type_args);
+                        return -1;
+                }
+        }
         /* argc  = check_arg_type(argc,argv,type_args,f_dz);*/
 
         for (i = 0; i < argc; i++) {
@@ -190,6 +206,9 @@ int cmd_add(int argc, char **argv, char * daz) {
                 printf("[cmd_add] error action add");
                 return -1;
         }*/
+        if (f_type >= 0) {
+                free(type_args);
+        }
         return 0;
 }
 
