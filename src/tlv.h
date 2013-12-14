@@ -126,6 +126,7 @@ tlv_t tlv_get_value_ptr(tlv_t *tlv);
 int tlv_mwrite(tlv_t *tlv, void *data);
 
 /**
+ * Read the value of a TLV
  **/
 int tlv_mread(tlv_t *tlv, char *data);
 
