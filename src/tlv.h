@@ -64,6 +64,8 @@
  **/
 typedef char* tlv_t;
 
+void htod(unsigned int n, char *len);
+
 /**
  * Initialize a TLV. If the TLV was previously initialized/filled, call
  * tlv_destroy on it before calling this function.
@@ -137,7 +139,7 @@ int tlv_mread(tlv_t *tlv, char *data);
  * @param fd file descriptor where tlv is written
  * @return 0 on success, -1 on error
  **/
-int tlv_fwrite(tlv_t tlv, int fd);
+int tlv_fwrite(tlv_t *tlv, int fd);
 
 /**
  * Read a TLV value.
@@ -170,5 +172,11 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
  * @return a string representation of this type
  **/
 const char *tlv_type2str(char tlv_type);
+
+char tlv_str2type(char *tlv_type);
+
+int tlv_from_file(tlv_t *tlv, int fd);
+
+int tlv_file2tlv(tlv_t *tlv, int fd, char type);
 
 #endif

@@ -177,6 +177,7 @@ const char *get_ext(const char *path);
 /** type of a command-line argument */
 enum arg_type {
         ARG_TYPE_INT,
+        ARG_TYPE_FLAG,
         ARG_TYPE_STRING
 };
 

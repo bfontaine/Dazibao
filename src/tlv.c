@@ -2,8 +2,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "utils.h"
 #include "tlv.h"
+#include "logging.h"
 
 /** @file */
 
@@ -14,7 +22,7 @@
  * @param tlv tlv receiving length
  * @deprecated use tlv_set_length instead
  **/
-static void htod(unsigned int n, char *len) {
+void htod(unsigned int n, char *len) {
         union {
                 unsigned int i;
                 unsigned char c[4];
@@ -103,39 +111,113 @@ int tlv_mread(tlv_t *tlv, char *src) {
         return len;
 }
 
-int tlv_fwrite(tlv_t tlv, int fd) {
-/*
+int tlv_fwrite(tlv_t *tlv, int fd) {
         unsigned int to_write = TLV_SIZEOF(tlv);
-        int status = write_all(fd, tlv, to_write);
+        int status = write_all(fd, *tlv, to_write);
         if (status == -1 || (unsigned int)status != to_write) {
                 ERROR("write", -1);
         }
-*/
         return 0;
 }
 
 int tlv_fread(tlv_t *tlv, int fd) {
-/*
-        int len = tlv_get_length(*tlv);
+        int len = tlv_get_length(tlv);
 
-        *tlv = (tlv_t)safe_realloc(*tlv, sizeof(char)
-                                                * (TLV_SIZEOF_HEADER + len));
+        *tlv = (tlv_t)safe_realloc(*tlv,
+                                sizeof(**tlv) * (TLV_SIZEOF_HEADER + len));
 
         if (*tlv == NULL) {
                 perror("realloc");
                 return DZ_MEMORY_ERROR;
         }
 
-        if (read(fd, tlv_get_value_ptr(*tlv), len) < len) {
+        if (read(fd, tlv_get_value_ptr(tlv), len) < len) {
                 ERROR("read", -1);
         }
-*/
         return 0;
 }
 
+int tlv_from_file(tlv_t *tlv, int fd) {
+        
+        int status;
+        struct stat st;
+
+        if (fstat(fd, &st) == -1) {
+                PERROR("fstat");
+                status = -1;
+                goto OUT;
+        }
+
+        if (st.st_size < TLV_SIZEOF_HEADER) {
+                LOGERROR("File too small to be a TLV (%d).", (int)st.st_size);
+                status = -1;
+                goto OUT;
+        }
+
+
+        char *buff = malloc(sizeof(*buff) * st.st_size);
+
+        if (buff == NULL) {
+                LOGERROR("malloc failed");
+                status = -1;
+                goto OUT;
+        }
+
+        if (read(fd, buff, st.st_size) < st.st_size) {
+                LOGERROR("read failed");
+                status = -1;
+                goto FREEBUFF;
+        }
+
+        memcpy(*tlv, buff, TLV_SIZEOF_HEADER);
+
+        if (tlv_mread(tlv, &buff[4]) == -1) {
+                LOGERROR("tlv_mread failed.");
+                status = -1;
+                goto FREEBUFF;
+        }
+
+FREEBUFF:
+        free(buff);
+
+OUT:
+        return status;
+}
+
+int tlv_file2tlv(tlv_t *tlv, int fd, char type) {
+
+        struct stat st;
+        int status;
+
+        if (fstat(fd, &st) == -1) {
+                PERROR("fstat");
+                status = -1;
+                goto OUT;
+        }
+
+        if (st.st_size > TLV_MAX_VALUE_SIZE) {
+                LOGERROR("File too large to fit in a TLV.");
+                status = -1;
+                goto OUT;
+        }
+
+        tlv_set_type(tlv, type);
+        tlv_set_length(tlv, st.st_size);
+        if (tlv_fread(tlv, fd) != 0) {
+                LOGERROR("tlv_fread failed.");
+                status = -1;
+        }
+
+OUT:
+        if (close(fd) == -1) {
+                PERROR("close");
+        }
+
+        return status;
+}
 
 int tlv_fdump(tlv_t *tlv, int fd) {
-        return write(fd, tlv, TLV_SIZEOF(tlv));
+        return write(fd, *tlv, TLV_SIZEOF(tlv));
 }
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {
@@ -152,5 +234,18 @@ const char *tlv_type2str(char tlv_type) {
         case TLV_COMPOUND: return "compound";
         case TLV_DATED:    return "dated";
         default:           return "unknown";
+        }
+}
+
+
+char tlv_str2type(char *tlv_type) {
+        if (strcasecmp(tlv_type, "text") == 0) {
+                return TLV_TEXT;
+        } else if (strcasecmp(tlv_type, "png") == 0) {
+                return TLV_PNG;
+        } else if (strcasecmp(tlv_type, "jpg") == 0) {
+                return TLV_JPEG;
+        } else {
+                return -1;
         }
 }
