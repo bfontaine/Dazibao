@@ -86,7 +86,7 @@ int tlv_mwrite(tlv_t *tlv, void *dst) {
         return 0;
 }
 
-int tlv_mread(tlv_t *tlv, void *src) {
+int tlv_mread(tlv_t *tlv, char *src) {
 
         int len = tlv_get_length(tlv);
 
@@ -99,7 +99,7 @@ int tlv_mread(tlv_t *tlv, void *src) {
                 ERROR("realloc", -1);
         }
 
-        memcpy(tlv_get_value_ptr(tlv), src, len);
+        memcpy(tlv_get_value_ptr(tlv), src + TLV_SIZEOF_HEADER, len);
         return len;
 }
 

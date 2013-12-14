@@ -127,7 +127,7 @@ int tlv_mwrite(tlv_t *tlv, void *data);
 
 /**
  **/
-int tlv_mread(tlv_t *tlv, void *data);
+int tlv_mread(tlv_t *tlv, char *data);
 
 /**
  * Write a TLV.
