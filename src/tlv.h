@@ -206,4 +206,13 @@ int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size);
  **/
 int tlv_create_path(char *path, tlv_t *tlv, char *type);
 
+/**
+ * Create TLV with using input
+ * Return size of new tlv create
+ * @param tlv
+ * @param type
+ * @return sizeof new tlv create
+ **/
+int tlv_create_input(tlv_t *tlv, char *type);
+
 #endif

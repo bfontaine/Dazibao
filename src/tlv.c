@@ -229,4 +229,36 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type) {
         return tlv_size;
 }
 
+int tlv_create_input(tlv_t *tlv, char *type) {
+        char reader[BUFFSIZE],
+             *buff = NULL;
+        unsigned int buff_size = 0;
+        int read_size;
+
+        while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
+
+                buff_size += read_size;
+
+                if(buff_size > TLV_MAX_VALUE_SIZE) {
+                        fprintf(stderr, "tlv too large\n");
+                        exit(EXIT_FAILURE);
+                }
+
+                buff = safe_realloc(buff, sizeof(*buff) * buff_size);
+
+                if(buff == NULL) {
+                        perror("realloc");
+                        return DZ_MEMORY_ERROR;
+                }
+
+                memcpy(buff + (buff_size - read_size), reader, read_size);
+        }
+
+        tlv_set_type(tlv, type);
+        tlv_set_length(tlv, st_path.st_size);
+        tlv_size = tlv_mread(tlv, buff);
+        free(buff);
+        return tlv_size;
+}
+
 
