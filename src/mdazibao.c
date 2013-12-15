@@ -724,6 +724,12 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 len -= TLV_SIZEOF_DATE;
                 saved = compact_helper(d, reader, writer, *reader + len);
                 len = *writer - value_off; /* new length */
+                if (len == TLV_SIZEOF_DATE) {
+                        /* empty TLV, we're removing it (#97) */
+                        *writer = tlv_off;
+                        saved += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                }
+
                 tlv_set_length(&t, len);
                 memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
@@ -746,10 +752,14 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                         d->len = *writer;
                 } else {
                         len = *writer - (tlv_off + TLV_SIZEOF_HEADER);
+                        if (len == 0) {
+                                /* empty TLV, we're removing it (#97) */
+                                *writer = tlv_off;
+                                saved += TLV_SIZEOF_HEADER;
+                        }
                         tlv_set_length(&t, len);
                         memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
-
                 }
                 goto EOCOMPACT;
         default: /* other TLVs */
