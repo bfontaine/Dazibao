@@ -90,8 +90,6 @@ int check_args_op_type(int argc, char *type_args, char *op_type, int f_dz) {
                 return -1;
         }
 
-
-
         return 0;
 }
 
@@ -128,6 +126,9 @@ int cmd_add(int argc, char **argv, char * daz) {
                         free(type_args);
                         return -1;
                 }
+        } else if ( argc > (f_dz >= 0 ? 1:0) + (f_input >= 0 ? 1:0)) {
+                printf("check_args_no_op failed\n");
+                return -1;
         }
         /* argc  = check_arg_type(argc,argv,type_args,f_dz);*/
 
@@ -193,12 +194,13 @@ int cmd_add(int argc, char **argv, char * daz) {
                         return -1;
                 }
                 tmp_size = 0;
-        }
+        }*/
 
         printf("AF f_da: %2d| f_dz: %2d| f_ty:%2d | f_co: %2d | f_in : %2d |"
         "(s_d: %6d|s_co: %6d| s_tmp: %6d) | argc :%d\n",
         f_date,f_dz,f_type,f_compound,f_input,date_size,compound_size,
         tmp_size,argc);
+        /*
         char **args_v = argv + tmp_first_args + 1;
         int args_c = argc - tmp_first_args - 1;
 
