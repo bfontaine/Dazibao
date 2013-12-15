@@ -119,32 +119,32 @@ int main(int argc, char **argv) {
 
         struct sockaddr_un sun;
         int fd;
+        char *s_path = "";
+
 
         _log_level = LOG_LVL_DEBUG;
         memset(&sun, 0, sizeof(sun));
         sun.sun_family = AF_UNIX;
 
-        if (argc >= 3) {
-                if (strcmp(argv[1], "--path") == 0) {
-                        strncpy(sun.sun_path, argv[2], UNIX_PATH_MAX - 1);
-                } else if (strcmp(argv[1], "--notifier") == 0) {
-                        notifier = argv[2];
-                }
-                if (argc == 5) {
-                        if (strcmp(argv[3], "--path") == 0) {
-                                strncpy(sun.sun_path, argv[4],
-                                        UNIX_PATH_MAX - 1);
-                        } else if (strcmp(argv[3], "--notifier") == 0) {
-                                notifier = argv[4];
-                        }
-                }
+        struct s_option opt[] = {
+                {"--path", ARG_TYPE_STRING, (void *)&(s_path)},
+                {"--notifier", ARG_TYPE_STRING, (void *)&(notifier)}
+        };
+
+        struct s_args args = {NULL, NULL, opt};
+
+        if (jparse_args(argc - 1, &argv[1], &args,
+                                sizeof(opt)/sizeof(*opt)) != 0) {
+                ERROR("parse_args", -1);
         }
 
-        if (strcmp(sun.sun_path, "") == 0) {
+        if (strcmp(s_path, "") == 0) {
                 strncpy(sun.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, "/", UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, ".dazibao-notification-socket",
                         UNIX_PATH_MAX - 1);
+        } else {
+                strncpy(sun.sun_path, s_path, UNIX_PATH_MAX - 1);
         }
 
         notifier_enabled = check_notifier();
