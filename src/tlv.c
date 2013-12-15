@@ -154,23 +154,22 @@ int tlv_from_file(tlv_t *tlv, int fd) {
                 LOGERROR("tlv_fread failed.");
                 return -1;
         }
-        
+
         return 0;
 }
 
 int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
 
-        struct stat st;
         int tlv_size;
         int rc = 0;
         int len = 0;
 
-        int tlv_start = date ? TLV_SIZEOF_DATE + TLV_SIZEOF_HEADER : 0; 
- 
+        int tlv_start = date ? TLV_SIZEOF_DATE + TLV_SIZEOF_HEADER : 0;
+
         tlv_size = tlv_start + TLV_SIZEOF_HEADER;
-       
+
         *tlv = (tlv_t)safe_realloc(*tlv, tlv_size);
-        
+
         if (*tlv == NULL) {
                 ERROR("realloc", -1);
         }
@@ -184,7 +183,8 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
                                 ERROR("realloc", -1);
                         }
                 }
-        } while ((rc = read(fd, *tlv + tlv_start + len, tlv_size - len - tlv_start)) > 0);
+        } while ((rc = read(fd, *tlv + tlv_start + len,
+                                        tlv_size - len - tlv_start)) > 0);
 
         if (rc == -1) {
                 PERROR("read");

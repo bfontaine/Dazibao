@@ -338,7 +338,8 @@ int parse_arg(int argc, char **argv) {
 
         struct s_args args = {&(conf.nb_files), &conf.file, options};
 
-        if (jparse_args(argc, argv, &args, sizeof(options)/sizeof(*options)) != 0) {
+        if (jparse_args(argc, argv, &args,
+                                sizeof(options)/sizeof(*options)) != 0) {
                 ERROR("parse_args", -1);
         }
 
