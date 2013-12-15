@@ -299,8 +299,11 @@ int main(int argc, char **argv) {
 
                 if (status != 0) {
                         LOGWARN("route error, status=%d", status);
-                        if (error_response(client, HTTP_S_NOTFOUND) < 0) {
-                                LOGERROR("404 error response failed");
+                        if (status < 0) {
+                                status = HTTP_S_NOTFOUND;
+                        }
+                        if (error_response(client, status) < 0) {
+                                LOGERROR("%d error response failed", status);
                         }
                 }
 

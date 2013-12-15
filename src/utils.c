@@ -62,45 +62,47 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 char is_opt = 0;
                 for (int i = 0; i < nb_opt; i++) {
                         if (strcmp(argv[next_arg],
-                                        res->options[i].name) == 0) {
-                                is_opt = 1;
-                                switch (res->options[i].type) {
-                                case ARG_TYPE_INT:
-                                        if (next_arg > argc - 2) {
-                                                return -1;
-                                        }
-                                        *((int *)res->options[i].value) =
-                                                str2dec_positive(
-                                                        argv[next_arg + 1]);
-                                        next_arg += 2;
-                                        break;
-                                case ARG_TYPE_STRING:
-                                        if (next_arg > argc - 2) {
-                                                return -1;
-                                        }
-                                        *((char **)res->options[i].value) = argv[next_arg + 1];
-                                        next_arg += 2;
-                                        break;
-                                case ARG_TYPE_FLAG:
-                                        *((int *)res->options[i].value) = 1;
-                                        next_arg += 1;
-                                        break;
-                                default:
-                                        fprintf(stderr, "Unknown arg type, "
-                                                        "doing nothing.\n");
+                                        res->options[i].name) != 0) {
+                                continue;
+                        }
+                        is_opt = 1;
+                        switch (res->options[i].type) {
+                        case ARG_TYPE_INT:
+                                if (next_arg > argc - 2) {
                                         return -1;
                                 }
+                                *((int*)res->options[i].value) =
+                                        str2dec_positive(argv[next_arg + 1]);
+                                next_arg += 2;
                                 break;
+                        case ARG_TYPE_STRING:
+                                if (next_arg > argc - 2) {
+                                        return -1;
+                                }
+                                *((char**)res->options[i].value) =
+                                        argv[next_arg + 1];
+                                next_arg += 2;
+                                break;
+                        case ARG_TYPE_FLAG:
+                                *((int *)res->options[i].value) = 1;
+                                next_arg += 1;
+                                break;
+                        default:
+                                fprintf(stderr, "Unknown arg type, skipping."
+                                                "\n");
+                                return -1;
                         }
+                        break;
                 }
 
                 if (!is_opt) {
                         if (res->argc != NULL) {
                                 *res->argc = argc - next_arg;
                         }
-                        if (res->argv != NULL) {
-                                *(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;}
-                        break;
+                        if (res->argv == NULL) {
+                                break;
+                        }
+                        *(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;
                 }
         }
 

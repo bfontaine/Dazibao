@@ -40,10 +40,6 @@ int add(char *file, int in) {
                 goto CLOSE;
         }
 
-        
-        LOGERROR("Inserting TLV type: %d, size:%d",
-                tlv_get_type(&tlv), tlv_get_length(&tlv));
-
         if (dz_add_tlv(&dz, &tlv) != 0) {
                 LOGERROR("Failed adding TLV.");
                 status = -1;

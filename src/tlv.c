@@ -173,7 +173,7 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
         }
 
         tmp_ptr = date ? &tmp : tlv;
-        
+
         if (fstat(fd, &st) == -1) {
                 PERROR("fstat");
                 status = -1;
@@ -190,7 +190,7 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
         }
 
         *tlv = (tlv_t)safe_realloc(*tlv, tlv_size);
-        
+
         if (*tlv == NULL) {
                 ERROR("realloc", -1);
         }
@@ -254,6 +254,8 @@ char tlv_str2type(char *tlv_type) {
                 return TLV_PNG;
         } else if (strcasecmp(tlv_type, "jpg") == 0) {
                 return TLV_JPEG;
+        } else if (strcasecmp(tlv_type, "compound") == 0) {
+                return TLV_COMPOUND;
         } else {
                 return -1;
         }

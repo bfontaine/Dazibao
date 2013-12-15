@@ -16,18 +16,17 @@
 int route_get_index(dz_t dz, struct http_request req,
                         struct http_response *resp) {
 
-        if (strcmp(req.path, "/index.html") != 0 || dz.fd <= 0) {
-                LOGERROR("get_index - got wrong path '%s' and/or wrong " \
-                                "dz.fd=%d and/or wrong method %d.",
-                                req.path, dz.fd, req.method);
-                return -1;
+        if (strcmp(req.path, "/index.html") != 0) {
+                LOGERROR("get_index - got wrong path '%s' and/or method %d.",
+                                req.path, req.method);
+                return HTTP_S_BADREQ;
         }
 
         if (req.method != HTTP_M_HEAD) {
                 LOGDEBUG("Generating the HTML of the dazibao...");
                 if (dz2html(dz, resp->body) < 0) {
                         LOGERROR("Error while making dazibao's HTML");
-                        return -1;
+                        return HTTP_S_ERR;
                 }
 
                 resp->body_len = strlen(*(resp->body));
@@ -47,16 +46,10 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         unsigned long off = -1;
         int tlv_type, tlv_real_type;
 
-        if (dz.fd <= 0) {
-                LOGERROR("got wrong dz or method (dz.fd=%d, m=%d)",
-                                dz.fd, req.method);
-                return -1;
-        }
-
         if (tlv_init(&tlv) < 0) {
                 LOGERROR("Cannot allocate memory for a TLV");
                 tlv_destroy(&tlv);
-                return -1;
+                return HTTP_S_ERR;
         }
 
         tlv_type = get_image_tlv_type(req.path);
@@ -105,7 +98,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
         if (dz_read_tlv(&dz, &tlv, off) < 0) {
                 LOGERROR("Cannot read TLV at offset %li", (long)off);
                 tlv_destroy(&tlv);
-                return -1;
+                return HTTP_S_ERR;
         }
 
         if (req.method != HTTP_M_HEAD) {
@@ -115,7 +108,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
                         LOGERROR("Cannot alloc memory to store the " \
                                         "TLV's value");
                         tlv_destroy(&tlv);
-                        return -1;
+                        return HTTP_S_ERR;
                 }
 
                 memcpy(*resp->body, tlv_get_value_ptr(&tlv), resp->body_len);
@@ -136,15 +129,7 @@ int route_get_image_tlv(dz_t dz, struct http_request req,
 int route_post_rm_tlv(dz_t dz, struct http_request req,
                 struct http_response *resp) {
 
-        /* FIXME this return 204 even when the TLV was not removed */
-
         unsigned long off = -1;
-
-        if (dz.fd <= 0) {
-                LOGERROR("got wrong dz or method (dz=%d, m=%d)",
-                                dz.fd, req.method);
-                return -1;
-        }
 
         if (sscanf(req.path, "/tlv/delete/%16lu", &off) == 0) {
                 LOGERROR("Cannot parse the request path");
