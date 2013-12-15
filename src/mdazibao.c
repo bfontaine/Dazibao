@@ -134,6 +134,10 @@ OUT:
 }
 
 int dz_open(dz_t *d, char *path, int flags) {
+        return dz_open_with_size(d, path, flags, 0);
+}
+
+int dz_open_with_size(dz_t *d, char *path, int flags, size_t size) {
 
         int lock;
         char header[DAZIBAO_HEADER_SIZE];
@@ -171,7 +175,7 @@ int dz_open(dz_t *d, char *path, int flags) {
         d->len = st.st_size;
         d->fflags = flags;
 
-        if (dz_mmap_data(d, d->len) == -1) {
+        if (dz_mmap_data(d, d->len + size) == -1) {
                 goto PANIC;
         }
 
@@ -720,6 +724,12 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 len -= TLV_SIZEOF_DATE;
                 saved = compact_helper(d, reader, writer, *reader + len);
                 len = *writer - value_off; /* new length */
+                if (len == TLV_SIZEOF_DATE) {
+                        /* empty TLV, we're removing it (#97) */
+                        *writer = tlv_off;
+                        saved += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                }
+
                 tlv_set_length(&t, len);
                 memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
@@ -742,10 +752,14 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                         d->len = *writer;
                 } else {
                         len = *writer - (tlv_off + TLV_SIZEOF_HEADER);
+                        if (len == 0) {
+                                /* empty TLV, we're removing it (#97) */
+                                *writer = tlv_off;
+                                saved += TLV_SIZEOF_HEADER;
+                        }
                         tlv_set_length(&t, len);
                         memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
-
                 }
                 goto EOCOMPACT;
         default: /* other TLVs */

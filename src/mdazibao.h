@@ -78,8 +78,20 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param path location where to find the file
  * @param flags flags used with open(2)
  * @return 0 on success, -1 on error
+ * @see dz_open_with_size
  **/
 int dz_open(dz_t *d, char *path, int flags);
+
+/**
+ * Same as dz_open, but let you choose the size of the mmapping (see #129).
+ * @param d dazibao to fill with information
+ * @param path location where to find the file
+ * @param flags flags used with open(2)
+ * @param size number of bytes to add to the file size for the mmapping.
+ * @return 0 on success, -1 on error
+ * @see dz_open
+ **/
+int dz_open_with_size(dz_t *d, char *path, int flags, size_t size);
 
 /**
  * Close a dazibao
