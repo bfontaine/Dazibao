@@ -161,10 +161,10 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 }
 
                 rst = (*rh)(dz, *req, resp);
-                if (rst < 0) {
+                if (rst != 0) {
                         LOGERROR("Route handler error, rst=%d", rst);
                         destroy_http_response(resp);
-                        return -1;
+                        return rst;
                 }
 
                 if (req->method == HTTP_M_HEAD) {
