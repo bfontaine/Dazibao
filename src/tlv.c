@@ -162,67 +162,45 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
 
         struct stat st;
         int tlv_size;
-        int status;
-        tlv_t tmp;
-        tlv_t *tmp_ptr;
+        int rc = 0;
+        int len = 0;
 
-        if (date && tlv_init(&tmp) == -1) {
-                LOGERROR("tlv_init failed");
-                status = -1;
-                goto OUT;
-        }
-
-        tmp_ptr = date ? &tmp : tlv;
-
-        if (fstat(fd, &st) == -1) {
-                PERROR("fstat");
-                status = -1;
-                goto DESTROY;
-        }
-
-        tlv_size = st.st_size +
-                (date ? TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE : 0);
-
-        if (tlv_size > TLV_MAX_VALUE_SIZE) {
-                LOGERROR("Too large to fit in a TLV.");
-                status = -1;
-                goto DESTROY;
-        }
-
+        int tlv_start = date ? TLV_SIZEOF_DATE + TLV_SIZEOF_HEADER : 0; 
+ 
+        tlv_size = tlv_start + TLV_SIZEOF_HEADER;
+       
         *tlv = (tlv_t)safe_realloc(*tlv, tlv_size);
-
+        
         if (*tlv == NULL) {
                 ERROR("realloc", -1);
         }
 
+        do {
+                len += rc;
+                if (len + tlv_start == tlv_size) {
+                        tlv_size *= 2;
+                        *tlv = safe_realloc(*tlv, tlv_size);
+                        if (*tlv == NULL) {
+                                ERROR("realloc", -1);
+                        }
+                }
+        } while ((rc = read(fd, *tlv + tlv_start + len, tlv_size - len - tlv_start)) > 0);
+
+        if (rc == -1) {
+                PERROR("read");
+                return -1;
+        }
+
+        (*tlv)[tlv_start] = type;
+        htod(len, &((*tlv)[tlv_start + 1]));
+
         if (date) {
                 tlv_set_type(tlv, TLV_DATED);
-                tlv_set_length(tlv, tlv_size);
+                tlv_set_length(tlv, len + tlv_start);
                 tlv_set_date(tlv, date);
         }
 
-        tlv_set_type(tmp_ptr, type);
-        tlv_set_length(tmp_ptr, st.st_size);
-
-        if (tlv_fread(tmp_ptr, fd) != 0) {
-                LOGERROR("tlv_fread failed.");
-                status = -1;
-                goto DESTROY;
-        }
-
-        if (date) {
-                memcpy(tlv_get_value_ptr(tlv) + TLV_SIZEOF_DATE,
-                        (char *)*tmp_ptr, st.st_size);
-        }
-
-DESTROY:
-        if (date && tlv_destroy(&tmp) != 0) {
-                LOGERROR("destroy failed");
-                status = -1;
-        }
-
-OUT:
-        return status;
+        return 0;
 }
 
 int tlv_fdump(tlv_t *tlv, int fd) {
