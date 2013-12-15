@@ -80,7 +80,7 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
                         type_args[i] = '4';
                 } else {
                         printf("unrecognized type %s\n", tmp);
-                        /*return -1;*/
+                        return -1;
                 }
                 tmp = strtok(NULL, de);
                 i++;
@@ -161,10 +161,6 @@ int cmd_add(int argc, char **argv, char * daz) {
         argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
                         &f_type, &f_input);
 
-        for (i = 0; i < argc; i++) {
-                printf("arg %d : %s\n",i,argv[i]);
-        }
-
         if (f_type >= 0) {
                 type_args = malloc(sizeof(char)* argc);
                 char *tmp = argv[f_type];
@@ -186,6 +182,12 @@ int cmd_add(int argc, char **argv, char * daz) {
                 printf("check apth args failed\n");
                 return -1;
         }
+
+        printf("all test for args is ok\n");
+        for (i = 0; i < argc; i++) {
+                printf("arg %d : %s\n",i,argv[i]);
+        }
+
         /*
         printf("AF f_da: %2d| f_dz: %2d| f_ty:%2d | f_co: %2d | f_in : %2d |"
         "(s_d: %6d|s_co: %6d| s_tmp: %6d) | argc :%d\n",
@@ -204,63 +206,72 @@ int cmd_add(int argc, char **argv, char * daz) {
         return 0;
 }
 
-int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
-        , int flag_date, char *daz) {
+int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
+                char *type, char *daz) {
         dz_t daz_buf;
         unsigned int buff_size = 0;
         tlv_t tlv;
         tlv_t buff;
-        if (flag_compound == 1) {
-                /* read all args fic name, and create create a tlv to it
-                int i;
-                int size_tlv = 0;
-                if (tlv_init(&tlv) < 0) {
-                        printf("[tlv_create_path] error to init tlv");
-                        return -1;
-                }
-                tlv_set_type(&tlv, (char) TLV_COMPOUND);
-                for (i = 0; i < argc; i++) {
+        int i;
+        int j = 0;
+        for (i = 0; i < argc; i++) {
+                if (i == f_in) {
                         if (tlv_init(&tlv) < 0) {
-                                printf("[tlv_create_path] error to init tlv");
+                                printf("[action_add] error to init tlv");
                                 return -1;
                         }
-                        size_tlv += tlv_create_path(argv[i], &buff);
-                        buff_size += size_tlv;
-                        if(buff_size > TLV_MAX_VALUE_SIZE) {
-                                printf("tlv compound too large\n");
-                                tlv_destroy(&tlv);
+                        buff_size = tlv_create_input(&tlv, &type[j]);
+                        j++;
+                }
+                if (i == f_dz) {
+                        if (tlv_init(&tlv) < 0) {
+                                printf("[action_add] error to init tlv");
+                                return -1;
+                        }
+                        buff_size = dz2tlv(argv[i], &tlv);
+                }
+                if ( i == f_co ) {
+                        /* read all args fic name, and create create
+                                a tlv to it
+                           int i;
+                           int size_tlv = 0;
+                           if (tlv_init(&tlv) < 0) {
+                           printf("[tlv_create_path] error to init tlv");
+                           return -1;
+                           }
+                           tlv_set_type(&tlv, (char) TLV_COMPOUND);
+                           for (i = 0; i < argc; i++) {
+                           if (tlv_init(&tlv) < 0) {
+                           printf("[tlv_create_path] error to init tlv");
+                           return -1;
+                           }
+                           size_tlv += tlv_create_path(argv[i], &buff);
+                           buff_size += size_tlv;
+                           if(buff_size > TLV_MAX_VALUE_SIZE) {
+                           printf("tlv compound too large\n");
+                           tlv_destroy(&tlv);
+                           tlv_destroy(&buff);
+                           return -1;
+                           }
+                           tlv_destroy(&buff);
+                           }*/
+                }
+
+                if (i == f_d) {
+                        if (f_co == f_dz) {
+                                buff_size = tlv_create_path(argv[argc-1],&buff);
+                                tlv_create_date(&tlv, &buff, buff_size);
                                 tlv_destroy(&buff);
-                                return -1;
                         }
-                        tlv_destroy(&buff);
-                }*/
-        }
+                        else {
+                                buff = tlv;
+                                tlv = NULL;
+                                tlv_create_date(&tlv, &buff, buff_size);
+                                tlv_destroy(&buff);
 
-        if (flag_dazibao == 1) {
-                if (tlv_init(&tlv) < 0) {
-                        printf("[action_add] error to init tlv");
-                        return -1;
+                        }
                 }
-                buff_size = dz2tlv(argv[argc-1], &tlv);
-        }
-        if (flag_date == 1) {
-                /*
-                  if only flag is activate date
-                        tlv to include date is oath argv[argc -1]
-                  else he exist tlv compound type to var tlv
-                */
-                if (flag_compound == flag_dazibao) {
-                        buff_size = tlv_create_path(argv[argc-1], &buff);
-                        tlv_create_date(&tlv, &buff, buff_size);
-                        tlv_destroy(&buff);
-                }
-                else {
-                        buff = tlv;
-                        tlv = NULL;
-                        tlv_create_date(&tlv, &buff, buff_size);
-                        tlv_destroy(&buff);
 
-                }
         }
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
@@ -280,56 +291,6 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
                 fprintf(stderr, "failed closing the dazibao\n");
                 return -1;
         }
-        return 0;
-}
-
-int action_no_option_add(char *daz, unsigned char type) {
-        dz_t daz_buf;
-        char reader[BUFFSIZE],
-             *buff = NULL;
-        unsigned int buff_size = 0;
-        int read_size, st;
-
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                exit(EXIT_FAILURE);
-        }
-
-        while((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
-
-                buff_size += read_size;
-
-                if(buff_size > TLV_MAX_VALUE_SIZE) {
-                        fprintf(stderr, "tlv too large\n");
-                        exit(EXIT_FAILURE);
-                }
-
-                buff = safe_realloc(buff, sizeof(*buff) * buff_size);
-
-                if(buff == NULL) {
-                        perror("realloc");
-                        return DZ_MEMORY_ERROR;
-                }
-
-                memcpy(buff + (buff_size - read_size), reader, read_size);
-        }
-
-
-        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, type);
-        tlv_set_length(&tlv, buff_size);
-
-        memcpy(tlv_get_value_ptr(&tlv), buff, buff_size);
-
-        st = dz_add_tlv(&daz_buf, &tlv);
-        if (st < 0) {
-                fprintf(stderr, "failed adding the tlv\n");
-                free(tlv);
-                free(buff);
-                return st;
-        }
-
-        free(tlv);
-        free(buff);
         return 0;
 }
 

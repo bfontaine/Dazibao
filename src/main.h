@@ -47,14 +47,9 @@ int cmd_add(int argc, char **argv, char *daz);
 /**
  * @param daz
  **/
-int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
-        , int flag_date, char *daz);
+int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
+       char *type , char *daz);
 
-/**
- * @param daz
- * @param type
- **/
-int action_no_option_add(char *daz, unsigned char type);
 /**
  * @param argc arguments count
  * @param argv arguments array
