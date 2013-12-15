@@ -1,6 +1,7 @@
 #ifndef _TLVS_H
 #define _TLVS_H 1
 
+#include <stdio.h>
 #include <stdint.h>
 
 /** @file
@@ -65,6 +66,21 @@
  * The type of a TLV
  **/
 typedef char* tlv_t;
+
+/**
+ * A TLV type
+ **/
+struct tlv_type {
+        /* the type's code (0-255) */
+        unsigned char code;
+        /* the type's name */
+        char *name;
+};
+
+/**
+ * All recognized TLV types.
+ **/
+extern struct tlv_type tlv_types[];
 
 void htod(unsigned int n, char *len);
 
