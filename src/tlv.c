@@ -191,6 +191,10 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
                 return -1;
         }
 
+        if (len + tlv_start > TLV_MAX_SIZE) {
+                LOGERROR("Too large to fit in a TLV: %d.", len + tlv_start);
+        }
+
         (*tlv)[tlv_start] = type;
         htod(len, &((*tlv)[tlv_start + 1]));
 
