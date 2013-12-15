@@ -286,6 +286,8 @@ char tlv_str2type(char *tlv_type) {
                 return TLV_PNG;
         } else if (strcasecmp(tlv_type, "jpg") == 0) {
                 return TLV_JPEG;
+        } else if (strcasecmp(tlv_type, "compound") == 0) {
+                return TLV_COMPOUND;
         } else {
                 return -1;
         }
