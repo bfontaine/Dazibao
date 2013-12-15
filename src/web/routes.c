@@ -131,6 +131,9 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
 
         unsigned long off = -1;
 
+        /* This route returns 204 No Content if the TLV was successfully
+           removed. */
+
         if (sscanf(req.path, "/tlv/delete/%16lu", &off) == 0) {
                 LOGERROR("Cannot parse the request path");
                 return -1;
@@ -155,13 +158,57 @@ int route_post_rm_tlv(dz_t dz, struct http_request req,
         return 0;
 }
 
+/**
+ * Route used to compact a Dazibao
+ * @param dz the current dazibao
+ * @param req the client request
+ * @param resp the response, which will be filled by the function
+ * @return 0 on success, -1 on error
+ **/
+int route_post_compact_dz(dz_t dz, struct http_request req,
+                struct http_response *resp) {
+        int saved;
+
+        /* This route returns the number of saved bytes if the dazibao was
+           successfully compacted. */
+
+        LOGDEBUG("Trying to compact the dazibao...");
+        saved = dz_compact(&dz);
+
+        if (saved < 0) {
+                LOGWARN("dz_compact gave us an error: %d", saved);
+                return HTTP_S_ERR;
+        }
+
+        LOGDEBUG("Saved %d bytes", saved);
+
+        /* 16 chars would be sufficient here */
+        *resp->body = (char*)malloc(sizeof(char)*16);
+
+        if (snprintf(*resp->body, 16, "%d", saved) > 16) {
+                LOGWARN("Cannot fit '%d' into 16 chars", saved);
+                *resp->body = strdup("0"); /* easy workaround */
+        }
+
+        resp->body_len = strlen(*resp->body);
+        resp->status = HTTP_S_OK;
+
+        return 0;
+}
+
 int register_routes(void) {
         int st = 0;
 
-        /* Add routes here */
-        st |= add_route(HTTP_M_GET,  "/index.html", route_get_index);
+        /* Add routes here
+         *
+         * Remember that routes are matched in the order they're added, so if
+         * a route matches '/foo/bar', place it *before* another route which
+         * matches '/foo/' or it will never match '/foo/bar*' paths.
+         */
+        st |= add_route(HTTP_M_GET,  "/index.html",  route_get_index);
         st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
-        st |= add_route(HTTP_M_GET,  "/tlv/", route_get_image_tlv);
+        st |= add_route(HTTP_M_GET,  "/tlv/",        route_get_image_tlv);
+        st |= add_route(HTTP_M_POST, "/compact",     route_post_compact_dz);
 
         return st;
 }
