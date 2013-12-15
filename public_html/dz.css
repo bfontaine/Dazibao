@@ -13,7 +13,7 @@ ol, ul {
     list-style: none;
 }
 
-body > .tlvs {
+.dazibao > .tlvs {
     max-width: 800px;
     margin:auto;
 }
