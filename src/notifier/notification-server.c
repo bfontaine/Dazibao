@@ -321,8 +321,6 @@ int accept_client() {
 
 int parse_arg(int argc, char **argv) {
 
-        LOGDEBUG("begin parsing args");
-
         conf.client_max = MAX_CLIENTS;
         conf.w_sleep_min = WATCH_SLEEP_MIN;
         conf.w_sleep_default = WATCH_SLEEP_DEFAULT;
@@ -335,14 +333,12 @@ int parse_arg(int argc, char **argv) {
                 {"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
                 {"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
                 {"--wtimedef", ARG_TYPE_INT, (void *)&(conf.w_sleep_default)},
-                {"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)},
+                {"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)}
         };
 
-        struct s_args args = {
-                &(conf.nb_files), &conf.file, options
-        };
+        struct s_args args = {&(conf.nb_files), &conf.file, options};
 
-        if (jparse_args(argc, argv, &args, 6) != 0) {
+        if (jparse_args(argc, argv, &args, sizeof(options)/sizeof(*options)) != 0) {
                 ERROR("parse_args", -1);
         }
 
