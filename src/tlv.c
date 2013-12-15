@@ -201,17 +201,11 @@ int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         return tlv_size;
 }
 
-int tlv_create_path(char *path, tlv_t *tlv) {
+int tlv_create_path(char *path, tlv_t *tlv, char *type) {
         tlv_t buff;
         int tlv_size, fd;
-        const char *c_type;
         struct stat st_path;
 
-        c_type = TLV_PADN;
-        if (c_type == NULL) {
-                printf("no type with path %s, no exist standard tlv now",path);
-                return -1;
-        }
         fd = open(path, O_RDONLY);
         if (fd < 0) {
                 printf("[tlv_create_path] error open");
@@ -228,7 +222,7 @@ int tlv_create_path(char *path, tlv_t *tlv) {
                 return -1;
         }
 
-        tlv_set_type(tlv, (char) *c_type);
+        tlv_set_type(tlv, type);
         tlv_set_length(tlv, st_path.st_size);
         tlv_size = tlv_mread(tlv, buff);
         close(fd);
