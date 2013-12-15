@@ -144,50 +144,18 @@ int tlv_fread(tlv_t *tlv, int fd) {
 }
 
 int tlv_from_file(tlv_t *tlv, int fd) {
-        
-        int status;
-        struct stat st;
 
-        if (fstat(fd, &st) == -1) {
-                PERROR("fstat");
-                status = -1;
-                goto OUT;
-        }
-
-        if (st.st_size < TLV_SIZEOF_HEADER) {
-                LOGERROR("File too small to be a TLV (%d).", (int)st.st_size);
-                status = -1;
-                goto OUT;
-        }
-
-
-        char *buff = malloc(sizeof(*buff) * st.st_size);
-
-        if (buff == NULL) {
-                LOGERROR("malloc failed");
-                status = -1;
-                goto OUT;
-        }
-
-        if (read(fd, buff, st.st_size) < st.st_size) {
+        if (read(fd, *tlv, TLV_SIZEOF_HEADER) < TLV_SIZEOF_HEADER) {
                 LOGERROR("read failed");
-                status = -1;
-                goto FREEBUFF;
+                return -1;
         }
 
-        memcpy(*tlv, buff, TLV_SIZEOF_HEADER);
-
-        if (tlv_mread(tlv, &buff[4]) == -1) {
-                LOGERROR("tlv_mread failed.");
-                status = -1;
-                goto FREEBUFF;
+        if (tlv_fread(tlv, fd) == -1) {
+                LOGERROR("tlv_fread failed.");
+                return -1;
         }
-
-FREEBUFF:
-        free(buff);
-
-OUT:
-        return status;
+        
+        return 0;
 }
 
 int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
