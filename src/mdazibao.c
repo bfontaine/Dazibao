@@ -134,6 +134,10 @@ OUT:
 }
 
 int dz_open(dz_t *d, char *path, int flags) {
+        return dz_open_with_size(d, path, flags, 0);
+}
+
+int dz_open_with_size(dz_t *d, char *path, int flags, size_t size) {
 
         int lock;
         char header[DAZIBAO_HEADER_SIZE];
@@ -171,7 +175,7 @@ int dz_open(dz_t *d, char *path, int flags) {
         d->len = st.st_size;
         d->fflags = flags;
 
-        if (dz_mmap_data(d, d->len) == -1) {
+        if (dz_mmap_data(d, d->len + size) == -1) {
                 goto PANIC;
         }
 
