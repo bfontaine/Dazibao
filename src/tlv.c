@@ -221,6 +221,12 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
                 goto DESTROY;
         }
 
+        *tlv = (tlv_t)safe_realloc(*tlv, tlv_size);
+        
+        if (*tlv == NULL) {
+                ERROR("realloc", -1);
+        }
+
         if (date) {
                 tlv_set_type(tlv, TLV_DATED);
                 tlv_set_length(tlv, tlv_size);
@@ -236,14 +242,13 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
                 goto DESTROY;
         }
 
-        if (date && tlv_mread(tlv, (char *)*tmp_ptr) == -1) {
-                LOGERROR("mread failed");
-                status = -1;
-                goto DESTROY;
+        if (date) {
+                memcpy(tlv_get_value_ptr(tlv) + TLV_SIZEOF_DATE,
+                        (char *)*tmp_ptr, st.st_size);
         }
 
 DESTROY:
-        if (date && tlv_destroy(tmp_ptr) != 0) {
+        if (date && tlv_destroy(&tmp) != 0) {
                 LOGERROR("destroy failed");
                 status = -1;
         }
