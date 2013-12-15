@@ -23,6 +23,7 @@ struct tlv_type tlv_types[] = {
         { TLV_JPEG     , "jpg"      },
         { TLV_COMPOUND , "compound" },
         { TLV_DATED    , "dated"    },
+        { TLV_GIF      , "gif"      },
         {-1,NULL}
 };
 
@@ -81,10 +82,10 @@ int tlv_destroy(tlv_t *t) {
 }
 
 int tlv_get_type(tlv_t *tlv) {
-        return (*tlv)[0];
+        return (unsigned char)((*tlv)[0]);
 }
 
-void tlv_set_type(tlv_t *tlv, char t) {
+void tlv_set_type(tlv_t *tlv, unsigned char t) {
         (*tlv)[0] = t;
 }
 
@@ -225,7 +226,7 @@ int tlv_fdump_value(tlv_t *tlv, int fd) {
         return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
-const char *tlv_type2str(char tlv_type) {
+const char *tlv_type2str(int tlv_type) {
         for (int i=0; tlv_types[i].name != NULL; i++) {
                 if (tlv_types[i].code == tlv_type) {
                         return tlv_types[i].name;

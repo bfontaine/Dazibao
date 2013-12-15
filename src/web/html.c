@@ -62,6 +62,9 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 case TLV_JPEG:
                         ext = JPEG_EXT;
                         break;
+                case TLV_GIF:
+                        ext = GIF_EXT;
+                        break;
                 default:
                         ext = DEFAULT_EXT;
                         break;
@@ -184,7 +187,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
             len_bottom;
 
         if (!TLV_VALID_TYPE(tlv_type)) {
-                LOGDEBUG("Unknown TLV type: %d", tlv_type);
+                LOGWARN("Invalid TLV type: %d", tlv_type);
                 return 0;
         }
 
@@ -225,6 +228,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                         break;
                 case TLV_PNG:
                 case TLV_JPEG:
+                case TLV_GIF:
                         st = html_add_img_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;

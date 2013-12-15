@@ -29,8 +29,11 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
+/** code for a GIF TLV (see #100) */
+#define TLV_GIF    140
+
 /** test that a TLV type is valid */
-#define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 6)
+#define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 255)
 
 /** size of the date field in a dated TLV */
 #define TLV_SIZEOF_DATE 4
@@ -71,8 +74,8 @@ typedef char* tlv_t;
  * A TLV type
  **/
 struct tlv_type {
-        /* the type's code (0-255) */
-        unsigned char code;
+        /* the type's code */
+        int code;
         /* the type's name */
         char *name;
 };
@@ -118,7 +121,7 @@ void tlv_set_date(tlv_t *tlv, uint32_t date);
  * @param tlv TLV whose type has to be set
  * @param t type to set
  **/
-void tlv_set_type(tlv_t *tlv, char t);
+void tlv_set_type(tlv_t *tlv, unsigned char t);
 
 /**
  * Set length of a TLV.
@@ -196,7 +199,7 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
  * @param tlv_type the type
  * @return a string representation of this type
  **/
-const char *tlv_type2str(char tlv_type);
+const char *tlv_type2str(int tlv_type);
 
 char tlv_str2type(char *tlv_type);
 
