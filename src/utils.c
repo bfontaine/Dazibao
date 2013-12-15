@@ -96,13 +96,11 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 }
 
                 if (!is_opt) {
-                        if (res->argc != NULL) {
+                        if (res->argc != NULL && res->argv != NULL) {
                                 *res->argc = argc - next_arg;
+                                *(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;
                         }
-                        if (res->argv == NULL) {
-                                break;
-                        }
-                        *(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;
+                        break;
                 }
         }
 
