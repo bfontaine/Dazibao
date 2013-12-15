@@ -66,28 +66,28 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
 
 int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char delim = ',';
-        char *tmp = strtok(op_type, &delim);
+        const char *de = &delim;
+        char *tmp = strtok(op_type, de);
         int i = 0;
         while (1) {
-                printf("type : %s\n",tmp);
                 if ( tmp == NULL) {
                         break;
                 } else if (strcmp( tmp , "text") == 0) {
-                        type_args[i] = (char) TLV_TEXT;
+                        type_args[i] = '2';
                 } else if (strcmp( tmp , "jpg") == 0) {
-                        type_args[i] = (char) TLV_JPEG;
+                        type_args[i] = '3';
                 } else if (strcmp( tmp , "png") == 0) {
-                        type_args[i] = (char) TLV_PNG;
+                        type_args[i] = '4';
                 } else {
-                        printf("unrecognized type %s\n",tmp);
+                        printf("unrecognized type %s\n", tmp);
                         /*return -1;*/
                 }
-                tmp = strtok(NULL, &delim);
+                tmp = strtok(NULL, de);
                 i++;
         }
 
-        if (i+1 != (argc + (f_dz >= 0 ? 1 : 0))) {
-                printf("args to option --type too large of type\n");
+        if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
+                printf("args to option type too large %d %d\n",i,argc);
                 return -1;
         }
 
@@ -133,10 +133,6 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
                         date_size = date_size + tmp_size;
                 }
 
-                printf(" f_da: %2d| f_dz: %2d|  f_co: %2d | (s_d: %6d|"
-                "s_co: %6d| s_tmp: %6d)\n",*f_d,*f_dz,*f_co,date_size,
-                compound_size,tmp_size);
-
                 if ((compound_size > TLV_MAX_VALUE_SIZE) ||
                         (date_size > (TLV_MAX_VALUE_SIZE - TLV_SIZEOF_DATE)) ||
                         (tmp_size > TLV_MAX_VALUE_SIZE)) {
@@ -154,7 +150,6 @@ int cmd_add(int argc, char **argv, char * daz) {
             f_dz = -1,
             f_type = -1,
             f_input = -1,
-            tmp_first_args = 0,
             i;
         char *type_args;
 
@@ -171,7 +166,7 @@ int cmd_add(int argc, char **argv, char * daz) {
         }
 
         if (f_type >= 0) {
-                type_args = malloc(sizeof(char*)* argc);
+                type_args = malloc(sizeof(char)* argc);
                 char *tmp = argv[f_type];
                 if (f_type < (argc -1)) {
                         argv[f_type] = argv[f_type + 1];
@@ -182,11 +177,13 @@ int cmd_add(int argc, char **argv, char * daz) {
                         free(type_args);
                         return -1;
                 }
-                for (i = 0; i < argc; i++) {
-                        printf("arg %d : %c\n",i,type_args[i]);
-                }
         } else if ( argc > (f_dz >= 0 ? 1:0) + (f_input >= 0 ? 1:0)) {
                 printf("check_args_no_op failed\n");
+                return -1;
+        }
+
+        if (check_args(argc, argv, &f_dz, &f_compound, &f_date)) {
+                printf("check apth args failed\n");
                 return -1;
         }
         /*
