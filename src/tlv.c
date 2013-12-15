@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+
 #include "utils.h"
 #include "tlv.h"
 #include "logging.h"
@@ -40,6 +41,11 @@ void htod(unsigned int n, char *len) {
 static unsigned int dtoh(char *len) {
         unsigned char *tmp = (unsigned char *)len;
         return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
+}
+
+void tlv_set_date(tlv_t *tlv, uint32_t date) {
+        uint32_t d = htonl(date);
+        memcpy((*tlv) + TLV_SIZEOF_HEADER, &d, sizeof(d));
 }
 
 int tlv_init(tlv_t *t) {
@@ -184,35 +190,65 @@ OUT:
         return status;
 }
 
-int tlv_file2tlv(tlv_t *tlv, int fd, char type) {
+int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
 
         struct stat st;
+        int tlv_size;
         int status;
+        tlv_t tmp;
+        tlv_t *tmp_ptr;
 
+        if (date && tlv_init(&tmp) == -1) {
+                LOGERROR("tlv_init failed");
+                status = -1;
+                goto OUT;
+        }
+
+        tmp_ptr = date ? &tmp : tlv;
+        
         if (fstat(fd, &st) == -1) {
                 PERROR("fstat");
                 status = -1;
-                goto OUT;
+                goto DESTROY;
         }
 
-        if (st.st_size > TLV_MAX_VALUE_SIZE) {
-                LOGERROR("File too large to fit in a TLV.");
+        tlv_size = st.st_size +
+                (date ? TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE : 0);
+
+        if (tlv_size > TLV_MAX_VALUE_SIZE) {
+                LOGERROR("Too large to fit in a TLV.");
                 status = -1;
-                goto OUT;
+                goto DESTROY;
         }
 
-        tlv_set_type(tlv, type);
-        tlv_set_length(tlv, st.st_size);
-        if (tlv_fread(tlv, fd) != 0) {
+        if (date) {
+                tlv_set_type(tlv, TLV_DATED);
+                tlv_set_length(tlv, tlv_size);
+                tlv_set_date(tlv, date);
+        }
+
+        tlv_set_type(tmp_ptr, type);
+        tlv_set_length(tmp_ptr, st.st_size);
+
+        if (tlv_fread(tmp_ptr, fd) != 0) {
                 LOGERROR("tlv_fread failed.");
+                status = -1;
+                goto DESTROY;
+        }
+
+        if (date && tlv_mread(tlv, (char *)*tmp_ptr) == -1) {
+                LOGERROR("mread failed");
+                status = -1;
+                goto DESTROY;
+        }
+
+DESTROY:
+        if (date && tlv_destroy(tmp_ptr) != 0) {
+                LOGERROR("destroy failed");
                 status = -1;
         }
 
 OUT:
-        if (close(fd) == -1) {
-                PERROR("close");
-        }
-
         return status;
 }
 

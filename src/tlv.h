@@ -1,6 +1,8 @@
 #ifndef _TLVS_H
 #define _TLVS_H 1
 
+#include <stdint.h>
+
 /** @file
  * Set of functions used to work with TLVs
  **/
@@ -87,6 +89,13 @@ int tlv_destroy(tlv_t *t);
  * @return type of tlv
  **/
 int tlv_get_type(tlv_t *tlv);
+
+/**
+ * Set the date of a (dated) TLV
+ * @param tlv TLV whose date has to be set
+ * @param date date to set
+ **/
+void tlv_set_date(tlv_t *tlv, uint32_t date);
 
 /**
  * Set the type of a TLV
@@ -177,6 +186,6 @@ char tlv_str2type(char *tlv_type);
 
 int tlv_from_file(tlv_t *tlv, int fd);
 
-int tlv_file2tlv(tlv_t *tlv, int fd, char type);
+int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date);
 
 #endif

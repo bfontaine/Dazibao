@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/mman.h>
+#include <stdint.h>
 
 #include "utils.h"
 #include "logging.h"
@@ -70,6 +71,7 @@ int mk_tlv(int argc, char **argv, int in, int out) {
 	int status;
 	char type_code;
         tlv_t tlv;
+        uint32_t timestamp;
 	
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
@@ -81,6 +83,18 @@ int mk_tlv(int argc, char **argv, int in, int out) {
         if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
                 LOGERROR("jparse_args failed");
                 status = -1;
+                goto OUT;
+        }
+
+        if (date) {
+                timestamp = (uint32_t) time(NULL);
+                if (timestamp == (uint32_t) -1) {
+                        LOGERROR("Failed getting time.");
+                        status = -1;
+                        goto OUT;
+                }
+        } else {
+                timestamp = 0;
         }
 
 	type_code = tlv_str2type(type);
@@ -97,7 +111,7 @@ int mk_tlv(int argc, char **argv, int in, int out) {
                 goto DESTROY;
         }
 
-        if (tlv_file2tlv(&tlv, in, type_code)) {
+        if (tlv_file2tlv(&tlv, in, type_code, timestamp)) {
                 LOGERROR("tlv_file2tlv failed");
                 status = -1;
                 goto DESTROY;
