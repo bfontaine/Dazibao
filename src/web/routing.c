@@ -185,7 +185,7 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
 
         LOGDEBUG("No route found for path '%s'", req->path);
 
-        if (file_response(sock, req) == 0) {
+        if (req->method != HTTP_M_POST && file_response(sock, req) == 0) {
                 return 0;
         }
 
