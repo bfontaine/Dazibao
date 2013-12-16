@@ -102,7 +102,7 @@ int destroy_routes(void) {
         return 0;
 }
 
-int route_request(int sock, dz_t dz, struct http_request *req) {
+int route_request(int sock, dz_t *dz, struct http_request *req) {
         route_handler rh;
         int route_status = -1, err;
 
@@ -124,10 +124,6 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         if (req->method == HTTP_M_UNSUPPORTED) {
                 error_response(sock, HTTP_S_NOTIMPL);
                 return 0;
-        }
-
-        if (dz.fd < 0) {
-                LOGWARN("Routing a request with no dazibao (%d)", dz.fd);
         }
 
         rh = get_route_handler(req->method, req->path, &route_status);

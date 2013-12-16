@@ -278,6 +278,7 @@ int main(int argc, char **argv) {
                         }
                         if (dz.fd > 0 && dz_close(&dz) < 0) {
                                 LOGERROR("Cannot close the Dazibao.");
+                                dz.fd = -1;
                         }
                         continue;
                 }
@@ -293,8 +294,9 @@ int main(int argc, char **argv) {
 
                 /* <routing+response>  */
 
-                status = route_request(client, dz, req);
-                dz_close(&dz);
+                status = route_request(client, &dz, req);
+
+                LOGDEBUG("Closing the dazibao. status=%d", dz_close(&dz));
                 dz.fd = -1;
 
                 if (status != 0) {
