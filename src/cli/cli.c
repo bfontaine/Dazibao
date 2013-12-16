@@ -136,10 +136,10 @@ int dump_tlv(int argc, char **argv, int out) {
         tlv_t tlv;
         int status = 0;
         char value = 0;
-        int offset = -1;
+        long long int offset = -1;
 
         struct s_option opt[] = {
-                {"--offset", ARG_TYPE_INT, (void *)&offset},
+                {"--offset", ARG_TYPE_LLINT, (void *)&offset},
                 {"--value", ARG_TYPE_FLAG, (void *)&value},
         };
 
@@ -203,11 +203,11 @@ int dump_dz(int argc, char **argv, int out) {
         
         dz_t dz;
         int status = 0;
-        int depth = 0;
+        long long int depth = 0;
         int debug = 0;
 
         struct s_option opt[] = {
-                {"--depth", ARG_TYPE_INT, (void *)&depth},
+                {"--depth", ARG_TYPE_LLINT, (void *)&depth},
                 {"--debug", ARG_TYPE_FLAG, (void *)&debug},
         };
 
@@ -277,11 +277,11 @@ OUT:
 
 int rm_tlv(int argc, char **argv) {
         dz_t dz;
-        int off = -1;
+        long long int off = -1;
         int status = 0;
 
         struct s_option opt[] = {
-                {"--offset", ARG_TYPE_INT, (void *)&off}
+                {"--offset", ARG_TYPE_LLINT, (void *)&off}
         };
 
         struct s_args args = {&argc, &argv, opt};
