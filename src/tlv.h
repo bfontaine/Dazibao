@@ -94,6 +94,8 @@ extern const char *JPG_SIGNATURE;
 /** GIF file signature */
 extern const char *GIF_SIGNATURE;
 
+unsigned int dtoh(char *len);
+
 /**
  * Convert {n} in dazibao's endianess
  * and set {tlv}'s length field with the converted value.

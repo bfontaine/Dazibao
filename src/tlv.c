@@ -46,7 +46,7 @@ void htod(unsigned int n, char *len) {
  * @return value of length
  * @deprecated use get_length
  **/
-static unsigned int dtoh(char *len) {
+unsigned int dtoh(char *len) {
         unsigned char *tmp = (unsigned char *)len;
         return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }

@@ -10,12 +10,170 @@
 #include <netinet/in.h>
 #include <sys/mman.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "logging.h"
 #include "tlv.h"
 #include "cli.h"
 #include "mdazibao.h"
+
+
+int add_all(int argc, char **argv) {
+
+        char date = 0;
+        char *type = NULL;
+        int i, len = 0;
+        uint32_t timestamp;	
+        int ptr_compound;
+        char *file = NULL;
+        char *delim = ",";
+
+        struct s_option opt[] = {
+                {"--date", ARG_TYPE_FLAG, (void *)&date},
+                {"--type", ARG_TYPE_STRING, (void *)&type},
+                {"--dazibao", ARG_TYPE_STRING, (void *)&file}
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt));
+
+        if (date) {
+                ptr_compound = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                len = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                timestamp = (uint32_t) time(NULL);
+                timestamp = htonl(timestamp);
+                if (timestamp == (uint32_t) -1) {
+                        return -1;
+                }
+        } else {
+                len = 0;
+                ptr_compound = 0;
+                timestamp = 0;
+        }
+
+        for (i = 0; i < argc; i++) {
+                struct stat st;
+                if (stat(argv[i], &st) == -1) {
+                        if (errno == ENOENT) {
+                                len += strlen(argv[i]);
+                        } else {
+                                return -1;
+                        }
+                } else {
+                        len += st.st_size;
+                }
+                len += TLV_SIZEOF_HEADER;
+        }
+
+        char *buf = malloc(len);
+        int write_ptr = 0;
+        int rc = 0;
+
+        if (argc > 1) {
+                write_ptr += TLV_SIZEOF_HEADER;
+        }
+        if (date) {
+                write_ptr += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+        }
+
+        for (i = 0; i < argc; i++) {
+
+                char typ = tlv_str2type(strtok(i == 0 ? type : NULL, delim));
+
+                int fd = open(argv[i], O_RDONLY);
+
+                if (fd == -1) {
+                        if (access(argv[i], F_OK) == 0) {
+                                LOGERROR("Failed opening %s", argv[i]);
+                                return -1;
+                        } else {
+                                buf[write_ptr++] = typ;
+                                htod(strlen(argv[i]), &buf[write_ptr]);
+                                write_ptr += TLV_SIZEOF_LENGTH;
+                                memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
+                                write_ptr += strlen(argv[i]);
+                                continue;
+                        }
+                }
+                
+                write_ptr += TLV_SIZEOF_LENGTH;
+                
+                rc = read(fd, buf + write_ptr, len - write_ptr);
+                
+                if (rc == -1) {
+                        return -1;
+                }
+
+                write_ptr -= TLV_SIZEOF_LENGTH;
+                buf[write_ptr++] = typ;
+                htod(rc, &buf[write_ptr]);
+                write_ptr += TLV_SIZEOF_LENGTH;
+
+                write_ptr += rc;
+                close(fd);
+        }
+
+        if (timestamp != 0) {
+                buf[0] = TLV_DATED;
+                htod(len - 1, &buf[1]);
+                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp, sizeof(timestamp));
+        }
+
+        if (argc > 1) {
+                buf[ptr_compound] = TLV_COMPOUND;
+                htod(len - ptr_compound - TLV_SIZEOF_HEADER, &buf[ptr_compound + 1]);
+        }
+        
+        return cli_add_tlv(file, buf);
+}
+
+int cli_add_tlv(char *file, char *buf) {
+
+        int status = 0;
+        tlv_t tlv;
+        dz_t dz;
+
+        if (tlv_init(&tlv) != 0) {
+                LOGERROR("Failed initializing TLV.");
+                status = -1;
+                goto OUT;
+        }
+
+        tlv_set_type(&tlv, buf[0]);
+        tlv_set_length(&tlv, dtoh(&buf[1]));
+
+        if (dz_open(&dz, file, O_RDWR) != 0) {
+                LOGERROR("Failed opening %s.", file);
+                status = -1;
+                goto DESTROY;
+        }
+
+        if (tlv_mread(&tlv, &buf[TLV_SIZEOF_HEADER]) == -1) {
+                LOGERROR("tlv_from_file failed.");
+                status = -1;
+                goto DESTROY;
+        }
+
+        if (dz_add_tlv(&dz, &tlv) != 0) {
+                LOGERROR("Failed adding TLV.");
+                status = -1;
+                goto DESTROY;
+        }
+
+DESTROY:
+        tlv_destroy(&tlv);
+
+        if (dz_close(&dz) == -1) {
+                LOGERROR("Failed closing dazibao.");
+                status = -1;
+        }
+OUT:
+        return status;
+                
+}
+
 
 int add(char *file, int in) {
 
@@ -67,14 +225,14 @@ int mk_tlv(int argc, char **argv, int in, int out) {
 	int status;
 	char type_code;
         tlv_t tlv;
-        uint32_t timestamp;
-	
+        uint32_t timestamp;	
+
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
                 {"--type", ARG_TYPE_STRING, (void *)&type}
         };
 
-        struct s_args args = {NULL, NULL, opt};
+        struct s_args args = {&argc, &argv, opt};
 
         if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
                 LOGERROR("jparse_args failed");
@@ -335,7 +493,7 @@ int main(int argc, char **argv) {
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
-                if (add(argv[2], STDIN_FILENO) != 0) {
+                if (add_all(argc - 2, &argv[2]) != 0) {
                         LOGERROR("TLV addition failed.");
                         return EXIT_FAILURE;
                 }

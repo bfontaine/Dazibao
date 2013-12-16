@@ -7,8 +7,9 @@
 
 /** format of the help text */
 #define CLI_USAGE_FMT "RTFM"
-#define DZCLI_TYPE_SEPARATOR ","
 
+int add_all(int argc, char **argv);
+int cli_add_tlv(char *file, char *buf);
 int add(char *file, int in);
 int mk_tlv(int argc, char **argv, int in, int out);
 int dump_tlv(int argc, char **argv, int out);
