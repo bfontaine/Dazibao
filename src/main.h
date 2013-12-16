@@ -48,7 +48,7 @@ int cmd_add(int argc, char **argv, char *daz);
  * @param daz
  **/
 int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
-       char *type , char *daz);
+                char *type , char *daz);
 
 /**
  * @param argc arguments count

@@ -167,7 +167,7 @@ int cmd_add(int argc, char **argv, char * daz) {
                 if (f_type < (argc -1)) {
                         argv[f_type] = argv[f_type + 1];
                 }
-                argc --;
+                argc--;
                 if (check_type_args(argc, type_args, tmp, f_dz) < 0) {
                         printf("check_args_no_op failed\n");
                         free(type_args);
@@ -247,14 +247,14 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                            }
                            size_tlv += tlv_create_path(argv[i], &buff);
                            buff_size += size_tlv;
-                           if(buff_size > TLV_MAX_VALUE_SIZE) {
+                           if (buff_size > TLV_MAX_VALUE_SIZE) {
                            printf("tlv compound too large\n");
                            tlv_destroy(&tlv);
                            tlv_destroy(&buff);
                            return -1;
                            }
                            tlv_destroy(&buff);
-                           }*/
+                           }
                 }
 
                 if (i == f_d) {
@@ -270,7 +270,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 tlv_destroy(&buff);
 
                         }
-                }
+                }*/
 
         }
 
@@ -488,7 +488,7 @@ int main(int argc, char **argv) {
         } else {
                 argc_cmd = argc - 3;
                 /* shift argv to the right to remove the program name and the
-                 * command */
+                * command */
                 argv_cmd = argv + 2;
         }
         /*
@@ -526,3 +526,4 @@ int main(int argc, char **argv) {
 
         exit(EXIT_SUCCESS);
 }
+

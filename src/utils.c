@@ -11,7 +11,7 @@ int check_tlv_path(const char * path, int flag_access) {
                 printf("[utils.c|check_tlv_path]file %s not exist\n",path);
                 return -1;
         }
-        if(stat(path, &st_path) < 0) {
+        if (stat(path, &st_path) < 0) {
                 printf("[utils.c|check_tlv_path] error stat \n");
                 return -1;
         }
@@ -34,7 +34,7 @@ int check_dz_path(const char * path, int flag_access) {
                 printf("[utils.c|check_dz_path]file %s not exist\n",path);
                 return -1;
         }
-        if(stat(path, &st_path) < 0) {
+        if (stat(path, &st_path) < 0) {
                 printf("[utils.c|check_dz_path] error stat \n");
                 return -1;
         }
