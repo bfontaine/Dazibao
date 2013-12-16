@@ -872,9 +872,4 @@ int dz2tlv(char *d, tlv_t *tlv) {
 
         return tlv_get_length(tlv);
 }
-
-int dz_check_tlv_at(dz_t *daz_buf, off_t off, int type, off_t **parent) {
-        return 1;
-}
-
 #undef BUFFLEN
