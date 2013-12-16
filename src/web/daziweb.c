@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
         struct sigaction sig;
 
         _log_newline = 0;
-        LOGDEBUG("Parsing arguments...");
+        LOGTRACE("Parsing arguments...");
 
         if (parse_args(argc, argv, &port) != 0) {
                 exit(EXIT_FAILURE);
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
         }
         init_wserver_infos();
 
-        LOGDEBUG("Setting up signals traps...");
+        LOGTRACE("Setting up signals traps...");
 
         memset(&sig, 0, sizeof(sig));
         sig.sa_handler = clean_close;
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
                 LOGWARN("Cannot intercept SIGSEGV");
         }
 
-        LOGDEBUG("Opening a socket...");
+        LOGTRACE("Opening a socket...");
 
         listening_sock = socket(AF_INET, SOCK_STREAM, 0);
         if (listening_sock == -1) {
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
                 clean_close(0);
         }
 
-        LOGDEBUG("Listening on it...");
+        LOGTRACE("Listening on it...");
 
         if (listen(listening_sock, MAX_QUEUE) == -1) {
                 perror("listen");
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
         LOGINFO("Listening on port %d...", port);
         LOGINFO("Press ^C to interrupt.");
 
-        LOGDEBUG("Initializing routes & request struct...");
+        LOGTRACE("Initializing routes & request struct...");
 
         register_routes();
         req = create_http_request();
@@ -278,6 +278,7 @@ int main(int argc, char **argv) {
                         }
                         if (dz.fd > 0 && dz_close(&dz) < 0) {
                                 LOGERROR("Cannot close the Dazibao.");
+                                dz.fd = -1;
                         }
                         continue;
                 }
@@ -293,8 +294,9 @@ int main(int argc, char **argv) {
 
                 /* <routing+response>  */
 
-                status = route_request(client, dz, req);
-                dz_close(&dz);
+                status = route_request(client, &dz, req);
+
+                LOGTRACE("Closing the dazibao. status=%d", dz_close(&dz));
                 dz.fd = -1;
 
                 if (status != 0) {

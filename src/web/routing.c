@@ -43,7 +43,7 @@ int add_route(char mth, char *path_suffix, route_handler route) {
                 mth = HTTP_M_GET;
         }
 
-        LOGDEBUG("Route handler for method %d and suffix '%s' added.",
+        LOGTRACE("Route handler for method %d and suffix '%s' added.",
                         mth, path_suffix);
 
         routes_paths[routes_cpt] = strdup(path_suffix);
@@ -57,7 +57,7 @@ int add_route(char mth, char *path_suffix, route_handler route) {
 }
 
 route_handler get_route_handler(char mth, char *path, int *status) {
-        LOGDEBUG("Getting route handler for method %d, path '%s'", mth, path);
+        LOGTRACE("Getting route handler for method %d, path '%s'", mth, path);
 
         if (mth == HTTP_M_HEAD) {
                 /* A HEAD request is the same as GET but without response body
@@ -102,7 +102,7 @@ int destroy_routes(void) {
         return 0;
 }
 
-int route_request(int sock, dz_t dz, struct http_request *req) {
+int route_request(int sock, dz_t *dz, struct http_request *req) {
         route_handler rh;
         int route_status = -1, err;
 
@@ -124,10 +124,6 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
         if (req->method == HTTP_M_UNSUPPORTED) {
                 error_response(sock, HTTP_S_NOTIMPL);
                 return 0;
-        }
-
-        if (dz.fd < 0) {
-                LOGWARN("Routing a request with no dazibao (%d)", dz.fd);
         }
 
         rh = get_route_handler(req->method, req->path, &route_status);
@@ -202,7 +198,7 @@ int file_response(int sock, struct http_request *req) {
         struct stat st;
         struct http_response *resp;
 
-        LOGDEBUG("Trying to find the file %s", req->path);
+        LOGTRACE("Trying to find the file %s", req->path);
 
         if (path == NULL || path[0] != '/' || strstr(path, "..")) {
                 LOGDEBUG("Wrong file path");
@@ -211,7 +207,7 @@ int file_response(int sock, struct http_request *req) {
 
         plen = strlen(path);
         if (plen > MAX_FILE_PATH_LENGTH) {
-                LOGDEBUG("Path is too long (max=%d)", MAX_FILE_PATH_LENGTH);
+                LOGWARN("Path is too long (max=%d)", MAX_FILE_PATH_LENGTH);
                 return -1;
         }
 
