@@ -219,11 +219,11 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
 }
 
 int tlv_fdump(tlv_t *tlv, int fd) {
-        return write(fd, *tlv, TLV_SIZEOF(tlv));
+        return write_all(fd, *tlv, TLV_SIZEOF(tlv));
 }
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {
-        return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+        return write_all(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
 const char *tlv_type2str(int tlv_type) {
