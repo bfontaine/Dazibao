@@ -434,20 +434,18 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
         tlv_init(&buf);
 
         off_prev = d->offset;
-        d->offset = DAZIBAO_HEADER_SIZE;
+        d->offset = min_offset;
         off_start = -1;
 
         while ((off_tmp = dz_next_tlv(d, &buf)) != -1
                 && off_tmp != EOD
                 && off_tmp < offset) {
-                if (tlv_get_type(&buf) == TLV_PAD1
-                        || tlv_get_type(&buf) == TLV_PADN) {
-                        /* pad reached */
-                        if (off_start == -1) {
-                                off_start = off_tmp;
-                        }
+                if (TLV_IS_EMPTY_PAD(tlv_get_type(&buf)) && off_start == -1) {
+                        /* we got a padN/pad1 */
+                        off_start = off_tmp;
                 } else {
-                        /* tlv which is not a pad */
+                        /* not a padN/pad1, the serie is broken, reset
+                           off_start */
                         off_start = -1;
                 }
         }
