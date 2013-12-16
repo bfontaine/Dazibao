@@ -127,7 +127,7 @@ int route_get_hash(dz_t *dz, struct http_request req,
 
         int oldhash = -1;
 
-        LOGTRACE("Trying to get the hash of the dazibao\n");
+        LOGTRACE("Trying to get the hash of the dazibao");
 
         if (strcmp(req.path, "/hash") == 0) {
                 oldhash = 0;
@@ -136,7 +136,7 @@ int route_get_hash(dz_t *dz, struct http_request req,
                 return HTTP_S_BADREQ;
         }
 
-        LOGTRACE("dz hash(%d) -> %d\n", oldhash, dz_hash(dz, &oldhash));
+        LOGTRACE("dz hash(%d) -> %d", oldhash, dz_hash(dz, &oldhash));
 
         /* 16 chars would be sufficient here */
         *resp->body = (char*)malloc(sizeof(char)*16);
