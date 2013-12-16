@@ -199,8 +199,6 @@ CLOSE:
         return status;
 }
 
-
-
 int dump_dz(int argc, char **argv, int out) {
         
         dz_t dz;
@@ -248,14 +246,14 @@ CLOSE:
 
 int compact_dz(char *file) {
 
-        dz_t daz_buf;
+        dz_t dz;
         int saved;
         int status = 0;
-        if (dz_open(&daz_buf, file, O_RDWR) < 0) {
+        if (dz_open(&dz, file, O_RDWR) < 0) {
                 return -1;
         }
 
-        saved = dz_compact(&daz_buf);
+        saved = dz_compact(&dz);
 
         if (saved < 0) {
                 LOGERROR("dz_compact failed.");
@@ -264,7 +262,7 @@ int compact_dz(char *file) {
         }
 
 CLOSE:
-        if (dz_close(&daz_buf) < 0) {
+        if (dz_close(&dz) < 0) {
                 LOGERROR("dz_close failed");
                 status = -1;
                 goto OUT;
@@ -275,6 +273,49 @@ OUT:
         }
         return status;
 
+}
+
+int rm_tlv(int argc, char **argv) {
+        dz_t dz;
+        int off = -1;
+        int status = 0;
+
+        struct s_option opt[] = {
+                {"--offset", ARG_TYPE_INT, (void *)&off}
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
+                LOGERROR("jparse_args failed");
+                return -1;
+        }
+
+        if (argv == NULL || off == -1) {
+                LOGERROR("Wrong arguments.");
+                return -1;
+        }
+
+        if (dz_open(&dz, argv[0], O_RDWR) < 0) {
+                LOGERROR("dz_open failed.");
+                return -1;
+        }
+
+        if (dz_rm_tlv(&dz, (off_t)off) < 0) {
+                LOGERROR("dz_rm_tlv failed.");
+                status = -1;
+                goto CLOSE;
+        }
+
+CLOSE:
+        if (dz_close(&dz) < 0) {
+                LOGERROR("dz_close failed.");
+                status = -1;
+                goto OUT;
+        }
+
+OUT:
+        return status;
 }
 
 
@@ -320,6 +361,12 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "compact") == 0) {
                 if (compact_dz(argv[2]) == -1) {
                         LOGERROR("Dazibao dumping failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+        } else if (strcmp(cmd, "rm") == 0) {
+                if (rm_tlv(argc - 2, &argv[2]) == -1) {
+                        LOGERROR("Failed removing TLV.");
                         return EXIT_FAILURE;
                 }
                 return EXIT_SUCCESS;
