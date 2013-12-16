@@ -300,7 +300,7 @@ RETURN_LINE:
                 return line;
         }
         line[i] = '\0';
-        LOGDEBUG("[header line] %s", line);
+        LOGTRACE("[header line] %s", line);
         return line;
 }
 
