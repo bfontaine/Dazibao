@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
 
         LOGTRACE("Initializing routes & request struct...");
 
-        register_routes();
+        LOGTRACE("register routes, status=%d", register_routes());
         req = create_http_request();
 
         while (1) {
