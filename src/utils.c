@@ -30,7 +30,7 @@ long str2dec_positive(char *s) {
         char *p = NULL;
         long ret;
 
-        if (s == NULL) {
+        if (s == NULL || s[0] == '\0') {
                 return -1;
         }
 
