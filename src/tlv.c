@@ -260,7 +260,8 @@ int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         int real_time = htonl(time(NULL));
 
         tlv_size = TLV_SIZEOF_DATE + value_size;
-        *tlv_d = malloc((TLV_SIZEOF_HEADER + tlv_size) * sizeof(tlv_t));
+        *tlv_d = (tlv_t)safe_realloc(tlv_d, sizeof(*tlv_d)* (TLV_SIZEOF_HEADER
+                        + tlv_size));
         if (*tlv_d == NULL) {
                 printf("[tlv_create_date] error to init tlv");
                 return -1;
