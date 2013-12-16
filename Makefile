@@ -101,7 +101,7 @@ clean: cleantmp
 	find . -name "*.o" -delete
 
 cleanall: clean
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(TESTS)
 
 check: cleantmp
 	./utils/stylecheck.sh
