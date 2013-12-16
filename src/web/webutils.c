@@ -23,6 +23,9 @@ int get_image_tlv_type(const char *path) {
         if (strcasecmp(ext, JPEG_EXT + 1) == 0) {
                 return TLV_JPEG;
         }
+        if (strcasecmp(ext, GIF_EXT + 1) == 0) {
+                return TLV_GIF;
+        }
         return -1;
 }
 

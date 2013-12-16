@@ -9,12 +9,23 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 #include "utils.h"
 #include "tlv.h"
 #include "logging.h"
 
 /** @file */
+
+struct tlv_type tlv_types[] = {
+        { TLV_PAD1     , "pad1"     },
+        { TLV_PADN     , "padN"     },
+        { TLV_TEXT     , "text"     },
+        { TLV_PNG      , "png"      },
+        { TLV_JPEG     , "jpg"      },
+        { TLV_COMPOUND , "compound" },
+        { TLV_DATED    , "dated"    },
+        { TLV_GIF      , "gif"      },
+        {-1,NULL}
+};
 
 /**
  * Convert {n} in dazibao's endianess
@@ -71,10 +82,10 @@ int tlv_destroy(tlv_t *t) {
 }
 
 int tlv_get_type(tlv_t *tlv) {
-        return (*tlv)[0];
+        return (unsigned char)((*tlv)[0]);
 }
 
-void tlv_set_type(tlv_t *tlv, char t) {
+void tlv_set_type(tlv_t *tlv, unsigned char t) {
         (*tlv)[0] = t;
 }
 
@@ -215,30 +226,21 @@ int tlv_fdump_value(tlv_t *tlv, int fd) {
         return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
-const char *tlv_type2str(char tlv_type) {
-        switch (tlv_type) {
-        case TLV_PAD1:     return "pad1";
-        case TLV_PADN:     return "padN";
-        case TLV_TEXT:     return "text";
-        case TLV_PNG:      return "png";
-        case TLV_JPEG:     return "jpeg";
-        case TLV_COMPOUND: return "compound";
-        case TLV_DATED:    return "dated";
-        default:           return "unknown";
+const char *tlv_type2str(int tlv_type) {
+        for (int i=0; tlv_types[i].name != NULL; i++) {
+                if (tlv_types[i].code == tlv_type) {
+                        return tlv_types[i].name;
+                }
         }
+        return "unknown";
 }
 
 
 char tlv_str2type(char *tlv_type) {
-        if (strcasecmp(tlv_type, "text") == 0) {
-                return TLV_TEXT;
-        } else if (strcasecmp(tlv_type, "png") == 0) {
-                return TLV_PNG;
-        } else if (strcasecmp(tlv_type, "jpg") == 0) {
-                return TLV_JPEG;
-        } else if (strcasecmp(tlv_type, "compound") == 0) {
-                return TLV_COMPOUND;
-        } else {
-                return -1;
+        for (int i=0; tlv_types[i].name != NULL; i++) {
+                if (strcasecmp(tlv_type, tlv_types[i].name) == 0) {
+                        return tlv_types[i].code;
+                }
         }
+        return -1;
 }

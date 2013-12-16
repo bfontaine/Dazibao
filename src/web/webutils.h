@@ -43,13 +43,15 @@ struct wserver_info WSERVER;
 #define JPEG_EXT ".jpg"
 /** default extension of a PNG image */
 #define PNG_EXT  ".png"
+/** default extension of a GIF image */
+#define GIF_EXT  ".gif"
 /** default extension of a file */
 #define DEFAULT_EXT ""
 
 /**
  * Guess the type of an image TLV from its path. If it ends with .png, it's a
- * TLV_PNG, if it ends with .jpg it's a TLV_JPEG. The function returns -1 if
- * the TLV type cannot be found.
+ * TLV_PNG, if it ends with .jpg it's a TLV_JPEG, etc. The function returns -1
+ * if the TLV type cannot be found.
  **/
 int get_image_tlv_type(const char *path);
 

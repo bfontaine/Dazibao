@@ -62,6 +62,9 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 case TLV_JPEG:
                         ext = JPEG_EXT;
                         break;
+                case TLV_GIF:
+                        ext = GIF_EXT;
+                        break;
                 default:
                         ext = DEFAULT_EXT;
                         break;
@@ -69,6 +72,8 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
 
         LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %li.", ext,
                         (long)*off);
+
+        /* TODO add height & width attributes */
 
         w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
                         HTML_TLV_IMG_FMT, (long)*off, ext);
@@ -108,13 +113,16 @@ int html_add_compound_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
         if (tlen > 0) {
                 SET_OFFSET(dz, off_value);
                 *off = off_value;
-                while ((dz_off = dz_next_tlv(&dz, t)) > 0) {
+                while ((dz_off = dz_next_tlv(&dz, t)) > 0
+                                && dz_off < off_after) {
                         if (html_add_tlv(dz, t, &dz_off, html, htmlsize,
                                                 htmlcursor) != 0) {
                                 return -1;
                         }
                 }
         }
+
+        LOGDEBUG("End of TLV compound of length=%d", tlen);
 
         memcpy(*html+(*htmlcursor), HTML_TLV_COMPOUND_BOTTOM_FMT, len_bottom);
         *htmlcursor += len_bottom;
@@ -184,7 +192,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
             len_bottom;
 
         if (!TLV_VALID_TYPE(tlv_type)) {
-                LOGDEBUG("Unknown TLV type: %d", tlv_type);
+                LOGWARN("Invalid TLV type: %d", tlv_type);
                 return 0;
         }
 
@@ -225,6 +233,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                         break;
                 case TLV_PNG:
                 case TLV_JPEG:
+                case TLV_GIF:
                         st = html_add_img_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
