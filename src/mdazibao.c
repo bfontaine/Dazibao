@@ -780,6 +780,10 @@ int dz_compact(dz_t *d) {
         return compact_helper(d, &reader, &writer, d->len);
 }
 
+int dz_dump_all(dz_t *d, int depth, int flag_debug) {
+        return dz_dump(d, d->len, depth, 0, flag_debug);
+}
+
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                 int flag_debug) {
 

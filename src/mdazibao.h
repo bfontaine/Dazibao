@@ -206,6 +206,8 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
  **/
 int dz_compact(dz_t *d);
 
+int dz_dump_all(dz_t *d, int depth, int flag_debug);
+
 /**
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
