@@ -142,7 +142,7 @@ char dz_check_tlv_type(dz_t *dz, off_t offset);
  * @param info the struct for the TLV image infos
  * @return 0 on success
  **/
-int dz_get_tlv_img_infos(dz_t *d, off_t offset, struct img_info *info);
+int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info);
 
 /**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
@@ -193,7 +193,8 @@ int dz_rm_tlv(dz_t *d, off_t offset);
 /**
  * Check that a Dazibao contains a TLV of a known type at a given offset. This
  * verifies that this TLV is either a top-level TLV or contained in a
- * compound/dated one.
+ * compound/dated one. This doesn't check its type, use dz_check_tlv_type for
+ * that
  * @param d a pointer to a Dazibao opened at least with the rights to read in
  * it
  * @param offset the offset of the TLV
@@ -206,6 +207,7 @@ int dz_rm_tlv(dz_t *d, off_t offset);
  * etc. This array will contain at most TLV_MAX_DEPTH elements. If it contains
  * less than TLV_MAX_DEPTH offsets, the other ones are set to (off_t)0.
  * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ * @see dz_check_tlv_type
  **/
 int dz_check_tlv_at(dz_t *d, off_t offset, int type, off_t **parents);
 

@@ -294,7 +294,9 @@ int main(int argc, char **argv) {
 
                 /* <routing+response>  */
 
+                LOGTRACE("routing request");
                 status = route_request(client, &dz, req);
+                LOGTRACE("end of routing");
 
                 LOGTRACE("Closing the dazibao. status=%d", dz_close(&dz));
                 dz.fd = -1;

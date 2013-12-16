@@ -286,14 +286,65 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
         return ok;
 }
 
-int dz_get_tlv_img_infos(dz_t *d, off_t offset, struct img_info *info) {
+int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
+        tlv_t t;
+        unsigned int length;
+        off_t val_off;
+        char st = -1;
 
-        if (d == NULL || info == NULL || offset < DAZIBAO_HEADER_SIZE) {
+        if (dz == NULL || info == NULL || offset < DAZIBAO_HEADER_SIZE) {
                 return -1;
         }
 
-        /* TODO */
-        return -1;
+        if (!dz_check_tlv_type(dz, offset)) {
+                return -1;
+        }
+
+        tlv_init(&t);
+        if (dz_tlv_at(dz, &t, offset) != 0) {
+                tlv_destroy(&t);
+                return -1;
+        }
+
+        length = tlv_get_length(&t);
+        val_off = offset + TLV_SIZEOF_HEADER;
+
+        switch (tlv_get_type(&t)) {
+        case TLV_PNG:
+                /* see stackoverflow.com/a/5354657/735926 */
+                if (length < 24) {
+                        st = -1;
+                        break;
+                }
+                info->width = 0;
+                info->height = 0;
+                memcpy(&(info->width), dz->data + val_off + 16, 4);
+                memcpy(&(info->height), dz->data + val_off + 20, 4);
+
+                info->width = ntohl(info->width);
+                info->height = ntohl(info->height);
+                st = 0;
+                break;
+        case TLV_GIF:
+                /* see www.onicos.com/staff/iz/formats/gif.html#header */
+                if (length < 10) {
+                        st = -1;
+                        break;
+                }
+                info->width = ((unsigned char)dz->data[val_off + 7] << 8)
+                        + (unsigned char)dz->data[val_off + 6];
+                info->height = ((unsigned char)dz->data[val_off + 9] << 8)
+                        + (unsigned char)dz->data[val_off + 8];
+                st = 0;
+                break;
+        case TLV_JPEG:
+                /* see stackoverflow.com/a/692013/735926 */
+                st = -1;
+                break;
+        }
+
+        tlv_destroy(&t);
+        return st;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
