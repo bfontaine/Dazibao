@@ -5,7 +5,7 @@
  * A client for the notifications server
  **/
 
-#define BUFFER_SIZE 1024
+#define NC_BUFFLEN 1024
 
 int check_notifier(void);
 void print_notification(char *title, char *msg);

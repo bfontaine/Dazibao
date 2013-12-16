@@ -13,11 +13,6 @@
 
 /** @file */
 
-#ifndef BUFFLEN
-/** buffer length used by various functions */
-#define BUFFLEN 128
-#endif
-
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
  * @param d a pointer to the dazibao
@@ -851,5 +846,3 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         tlv_destroy(&tlv);
         return 0;
 }
-
-#undef BUFFLEN
