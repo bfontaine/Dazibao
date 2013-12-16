@@ -125,7 +125,8 @@ checkwhattodo:
 
 tests: $(TESTS)
 	@for f in $^; do \
-		echo "==> $$f"; \
+		g=$${f%%.test};g=$${g##*/}; \
+		echo "==> $$g"; \
 		./$$f; \
 	 done
 
