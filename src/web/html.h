@@ -38,7 +38,7 @@
                       "<ol class=\"tlvs\">"
 /** Format used for the HTML top of a TLV */
 #define HTML_TLV_TOP_FMT \
-                        "<li class=\"tlv\" data-offset=\"%lu\"" \
+                        "<li class=\"tlv\" data-offset=\"%li\"" \
                                          " data-length=\"%u\"" \
                                          " data-type=\"%d\">" \
                           "<span class=\"type\">%s</span>" \
@@ -56,7 +56,7 @@
 /** HTML format for a text TLV */
 #define HTML_TLV_TEXT_FMT "<blockquote>%.*s</blockquote>"
 /** HTML format for an image TLV */
-#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%lu%s\" />"
+#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%li%s\" />"
 /** HTML format for the top of a dated TLV */
 #define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>" \
                                  "<ol class=\"subtlv\">"

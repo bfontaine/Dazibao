@@ -46,6 +46,8 @@
 #define DZ_ARGS_ERROR        -128
 /** code for TLV types errors */
 #define DZ_TLV_TYPE_ERROR    -256
+/** code for mmap-related errors */
+#define DZ_MMAP_ERROR        -512
 
 /**
  * use 'perror' and exit with EXIT_FAILURE
@@ -180,9 +182,6 @@ long str2dec_positive(char *s);
  **/
 const char *get_ext(const char *path);
 
-/* = Logging = */
-#include "logging.h"
-
 /* = other utilities = */
 
 /** helper for STR macro */
@@ -197,6 +196,7 @@ const char *get_ext(const char *path);
 /** type of a command-line argument */
 enum arg_type {
         ARG_TYPE_INT,
+        ARG_TYPE_FLAG,
         ARG_TYPE_STRING
 };
 

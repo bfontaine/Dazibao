@@ -1,6 +1,9 @@
 #ifndef _TLVS_H
 #define _TLVS_H 1
 
+#include <stdio.h>
+#include <stdint.h>
+
 /** @file
  * Set of functions used to work with TLVs
  **/
@@ -26,8 +29,11 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
+/** code for a GIF TLV (see #100) */
+#define TLV_GIF    140
+
 /** test that a TLV type is valid */
-#define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 6)
+#define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 255)
 
 /** size of the date field in a dated TLV */
 #define TLV_SIZEOF_DATE 4
@@ -65,6 +71,23 @@
 typedef char* tlv_t;
 
 /**
+ * A TLV type
+ **/
+struct tlv_type {
+        /* the type's code */
+        int code;
+        /* the type's name */
+        char *name;
+};
+
+/**
+ * All recognized TLV types.
+ **/
+extern struct tlv_type tlv_types[];
+
+void htod(unsigned int n, char *len);
+
+/**
  * Initialize a TLV. If the TLV was previously initialized/filled, call
  * tlv_destroy on it before calling this function.
  * @param t the TLV to init
@@ -87,11 +110,18 @@ int tlv_destroy(tlv_t *t);
 int tlv_get_type(tlv_t *tlv);
 
 /**
+ * Set the date of a (dated) TLV
+ * @param tlv TLV whose date has to be set
+ * @param date date to set
+ **/
+void tlv_set_date(tlv_t *tlv, uint32_t date);
+
+/**
  * Set the type of a TLV
  * @param tlv TLV whose type has to be set
  * @param t type to set
  **/
-void tlv_set_type(tlv_t *tlv, char t);
+void tlv_set_type(tlv_t *tlv, unsigned char t);
 
 /**
  * Set length of a TLV.
@@ -126,8 +156,9 @@ tlv_t tlv_get_value_ptr(tlv_t *tlv);
 int tlv_mwrite(tlv_t *tlv, void *data);
 
 /**
+ * Read the value of a TLV
  **/
-int tlv_mread(tlv_t *tlv, void *data);
+int tlv_mread(tlv_t *tlv, char *data);
 
 /**
  * Write a TLV.
@@ -136,7 +167,7 @@ int tlv_mread(tlv_t *tlv, void *data);
  * @param fd file descriptor where tlv is written
  * @return 0 on success, -1 on error
  **/
-int tlv_fwrite(tlv_t tlv, int fd);
+int tlv_fwrite(tlv_t *tlv, int fd);
 
 /**
  * Read a TLV value.
@@ -152,7 +183,7 @@ int tlv_fread(tlv_t *tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same as write(2)
  **/
-int tlv_fdump(tlv_t tlv, int fd);
+int tlv_fdump(tlv_t *tlv, int fd);
 
 
 /**
@@ -161,14 +192,20 @@ int tlv_fdump(tlv_t tlv, int fd);
  * @param fd file descriptor where you want to dump
  * @return same value as as write(2)
  **/
-int tlv_fdump_value(tlv_t tlv, int fd);
+int tlv_fdump_value(tlv_t *tlv, int fd);
 
 /**
  * Return a string representation for a TLV type
  * @param tlv_type the type
  * @return a string representation of this type
  **/
-const char *tlv_type2str(char tlv_type);
+const char *tlv_type2str(int tlv_type);
+
+char tlv_str2type(char *tlv_type);
+
+int tlv_from_file(tlv_t *tlv, int fd);
+
+int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date);
 
 /**
  * Return the tlv type for a file from its extension, or NULL if it cannot be

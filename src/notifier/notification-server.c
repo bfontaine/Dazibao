@@ -16,6 +16,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "logging.h"
 #include "notifutils.h"
 #include "hash.h"
 #include "notification-server.h"
@@ -24,8 +25,6 @@ static struct ns_config conf;
 int _log_level;
 
 void send_message(int s_index, char *str, int len) {
-
-        LOGDEBUG("Sending message at client n°%d", s_index);
 
         if (write(conf.c_socket[s_index], str, len) < len) {
                 if (errno == EPIPE) {
@@ -47,8 +46,14 @@ void *notify(void *arg) {
         str[len - 1] = '\n';
 
         for (i = 0; i < conf.client_max; i++) {
+                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_lock() failed.");
+                }
                 if (conf.c_socket[i] != -1) {
                         send_message(i, str, len);
+                }
+                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_unlock() failed.");
                 }
         }
 
@@ -156,7 +161,7 @@ void *watch_file(void *arg) {
                 if (changed == 1) {
                         sleeping_time =
                                 MAX(MIN(sleeping_time / 2,
-                                                        conf.w_sleep_default),
+                                                conf.w_sleep_default),
                                         conf.w_sleep_min);
                         notify(path);
                 } else if (changed == 0) {
@@ -188,7 +193,7 @@ int nsa() {
         for (i = 0; i < conf.nb_files; i++) {
                 pthread_t thread;
                 if (pthread_create(&thread, &attr, watch_file,
-                                (void *) (conf.file[i])) != 0) {
+                                        (void *) (conf.file[i])) != 0) {
                         PERROR("pthread_create");
                 }
         }
@@ -221,27 +226,27 @@ int set_up_server() {
                 strncpy(saddr.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
                 strncat(saddr.sun_path, "/", UNIX_PATH_MAX - 1);
                 strncat(saddr.sun_path, ".dazibao-notification-socket",
-                                UNIX_PATH_MAX - 1);
+                        UNIX_PATH_MAX - 1);
         } else {
                 strncpy(saddr.sun_path, conf.s_path, UNIX_PATH_MAX - 1);
         }
 
         conf.s_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 
-        if(conf.s_socket < 0) {
+        if (conf.s_socket < 0) {
                 PERROR("socket");
                 exit(1);
         }
 
         if (bind(conf.s_socket, (struct sockaddr*)&saddr,
-                                sizeof(saddr))  == -1) {
+                        sizeof(saddr))  == -1) {
                 if (errno != EADDRINUSE) {
                         ERROR("bind", -1);
                 }
                 if (connect(conf.s_socket, (struct sockaddr*)&saddr,
                                 sizeof(saddr)) == -1) {
                         LOGINFO("Removing old socket at \"%s\"",
-                                        saddr.sun_path);
+                                saddr.sun_path);
                         if (unlink(saddr.sun_path) == -1) {
                                 ERROR("unlink", -1);
                         }
@@ -254,7 +259,7 @@ int set_up_server() {
                                 ERROR("close", -1);
                         }
                         LOGERROR("Socket at \"%s\" already in use",
-                                        saddr.sun_path);
+                                saddr.sun_path);
                         return -1;
                 }
         }
@@ -272,28 +277,41 @@ int accept_client() {
 
         struct sockaddr_un caddr;
         socklen_t len = sizeof(caddr);
-        int i;
+        int i, s;
+
+        s = accept(conf.s_socket, (struct sockaddr*)&caddr, &len);
+        if (s == -1) {
+                ERROR("accept", -1);
+        }
 
         for (i = 0; i < conf.client_max; i++) {
+                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_lock() failed.");
+                }
                 if (conf.c_socket[i] == -1) {
-                        conf.c_socket[i] =
-                                accept(conf.s_socket,
-                                        (struct sockaddr*)&caddr,
-                                        &len);
-                        if (conf.c_socket[i] == -1) {
-                                if (errno == EINTR) {
-                                        sleep(1);
-                                        return accept_client();
-                                }
-                                ERROR("accept", -1);
+                        conf.c_socket[i] = s;
+                        if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+                                LOGERROR("pthread_mutex_unlock() failed.");
                         }
                         LOGINFO("New client connected");
                         break;
                 }
+                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_unlock() failed.");
+                }
         }
 
         if (i == conf.client_max) {
+
                 LOGWARN("Server is full");
+                if (write(s, NS_ERR_FULL, strlen(NS_ERR_FULL))
+                        < (int)strlen(NS_ERR_FULL)) {
+                        PERROR("write");
+                }
+
+                if (close(s) == -1) {
+                        LOGERROR("close() failed");
+                }
                 return -1;
         }
 
@@ -303,8 +321,6 @@ int accept_client() {
 
 int parse_arg(int argc, char **argv) {
 
-        LOGDEBUG("begin parsing args");
-
         conf.client_max = MAX_CLIENTS;
         conf.w_sleep_min = WATCH_SLEEP_MIN;
         conf.w_sleep_default = WATCH_SLEEP_DEFAULT;
@@ -312,19 +328,18 @@ int parse_arg(int argc, char **argv) {
         conf.reliable = RELIABLE_DEFAULT;
 
         struct s_option options[] = {
-                {"--path", ARG_TYPE_STRING, (void *)conf.s_path},
-                {"--max", ARG_TYPE_STRING, (void *)&(conf.client_max)},
+                {"--path", ARG_TYPE_STRING, (void *)&(conf.s_path)},
+                {"--max", ARG_TYPE_INT, (void *)&(conf.client_max)},
                 {"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
                 {"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
                 {"--wtimedef", ARG_TYPE_INT, (void *)&(conf.w_sleep_default)},
-                {"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)},
+                {"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)}
         };
 
-        struct s_args args = {
-                &(conf.nb_files), &conf.file, options
-        };
+        struct s_args args = {&(conf.nb_files), &conf.file, options};
 
-        if (jparse_args(argc, argv, &args, 6) != 0) {
+        if (jparse_args(argc, argv, &args,
+                                sizeof(options)/sizeof(*options)) != 0) {
                 ERROR("parse_args", -1);
         }
 
@@ -334,7 +349,8 @@ int parse_arg(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
-        int client_max = 10;
+        int i;
+
         _log_level = LOG_LVL_DEBUG;
 
         memset(&conf, 0, sizeof(conf));
@@ -344,28 +360,41 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
         }
 
-        if (parse_arg(argc, argv) == -1) {
+        if (parse_arg(argc - 1, &argv[1]) == -1) {
                 LOGFATAL("Wrong arguments, see documentation for details");
                 exit(EXIT_FAILURE);
         }
 
-        conf.c_socket = malloc(sizeof(*conf.c_socket) * client_max);
+        conf.c_socket = malloc(sizeof(*conf.c_socket) * conf.client_max);
 
         if (conf.c_socket == NULL) {
                 ERROR("malloc", -1);
         }
 
-        memset(conf.c_socket, -1, sizeof(*conf.c_socket) * conf.client_max);
+        conf.c_mtx = malloc(sizeof(*conf.c_mtx) * conf.client_max);
+
+        if (conf.c_mtx == NULL) {
+                ERROR("malloc", -1);
+        }
+
+        for (i = 0; i < conf.client_max; i++) {
+                conf.c_socket[i] = -1;
+                if (pthread_mutex_init(&(conf.c_mtx[i]),
+                                        PTHREAD_MUTEX_NORMAL) != 0) {
+                        LOGERROR("pthread_mutex_init");
+                        goto OUT;
+                }
+        }
 
         if (set_up_server() == -1) {
-                PERROR("set_up_server");
+                LOGERROR("set_up_server");
                 goto OUT;
         }
 
         LOGINFO("Server set up");
 
-        if(nsa() != 0) {
-                PERROR("nsa");
+        if (nsa() != 0) {
+                LOGERROR("nsa");
                 goto OUT;
         }
 
@@ -377,6 +406,7 @@ int main(int argc, char **argv) {
         }
 OUT:
         free(conf.c_socket);
+        free(conf.c_mtx);
 
         return 0;
 }

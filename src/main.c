@@ -435,6 +435,7 @@ int cmd_create(int argc, char **argv, char *daz) {
 }
 int cmd_compact(int argc , char **argv, char *daz) {
         dz_t daz_buf;
+        int saved;
         if (argc > 0) {
                 fprintf(stderr, "'compact' doesn't take any option\n");
                 return DZ_ARGS_ERROR;
@@ -444,7 +445,9 @@ int cmd_compact(int argc , char **argv, char *daz) {
                 return -1;
         }
 
-        if (dz_compact(&daz_buf)) {
+        saved = dz_compact(&daz_buf);
+
+        if (saved < 0) {
                 return -1;
         }
 
@@ -452,6 +455,8 @@ int cmd_compact(int argc , char **argv, char *daz) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
+
+        printf("%d bytes saved.\n", saved);
         return 0;
 
 }
@@ -482,6 +487,8 @@ int main(int argc, char **argv) {
                 argv_cmd = NULL;
         } else {
                 argc_cmd = argc - 3;
+                /* shift argv to the right to remove the program name and the
+                 * command */
                 argv_cmd = argv + 2;
         }
         /*

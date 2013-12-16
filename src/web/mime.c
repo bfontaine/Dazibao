@@ -2,6 +2,7 @@
 #include <string.h>
 #include "webutils.h"
 #include "utils.h"
+#include "logging.h"
 #include "mime.h"
 
 /** @file */
