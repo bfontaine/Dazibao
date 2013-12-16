@@ -210,7 +210,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 char *type, char *daz) {
         dz_t daz_buf;
         unsigned int buff_size_co = 0;
-        unsigned int buff_size_d = 0;
         tlv_t tlv = NULL;
         tlv_t buff_co = NULL;
         tlv_t buff_d = NULL;
@@ -273,23 +272,23 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         }
                 }
 
-                if (i >= f_d) {/*
+                if (i >= f_d) {
+                        if (tlv_init(&buff_d) < 0) {
+                                printf(" error to init tlv");
+                                return -1;
+                        }
                         if (tlv_size == 0) {
-                                tlv_size = tlv_create_path(argv[argc-1],
+                                tlv_size = tlv_create_path(argv[i],
                                         &tlv, &type[j]);
-                                tlv_create_date(&tlv, &buff_d, buff_size);
-                                tlv_destroy(&buff_d);
                                 j++;
                         }
-                        else {
-                                buff = tlv;
-                                tlv = NULL;
-                                tlv_create_date(&tlv, &buff, buff_size);
-                                tlv_destroy(&buff);
-                        }*/
+                        tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
+                        tlv = buff_d;
+                        buff_d = NULL;
+
                 }
 
-                if (tlv != NULL) {
+                if (tlv_size > 0) {
                         if (dz_add_tlv(&daz_buf, &tlv) == -1) {
                                 fprintf(stderr, "failed adding the tlv\n");
                                 tlv_destroy(&tlv);
