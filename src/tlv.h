@@ -32,6 +32,8 @@
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
+#define TLV_MIN_PADN_LENGTH 2
+
 /** test that a TLV type is valid */
 #define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 255)
 
@@ -85,6 +87,20 @@ struct tlv_type {
  **/
 extern struct tlv_type tlv_types[];
 
+/** PNG file signature */
+extern const char *PNG_SIGNATURE;
+/** JPG/JPEG file signature */
+extern const char *JPG_SIGNATURE;
+/** GIF file signature */
+extern const char *GIF_SIGNATURE;
+
+/**
+ * Convert {n} in dazibao's endianess
+ * and set {tlv}'s length field with the converted value.
+ * @param n wanted length
+ * @param tlv tlv receiving length
+ * @deprecated use tlv_set_length instead
+ **/
 void htod(unsigned int n, char *len);
 
 /**

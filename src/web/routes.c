@@ -120,6 +120,40 @@ int route_get_image_tlv(dz_t *dz, struct http_request req,
 }
 
 /**
+ * Route used to get the hash of the current Dazibao: /hash/<previous hash>.
+ **/
+int route_get_hash(dz_t *dz, struct http_request req,
+                struct http_response *resp) {
+
+        int oldhash = -1;
+
+        LOGTRACE("Trying to get the hash of the dazibao");
+
+        if (strcmp(req.path, "/hash") == 0) {
+                oldhash = 0;
+        } else if (sscanf(req.path, "/hash/%16d", &oldhash) == 0) {
+                LOGWARN("Cannot get the hash from '%s'", req.path);
+                return HTTP_S_BADREQ;
+        }
+
+        LOGTRACE("dz hash(%d) -> %d", oldhash, dz_hash(dz, &oldhash));
+
+        /* 16 chars would be sufficient here */
+        *resp->body = (char*)malloc(sizeof(char)*16);
+
+        if (snprintf(*resp->body, 16, "%d", oldhash) > 16) {
+                LOGWARN("Cannot fit '%d' into 16 chars", oldhash);
+                *resp->body = NULL;
+                return HTTP_S_ERR;
+        }
+
+        resp->body_len = strlen(*resp->body);
+        resp->status = HTTP_S_OK;
+
+        return 0;
+}
+
+/**
  * Route used to delete a TLV
  * @param dz the current dazibao
  * @param req the client request
@@ -206,9 +240,12 @@ int register_routes(void) {
          * matches '/foo/' or it will never match '/foo/bar*' paths.
          */
         st |= add_route(HTTP_M_GET,  "/index.html",  route_get_index);
+
         st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
         st |= add_route(HTTP_M_GET,  "/tlv/",        route_get_image_tlv);
+
         st |= add_route(HTTP_M_POST, "/compact",     route_post_compact_dz);
+        st |= add_route(HTTP_M_GET,  "/hash",        route_get_hash);
 
         return st;
 }

@@ -2,6 +2,7 @@
 #define _MDAZIBAO_H 1
 
 #include <sys/types.h>
+#include "utils.h"
 #include "tlv.h"
 
 /**
@@ -41,6 +42,9 @@ typedef struct {
         /** mmaped region */
         char *data;
 } dz_t;
+
+/** type of a Dazibao hash */
+typedef int hash_t;
 
 /**
  * @param d the dazibao
@@ -125,6 +129,25 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 time_t dz_read_date_at(dz_t *d, off_t offset);
 
 /**
+ * Check that a TLV has a good type by reading its first bytes. This is
+ * especially useful with media types to verify that we're using the
+ * appropriate file type. Note: some TLVs are not checked.
+ * @param d pointer to the dazibao
+ * @param offset offset of the TLV
+ * @return 1 if the type is ok, 0 if not
+ **/
+char dz_check_tlv_type(dz_t *dz, off_t offset);
+
+/**
+ * Extract info from a TLV image and store it a struct.
+ * @param d a pointer to the dazibao
+ * @param offset the TLV's offset
+ * @param info the struct for the TLV image infos
+ * @return 0 on success
+ **/
+int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info);
+
+/**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
  * @param d dazibao used for reading
  * @param tlv to be filled
@@ -173,7 +196,8 @@ int dz_rm_tlv(dz_t *d, off_t offset);
 /**
  * Check that a Dazibao contains a TLV of a known type at a given offset. This
  * verifies that this TLV is either a top-level TLV or contained in a
- * compound/dated one.
+ * compound/dated one. This doesn't check its type, use dz_check_tlv_type for
+ * that
  * @param d a pointer to a Dazibao opened at least with the rights to read in
  * it
  * @param offset the offset of the TLV
@@ -186,6 +210,7 @@ int dz_rm_tlv(dz_t *d, off_t offset);
  * etc. This array will contain at most TLV_MAX_DEPTH elements. If it contains
  * less than TLV_MAX_DEPTH offsets, the other ones are set to (off_t)0.
  * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ * @see dz_check_tlv_type
  **/
 int dz_check_tlv_at(dz_t *d, off_t offset, int type, off_t **parents);
 
@@ -214,5 +239,16 @@ int dz_dump_all(dz_t *d, int depth, int flag_debug);
  * @param daz_buf
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
+
+/**
+ * Test if a Dazibao changed using an hash.
+ * @param dz a pointer on the dazibao
+ * @param oldhash a pointer to a int containing the previous hash. If it's set
+ * to 0, we'll assume that there was no previous hash. The function will
+ * compare it to the new hash then store the new one in it.
+ * @return 1 if the new hash is different of the previous one, 0 if it's the
+ * same or if *oldhash was 0. A negative number is returned on error.
+ **/
+int dz_hash(dz_t *dz, hash_t *oldhash);
 
 #endif /* _DAZIBAO_H */

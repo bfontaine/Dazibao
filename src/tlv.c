@@ -27,13 +27,10 @@ struct tlv_type tlv_types[] = {
         {-1,NULL}
 };
 
-/**
- * Convert {n} in dazibao's endianess
- * and set {tlv}'s length field with the converted value.
- * @param n wanted length
- * @param tlv tlv receiving length
- * @deprecated use tlv_set_length instead
- **/
+const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
+const char *JPG_SIGNATURE = "\255\216\255";
+const char *GIF_SIGNATURE = "GIF";
+
 void htod(unsigned int n, char *len) {
         union {
                 unsigned int i;
