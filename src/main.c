@@ -188,18 +188,11 @@ int cmd_add(int argc, char **argv, char * daz) {
                 printf("arg %d : %s\n",i,argv[i]);
         }
 
-        /*
-        printf("AF f_da: %2d| f_dz: %2d| f_ty:%2d | f_co: %2d | f_in : %2d |"
-        "(s_d: %6d|s_co: %6d| s_tmp: %6d) | argc :%d\n",
-        f_date,f_dz,f_type,f_compound,f_input,date_size,compound_size,
-        tmp_size,argc);
-        char **args_v = argv + tmp_first_args + 1;
-        int args_c = argc - tmp_first_args - 1;
-
-        if (action_add(args_c, args_v, f_compound, f_dz,f_date, daz) == -1) {
-                printf("[cmd_add] error action add");
+        if (action_add(argc, argv, f_compound, f_dz, f_date, f_input,
+                type_args, daz) == -1) {
+                printf("[cmd_add] error action add\n");
                 return -1;
-        }*/
+        }
         if (f_type >= 0) {
                 free(type_args);
         }
@@ -229,21 +222,30 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 int tlv_size =0;
                 /* inizialized tlv */
                 if (tlv_init(&tlv) < 0) {
-                      printf("[action_add] error to init tlv");
+                      printf("error to init tlv\n");
                         return -1;
                 }
 
                 if (i == f_in) {
                         tlv_size = tlv_create_input(&tlv, &type[j]);
+                        if (tlv_size < 0) {
+                                printf("error to create tlv - \n");
+                                return -1;
+                        }
                         j++;
                 }
                 if (i == f_dz) {
                         tlv_size = dz2tlv(argv[i], &tlv);
+                        if (tlv_size < 0) {
+                                printf(" error to create dz compound %s\n",
+                                argv[i]);
+                                return -1;
+                        }
                 }
                 if ( i >= f_co ) {
                         if (f_co == i) {
                                 if (tlv_init(&buff_co) < 0) {
-                                        printf(" error to init tlv");
+                                        printf("error to init tlv compound\n");
                                         return -1;
                                 }
                         }
@@ -251,6 +253,11 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         if (tlv_size == 0) {
                                 tlv_size = tlv_create_path(argv[i],
                                         &tlv, &type[j]);
+                                if (tlv_size < 0) {
+                                        printf(" error to create tlv with path"
+                                        " %s\n",argv[i]);
+                                        return -1;
+                                }
                                 j++;
                         }
                         tlv = (tlv_t)safe_realloc(tlv, sizeof(*tlv)
@@ -268,7 +275,12 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         if (i == argc -1) {
                                 tlv_size = tlv_create_compound(&tlv, &buff_co,
                                         buff_size_co);
-                                tlv_destroy(&tlv);
+                                if (tlv_size < 0) {
+                                        printf(" error to create compound"
+                                        " %s\n", argv[i]);
+                                        return -1;
+                                }
+                                tlv_destroy(&buff_co);
                         }
                 }
 
@@ -280,9 +292,19 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         if (tlv_size == 0) {
                                 tlv_size = tlv_create_path(argv[i],
                                         &tlv, &type[j]);
+                                if (tlv_size < 0) {
+                                        printf(" error to create tlv with path"
+                                        " %s\n", argv[i]);
+                                        return -1;
+                                }
                                 j++;
                         }
                         tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
+                        if (tlv_size < 0) {
+                                printf(" error to create dz compound"
+                                        " %s\n", argv[i]);
+                                return -1;
+                        }
                         tlv = buff_d;
                         buff_d = NULL;
 
@@ -294,8 +316,8 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 tlv_destroy(&tlv);
                                 return -1;
                         }
+                        tlv_destroy(&tlv);
                 }
-                tlv_destroy(&tlv);
         }
 
         if (dz_close(&daz_buf) < 0) {
