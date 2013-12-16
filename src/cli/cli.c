@@ -130,6 +130,75 @@ OUT:
 	return status;	
 }
 
+int dump_tlv(int argc, char **argv, int out) {
+        
+        dz_t dz;
+        tlv_t tlv;
+        int status = 0;
+        char value = 0;
+        int offset = -1;
+
+        struct s_option opt[] = {
+                {"--offset", ARG_TYPE_INT, (void *)&offset},
+                {"--value", ARG_TYPE_FLAG, (void *)&value},
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
+                LOGERROR("jparse_args failed");
+                return -1;
+        }
+
+        if (argv == NULL || offset == -1) {
+                LOGERROR("Wrong arguments.");
+                return -1;
+        }
+
+        if (dz_open(&dz, argv[0], O_RDWR) != 0) {
+                LOGERROR("Failed opening %s.", argv[0]);
+                return -1;
+        }
+
+        if (tlv_init(&tlv) != 0) {
+                LOGERROR("Failed initializing TLV.");
+                status = -1;
+                goto CLOSE;
+        }
+
+        switch (dz_tlv_at(&dz, &tlv, offset)) {
+        case -1:
+/*
+  Fixme: dz_tlv_at should always return EOD since it is 0
+  case EOD:
+ */
+                LOGERROR("dz_tlv_at %d failed.", (int)offset);
+                status = -1;
+                goto DESTROY;
+        default:
+                break;
+        };
+        
+        dz_read_tlv(&dz, &tlv, offset);
+        
+        if (value) {
+                tlv_fdump_value(&tlv, out);
+        } else {
+                tlv_fdump(&tlv, out);
+        }
+
+DESTROY:
+        tlv_destroy(&tlv);
+
+CLOSE:
+        if (dz_close(&dz) == -1) {
+                LOGERROR("Failed closing dazibao.");
+                status = -1;
+        }
+
+        return status;
+}
+
 
 int main(int argc, char **argv) {
 
@@ -155,6 +224,12 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "mk_tlv") == 0) {
                 if (mk_tlv(argc - 2, &argv[2], STDIN_FILENO, STDOUT_FILENO) == -1) {
                         LOGERROR("TLV making failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+        }  else if (strcmp(cmd, "dump_tlv") == 0) {
+                if (dump_tlv(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
+                        LOGERROR("TLV dumping failed.");
                         return EXIT_FAILURE;
                 }
                 return EXIT_SUCCESS;
