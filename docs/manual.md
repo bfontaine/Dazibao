@@ -73,3 +73,14 @@ Options:
 --offset <n> Define the offset of the wanted tlv
 --value      Flag to dump the value only (default also dump header)
 ```
+
+#### `dazicli dump [OPTION] DAZIBAO`
+
+Dump a whole dazibao on stdout.
+
+Options:
+```
+--depth <n> Set n as the maximum depth that will be printed.
+            Default is 0.
+--debug     Flag to force PAD1 and PADN printing.
+```
