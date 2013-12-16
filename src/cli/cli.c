@@ -71,7 +71,7 @@ int mk_tlv(int argc, char **argv, int in, int out) {
 	
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
-                {"--type", ARG_TYPE_STRING, (void *)&type},
+                {"--type", ARG_TYPE_STRING, (void *)&type}
         };
 
         struct s_args args = {NULL, NULL, opt};
