@@ -22,12 +22,19 @@
 int cli_add_all(int argc, char **argv) {
 
         char date = 0;
-        char *type = NULL;
-        int i, len = 0;
-        uint32_t timestamp;	
-        int ptr_compound;
-        char *file = NULL;
-        char *delim = ",";
+        char
+                *type = NULL,
+                *file = NULL,
+                *delim = ",",
+                *buf;
+        int
+                i,
+                len = 0,
+                ptr_compound,
+                write_ptr,
+                rc,
+                status = 0;
+        uint32_t timestamp;
 
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
@@ -37,15 +44,27 @@ int cli_add_all(int argc, char **argv) {
 
         struct s_args args = {&argc, &argv, opt};
 
-        jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt));
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) == -1) {
+                LOGERROR("jparse_args failed.");
+                status = -1;
+                goto OUT;
+        }
 
+        if (file == NULL || type == NULL) {
+                LOGERROR("Missing arguments (see manual).");
+                status = -1;
+                goto OUT;
+        }
+
+        /* set date and update pointers */
         if (date) {
                 ptr_compound = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 len = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 timestamp = (uint32_t) time(NULL);
                 timestamp = htonl(timestamp);
                 if (timestamp == (uint32_t) -1) {
-                        return -1;
+                        status = -1;
+                        goto OUT;
                 }
         } else {
                 len = 0;
@@ -53,13 +72,16 @@ int cli_add_all(int argc, char **argv) {
                 timestamp = 0;
         }
 
+
+        /* Compute needed size */
         for (i = 0; i < argc; i++) {
                 struct stat st;
                 if (stat(argv[i], &st) == -1) {
                         if (errno == ENOENT) {
                                 len += strlen(argv[i]);
                         } else {
-                                return -1;
+                                status = -1;
+                                goto OUT;
                         }
                 } else {
                         len += st.st_size;
@@ -67,20 +89,32 @@ int cli_add_all(int argc, char **argv) {
                 len += TLV_SIZEOF_HEADER;
         }
 
-        char *buf = malloc(len);
-        int write_ptr = 0;
-        int rc = 0;
+        buf = malloc(len);
+
+        if (buf == NULL) {
+                return -1;
+        }
+
+        write_ptr = 0;
+        rc = 0;
 
         if (argc > 1) {
                 write_ptr += TLV_SIZEOF_HEADER;
         }
+
         if (date) {
                 write_ptr += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
         }
 
         for (i = 0; i < argc; i++) {
 
-                char typ = tlv_str2type(strtok(i == 0 ? type : NULL, delim));
+                char typ = tlv_str2type(strtok((i == 0 ? type : NULL), delim));
+                
+                if (typ == -1) {
+                        LOGERROR("Undefined type.");
+                        status = -1;
+                        goto FREEBUF;
+                }
 
                 int fd = open(argv[i], O_RDONLY);
 
@@ -112,7 +146,9 @@ int cli_add_all(int argc, char **argv) {
                 write_ptr += TLV_SIZEOF_LENGTH;
 
                 write_ptr += rc;
-                close(fd);
+                if (close(fd) == -1) {
+                        PERROR("close");
+                }
         }
 
         if (timestamp != 0) {
@@ -126,7 +162,15 @@ int cli_add_all(int argc, char **argv) {
                 htod(len - ptr_compound - TLV_SIZEOF_HEADER, &buf[ptr_compound + 1]);
         }
         
-        return cli_add_tlv(file, buf);
+        if (cli_add_tlv(file, buf) != 0) {
+                status = -1;
+        }
+
+FREEBUF:
+        free(buf);
+OUT:
+        return status;
+
 }
 
 int cli_add_tlv(char *file, char *buf) {
