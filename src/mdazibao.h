@@ -43,6 +43,9 @@ typedef struct {
         char *data;
 } dz_t;
 
+/** type of a Dazibao hash */
+typedef int hash_t;
+
 /**
  * @param d the dazibao
  **/
@@ -236,5 +239,16 @@ int dz_dump_all(dz_t *d, int depth, int flag_debug);
  * @param daz_buf
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
+
+/**
+ * Test if a Dazibao changed using an hash.
+ * @param dz a pointer on the dazibao
+ * @param oldhash a pointer to a int containing the previous hash. If it's set
+ * to 0, we'll assume that there was no previous hash. The function will
+ * compare it to the new hash then store the new one in it.
+ * @return 1 if the new hash is different of the previous one, 0 if it's the
+ * same or if *oldhash was 0. A negative number is returned on error.
+ **/
+int dz_hash(dz_t *dz, hash_t *oldhash);
 
 #endif /* _DAZIBAO_H */

@@ -980,3 +980,23 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         tlv_destroy(&tlv);
         return 0;
 }
+
+int dz_hash(dz_t *dz, hash_t *oldhash) {
+        hash_t len;
+        if (dz == NULL || oldhash == NULL) {
+                return DZ_NULL_POINTER_ERROR;
+        }
+
+        /* TODO this is a basic function, this code should be replaced by a
+         * real hashing function */
+
+        len = (hash_t)dz->len;
+
+        if (*oldhash == 0 || *oldhash == len) {
+                *oldhash = len;
+                return 0;
+        }
+
+        *oldhash = len;
+        return 1;
+}
