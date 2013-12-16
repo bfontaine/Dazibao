@@ -15,7 +15,7 @@ int get_image_tlv_type(const char *path) {
         if (path == NULL || ext == NULL) {
                 return -1;
         }
-        LOGDEBUG("Determining the TLV type of ext '%s'...", ext);
+        LOGTRACE("Determining the TLV type of ext '%s'...", ext);
 
         if (strcasecmp(ext, PNG_EXT + 1) == 0) {
                 return TLV_PNG;

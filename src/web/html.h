@@ -35,20 +35,22 @@
                       "<title>Dazibao - %s</title>" \
                     "</head>" \
                     "<body>" \
-                      "<ol class=\"tlvs\">"
+                      "<div class=\"dazibao\">" \
+                        "<ol class=\"tlvs\">"
 /** Format used for the HTML top of a TLV */
 #define HTML_TLV_TOP_FMT \
-                        "<li class=\"tlv\" data-offset=\"%li\"" \
-                                         " data-length=\"%u\"" \
-                                         " data-type=\"%d\">" \
-                          "<span class=\"type\">%s</span>" \
-                          "<div class=\"value\">"
+                          "<li class=\"tlv\" data-offset=\"%li\"" \
+                                           " data-length=\"%u\"" \
+                                           " data-type=\"%d\">" \
+                            "<span class=\"type\">%s</span>" \
+                            "<div class=\"value\">"
 /** Format used for the HTML bottom of a TLV */
-#define HTML_TLV_BOTTOM   "</div>" \
-                        "</li>"
+#define HTML_TLV_BOTTOM     "</div>" \
+                          "</li>"
 /** Format used for the HTML bottom of a dazibao */
 #define HTML_DZ_BOTTOM \
-                      "</ol>" \
+                        "</ol>" \
+                      "</div>" \
                       "<script src=\"/dz.js\"></script>" \
                     "</body>" \
                   "</html>"
