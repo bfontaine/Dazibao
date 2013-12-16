@@ -1,15 +1,6 @@
 #ifndef _MAIN_H
 #define _MAIN_H 1
 
-#include "mdazibao.h"
-#include <limits.h>
-#include <locale.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include "utils.h"
-#include "main.h"
-#include "mdazibao.h"
 /** @file
  * Main program used for the command-line interface
  **/
