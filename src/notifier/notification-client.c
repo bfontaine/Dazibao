@@ -9,13 +9,13 @@
 #include <sys/wait.h>
 #include <string.h>
 #include "utils.h"
+#include "logging.h"
 #include "notifutils.h"
 #include "notification-client.h"
 
 static char notifier_enabled = 1;
 static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
 static char cmd[BUFFER_SIZE*2];
-int _log_level = LOG_LVL_DEBUG;
 
 int check_notifier(void) {
         LOGINFO("Looking for %s", notifier);
@@ -43,6 +43,7 @@ int notify(char *title, char *msg) {
 int read_notifications(char *buf, int len) {
 
         while (1) {
+                char *msg;
                 char *p = memchr(buf, '\n', len);
                 if (p == NULL) {
                         if (len >= BUFFER_SIZE) {
@@ -52,15 +53,23 @@ int read_notifications(char *buf, int len) {
                         return len;
                 }
 
-                if (buf[0] == 'C') {
-                        char *msg;
+                switch (buf[0]) {
+
+                case 'C':
                         msg = calloc(sizeof(*msg), p - buf);
                         strncpy(msg, buf + 1, p - buf - 1);
                         notify("Dazibao changed", msg);
                         free(msg);
-                } else {
+                        break;
+                case 'E':
+                        msg = calloc(sizeof(*msg), p - buf);
+                        strncpy(msg, buf + 1, p - buf - 1);
+                        notify("Error", msg);
+                        free(msg);
+                        break;
+                default:
                         fprintf(stderr, "Unknown notification type: %c.\n",
-                                        buf[0]);
+                                buf[0]);
                 }
 
                 if (p + 1 >= buf + len) {
@@ -110,42 +119,43 @@ int main(int argc, char **argv) {
 
         struct sockaddr_un sun;
         int fd;
+        char *s_path = "";
 
+
+        _log_level = LOG_LVL_DEBUG;
         memset(&sun, 0, sizeof(sun));
         sun.sun_family = AF_UNIX;
 
-        if (argc >= 3) {
-                if (strcmp(argv[1], "--path") == 0) {
-                        strncpy(sun.sun_path, argv[2], UNIX_PATH_MAX - 1);
-                } else if (strcmp(argv[1], "--notifier") == 0) {
-                        notifier = argv[2];
-                }
-                if (argc == 5) {
-                        if (strcmp(argv[3], "--path") == 0) {
-                                strncpy(sun.sun_path, argv[4],
-                                                UNIX_PATH_MAX - 1);
-                        } else if (strcmp(argv[3], "--notifier") == 0) {
-                                notifier = argv[4];
-                        }
-                }
+        struct s_option opt[] = {
+                {"--path", ARG_TYPE_STRING, (void *)&(s_path)},
+                {"--notifier", ARG_TYPE_STRING, (void *)&(notifier)}
+        };
+
+        struct s_args args = {NULL, NULL, opt};
+
+        if (jparse_args(argc - 1, &argv[1], &args,
+                                sizeof(opt)/sizeof(*opt)) != 0) {
+                ERROR("parse_args", -1);
         }
 
-        if (strcmp(sun.sun_path, "") == 0) {
+        if (strcmp(s_path, "") == 0) {
                 strncpy(sun.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, "/", UNIX_PATH_MAX - 1);
                 strncat(sun.sun_path, ".dazibao-notification-socket",
-                                UNIX_PATH_MAX - 1);
+                        UNIX_PATH_MAX - 1);
+        } else {
+                strncpy(sun.sun_path, s_path, UNIX_PATH_MAX - 1);
         }
 
         notifier_enabled = check_notifier();
 
         fd = socket(PF_UNIX, SOCK_STREAM, 0);
-        if(fd < 0) {
+        if (fd < 0) {
                 PERROR("socket");
                 exit(1);
         }
 
-        if(connect(fd, (struct sockaddr*)&sun, sizeof(sun)) < 0) {
+        if (connect(fd, (struct sockaddr*)&sun, sizeof(sun)) < 0) {
                 PERROR("connect");
                 exit(1);
         }

@@ -1,17 +1,8 @@
 #ifndef _MDAZIBAO_H
 #define _MDAZIBAO_H 1
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
-#include <sys/mman.h>
 #include "tlv.h"
-#include "utils.h"
 
 /**
  * @file
@@ -37,18 +28,35 @@
  * The type of a Dazibao
  **/
 typedef struct {
+        /** file descriptor */
         int fd;
+        /** flag used to open the file */
         int fflags;
+        /** length of the dazibao */
         size_t len;
+        /** current offset */
         size_t offset;
+        /** actual length of the file */
         size_t space;
+        /** mmaped region */
         char *data;
 } dz_t;
 
-int sync_file(dz_t *d);
+/**
+ * @param d the dazibao
+ **/
+int dz_sync(dz_t *d);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_mmap_data(dz_t *d, size_t t);
 
+/**
+ * @param d the dazibao
+ * @param t
+ **/
 int dz_remap(dz_t *d, size_t t);
 
 
@@ -70,8 +78,20 @@ int dz_create(dz_t *daz_buf, char *path);
  * @param path location where to find the file
  * @param flags flags used with open(2)
  * @return 0 on success, -1 on error
+ * @see dz_open_with_size
  **/
 int dz_open(dz_t *d, char *path, int flags);
+
+/**
+ * Same as dz_open, but let you choose the size of the mmapping (see #129).
+ * @param d dazibao to fill with information
+ * @param path location where to find the file
+ * @param flags flags used with open(2)
+ * @param size number of bytes to add to the file size for the mmapping.
+ * @return 0 on success, -1 on error
+ * @see dz_open
+ **/
+int dz_open_with_size(dz_t *d, char *path, int flags, size_t size);
 
 /**
  * Close a dazibao
@@ -91,11 +111,17 @@ int dz_reset(dz_t *d);
  * Fill tlv value
  * @param d dazibao used for reading
  * @param tlv tlv to be filled
- * @param offset off wanted tlv
+ * @param offset offset of the TLV
  * @return 0 on success, -1 on error
  **/
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
 
+/**
+ * Read a 4-bytes date in a dazibao
+ * @param d the dazibao
+ * @param offset offset of the date
+ * @return a timestamp
+ **/
 time_t dz_read_date_at(dz_t *d, off_t offset);
 
 /**
@@ -145,6 +171,25 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv);
 int dz_rm_tlv(dz_t *d, off_t offset);
 
 /**
+ * Check that a Dazibao contains a TLV of a known type at a given offset. This
+ * verifies that this TLV is either a top-level TLV or contained in a
+ * compound/dated one.
+ * @param d a pointer to a Dazibao opened at least with the rights to read in
+ * it
+ * @param offset the offset of the TLV
+ * @param type the type of the TLV. If this is -1, it'll won't be verified, and
+ * any known TLV will work.
+ * @param parents if not null, will be filled with an array of offsets for the
+ * TLVs containing the checked TLV. If it's a top-level TLV, this array will
+ * only contain its offset. If it's a child of a top-level TLV, it'll contain
+ * the offset of the checked TLV followed by the offset of the top-level TLV,
+ * etc. This array will contain at most TLV_MAX_DEPTH elements. If it contains
+ * less than TLV_MAX_DEPTH offsets, the other ones are set to (off_t)0.
+ * @return 1 if there's such TLV, 0 if there's not, a negative number on error
+ **/
+int dz_check_tlv_at(dz_t *d, off_t offset, int type, off_t **parents);
+
+/**
  * Empty a part of a dazibao.The part is filled with padN/pad1
  * @param d the Dazibao
  * @param start starting offset of emptying
@@ -155,8 +200,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
 
 /**
  * Compact a Dazibao file. The file must have been opened in read/write mode,
- * and the Dazibao is NOT closed by the function. Also, the dazibao offset is
- * NOT preserved.
+ * and the Dazibao is NOT closed by the function.
  * @return number of bytes saved by the compacting operation on success, or -1
  *         on error
  **/

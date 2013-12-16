@@ -123,45 +123,51 @@ const char *get_ext(const char *path) {
 
 int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 
-        int next_arg = 1;
+        int next_arg = 0;
 
         while (next_arg < argc) {
                 char is_opt = 0;
                 for (int i = 0; i < nb_opt; i++) {
                         if (strcmp(argv[next_arg],
-                                                res->options[i].name) == 0) {
+                                        res->options[i].name) != 0) {
+                                continue;
+                        }
+                        is_opt = 1;
+                        switch (res->options[i].type) {
+                        case ARG_TYPE_INT:
                                 if (next_arg > argc - 2) {
-                                        fprintf(stderr,"'%s' parameter "
-                                                        "is missing.\n",
-                                                        res->options[i].name);
                                         return -1;
                                 }
-                                is_opt = 1;
-                                switch (res->options[i].type) {
-                                case ARG_TYPE_INT:
-                                        *((int *)res->options[i].value) =
-                                                str2dec_positive(
-                                                        argv[next_arg + 1]);
-                                        break;
-                                case ARG_TYPE_STRING:
-                                        res->options[i].value =
-                                                argv[next_arg + 1];
-                                        break;
-                                default:
-                                        fprintf(stderr, "Unknown arg type, "
-                                                        "doing nothing.\n");
-                                        return -1;
-                                }
-
-
+                                *((int*)res->options[i].value) =
+                                        str2dec_positive(argv[next_arg + 1]);
                                 next_arg += 2;
                                 break;
+                        case ARG_TYPE_STRING:
+                                if (next_arg > argc - 2) {
+                                        return -1;
+                                }
+                                *((char**)res->options[i].value) =
+                                        argv[next_arg + 1];
+                                next_arg += 2;
+                                break;
+                        case ARG_TYPE_FLAG:
+                                *((int *)res->options[i].value) = 1;
+                                next_arg += 1;
+                                break;
+                        default:
+                                fprintf(stderr, "Unknown arg type, skipping."
+                                                "\n");
+                                return -1;
                         }
+                        break;
                 }
 
                 if (!is_opt) {
-                        *res->argc = argc - next_arg;
-                        *(res->argv) = *res->argc > 0 ? &argv[next_arg] : NULL;
+                        if (res->argc != NULL && res->argv != NULL) {
+                                *res->argc = argc - next_arg;
+                                *(res->argv) = *res->argc > 0 ?
+                                        &argv[next_arg] : NULL;
+                        }
                         break;
                 }
         }

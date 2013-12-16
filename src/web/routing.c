@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "logging.h"
 #include "webutils.h"
 #include "http.h"
 #include "routing.h"
@@ -160,10 +161,10 @@ int route_request(int sock, dz_t dz, struct http_request *req) {
                 }
 
                 rst = (*rh)(dz, *req, resp);
-                if (rst < 0) {
+                if (rst != 0) {
                         LOGERROR("Route handler error, rst=%d", rst);
                         destroy_http_response(resp);
-                        return -1;
+                        return rst;
                 }
 
                 if (req->method == HTTP_M_HEAD) {
@@ -247,7 +248,7 @@ int file_response(int sock, struct http_request *req) {
         map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
         if (map == MAP_FAILED) {
-                LOGERROR("Cannot mmap with size=%lu", st.st_size);
+                LOGERROR("Cannot mmap with size=%li", (long)st.st_size);
                 perror("mmap");
                 close(fd);
                 return -1;
