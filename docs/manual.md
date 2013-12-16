@@ -42,3 +42,34 @@ Available options:
     Second %s is the place where message body will be include.
 ```
 NB: If no `--notifier` option is provided, default is `"notify-send \"%s\" \"%s\""`
+
+## Command line interface
+
+### Dazicli
+
+#### `dazicli mk_tlv [OPTION]`
+
+Read from stdin and produce a tlv with data read. Print it on stdout.
+     
+Options:
+
+```
+--type <type> Type of the tlv (text, jpg, compound)
+--date        If present, will include the TLV in a DATED TLV (using current time)
+```
+
+NB: Since --type MUST be provided by user, it is not really an option.
+
+#### `dazicli add DAZIBAO`
+
+Read a TLV from stdin and add it at `DAZIBAO`. It assumes that TLV read is a valid TLV.
+
+#### `dazicli dump_tlv [OPTION] DAZIBAO`
+
+Dump a tlv on stdout.
+
+Options:
+```
+--offset <n> Define the offset of the wanted tlv
+--value      Flag to dump the value only (default also dump header)
+```
