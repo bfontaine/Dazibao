@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <arpa/inet.h>
 #include "mdazibao.h"
 #include "utils.h"
 #include "tlv.h"
@@ -211,10 +212,88 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
-        /* TODO ensure that the date is in big endian */
-        time_t t = 0;
+        uint32_t t = 0;
         memcpy(&t, d->data + offset, TLV_SIZEOF_DATE);
-        return t;
+        return (time_t)ntohl(t);
+}
+
+char dz_check_tlv_type(dz_t *dz, off_t offset) {
+        tlv_t t;
+        char ok = 1;
+        unsigned int length, header_len;
+
+        tlv_init(&t);
+        if (dz_tlv_at(dz, &t, offset) != 0) {
+                tlv_destroy(&t);
+                return -1;
+        }
+
+        length = tlv_get_length(&t);
+
+        switch (tlv_get_type(&t)) {
+        case TLV_PADN:
+                if (length < TLV_MIN_PADN_LENGTH) {
+                        ok = 0;
+                }
+                break;
+        case TLV_DATED:
+                if (length < TLV_SIZEOF_DATE) {
+                        ok = 0;
+                }
+                break;
+        case TLV_TEXT:
+                /* TODO */
+                break;
+        case TLV_PNG:
+                /* see www.libpng.org/pub/png/spec/1.2/
+                               PNG-Rationale.html#R.PNG-file-signature */
+                header_len = strlen(PNG_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        PNG_SIGNATURE, header_len) == 0);
+                break;
+        case TLV_JPEG:
+                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure
+                 */
+                header_len = strlen(JPG_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        JPG_SIGNATURE, header_len) == 0);
+                break;
+        case TLV_GIF:
+                /* see www.onicos.com/staff/iz/formats/gif.html#header
+                 */
+                header_len = strlen(GIF_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        GIF_SIGNATURE, header_len) == 0);
+                break;
+        }
+
+        tlv_destroy(&t);
+        return ok;
+}
+
+int dz_get_tlv_img_infos(dz_t *d, off_t offset, struct img_info *info) {
+
+        if (d == NULL || info == NULL || offset < DAZIBAO_HEADER_SIZE) {
+                return -1;
+        }
+
+        /* TODO */
+        return -1;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {

@@ -2,6 +2,7 @@
 #define _MDAZIBAO_H 1
 
 #include <sys/types.h>
+#include "utils.h"
 #include "tlv.h"
 
 /**
@@ -123,6 +124,25 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset);
  * @return a timestamp
  **/
 time_t dz_read_date_at(dz_t *d, off_t offset);
+
+/**
+ * Check that a TLV has a good type by reading its first bytes. This is
+ * especially useful with media types to verify that we're using the
+ * appropriate file type. Note: some TLVs are not checked.
+ * @param d pointer to the dazibao
+ * @param offset offset of the TLV
+ * @return 1 if the type is ok, 0 if not
+ **/
+char dz_check_tlv_type(dz_t *dz, off_t offset);
+
+/**
+ * Extract info from a TLV image and store it a struct.
+ * @param d a pointer to the dazibao
+ * @param offset the TLV's offset
+ * @param info the struct for the TLV image infos
+ * @return 0 on success
+ **/
+int dz_get_tlv_img_infos(dz_t *d, off_t offset, struct img_info *info);
 
 /**
  * Fill a tlv with the type and the length of the next TLV in the Dazibao
