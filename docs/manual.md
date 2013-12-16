@@ -47,22 +47,19 @@ NB: If no `--notifier` option is provided, default is `"notify-send \"%s\" \"%s\
 
 ### Dazicli
 
-#### `dazicli mk_tlv [OPTION]`
+#### `dazicli add [OPTION] [FILE]`
 
-Read from stdin and produce a tlv with data read. Print it on stdout.
-     
+Produce a tlv with a list of TLV and add it to a dazibao. If more than one TLV is provided, they will be merge into a compound TLV.
+
 Options:
 
 ```
---type <type> Type of the tlv (text, jpg, compound)
---date        If present, will include the TLV in a DATED TLV (using current time)
+--dazibao <file> Specify path of dazibao to use.
+--type <type>    Types of tlvs (text, jpg, compound), separated by comma.
+--date           If present, will include the TLV in a DATED TLV (using current time)
 ```
 
-NB: Since --type MUST be provided by user, it is not really an option.
-
-#### `dazicli add DAZIBAO`
-
-Read a TLV from stdin and add it at `DAZIBAO`. It assumes that TLV read is a valid TLV.
+NB: Since --type and --dazibao *MUST* be provided by user, they are not really options.
 
 #### `dazicli dump_tlv [OPTION] DAZIBAO`
 
@@ -84,3 +81,18 @@ Options:
             Default is 0.
 --debug     Flag to force PAD1 and PADN printing.
 ```
+
+### `dazicli rm [OPTION] DAZIBAO`
+
+Remove a TLV from DAZIBAO.
+
+Options:
+```
+--offset <n> Specify the offset of the TLV to remove.
+```
+
+NB: `--offset` is not a real option, it *MUST* be provided by user.
+
+### `dazicli compact DAZIBAO`
+
+Compact a dazibao.
