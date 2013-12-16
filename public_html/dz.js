@@ -26,11 +26,12 @@
         },
         compact: function(callback) {
             api.call('post', '/compact', function(xhr) {
-                if (xhr.status == 200) {
-                    callback(+xhr.responseText, xhr);
-                } else {
-                    callback(-1, xhr);
-                }
+                callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
+            });
+        },
+        hash: function(callback) {
+            api.call('get', '/hash', function(xhr) {
+                callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
             });
         }
     };
@@ -104,8 +105,41 @@
                 }
             });
         });
+    }();
 
+    /* Notifications */
+    !function() {
 
+        var prev_hash = 0,
+            min_timeout = 2000,
+            max_timeout = 30000,
+            timeout = 10000; // 10 seconds
+
+        function check_hash() {
+            api.hash(function( hash ) {
+                var changed = false;
+
+                if (prev_hash != 0) {
+                    changed = (hash != prev_hash);
+                }
+                prev_hash = hash;
+
+                if (changed) {
+                    timeout = Math.max(min_timeout, timeout/2);
+                    alert("changed!"); // TODO better notification
+                    console.log("Dazibao changed. Checking again in "
+                                + timeout);
+                } else {
+                    timeout = Math.min(max_timeout, timeout*1.5);
+                    console.log("Dazibao didn't change. Checking again in "
+                                + timeout);
+                }
+
+                setTimeout(check_hash, timeout);
+            });
+        }
+
+        check_hash();
     }();
 
 })(document.getElementsByTagName('body')[0]);
