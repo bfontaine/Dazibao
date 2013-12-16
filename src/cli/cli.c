@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
         }
 
         if (argc < 3) {
-                printf(CLI_USAGE_FMT, argv[0]);
+                LOGERROR(CLI_USAGE_FMT);
                 exit(EXIT_FAILURE);
         }
         
