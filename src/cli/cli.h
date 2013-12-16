@@ -11,5 +11,7 @@
 
 int add(char *file, int in);
 int mk_tlv(int argc, char **argv, int in, int out);
+int dump_tlv(int argc, char **argv, int out);
+int dump_dz(int argc, char **argv, int out);
 int compact_dz(char *file);
 #endif
