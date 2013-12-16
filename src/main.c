@@ -65,9 +65,8 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
 }
 
 int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
-        char delim = ',';
-        const char *de = &delim;
-        char *tmp = strtok(op_type, de);
+        char * delim = ",\0";
+        char *tmp = strtok(op_type, delim);
         int i = 0;
         while (1) {
                 if ( tmp == NULL) {
@@ -82,7 +81,7 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
                         printf("unrecognized type %s\n", tmp);
                         return -1;
                 }
-                tmp = strtok(NULL, de);
+                tmp = strtok(NULL, delim);
                 i++;
         }
 
