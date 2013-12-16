@@ -7,6 +7,7 @@ SRC=src
 WEBSRC=$(SRC)/web
 NSRC=$(SRC)/notifier
 DCSRC=$(SRC)/cli
+TSRC=tests
 
 VALGRIND=valgrind
 VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
@@ -36,6 +37,8 @@ WSERVER=daziweb
 DAZICLI=dazicli
 TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
+TESTS=$(TSRC)/utils.test
+
 ifndef UNUSED
 #ifndef STRICT
 CFLAGS+= -Wno-unused-parameter -Wno-unused-variable
@@ -57,7 +60,7 @@ CPPCHECK=cppcheck \
 	--language=c -q
 
 .DEFAULT: all
-.PHONY: clean cleantmp check checkwhattodo doc
+.PHONY: clean cleantmp check checkwhattodo doc tests
 
 all: check $(TARGETS)
 
@@ -114,9 +117,20 @@ doc:
 	@echo '--> open docs/codedoc/html/index.html for the HTML doc'
 
 checkwhattodo:
-	@d=$(SRC);c="TO";f="FIX";x="X"; \
-	 for s in $${c}DO $${f}ME $${x}XX; do \
+	@d=$(SRC);for s in TODO FIXME XXX; do \
 		echo "== $$s =="; \
 		grep -nI -e $$s -- \
-			$$d/*.c $$d/*.h $$d/*/*.c $$d/*/*.h Makefile;\
+			$$d/*.c $$d/*.h $$d/*/*.c $$d/*/*.h;\
 	done; true
+
+tests: $(TESTS)
+	@for f in $^; do \
+		echo "==> $$f"; \
+		./$$f; \
+	 done
+
+$(TSRC)/%.test: $(TSRC)/test-%.o $(SRC)/%.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(TSRC)/%.o: $(TSRC)/%.c 
+	$(CC) $(CFLAGS) -o $@ -c $<

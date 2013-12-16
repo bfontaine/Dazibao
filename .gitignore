@@ -2,6 +2,7 @@
 *.swo
 *.swp
 *.o
+*.test
 .DS_Store
 a.out
 /tmp
