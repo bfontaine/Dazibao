@@ -14,6 +14,8 @@
 #include "logging.h"
 
 /** @file */
+/** buffer size used in various functions */
+#define BUFFSIZE 512
 
 struct tlv_type tlv_types[] = {
         { TLV_PAD1     , "pad1"     },
@@ -247,13 +249,9 @@ char tlv_str2type(char *tlv_type) {
 
 int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
         unsigned int tlv_size;
-        if (tlv_init(tlv_c) < 0) {
-                printf("[tlv_create_compound] error to init tlv");
-                return -1;
-        }
         tlv_set_type(tlv_c, (char) TLV_COMPOUND);
         tlv_set_length(tlv_c, buff_size);
-        tlv_size = tlv_mread(tlv_c, value);
+        tlv_size = tlv_mread(tlv_c, *value);
         return tlv_size;
 }
 
@@ -296,7 +294,7 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type) {
                 return -1;
         }
 
-        tlv_set_type(tlv, type);
+        tlv_set_type(tlv,(unsigned char)  *type);
         tlv_set_length(tlv, st_path.st_size);
         tlv_size = tlv_mread(tlv, buff);
         close(fd);
@@ -307,7 +305,7 @@ int tlv_create_input(tlv_t *tlv, char *type) {
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
-        int read_size;
+        int read_size, tlv_size;
 
         while ((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
 
@@ -328,8 +326,8 @@ int tlv_create_input(tlv_t *tlv, char *type) {
                 memcpy(buff + (buff_size - read_size), reader, read_size);
         }
 
-        tlv_set_type(tlv, type);
-        tlv_set_length(tlv, st_path.st_size);
+        tlv_set_type(tlv, (unsigned char) *type);
+        tlv_set_length(tlv, buff_size);
         tlv_size = tlv_mread(tlv, buff);
         free(buff);
         return tlv_size;
