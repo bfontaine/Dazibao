@@ -41,5 +41,5 @@
 
 int add(char *file, int in);
 int mk_tlv(int argc, char **argv, int in, int out);
-
+int compact_dz(char *file);
 #endif

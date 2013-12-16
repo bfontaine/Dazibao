@@ -246,6 +246,37 @@ CLOSE:
 }
 
 
+int compact_dz(char *file) {
+
+        dz_t daz_buf;
+        int saved;
+        int status = 0;
+        if (dz_open(&daz_buf, file, O_RDWR) < 0) {
+                return -1;
+        }
+
+        saved = dz_compact(&daz_buf);
+
+        if (saved < 0) {
+                LOGERROR("dz_compact failed.");
+                status = -1;
+                goto CLOSE;
+        }
+
+CLOSE:
+        if (dz_close(&daz_buf) < 0) {
+                LOGERROR("dz_close failed");
+                status = -1;
+                goto OUT;
+        }
+OUT:
+        if (status == 0) {
+                LOGINFO("%d bytes saved.\n", saved);
+        }
+        return status;
+
+}
+
 
 int main(int argc, char **argv) {
 
@@ -282,6 +313,12 @@ int main(int argc, char **argv) {
                 return EXIT_SUCCESS;
         }  else if (strcmp(cmd, "dump") == 0) {
                 if (dump_dz(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
+                        LOGERROR("Dazibao dumping failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+        } else if (strcmp(cmd, "compact") == 0) {
+                if (compact_dz(argv[2]) == -1) {
                         LOGERROR("Dazibao dumping failed.");
                         return EXIT_FAILURE;
                 }
