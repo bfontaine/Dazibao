@@ -15,7 +15,7 @@
 
 static char notifier_enabled = 1;
 static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
-static char cmd[BUFFER_SIZE*2];
+static char cmd[NC_BUFFLEN*2];
 
 int check_notifier(void) {
         LOGINFO("Looking for %s", notifier);
@@ -32,7 +32,7 @@ int notify(char *title, char *msg) {
         int status = 0;
 
         if (notifier_enabled) {
-                snprintf(cmd, BUFFER_SIZE*2-1, notifier, title, msg);
+                snprintf(cmd, NC_BUFFLEN*2-1, notifier, title, msg);
                 status = system(cmd) == -1 ? -1 : 0;
         }
 
@@ -46,7 +46,7 @@ int read_notifications(char *buf, int len) {
                 char *msg;
                 char *p = memchr(buf, '\n', len);
                 if (p == NULL) {
-                        if (len >= BUFFER_SIZE) {
+                        if (len >= NC_BUFFLEN) {
                                 fprintf(stderr, "Notification too long!\n");
                                 return -1;
                         }
@@ -85,13 +85,13 @@ int read_notifications(char *buf, int len) {
 
 int receive_notifications(int fd) {
 
-        char buf[BUFFER_SIZE];
+        char buf[NC_BUFFLEN];
         int bufptr;
 
         bufptr = 0;
 
         while (1) {
-                int rc = read(fd, buf + bufptr, BUFFER_SIZE - bufptr);
+                int rc = read(fd, buf + bufptr, NC_BUFFLEN - bufptr);
 
                 if (rc < 0) {
                         if (errno == EINTR) {
