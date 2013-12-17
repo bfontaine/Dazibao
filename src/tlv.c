@@ -40,12 +40,6 @@ void htod(unsigned int n, char *len) {
         memcpy(len, &tmp.c[1], 3);
 }
 
-/**
- * Convert an int written in dazibao's endianess to host endianess.
- * @param len int using dazibao's endianess
- * @return value of length
- * @deprecated use get_length
- **/
 unsigned int dtoh(char *len) {
         unsigned char *tmp = (unsigned char *)len;
         return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
@@ -234,6 +228,9 @@ const char *tlv_type2str(int tlv_type) {
 
 
 char tlv_str2type(char *tlv_type) {
+        if (tlv_type == NULL) {
+                return -1;
+        }
         for (int i=0; tlv_types[i].name != NULL; i++) {
                 if (strcasecmp(tlv_type, tlv_types[i].name) == 0) {
                         return tlv_types[i].code;
