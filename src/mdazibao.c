@@ -882,7 +882,12 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 }
                 goto EOCOMPACT;
         default: /* other TLVs */
-                dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                if (len == 0) {
+                        saved += TLV_SIZEOF_HEADER;
+                        *reader += TLV_SIZEOF_HEADER;
+                } else {
+                        dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                }
         }
 
 EOCOMPACT:
