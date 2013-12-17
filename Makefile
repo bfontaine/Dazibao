@@ -26,8 +26,8 @@ DOXYFLAGS=
 
 UTILS=$(SRC)/logging.o $(SRC)/utils.o
 WUTILS=$(SRC)/logging.o $(SRC)/utils.o $(WEBSRC)/webutils.o $(WEBSRC)/http.o
-NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o
-NCUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h
+NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/hash.o
+NCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 DCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 
 TARGET=dazibao
