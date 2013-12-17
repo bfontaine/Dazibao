@@ -34,6 +34,8 @@
 
 #define TLV_TIFF   128
 
+#define TLV_MP3    129
+
 #define TLV_MIN_PADN_LENGTH 2
 
 /** test that a TLV type is valid */

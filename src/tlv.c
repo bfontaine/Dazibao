@@ -35,6 +35,7 @@ struct tlv_type tlv_types[] = {
         { TLV_DATED    , "dated"    },
         { TLV_GIF      , "gif"      },
         { TLV_TIFF     , "tiff"     },
+        { TLV_MP3      , "mp3"      },
         { -1           , NULL       }
 };
 
@@ -47,7 +48,9 @@ struct type_signature sigs[] =  {
         { TLV_GIF,  "GIF87a"            },
         { TLV_GIF,  "GIF89a"            },
         { TLV_TIFF, "\073\073\042\000"  },
-        { TLV_TIFF, "\077\077\000\042"  }
+        { TLV_TIFF, "\077\077\000\042"  },
+        { TLV_MP3,  "\255\251"          },
+        { TLV_MP3,  "\073\068\051"      }
 };
 
 

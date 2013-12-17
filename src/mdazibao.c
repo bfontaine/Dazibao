@@ -254,17 +254,19 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                 ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
                                 length) == TLV_JPEG;
                 break;
-        case TLV_TIFF:
-                /* see www.onicos.com/staff/iz/formats/gif.html#header */
-                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_TIFF;
-                break;
         case TLV_GIF:
                 /* see www.onicos.com/staff/iz/formats/gif.html#header */
                 ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
                                 length) == TLV_GIF;
                 break;
-
+        case TLV_TIFF:
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_TIFF;
+                break;
+        case TLV_MP3:
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_MP3;
+                break;
         }
 
         tlv_destroy(&t);
