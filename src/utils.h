@@ -237,7 +237,9 @@ struct s_args {
  * @param argc arguments count
  * @param argv arguments
  * @param res the structure which will be filled
- * @param nb_opt
+ * @param nb_opt number of options avaible (in struct s_args *res)
+ * @return 0 on success
+ * @return -1 on error
  **/
 int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt);
 
