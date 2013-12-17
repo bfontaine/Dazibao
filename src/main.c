@@ -287,10 +287,10 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 }
                                 j++;
                         }
-                        tlv = (tlv_t)safe_realloc(tlv, sizeof(*tlv)
+                        buff_co = (tlv_t)safe_realloc(buff_co, sizeof(*buff_co)
                                                 * (TLV_SIZEOF_HEADER +
                                                 buff_size_co + tlv_size));
-                        if (tlv == NULL) {
+                        if (buff_co == NULL) {
                                 ERROR("realloc", -1);
                         }
 
@@ -300,6 +300,10 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         tlv_destroy(&tlv);
 
                         if (i == argc -1) {
+                                if (tlv_init(&tlv) < 0) {
+                                        printf(" error to init tlv");
+                                        return -1;
+                                }
                                 tlv_size = tlv_create_compound(&tlv, &buff_co,
                                         buff_size_co);
                                 if (tlv_size < 0) {
