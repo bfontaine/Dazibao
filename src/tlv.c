@@ -249,7 +249,7 @@ char tlv_str2type(char *tlv_type) {
 
 int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
         unsigned int tlv_size;
-        tlv_set_type(tlv_c, (char) TLV_COMPOUND);
+        tlv_set_type(tlv_c, (unsigned char) TLV_COMPOUND);
         tlv_set_length(tlv_c, buff_size);
         tlv_size = tlv_mread(tlv_c, *value);
         return tlv_size;
@@ -258,19 +258,17 @@ int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
 int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         unsigned int tlv_size ;
         int real_time = htonl(time(NULL));
+        char *buff;
 
         tlv_size = TLV_SIZEOF_DATE + value_size;
-        *tlv_d = (tlv_t)safe_realloc(tlv_d, sizeof(*tlv_d)* (TLV_SIZEOF_HEADER
-                        + tlv_size));
-        if (*tlv_d == NULL) {
-                printf("[tlv_create_date] error to init tlv");
-                return -1;
-        }
-        tlv_set_type(tlv_d, (char) TLV_DATED );
+        buff = malloc(sizeof(char*)* tlv_size);
+        /*memcpy(buff, &real_time, TLV_SIZEOF_DATE);*/
+        memcpy(buff + TLV_SIZEOF_DATE, *value_tlv, value_size);
+
+        tlv_set_type(tlv_d, (unsigned char) TLV_DATED );
         tlv_set_length(tlv_d, tlv_size);
-        char *t = tlv_get_value_ptr(tlv_d);
-        memcpy(t, &real_time, TLV_SIZEOF_DATE);
-        memcpy(t + TLV_SIZEOF_DATE * sizeof(tlv_t), *value_tlv, value_size);
+        tlv_size = tlv_mread(tlv_d, buff);
+        free(buff);
         return tlv_size;
 }
 
