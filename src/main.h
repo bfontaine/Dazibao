@@ -38,20 +38,44 @@
         "            -r, --recursive: (todo)\n"
 
 /**
- * check if add option have a goof formation
+ * check if add option have a good formation
  * and keep only args and cut option but keep
  * timekeepper in flag matching
  * @param argc : lenght to argv
- * @param argv : parameters to line command
+ * @param argv : parameters to command line
  * @param f_d  : flag to option date
  * @param f_co : flag to option compound
  * @param f_dz : flag to option dazibao
  * @param f_ty : flag to option type
  * @param f_in : flag to option "-" -> input
- * @return 0 is good or -1 to error
+ * @return count to parameters
  **/
 int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 int *f_ty, int *f_in);
+
+/**
+ * check if option type counter of args exist
+ * @param argc : lenght to argv
+ * @param type_args : to write a good version of type after to check
+ * @param op_type : type write to command line
+ * @param f_dz : flag to option dazibao
+ * @return 0 is good or -1 to error
+ **/
+int check_type_args(int argc, char *type_args, char *op_type, int f_dz);
+
+/**
+ * check 2 point:
+ *      - if path have a goof file
+ *      - if tlv to create will be a good size
+ * @param argc : lenght to argv
+ * @param argv : parameters to command line
+ * @param f_d  : flag to option date
+ * @param f_co : flag to option compound
+ * @param f_dz : flag to option dazibao
+ * @return 0 is good or -1 to error
+ **/
+int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d);
+
 /**
  * manage to all check verification to parameters command line
  * @param argc : lenght to argv
