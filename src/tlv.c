@@ -16,7 +16,14 @@
 /** @file */
 /** buffer size used in various functions */
 #define BUFFSIZE 512
-
+/*
+const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
+const char *JPG_SIGNATURE = "\255\216\255";
+const char *GIF_SIGNATURE = "GIF";
+*/
+/** 
+ * All recognized TLV types.
+ **/
 struct tlv_type tlv_types[] = {
         { TLV_PAD1     , "pad1"     },
         { TLV_PADN     , "padN"     },
@@ -26,24 +33,19 @@ struct tlv_type tlv_types[] = {
         { TLV_COMPOUND , "compound" },
         { TLV_DATED    , "dated"    },
         { TLV_GIF      , "gif"      },
-        {-1,NULL}
+        { -1           , NULL       }
 };
 
-const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
-const char *JPG_SIGNATURE = "\255\216\255";
-const char *GIF_SIGNATURE = "GIF";
-
-struct type_signature {
-        char type;
-        char *signature;
-};
-
+/**
+ * "Associative array" of TLV type / file signature
+ **/
 struct type_signature sigs[] =  {
         { TLV_PNG,  "\211PNG\r\n\032\n" },
         { TLV_JPEG, "\255\216\255"      },
         { TLV_GIF,  "GIF87a"            },
         { TLV_GIF,  "GIF89a"            }
 };
+
 
 char guess_type(char *src, unsigned int len) {
 
@@ -61,7 +63,6 @@ char guess_type(char *src, unsigned int len) {
         /* TODO: Check for type text. */
         return TLV_TEXT;
 }
-
 
 void htod(unsigned int n, char *len) {
         union {
@@ -177,7 +178,7 @@ int tlv_fread(tlv_t *tlv, int fd) {
         return 0;
 }
 
-int tlv_from_file(tlv_t *tlv, int fd) {
+int tlv_import_from_file(tlv_t *tlv, int fd) {
 
         if (read(fd, *tlv, TLV_SIZEOF_HEADER) < TLV_SIZEOF_HEADER) {
                 LOGERROR("read failed");
@@ -192,7 +193,7 @@ int tlv_from_file(tlv_t *tlv, int fd) {
         return 0;
 }
 
-int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
+int tlv_from_file(tlv_t *tlv, int fd, char type, uint32_t date) {
 
         int tlv_size;
         int rc = 0;

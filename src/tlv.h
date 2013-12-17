@@ -83,24 +83,27 @@ struct tlv_type {
 };
 
 /**
- * All recognized TLV types.
+ * A TLV type and its file signature
  **/
-extern struct tlv_type tlv_types[];
+struct type_signature {
+        /* TLV type */
+        char type;
+        /* File signature */
+        char *signature;
+};
 
-/** PNG file signature */
-extern const char *PNG_SIGNATURE;
-/** JPG/JPEG file signature */
-extern const char *JPG_SIGNATURE;
-/** GIF file signature */
-extern const char *GIF_SIGNATURE;
-
+/**
+ * Guess type from a buffer
+ * @param src data to test
+ * @param len length of buffer
+ * @return TLV type corresponding to the buffer
+ */
 char guess_type(char *src, unsigned int len);
 
 /**
  * Convert an int written in host endianess into dazibao's one.
  * @param n length
  * @param len result parameter
- * @deprecated use tlv_set_length instead
  **/
 void htod(unsigned int n, char *len);
 
@@ -108,7 +111,6 @@ void htod(unsigned int n, char *len);
  * Convert an int written in dazibao's endianess to host endianess.
  * @param len int using dazibao's endianess
  * @return value of length
- * @deprecated use get_length
  **/
 unsigned int dtoh(char *len);
 
@@ -177,11 +179,18 @@ unsigned int tlv_get_length(tlv_t *tlv);
 tlv_t tlv_get_value_ptr(tlv_t *tlv);
 
 /**
+ * Write TLV to a buffer
+ * @param tlv to write
+ * @param data buffer. Must be large enough to contain the tlv
+ * @return 0 on succes, -1 on error
  **/
 int tlv_mwrite(tlv_t *tlv, void *data);
 
 /**
- * Read the value of a TLV
+ * Read the value of a TLV from memory
+ * @param tlv tlv prefiled with type and length (will be resized)
+ * @param data buffer containing tlv value
+ * @return 0 on succes, -1 on error
  **/
 int tlv_mread(tlv_t *tlv, char *data);
 
@@ -235,9 +244,24 @@ const char *tlv_type2str(int tlv_type);
  **/
 char tlv_str2type(char *tlv_type);
 
-int tlv_from_file(tlv_t *tlv, int fd);
 
-int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date);
+/**
+ * Import a TLV from a file (or pipe, socket, ...).
+ * It supposed to be a valid TLV.
+ * @param tlv tlv to fill with imported one.
+ * @param fd file descriptor used for reading.
+ **/
+int tlv_import_from_file(tlv_t *tlv, int fd);
+
+/**
+ * Convert a file (or pipe, socket, ...) into a tlv.
+ * @param tlv tlv to fill
+ * @param fd file descriptor used for reading
+ * @param type type of the tlv wanted
+ * @param date date to use (if 0, not included in a dated tlv).
+ * @return 0 on succes, -1 on error 
+ */
+int tlv_from_file(tlv_t *tlv, int fd, char type, uint32_t date);
 
 /**
  * Return the tlv type for a file from its extension, or NULL if it cannot be
