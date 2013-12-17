@@ -17,11 +17,16 @@
         "            -m, --merge: (todo)\n" \
         "\n" \
         "    add: add a TLV\n" \
-        "        command: add [--date] [--compound] <tlv args> <dazibao>\n" \
+        "        command: add [--type] <type args> [--dazibao] <dazibo> " \
+        "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
-        "            -d, --date: (todo)\n" \
-        "            -c, --compound: (todo)\n" \
-        "            -C, --dazibao: (todo)\n" \
+        "            --type: allow to give a type with parameters, by order" \
+        "                       for all args excepted to dazibao option " \
+        "            --date: create a tlv dated with all args after option\n" \
+        "            --compound: create a tlv compound with alla args " \
+        "                       after option\n" \
+        "            --dazibao: insert a dazibao when size is respected" \
+        "                       with tlv compound\n" \
         "\n" \
         "    rm: remove a TLV\n" \
         "        command: rm <offset> <dazibao>\n" \
@@ -29,13 +34,11 @@
         "    dump: dump a Dazibao\n" \
         "        command: dump [--debug ] [--depth] <depth> <dazibao>\n" \
         "        options:\n" \
-        "            -D, --depth: (todo)\n" \
-        "            -d, --debug: (todo)\n" \
+        "            -D, --depth: allow to show inside tlv\n" \
+        "            -d, --debug: show tlv PAD1 and PADN\n" \
         "\n" \
         "    compact: compact a dazibao\n" \
-        "        command: compact [--recusive] <dazibao>\n" \
-        "        options:\n" \
-        "            -r, --recursive: (todo)\n"
+        "        command: compact <dazibao>\n"
 
 /**
  * check if add option have a good formation
