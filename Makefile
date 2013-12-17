@@ -37,7 +37,8 @@ WSERVER=daziweb
 DAZICLI=dazicli
 TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
-TESTS=$(TSRC)/utils.test
+TESTS=$(TSRC)/utils.test \
+      $(TSRC)/logging.test
 
 ifndef UNUSED
 #ifndef STRICT

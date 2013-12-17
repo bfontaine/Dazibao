@@ -1,5 +1,8 @@
 #ifndef _TESTS_H
 #define _TESTS_H 1
+
+#include <stdio.h>
+
 /** helpers for tests */
 
 /* from http://stackoverflow.com/a/3219471/735926 */
@@ -50,7 +53,8 @@ extern int __tests_success;
 
 /* call this at the end of the tests */
 #define END_OF_TESTS() \
-        { int p=((int)((100*__tests_success/(__tests_ct+0.0))*10)/10); \
+        { int p=__tests_ct==0 \
+                ? 0 : ((int)((100*__tests_success/(__tests_ct+0.0))*10)/10); \
           printf(ANSI_COLOR_CYAN "Total: %d%% (%d/%d)" EOTESTLINE, \
                           p, __tests_success, __tests_ct); }
 
