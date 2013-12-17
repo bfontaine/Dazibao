@@ -32,6 +32,8 @@
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
+#define TLV_TIFF   128
+
 #define TLV_MIN_PADN_LENGTH 2
 
 /** test that a TLV type is valid */
