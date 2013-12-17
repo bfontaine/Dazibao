@@ -39,6 +39,8 @@
 
 #define TLV_OGG    132
 
+#define TLV_MIDI   133
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
