@@ -25,14 +25,20 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                         *f_ty = ad_tmp;
                         args_ty = 1;
                         /* recupérer la chaine type*/
-                } else if (strcmp(argv[i],"--date") == 0) {
-                        *f_d = ad_tmp;
+                } else if ((strcmp(argv[i],"--date") == 0)) {
+                        if (*f_d < 0) {
+                                *f_d = ad_tmp;
+                        }
                 } else if (strcmp(argv[i],"--dazibao") == 0) {
-                        *f_dz = ad_tmp;
-                        args_dz = 1;
+                        if (*f_dz < 0) {
+                                *f_dz = ad_tmp;
+                                args_dz = 1;
+                        }
                 } else if (strcmp(argv[i],"--compound") == 0) {
-                        *f_co = ad_tmp;
-                        args_co = argc - i -1;
+                        if (*f_co < 0) {
+                                *f_co = ad_tmp;
+                                args_co = argc - i -1;
+                        }
                 } else if (strcmp(argv[i],"-") == 0) {
                         *f_in = ad_tmp;
                         argv[ad_tmp] = argv[i];
