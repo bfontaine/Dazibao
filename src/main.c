@@ -14,16 +14,12 @@
 #define BUFFSIZE 512
 int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 int *f_ty, int *f_in) {
-        int args_co = 0,  /* element to tlv compound */
-            args_dz = 0,
-            args_ty = 0,
-            ad_tmp = 0,
+        int ad_tmp = 0,
             count_args = 0,
             i;
         for (i = 0; i < argc; i++) {
                 if (!strcmp(argv[i],"--type")) {
                         *f_ty = ad_tmp;
-                        args_ty = 1;
                         /* recupérer la chaine type*/
                 } else if ((strcmp(argv[i],"--date") == 0)) {
                         if (*f_d < 0) {
@@ -32,12 +28,10 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 } else if (strcmp(argv[i],"--dazibao") == 0) {
                         if (*f_dz < 0) {
                                 *f_dz = ad_tmp;
-                                args_dz = 1;
                         }
                 } else if (strcmp(argv[i],"--compound") == 0) {
                         if (*f_co < 0) {
                                 *f_co = ad_tmp;
-                                args_co = argc - i -1;
                         }
                 } else if (strcmp(argv[i],"-") == 0) {
                         if (*f_in < 0) {
@@ -46,27 +40,11 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                                 ad_tmp ++;
                                 count_args++;
                         }
-                } else if (args_ty > 0) {
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
-                } else if (args_dz > 0) { /* check args if good path */
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
-                } else if (args_co > 0) {
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
                 } else {
-                        /* if argv[i] is not option and no args option
-                           check if is a path to tlv */
-                        if (ad_tmp >= 0) {
-                                argv[ad_tmp] = argv[i];
-                                ad_tmp++;
-                                count_args++;
-                        }
-
+                        /* if not a option is consider to a parameters */
+                        argv[ad_tmp] = argv[i];
+                        ad_tmp++;
+                        count_args++;
                 }
         }
         return count_args;
