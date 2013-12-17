@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <fcntl.h>
+#include <sys/file.h>
 #include "utils.h"
 #include "logging.h"
 #include "notifutils.h"
@@ -96,6 +97,12 @@ int reliable_watch(char *file, uint32_t *old_hash) {
                 ERROR("open", -1);
         }
 
+        if (flock(fd, LOCK_SH) == -1) {
+                PERROR("flock");
+                status = -1;
+                goto CLOSE;
+        }
+
         if (fstat(fd, &st) < 0) {
                 PERROR("fstat");
                 status = -1;
@@ -124,6 +131,10 @@ int reliable_watch(char *file, uint32_t *old_hash) {
 
         if (munmap(buf, st.st_size) == -1) {
                 PERROR("munmap");
+        }
+
+        if (flock(fd, LOCK_UN) == -1) {
+                PERROR("flock");
         }
 
 CLOSE:
