@@ -255,8 +255,8 @@ int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         char *buff;
 
         tlv_size = TLV_SIZEOF_DATE + value_size;
-        buff = malloc(sizeof(char*)* tlv_size);
-        /*memcpy(buff, &real_time, TLV_SIZEOF_DATE);*/
+        buff = (char *)malloc(sizeof(*buff)* tlv_size);
+        memcpy(buff, &real_time, TLV_SIZEOF_DATE);
         memcpy(buff + TLV_SIZEOF_DATE, *value_tlv, value_size);
 
         tlv_set_type(tlv_d, (unsigned char) TLV_DATED );
