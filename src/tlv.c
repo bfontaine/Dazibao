@@ -39,9 +39,10 @@ struct type_signature {
 };
 
 struct type_signature sigs[] =  {
-        { TLV_PNG      , "\211PNG\r\n\032\n"},
-        { TLV_JPEG     , "\255\216\255"      },
-        { TLV_GIF      , "GIF"      }
+        { TLV_PNG,  "\211PNG\r\n\032\n" },
+        { TLV_JPEG, "\255\216\255"      },
+        { TLV_GIF,  "GIF87a"            },
+        { TLV_GIF,  "GIF89a"            }
 };
 
 char guess_type(char *src, unsigned int len) {
