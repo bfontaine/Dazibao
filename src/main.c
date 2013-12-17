@@ -54,10 +54,8 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char * delim = ",\0";
         char *tmp = strtok(op_type, delim);
         int i = 0;
-        while (1) {
-                if ( tmp == NULL) {
-                        break;
-                } else if (strcmp( tmp , "text") == 0) {
+        while (tmp == NULL) {
+                if (strcmp( tmp , "text") == 0) {
                         type_args[i] = (char)TLV_TEXT;
                 } else if (strcmp( tmp , "jpg") == 0) {
                         type_args[i] = (char)TLV_JPEG;
@@ -74,10 +72,9 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         }
 
         if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
-                printf("args to option type too large %d %d\n",i,argc);
+                printf("args to option type too large\n");
                 return -1;
         }
-
         return 0;
 }
 
