@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <errno.h>
+#include <sys/file.h>
 
 #include "utils.h"
 #include "logging.h"
@@ -20,10 +21,6 @@
 
 
 int cli_add_all(int argc, char **argv) {
-
-        /**
-         * TODO: lock file
-         */
 
         char date = 0;
         char
@@ -100,6 +97,11 @@ int cli_add_all(int argc, char **argv) {
                                 PERROR("fstat");
                                 status = -1;
                                 goto FREEFD;
+                        }
+                        if (flock(fd[1], LOCK_SH)) {
+                                PERROR("flock");
+                                status = -1;
+                                goto UNLOCK;
                         }
                         len += st.st_size;
                 }
@@ -180,6 +182,14 @@ int cli_add_all(int argc, char **argv) {
         
         if (cli_add_tlv(file, buf) != 0) {
                 status = -1;
+        }
+
+UNLOCK:
+        for (i = 0; i < argc; i++) {
+                if (fd[i] != -1 && flock(fd[i], LOCK_SH) == -1) {
+                        PERROR("flock");
+                        status = -1;
+                }
         }
 
 FREEBUF:
