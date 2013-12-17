@@ -87,43 +87,39 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
                 if (strcmp(argv[i],"-") == 0) {
                         continue;
                 } else if ( i == *f_dz) {
-                        if ((tmp_size = check_dz_path (argv[i], R_OK)) < 0) {
-                                printf("[cmd_add] check path arg failed :%s\n",
-                                        argv[i]);
+                        if ((tmp_size = check_dz_path(argv[i], R_OK)) < 0) {
+                                printf("check dz arg failed :%s\n", argv[i]);
                                 return -1;
                         }
                 } else if ( i >= *f_co) {
-                        if ((tmp_size = check_tlv_path (argv[i], R_OK)) < 0) {
-                                printf("[cmd_add] check dz arg failed :%s\n",
-                                        argv[i]);
+                        if ((tmp_size = check_tlv_path(argv[i], R_OK)) < 0) {
+                                printf("check path arg failed :%s\n", argv[i]);
                                 return -1;
                         }
+                        compound_size += tmp_size;
                 } else {
-                        tmp_size = check_tlv_path (argv[i], R_OK);
+                        tmp_size = check_tlv_path(argv[i], R_OK);
                         if (tmp_size < 0) {
-                                printf("[cmd_add] check arg failed :%s\n",
-                                        argv[i]);
+                                printf("check arg failed :%s\n", argv[i]);
                                 return -1;
                         }
                 }
                 /* check size file for tlv */
-                if (*f_co > 0) {
-                        compound_size += tmp_size;
+                if ((*f_d <= *f_co) && (i >= *f_co)) {
+                        date_size += compound_size +
+                                TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 } else {
-                        date_size = 0;
-                }
-
-                if (*f_d >= 0) {
-                        date_size = date_size + tmp_size;
+                        date_size += tmp_size;
                 }
 
                 if ((compound_size > TLV_MAX_VALUE_SIZE) ||
-                        (date_size > (TLV_MAX_VALUE_SIZE - TLV_SIZEOF_DATE)) ||
+                        (date_size > TLV_MAX_VALUE_SIZE) ||
                         (tmp_size > TLV_MAX_VALUE_SIZE)) {
-                        printf("[cmd_add] tlv too large\n");
+                        printf("tlv too large\n");
                         return -1;
                 }
                 tmp_size = 0;
+                date_size = 0;
         }
         return 0;
 }
