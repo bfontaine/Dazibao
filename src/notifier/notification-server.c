@@ -27,8 +27,6 @@ int _log_level;
 
 void ns_exit(int unused) {
 
-        int i;
-
         broadcast(NS_ERR_EXIT, strlen(NS_ERR_EXIT));
 
         LOGINFO("Unlinking %s", conf.s_path);
@@ -74,7 +72,6 @@ void *notify(void *arg) {
         char *file = (char *)arg;
         int len = strlen(file) + 2;
         char *str = malloc(sizeof(*str) * len);
-        int i;
 
         str[0] = 'C';
         memcpy(&str[1], file, len - 2);
