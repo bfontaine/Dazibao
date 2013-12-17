@@ -7,16 +7,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <arpa/inet.h>
 #include "mdazibao.h"
 #include "utils.h"
 #include "tlv.h"
 
 /** @file */
-
-#ifndef BUFFLEN
-/** buffer length used by various functions */
-#define BUFFLEN 128
-#endif
 
 /**
  * Look for the beggining of an unbroken pad1/padN serie leading to `offset`.
@@ -216,10 +212,139 @@ int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
-        /* TODO ensure that the date is in big endian */
-        time_t t = 0;
+        uint32_t t = 0;
         memcpy(&t, d->data + offset, TLV_SIZEOF_DATE);
-        return t;
+        return (time_t)ntohl(t);
+}
+
+char dz_check_tlv_type(dz_t *dz, off_t offset) {
+        tlv_t t;
+        char ok = 1;
+        unsigned int length, header_len;
+
+        tlv_init(&t);
+        if (dz_tlv_at(dz, &t, offset) != 0) {
+                tlv_destroy(&t);
+                return -1;
+        }
+
+        length = tlv_get_length(&t);
+
+        switch (tlv_get_type(&t)) {
+        case TLV_PADN:
+                if (length < TLV_MIN_PADN_LENGTH) {
+                        ok = 0;
+                }
+                break;
+        case TLV_DATED:
+                if (length < TLV_SIZEOF_DATE) {
+                        ok = 0;
+                }
+                break;
+        case TLV_TEXT:
+                /* TODO */
+                break;
+        case TLV_PNG:
+                /* see www.libpng.org/pub/png/spec/1.2/
+                               PNG-Rationale.html#R.PNG-file-signature */
+                header_len = strlen(PNG_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        PNG_SIGNATURE, header_len) == 0);
+                break;
+        case TLV_JPEG:
+                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure
+                 */
+                header_len = strlen(JPG_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        JPG_SIGNATURE, header_len) == 0);
+                break;
+        case TLV_GIF:
+                /* see www.onicos.com/staff/iz/formats/gif.html#header
+                 */
+                header_len = strlen(GIF_SIGNATURE);
+                if (length < header_len) {
+                        ok = 0;
+                        break;
+                }
+
+                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
+                                        GIF_SIGNATURE, header_len) == 0);
+                break;
+        }
+
+        tlv_destroy(&t);
+        return ok;
+}
+
+int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
+        tlv_t t;
+        unsigned int length;
+        off_t val_off;
+        char st = -1;
+
+        if (dz == NULL || info == NULL || offset < DAZIBAO_HEADER_SIZE) {
+                return -1;
+        }
+
+        if (!dz_check_tlv_type(dz, offset)) {
+                return -1;
+        }
+
+        tlv_init(&t);
+        if (dz_tlv_at(dz, &t, offset) != 0) {
+                tlv_destroy(&t);
+                return -1;
+        }
+
+        length = tlv_get_length(&t);
+        val_off = offset + TLV_SIZEOF_HEADER;
+
+        switch (tlv_get_type(&t)) {
+        case TLV_PNG:
+                /* see stackoverflow.com/a/5354657/735926 */
+                if (length < 24) {
+                        st = -1;
+                        break;
+                }
+                info->width = 0;
+                info->height = 0;
+                memcpy(&(info->width), dz->data + val_off + 16, 4);
+                memcpy(&(info->height), dz->data + val_off + 20, 4);
+
+                info->width = ntohl(info->width);
+                info->height = ntohl(info->height);
+                st = 0;
+                break;
+        case TLV_GIF:
+                /* see www.onicos.com/staff/iz/formats/gif.html#header */
+                if (length < 10) {
+                        st = -1;
+                        break;
+                }
+                info->width = ((unsigned char)dz->data[val_off + 7] << 8)
+                        + (unsigned char)dz->data[val_off + 6];
+                info->height = ((unsigned char)dz->data[val_off + 9] << 8)
+                        + (unsigned char)dz->data[val_off + 8];
+                st = 0;
+                break;
+        case TLV_JPEG:
+                /* see stackoverflow.com/a/692013/735926 */
+                st = -1;
+                break;
+        }
+
+        tlv_destroy(&t);
+        return st;
 }
 
 off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
@@ -309,20 +434,18 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
         tlv_init(&buf);
 
         off_prev = d->offset;
-        d->offset = DAZIBAO_HEADER_SIZE;
+        d->offset = min_offset;
         off_start = -1;
 
         while ((off_tmp = dz_next_tlv(d, &buf)) != -1
                 && off_tmp != EOD
                 && off_tmp < offset) {
-                if (tlv_get_type(&buf) == TLV_PAD1
-                        || tlv_get_type(&buf) == TLV_PADN) {
-                        /* pad reached */
-                        if (off_start == -1) {
-                                off_start = off_tmp;
-                        }
+                if (TLV_IS_EMPTY_PAD(tlv_get_type(&buf)) && off_start == -1) {
+                        /* we got a padN/pad1 */
+                        off_start = off_tmp;
                 } else {
-                        /* tlv which is not a pad */
+                        /* not a padN/pad1, the serie is broken, reset
+                           off_start */
                         off_start = -1;
                 }
         }
@@ -780,6 +903,10 @@ int dz_compact(dz_t *d) {
         return compact_helper(d, &reader, &writer, d->len);
 }
 
+int dz_dump_all(dz_t *d, int depth, int flag_debug) {
+        return dz_dump(d, d->len, depth, 0, flag_debug);
+}
+
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                 int flag_debug) {
 
@@ -852,7 +979,6 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         return 0;
 }
 
-
 int dz2tlv(char *d, tlv_t *tlv) {
         dz_t dz;
 
@@ -871,5 +997,25 @@ int dz2tlv(char *d, tlv_t *tlv) {
         }
 
         return tlv_get_length(tlv);
+}
+
+int dz_hash(dz_t *dz, hash_t *oldhash) {
+        hash_t len;
+        if (dz == NULL || oldhash == NULL) {
+                return DZ_NULL_POINTER_ERROR;
+        }
+
+        /* TODO this is a basic function, this code should be replaced by a
+         * real hashing function */
+
+        len = (hash_t)dz->len;
+
+        if (*oldhash == 0 || *oldhash == len) {
+                *oldhash = len;
+                return 0;
+        }
+
+        *oldhash = len;
+        return 1;
 }
 #undef BUFFLEN

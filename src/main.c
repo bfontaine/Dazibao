@@ -1,4 +1,3 @@
-#include "mdazibao.h"
 #include <limits.h>
 #include <locale.h>
 #include <stdlib.h>

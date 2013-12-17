@@ -12,36 +12,9 @@ This project aim at being compatible with any UNIX system, conforming the norm P
 
 We designed these APIs as an object-oriented structure for the purpose of being idependant of the implementation. A programm using the Dazibao (or TLV) API does not have to know about the structure used, and the Dazibao API does not have to know how a TLV actually is represented.
 
-### Dazibao API
-
-### TLV API
-
 ## Notifications
 
 ### Notification server
-
-#### Usage
-```
-notification-server [OPTION] [FILE]
-```
-Available options:
-```
---path <path>  use <path> as connection point for clients
-       	       default is "$HOME/.dazibao-notification-socket"
---max <n>      allow <n> client maximum on server
-      	       default is MAX_CLIENTS (from notification-server.h)
---reliable <n> if n = 0, disable the reliable mode, else, enable it
-	       default is 1
---wtimemin <n> modify minimum waiting time between 2 file checks
-	       default is WATCH_SLEEP_MIN
---wtimedef <n> modify default waiting time between 2 file checks
-	       default is WATCH_SLEEP_DEFAULT
---wtimemax <n> modify maximum waiting time between 2 file checks
-	       default is WATCH_SLEEP_MAX
-```
-NB: Order between options does not matter, but all options have to be written before the file list.
-
-#### History
 
 Until [4e5562e](4e5562e28d15ed8013407136ed62125a16d6686d), we used signals to notify change on file. The plan was:
 * one process per file
@@ -64,22 +37,6 @@ The bad side:
   Not a real issue since you can enable the *reliable mode* with `--reliable` option.
 
 ### Notification client
-
-#### Usage
-```
-notification-client [OPTION]
-```
-Available options:
-```
---path </path/to/server>
-    Define the path used to connect to the server
-
---notifier "notifier-command -title \"%s\" -message \"%s\""
-    Define the command used to notify user.
-    First %s is the place where message title will be include.
-    Second %s is the place where message body will be include.
-```
-NB: If no `--notifier` option is provided, default is `"notify-send \"%s\" \"%s\""`
 
 #### Known issues
 

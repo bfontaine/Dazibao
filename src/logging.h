@@ -19,6 +19,8 @@ extern int _log_level;
 /* set this to 0 to get each log entry on one line instead of two */
 extern char _log_newline;
 
+/** "trace" log level */
+#define LOG_LVL_TRACE  60
 /** "debug" log level */
 #define LOG_LVL_DEBUG  50
 /** "info" log level */
@@ -49,6 +51,8 @@ extern char _log_newline;
  *
  * Don't put a \n at the end of the format string */
 
+/** add an entry to a log using the "trace" level */
+#define LOGTRACE(fmt, ...) _LOG(LOG_LVL_TRACE, "TRACE", fmt, ##__VA_ARGS__)
 /** add an entry to a log using the "debug" level */
 #define LOGDEBUG(fmt, ...) _LOG(LOG_LVL_DEBUG, "DEBUG", fmt, ##__VA_ARGS__)
 /** add an entry to a log using the "info" level */

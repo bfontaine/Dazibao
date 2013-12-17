@@ -7,6 +7,7 @@ SRC=src
 WEBSRC=$(SRC)/web
 NSRC=$(SRC)/notifier
 DCSRC=$(SRC)/cli
+TSRC=tests
 
 VALGRIND=valgrind
 VALFLAGS=-v --tool=memcheck --leak-check=full --track-origins=yes \
@@ -25,8 +26,8 @@ DOXYFLAGS=
 
 UTILS=$(SRC)/logging.o $(SRC)/utils.o
 WUTILS=$(SRC)/logging.o $(SRC)/utils.o $(WEBSRC)/webutils.o $(WEBSRC)/http.o
-NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h $(NSRC)/hash.o
-NCUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/notifutils.h
+NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/hash.o
+NCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 DCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 
 TARGET=dazibao
@@ -35,6 +36,10 @@ NCLIENT=notification-client
 WSERVER=daziweb
 DAZICLI=dazicli
 TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
+
+TESTS=$(TSRC)/utils.test \
+      $(TSRC)/logging.test \
+      $(TSRC)/tlv.test
 
 ifndef UNUSED
 #ifndef STRICT
@@ -57,7 +62,7 @@ CPPCHECK=cppcheck \
 	--language=c -q
 
 .DEFAULT: all
-.PHONY: clean cleantmp check checkwhattodo doc
+.PHONY: clean cleantmp check checkwhattodo doc tests
 
 all: check $(TARGETS)
 
@@ -98,7 +103,7 @@ clean: cleantmp
 	find . -name "*.o" -delete
 
 cleanall: clean
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(TESTS)
 
 check: cleantmp
 	./utils/stylecheck.sh
@@ -114,9 +119,23 @@ doc:
 	@echo '--> open docs/codedoc/html/index.html for the HTML doc'
 
 checkwhattodo:
-	@d=$(SRC);c="TO";f="FIX";x="X"; \
-	 for s in $${c}DO $${f}ME $${x}XX; do \
+	@d=$(SRC);for s in TODO FIXME XXX; do \
 		echo "== $$s =="; \
 		grep -nI -e $$s -- \
-			$$d/*.c $$d/*.h $$d/*/*.c $$d/*/*.h Makefile;\
+			$$d/*.c $$d/*.h $$d/*/*.c $$d/*/*.h;\
 	done; true
+
+tests: $(TESTS)
+	@for f in $^; do \
+		g=$${f%%.test};g=$${g##*/}; \
+		echo "==> $$g"; \
+		./$$f; \
+	 done
+
+$(TSRC)/tlv.test: $(TSRC)/test-tlv.o $(SRC)/tlv.o $(SRC)/utils.o \
+	$(SRC)/logging.o
+$(TSRC)/%.test: $(TSRC)/test-%.o $(SRC)/%.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(TSRC)/%.o: $(TSRC)/%.c 
+	$(CC) $(CFLAGS) -o $@ -c $<

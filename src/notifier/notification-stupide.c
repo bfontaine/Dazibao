@@ -6,10 +6,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define BUFFER_SIZE 1024
+#define NS_BUFFER_SIZE 1024
 
 int main() {
-        char buf[BUFFER_SIZE];
+        char buf[NS_BUFFER_SIZE];
         struct sockaddr_un sun;
         int fd, bufptr, rc;
 
@@ -34,7 +34,7 @@ int main() {
         bufptr = 0;
         while (1) {
                 char *p;
-                rc = read(fd, buf + bufptr, BUFFER_SIZE - bufptr);
+                rc = read(fd, buf + bufptr, NS_BUFFER_SIZE - bufptr);
                 if (rc < 0) {
                         if (errno == EINTR)
                                 continue;
@@ -49,7 +49,7 @@ int main() {
 
                 p = memchr(buf, '\n', bufptr);
                 if (p == NULL) {
-                        if (bufptr >= BUFFER_SIZE) {
+                        if (bufptr >= NS_BUFFER_SIZE) {
                                 fprintf(stderr, "Notification too long!\n");
                                 exit(1);
                         }

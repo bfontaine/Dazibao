@@ -7,11 +7,6 @@
 
 #include "http.h"
 
-#ifndef BUFFLEN
-/** The length of the buffer to use in various functions */
-#define BUFFLEN 512
-#endif
-
 /** A struct describing an HTTP request */
 struct http_request {
         /** the request method, as defined in http.h */

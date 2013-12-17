@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "tlv.h"
+#include <limits.h>
 #include "utils.h"
 #include "mdazibao.h"
 
@@ -76,7 +77,7 @@ long str2dec_positive(char *s) {
         char *p = NULL;
         long ret;
 
-        if (s == NULL) {
+        if (s == NULL || s[0] == '\0') {
                 return -1;
         }
 
@@ -105,6 +106,7 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 
         int next_arg = 0;
 
+
         while (next_arg < argc) {
                 char is_opt = 0;
                 for (int i = 0; i < nb_opt; i++) {
@@ -114,14 +116,31 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                         }
                         is_opt = 1;
                         switch (res->options[i].type) {
-                        case ARG_TYPE_INT:
+                        case ARG_TYPE_LLINT:
                                 if (next_arg > argc - 2) {
                                         return -1;
                                 }
-                                *((int*)res->options[i].value) =
-                                        str2dec_positive(argv[next_arg + 1]);
+                                char *endptr = NULL;
+                                long long int lli = strtoll(argv[next_arg + 1],
+                                                        &endptr, 10);
+                                if (endptr != NULL && *endptr != '\0') {
+                                        fprintf(stderr,
+                                                "Invalid argument: %s\n",
+                                                argv[next_arg + 1]);
+                                        return -1;
+                                }
+                                if (lli == LLONG_MIN || lli == LLONG_MAX) {
+                                        fprintf(stderr, "Overflow: %s\n",
+                                                argv[next_arg + 1]);
+                                        return -1;
+                                }
+                                *((long long int*)res->options[i].value) = lli;
                                 next_arg += 2;
                                 break;
+
+                                if (next_arg > argc - 2) {
+                                        return -1;
+                                }
                         case ARG_TYPE_STRING:
                                 if (next_arg > argc - 2) {
                                         return -1;

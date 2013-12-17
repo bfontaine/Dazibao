@@ -328,19 +328,20 @@ int parse_arg(int argc, char **argv) {
         conf.reliable = RELIABLE_DEFAULT;
 
         struct s_option options[] = {
-                {"--path", ARG_TYPE_STRING, (void *)&(conf.s_path)},
-                {"--max", ARG_TYPE_INT, (void *)&(conf.client_max)},
-                {"--wtimemin", ARG_TYPE_INT, (void *)&(conf.w_sleep_min)},
-                {"--wtimemax", ARG_TYPE_INT, (void *)&(conf.w_sleep_max)},
-                {"--wtimedef", ARG_TYPE_INT, (void *)&(conf.w_sleep_default)},
-                {"--reliable", ARG_TYPE_INT, (void *)&(conf.reliable)}
+                {"--path", ARG_TYPE_STRING, (void*)&(conf.s_path)},
+                {"--max", ARG_TYPE_LLINT, (void*)&(conf.client_max)},
+                {"--wtimemin", ARG_TYPE_LLINT, (void*)&(conf.w_sleep_min)},
+                {"--wtimemax", ARG_TYPE_LLINT, (void*)&(conf.w_sleep_max)},
+                {"--wtimedef", ARG_TYPE_LLINT, (void*)&(conf.w_sleep_default)},
+                {"--reliable", ARG_TYPE_LLINT, (void*)&(conf.reliable)}
         };
 
         struct s_args args = {&(conf.nb_files), &conf.file, options};
 
         if (jparse_args(argc, argv, &args,
                                 sizeof(options)/sizeof(*options)) != 0) {
-                ERROR("parse_args", -1);
+                LOGERROR("parse_args");
+                return -1;
         }
 
         return 0;

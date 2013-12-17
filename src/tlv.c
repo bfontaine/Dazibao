@@ -29,13 +29,10 @@ struct tlv_type tlv_types[] = {
         {-1,NULL}
 };
 
-/**
- * Convert {n} in dazibao's endianess
- * and set {tlv}'s length field with the converted value.
- * @param n wanted length
- * @param tlv tlv receiving length
- * @deprecated use tlv_set_length instead
- **/
+const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
+const char *JPG_SIGNATURE = "\255\216\255";
+const char *GIF_SIGNATURE = "GIF";
+
 void htod(unsigned int n, char *len) {
         union {
                 unsigned int i;
@@ -45,13 +42,7 @@ void htod(unsigned int n, char *len) {
         memcpy(len, &tmp.c[1], 3);
 }
 
-/**
- * Convert an int written in dazibao's endianess to host endianess.
- * @param len int using dazibao's endianess
- * @return value of length
- * @deprecated use get_length
- **/
-static unsigned int dtoh(char *len) {
+unsigned int dtoh(char *len) {
         unsigned char *tmp = (unsigned char *)len;
         return (tmp[0] << 16) + (tmp[1] << 8) + tmp[2];
 }
@@ -221,11 +212,11 @@ int tlv_file2tlv(tlv_t *tlv, int fd, char type, uint32_t date) {
 }
 
 int tlv_fdump(tlv_t *tlv, int fd) {
-        return write(fd, *tlv, TLV_SIZEOF(tlv));
+        return write_all(fd, *tlv, TLV_SIZEOF(tlv));
 }
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {
-        return write(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+        return write_all(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
 const char *tlv_type2str(int tlv_type) {
@@ -239,6 +230,9 @@ const char *tlv_type2str(int tlv_type) {
 
 
 char tlv_str2type(char *tlv_type) {
+        if (tlv_type == NULL) {
+                return -1;
+        }
         for (int i=0; tlv_types[i].name != NULL; i++) {
                 if (strcasecmp(tlv_type, tlv_types[i].name) == 0) {
                         return tlv_types[i].code;

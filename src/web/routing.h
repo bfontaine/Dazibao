@@ -21,11 +21,12 @@
  * Type of a route handler. This a pointer to a function which returns an int
  * (0 if everything is ok, an HTTP status or an error code if there was an
  * error. It takes the following arguments:
- *  - dz (dz_t): the currently open dazibao
+ *  - dz (dz_t*): a pointer to the currently open dazibao
  *  - req (struct http_request): the request
  *  - resp (struct http_response*): the response to send back
  **/
-typedef int (*route_handler)(dz_t, struct http_request, struct http_response*);
+typedef int (*route_handler)(dz_t*, struct http_request,
+                struct http_response*);
 
 /**
  * Add a new route handler.
@@ -65,12 +66,12 @@ route_handler get_route_handler(char mth, char *path, int *status);
  * Route a request, i.e. find the matching route and accordingly respond to the
  * request.
  * @param sock the socket which will be used to send the response
- * @param dz the currently open dazibao
+ * @param dz a pointer to the currently open dazibao
  * @param req the client request
  * @return 0 on success or -1 for a generic error, or an HTTP status for a more
  * specific error
  **/
-int route_request(int sock, dz_t dz, struct http_request *req);
+int route_request(int sock, dz_t *dz, struct http_request *req);
 
 /**
  * Free the routes table.

@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <sys/mman.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "logging.h"
@@ -17,27 +18,186 @@
 #include "cli.h"
 #include "mdazibao.h"
 
-int add(char *file, int in) {
 
-        dz_t dz;
-        tlv_t tlv;
-        int status = 0;
+int cli_add_all(int argc, char **argv) {
 
-        if (dz_open(&dz, file, O_RDWR) != 0) {
-                LOGERROR("Failed opening %s.", file);
+        char date = 0;
+        char
+                *type = NULL,
+                *file = NULL,
+                *delim = ",",
+                *buf;
+        int
+                i,
+                len = 0,
+                ptr_compound,
+                write_ptr,
+                rc,
+                status = 0;
+        uint32_t timestamp;
+
+        struct s_option opt[] = {
+                {"--date", ARG_TYPE_FLAG, (void *)&date},
+                {"--type", ARG_TYPE_STRING, (void *)&type},
+                {"--dazibao", ARG_TYPE_STRING, (void *)&file}
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) == -1) {
+                LOGERROR("jparse_args failed.");
+                status = -1;
+                goto OUT;
+        }
+
+        if (file == NULL || type == NULL) {
+                LOGERROR("Missing arguments (see manual).");
+                status = -1;
+                goto OUT;
+        }
+
+        /* set date and update pointers */
+        if (date) {
+                ptr_compound = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                len = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                timestamp = (uint32_t) time(NULL);
+                timestamp = htonl(timestamp);
+                if (timestamp == (uint32_t) -1) {
+                        status = -1;
+                        goto OUT;
+                }
+        } else {
+                len = 0;
+                ptr_compound = 0;
+                timestamp = 0;
+        }
+
+
+        /* Compute needed size */
+        for (i = 0; i < argc; i++) {
+                struct stat st;
+                if (stat(argv[i], &st) == -1) {
+                        if (errno == ENOENT) {
+                                len += strlen(argv[i]);
+                        } else {
+                                status = -1;
+                                goto OUT;
+                        }
+                } else {
+                        len += st.st_size;
+                }
+                len += TLV_SIZEOF_HEADER;
+        }
+
+        buf = malloc(len);
+
+        if (buf == NULL) {
                 return -1;
         }
+
+        write_ptr = 0;
+        rc = 0;
+
+        if (argc > 1) {
+                write_ptr += TLV_SIZEOF_HEADER;
+        }
+
+        if (date) {
+                write_ptr += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+        }
+
+        for (i = 0; i < argc; i++) {
+
+                char typ = tlv_str2type(strtok((i == 0 ? type : NULL), delim));
+                
+                if (typ == -1) {
+                        LOGERROR("Undefined type.");
+                        status = -1;
+                        goto FREEBUF;
+                }
+
+                int fd = open(argv[i], O_RDONLY);
+
+                if (fd == -1) {
+                        if (access(argv[i], F_OK) == 0) {
+                                LOGERROR("Failed opening %s", argv[i]);
+                                return -1;
+                        } else {
+                                buf[write_ptr++] = typ;
+                                htod(strlen(argv[i]), &buf[write_ptr]);
+                                write_ptr += TLV_SIZEOF_LENGTH;
+                                memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
+                                write_ptr += strlen(argv[i]);
+                                continue;
+                        }
+                }
+                
+                write_ptr += TLV_SIZEOF_LENGTH;
+                
+                rc = read(fd, buf + write_ptr, len - write_ptr);
+                
+                if (rc == -1) {
+                        return -1;
+                }
+
+                write_ptr -= TLV_SIZEOF_LENGTH;
+                buf[write_ptr++] = typ;
+                htod(rc, &buf[write_ptr]);
+                write_ptr += TLV_SIZEOF_LENGTH;
+
+                write_ptr += rc;
+                if (close(fd) == -1) {
+                        PERROR("close");
+                }
+        }
+
+        if (timestamp != 0) {
+                buf[0] = TLV_DATED;
+                htod(len - 1, &buf[1]);
+                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp, sizeof(timestamp));
+        }
+
+        if (argc > 1) {
+                buf[ptr_compound] = TLV_COMPOUND;
+                htod(len - ptr_compound - TLV_SIZEOF_HEADER, &buf[ptr_compound + 1]);
+        }
+        
+        if (cli_add_tlv(file, buf) != 0) {
+                status = -1;
+        }
+
+FREEBUF:
+        free(buf);
+OUT:
+        return status;
+
+}
+
+int cli_add_tlv(char *file, char *buf) {
+
+        int status = 0;
+        tlv_t tlv;
+        dz_t dz;
 
         if (tlv_init(&tlv) != 0) {
                 LOGERROR("Failed initializing TLV.");
                 status = -1;
-                goto CLOSE;
+                goto OUT;
         }
 
-        if (tlv_from_file(&tlv, in) == -1) {
+        tlv_set_type(&tlv, buf[0]);
+        tlv_set_length(&tlv, dtoh(&buf[1]));
+
+        if (dz_open(&dz, file, O_RDWR) != 0) {
+                LOGERROR("Failed opening %s.", file);
+                status = -1;
+                goto DESTROY;
+        }
+
+        if (tlv_mread(&tlv, &buf[TLV_SIZEOF_HEADER]) == -1) {
                 LOGERROR("tlv_from_file failed.");
                 status = -1;
-                goto CLOSE;
+                goto DESTROY;
         }
 
         if (dz_add_tlv(&dz, &tlv) != 0) {
@@ -49,97 +209,26 @@ int add(char *file, int in) {
 DESTROY:
         tlv_destroy(&tlv);
 
-CLOSE:
         if (dz_close(&dz) == -1) {
                 LOGERROR("Failed closing dazibao.");
                 status = -1;
         }
-
-        return status;
-}
-
-
-int mk_tlv(int argc, char **argv, int in, int out) {
-
-        int date = 0;
-        char *type = "";
-	struct stat st;
-	int status;
-	char type_code;
-        tlv_t tlv;
-        uint32_t timestamp;
-	
-        struct s_option opt[] = {
-                {"--date", ARG_TYPE_FLAG, (void *)&date},
-                {"--type", ARG_TYPE_STRING, (void *)&type},
-        };
-
-        struct s_args args = {NULL, NULL, opt};
-
-        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
-                LOGERROR("jparse_args failed");
-                status = -1;
-                goto OUT;
-        }
-
-        if (date) {
-                timestamp = (uint32_t) time(NULL);
-                if (timestamp == (uint32_t) -1) {
-                        LOGERROR("Failed getting time.");
-                        status = -1;
-                        goto OUT;
-                }
-        } else {
-                timestamp = 0;
-        }
-
-	type_code = tlv_str2type(type);
-
-	if (type_code == -1) {
-                LOGERROR("Undefined type: %s", type);
-                status = -1;
-                goto OUT;
-	}
-
-        if (tlv_init(&tlv) == -1) {
-                LOGERROR("tlv_init failed");
-                status = -1;
-                goto DESTROY;
-        }
-
-        if (tlv_file2tlv(&tlv, in, type_code, timestamp)) {
-                LOGERROR("tlv_file2tlv failed");
-                status = -1;
-                goto DESTROY;
-        }
-
-        if (tlv_fdump(&tlv, out) == -1) {
-                LOGERROR("tlv_fdump failed");
-                status = -1;
-                goto DESTROY;
-        }
-
-DESTROY:
-        if (tlv_destroy(&tlv) == -1) {
-                LOGERROR("tlv_destroy failed");
-                status = -1;
-                goto OUT;
-        }
-
 OUT:
-	return status;	
+        return status;
+                
 }
 
-int dump_tlv(int argc, char **argv, int out) {
+
+int cli_dump_tlv(int argc, char **argv, int out) {
         
         dz_t dz;
         tlv_t tlv;
         int status = 0;
         char value = 0;
-        int offset = -1;
+        long long int offset = -1;
 
         struct s_option opt[] = {
-                {"--offset", ARG_TYPE_INT, (void *)&offset},
+                {"--offset", ARG_TYPE_LLINT, (void *)&offset},
                 {"--value", ARG_TYPE_FLAG, (void *)&value},
         };
 
@@ -199,6 +288,125 @@ CLOSE:
         return status;
 }
 
+int cli_dump_dz(int argc, char **argv, int out) {
+        
+        dz_t dz;
+        int status = 0;
+        long long int depth = 0;
+        int debug = 0;
+
+        struct s_option opt[] = {
+                {"--depth", ARG_TYPE_LLINT, (void *)&depth},
+                {"--debug", ARG_TYPE_FLAG, (void *)&debug},
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
+                LOGERROR("jparse_args failed");
+                return -1;
+        }
+
+        if (argv == NULL) {
+                LOGERROR("Wrong arguments.");
+                return -1;
+        }
+
+        if (dz_open(&dz, argv[0], O_RDONLY) != 0) {
+                LOGERROR("Failed opening %s.", argv[0]);
+                return -1;
+        }
+
+        if (dz_dump_all(&dz, depth, debug)) {
+                LOGERROR("dz_dump_all failed");
+                status = -1;
+                goto CLOSE;
+        }
+
+CLOSE:
+        if (dz_close(&dz) == -1) {
+                LOGERROR("Failed closing dazibao.");
+                status = -1;
+        }
+
+        return status;
+}
+
+
+int cli_compact_dz(char *file) {
+
+        dz_t dz;
+        int saved;
+        int status = 0;
+        if (dz_open(&dz, file, O_RDWR) < 0) {
+                return -1;
+        }
+
+        saved = dz_compact(&dz);
+
+        if (saved < 0) {
+                LOGERROR("dz_compact failed.");
+                status = -1;
+                goto CLOSE;
+        }
+
+CLOSE:
+        if (dz_close(&dz) < 0) {
+                LOGERROR("dz_close failed");
+                status = -1;
+                goto OUT;
+        }
+OUT:
+        if (status == 0) {
+                LOGINFO("%d bytes saved.\n", saved);
+        }
+        return status;
+
+}
+
+int cli_rm_tlv(int argc, char **argv) {
+        dz_t dz;
+        long long int off = -1;
+        int status = 0;
+
+        struct s_option opt[] = {
+                {"--offset", ARG_TYPE_LLINT, (void *)&off}
+        };
+
+        struct s_args args = {&argc, &argv, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
+                LOGERROR("jparse_args failed");
+                return -1;
+        }
+
+        if (argv == NULL || off == -1) {
+                LOGERROR("Wrong arguments.");
+                return -1;
+        }
+
+        if (dz_open(&dz, argv[0], O_RDWR) < 0) {
+                LOGERROR("dz_open failed.");
+                return -1;
+        }
+
+        if (dz_rm_tlv(&dz, (off_t)off) < 0) {
+                LOGERROR("dz_rm_tlv failed.");
+                status = -1;
+                goto CLOSE;
+        }
+
+CLOSE:
+        if (dz_close(&dz) < 0) {
+                LOGERROR("dz_close failed.");
+                status = -1;
+                goto OUT;
+        }
+
+OUT:
+        return status;
+}
+
 
 int main(int argc, char **argv) {
 
@@ -209,27 +417,39 @@ int main(int argc, char **argv) {
         }
 
         if (argc < 3) {
-                printf(CLI_USAGE_FMT, argv[0]);
+                LOGERROR(CLI_USAGE_FMT);
                 exit(EXIT_FAILURE);
         }
         
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
-                if (add(argv[2], STDIN_FILENO) != 0) {
+                if (cli_add_all(argc - 2, &argv[2]) != 0) {
                         LOGERROR("TLV addition failed.");
                         return EXIT_FAILURE;
                 }
                 return EXIT_SUCCESS;
-        } else if (strcmp(cmd, "mk_tlv") == 0) {
-                if (mk_tlv(argc - 2, &argv[2], STDIN_FILENO, STDOUT_FILENO) == -1) {
-                        LOGERROR("TLV making failed.");
+        } else if (strcmp(cmd, "dump_tlv") == 0) {
+                if (cli_dump_tlv(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
+                        LOGERROR("TLV dumping failed.");
                         return EXIT_FAILURE;
                 }
                 return EXIT_SUCCESS;
-        }  else if (strcmp(cmd, "dump_tlv") == 0) {
-                if (dump_tlv(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
-                        LOGERROR("TLV dumping failed.");
+        } else if (strcmp(cmd, "dump") == 0) {
+                if (cli_dump_dz(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
+                        LOGERROR("Dazibao dumping failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+        } else if (strcmp(cmd, "compact") == 0) {
+                if (cli_compact_dz(argv[2]) == -1) {
+                        LOGERROR("Dazibao dumping failed.");
+                        return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+        } else if (strcmp(cmd, "rm") == 0) {
+                if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
+                        LOGERROR("Failed removing TLV.");
                         return EXIT_FAILURE;
                 }
                 return EXIT_SUCCESS;
