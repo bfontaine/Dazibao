@@ -29,12 +29,14 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
-/** code for a GIF TLV (see #100) */
-#define TLV_GIF    140
-
 #define TLV_TIFF   128
 
 #define TLV_MP3    129
+
+#define TLV_MP4    130
+
+/** code for a GIF TLV (see #100) */
+#define TLV_GIF    140
 
 #define TLV_MIN_PADN_LENGTH 2
 
