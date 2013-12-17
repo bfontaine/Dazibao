@@ -240,43 +240,24 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                 }
                 break;
         case TLV_TEXT:
-                /* TODO */
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_PNG;
                 break;
         case TLV_PNG:
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_PNG;
                 /* see www.libpng.org/pub/png/spec/1.2/
                                PNG-Rationale.html#R.PNG-file-signature */
-                header_len = strlen(PNG_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        PNG_SIGNATURE, header_len) == 0);
                 break;
         case TLV_JPEG:
-                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure
-                 */
-                header_len = strlen(JPG_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        JPG_SIGNATURE, header_len) == 0);
+                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure */
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_JPEG;
                 break;
         case TLV_GIF:
-                /* see www.onicos.com/staff/iz/formats/gif.html#header
-                 */
-                header_len = strlen(GIF_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        GIF_SIGNATURE, header_len) == 0);
+                /* see www.onicos.com/staff/iz/formats/gif.html#header */
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == TLV_GIF;
                 break;
         }
 
