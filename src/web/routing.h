@@ -31,12 +31,12 @@ typedef int (*route_handler)(dz_t*, struct http_request,
 /**
  * Add a new route handler.
  * @param mth method used by the request
- * @param path_suffix a string which will be used to match an URL path. It MUST
+ * @param path_prefix a string which will be used to match an URL path. It MUST
  *        start with a slash ('/').
  * @param route a pointer on a route handler
  * @return 0 on success, and -1 on error
  **/
-int add_route(char mth, char *path_suffix, route_handler route);
+int add_route(char mth, char *path_prefix, route_handler route);
 
 /**
  * code returned by get_route_handler when the request method is wrong.
