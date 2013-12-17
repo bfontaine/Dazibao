@@ -115,18 +115,16 @@ int dz_create(dz_t *d, char *path) {
         memset(d->data + 1, 0, DAZIBAO_HEADER_SIZE - 1);
         d->len = DAZIBAO_HEADER_SIZE;
 
-        goto OUT;
+        if (dz_sync(d) < 0) {
+                return -1;
+        }
+        return 0;
+
 PANIC:
         if (close(d->fd) == -1) {
                 PERROR("close");
         }
         return -1;
-
-OUT:
-        if (dz_sync(d) < 0) {
-                return -1;
-        }
-        return 0;
 }
 
 int dz_open(dz_t *d, char *path, int flags) {
@@ -789,9 +787,6 @@ static int dz_memmove(dz_t *d, off_t *reader, off_t *writer, int count) {
 static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 off_t max_off) {
 
-        /* XXX this works only a dazibao with no padN/pad1, which is not quite
-         * we're expecting */
-
         int type = -1,
             len = 0,
             saved = 0,
@@ -867,6 +862,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                          * because it may change */
                         *writer += TLV_SIZEOF_LENGTH;
                         *reader += TLV_SIZEOF_LENGTH;
+                        max_off = tlv_off + TLV_SIZEOF_HEADER + len;
                 }
                 while (*reader < max_off) {
                         saved += compact_helper(d, reader, writer, max_off);
@@ -886,7 +882,12 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 }
                 goto EOCOMPACT;
         default: /* other TLVs */
-                dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                if (len == 0) {
+                        saved += TLV_SIZEOF_HEADER;
+                        *reader += TLV_SIZEOF_HEADER;
+                } else {
+                        dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                }
         }
 
 EOCOMPACT:

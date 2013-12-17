@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <errno.h>
+#include <sys/file.h>
 
 #include "utils.h"
 #include "logging.h"
@@ -32,8 +33,8 @@ int cli_add_all(int argc, char **argv) {
                 len = 0,
                 ptr_compound,
                 write_ptr,
-                rc,
                 status = 0;
+        int *fd;
         uint32_t timestamp;
 
         struct s_option opt[] = {
@@ -50,7 +51,7 @@ int cli_add_all(int argc, char **argv) {
                 goto OUT;
         }
 
-        if (file == NULL || type == NULL) {
+        if (file == NULL) {
                 LOGERROR("Missing arguments (see manual).");
                 status = -1;
                 goto OUT;
@@ -72,31 +73,53 @@ int cli_add_all(int argc, char **argv) {
                 timestamp = 0;
         }
 
+        fd = malloc(sizeof(*fd) * argc);
 
-        /* Compute needed size */
+        if (fd == NULL) {
+                PERROR("malloc");
+                status = -1;
+                goto OUT;
+        }
+
         for (i = 0; i < argc; i++) {
-                struct stat st;
-                if (stat(argv[i], &st) == -1) {
-                        if (errno == ENOENT) {
-                                len += strlen(argv[i]);
-                        } else {
+                fd[i] = open(argv[i], O_RDONLY);
+                if (fd[i] == -1) {
+                        if (access(argv[i], F_OK) == 0) {
+                                LOGERROR("Failed opening %s", argv[i]);
                                 status = -1;
-                                goto OUT;
+                                goto FREEFD;
                         }
+                        len += strlen(argv[i]);
                 } else {
+                        struct stat st;
+                        if (fstat(fd[i], &st) == -1) {
+                                PERROR("fstat");
+                                status = -1;
+                                goto FREEFD;
+                        }
+                        if (flock(fd[1], LOCK_SH)) {
+                                PERROR("flock");
+                                status = -1;
+                                goto UNLOCK;
+                        }
                         len += st.st_size;
                 }
+                len += TLV_SIZEOF_HEADER;
+        }
+
+        if (argc > 1) {
                 len += TLV_SIZEOF_HEADER;
         }
 
         buf = malloc(len);
 
         if (buf == NULL) {
-                return -1;
+                PERROR("malloc");
+                status = -1;
+                goto FREEFD;
         }
 
         write_ptr = 0;
-        rc = 0;
 
         if (argc > 1) {
                 write_ptr += TLV_SIZEOF_HEADER;
@@ -108,7 +131,29 @@ int cli_add_all(int argc, char **argv) {
 
         for (i = 0; i < argc; i++) {
 
-                char typ = tlv_str2type(strtok((i == 0 ? type : NULL), delim));
+                char typ;
+                unsigned int tlv_len;
+
+                write_ptr += TLV_SIZEOF_HEADER;
+
+                if (fd[i] == -1) {
+                        tlv_len = strlen(argv[i]);
+                        memcpy(buf + write_ptr, argv[i], tlv_len);
+                } else {
+                        tlv_len = read(fd[i], buf + write_ptr, len - write_ptr);
+                        if (tlv_len == (unsigned int)-1) {
+                                PERROR("read");
+                                status = -1;
+                                goto FREEBUF;
+                        }
+                }
+
+                if (type != NULL) {
+                        typ = tlv_str2type(strtok((i == 0 ? type : NULL),
+                                                                delim));
+                } else {
+                        typ = guess_type(buf + write_ptr, len);
+                }
                 
                 if (typ == -1) {
                         LOGERROR("Undefined type.");
@@ -116,39 +161,12 @@ int cli_add_all(int argc, char **argv) {
                         goto FREEBUF;
                 }
 
-                int fd = open(argv[i], O_RDONLY);
-
-                if (fd == -1) {
-                        if (access(argv[i], F_OK) == 0) {
-                                LOGERROR("Failed opening %s", argv[i]);
-                                return -1;
-                        } else {
-                                buf[write_ptr++] = typ;
-                                htod(strlen(argv[i]), &buf[write_ptr]);
-                                write_ptr += TLV_SIZEOF_LENGTH;
-                                memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
-                                write_ptr += strlen(argv[i]);
-                                continue;
-                        }
-                }
-                
-                write_ptr += TLV_SIZEOF_LENGTH;
-                
-                rc = read(fd, buf + write_ptr, len - write_ptr);
-                
-                if (rc == -1) {
-                        return -1;
-                }
-
-                write_ptr -= TLV_SIZEOF_LENGTH;
+                write_ptr -= TLV_SIZEOF_HEADER;
                 buf[write_ptr++] = typ;
-                htod(rc, &buf[write_ptr]);
+                htod(tlv_len, &buf[write_ptr]);
                 write_ptr += TLV_SIZEOF_LENGTH;
+                write_ptr += tlv_len;
 
-                write_ptr += rc;
-                if (close(fd) == -1) {
-                        PERROR("close");
-                }
         }
 
         if (timestamp != 0) {
@@ -166,8 +184,18 @@ int cli_add_all(int argc, char **argv) {
                 status = -1;
         }
 
+UNLOCK:
+        for (i = 0; i < argc; i++) {
+                if (fd[i] != -1 && flock(fd[i], LOCK_SH) == -1) {
+                        PERROR("flock");
+                        status = -1;
+                }
+        }
+
 FREEBUF:
         free(buf);
+FREEFD:
+        free(fd);
 OUT:
         return status;
 
