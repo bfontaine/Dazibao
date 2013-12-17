@@ -72,11 +72,13 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
                 if ( tmp == NULL) {
                         break;
                 } else if (strcmp( tmp , "text") == 0) {
-                        type_args[i] = '2';
+                        type_args[i] = (char)TLV_TEXT;
                 } else if (strcmp( tmp , "jpg") == 0) {
-                        type_args[i] = '3';
+                        type_args[i] = (char)TLV_JPEG;
                 } else if (strcmp( tmp , "png") == 0) {
-                        type_args[i] = '4';
+                        type_args[i] = (char)TLV_PNG;
+                } else if (strcmp( tmp , "gif") == 0) {
+                        type_args[i] = (char)TLV_GIF;
                 } else {
                         printf("unrecognized type %s\n", tmp);
                         return -1;
@@ -160,11 +162,23 @@ int cmd_add(int argc, char **argv, char * daz) {
         argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
                         &f_type, &f_input);
 
+        printf("check option ok %d \n",f_type);
+        for (i = 0; i < argc; i++) {
+                printf("arg %d : %s\n",i,argv[i]);
+        }
         if (f_type >= 0) {
                 type_args = malloc(sizeof(char)* argc);
                 char *tmp = argv[f_type];
                 if (f_type < (argc -1)) {
-                        argv[f_type] = argv[f_type + 1];
+                        /* deleted type args in argv*/
+                        for (i = (f_type + 1); i < (argc); i++) {
+                                argv[i-1] = argv[i];
+                        }
+                        f_date  = (f_date > f_type ? f_date -1 : f_date);
+                        f_compound = (f_compound > f_type ? f_compound-1 :
+                                        f_compound);
+                        f_input = (f_input > f_type ? f_input-1 : f_input);
+                        f_dz = (f_dz > f_type ? f_dz-1 : f_dz);
                 }
                 argc--;
                 if (check_type_args(argc, type_args, tmp, f_dz) < 0) {
@@ -177,8 +191,12 @@ int cmd_add(int argc, char **argv, char * daz) {
                 return -1;
         }
 
+        printf("check option --type  ok\n");
+        for (i = 0; i < argc; i++) {
+                printf("arg %d : %s\n",i,argv[i]);
+        }
         if (check_args(argc, argv, &f_dz, &f_compound, &f_date)) {
-                printf("check apth args failed\n");
+                printf("check path args failed\n");
                 return -1;
         }
 
@@ -224,6 +242,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                       printf("error to init tlv\n");
                         return -1;
                 }
+                printf("1 tlv is initialized\n");
 
                 if (i == f_in) {
                         tlv_size = tlv_create_input(&tlv, &type[j]);
@@ -232,6 +251,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 return -1;
                         }
                         j++;
+                        printf("tlv input is create\n");
                 }
                 if (i == f_dz) {
                         tlv_size = dz2tlv(argv[i], &tlv);
@@ -240,6 +260,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 argv[i]);
                                 return -1;
                         }
+                        printf("tlv compound form dz is create\n");
                 }
                 if ( i >= f_co ) {
                         if (f_co == i) {
@@ -280,6 +301,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                         return -1;
                                 }
                                 tlv_destroy(&buff_co);
+                                printf("1 tlv compound is create\n");
                         }
                 }
 
@@ -304,9 +326,10 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                         " %s\n", argv[i]);
                                 return -1;
                         }
+                        tlv_destroy(&tlv);
                         tlv = buff_d;
                         buff_d = NULL;
-
+                        printf("1 tlv dated is create\n");
                 }
 
                 if (tlv_size > 0) {
@@ -316,6 +339,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 return -1;
                         }
                         tlv_destroy(&tlv);
+                        printf("1 tlv is add\n");
                 }
         }
 
