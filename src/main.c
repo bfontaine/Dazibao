@@ -278,6 +278,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 return -1;
                         }
                         j++;
+                        printf("tlv is create from path\n");
                 }
                 if ( i >= f_co ) {
                         if (f_co == i) {
@@ -318,13 +319,13 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
 
                 if (i >= f_d) {
                         if (tlv_init(&buff_d) < 0) {
-                                printf(" error to init tlv");
+                                printf(" error to init tlv compound");
                                 return -1;
                         }
                         tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
                         if (tlv_size < 0) {
-                                printf(" error to create dz compound"
-                                        " %s\n", argv[i]);
+                                printf(" error to create tlv dated"
+                                        "%s\n", argv[i]);
                                 return -1;
                         }
                         tlv_destroy(&tlv);
@@ -333,13 +334,15 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         printf("1 tlv dated is create\n");
                 }
 
-                if (dz_add_tlv(&daz_buf, &tlv) == -1) {
-                        fprintf(stderr, "failed adding the tlv\n");
+                if (tlv_size > 0) {
+                        if (dz_add_tlv(&daz_buf, &tlv) == -1) {
+                                fprintf(stderr, "failed adding the tlv\n");
+                                tlv_destroy(&tlv);
+                                return -1;
+                        }
                         tlv_destroy(&tlv);
-                        return -1;
+                        printf("1 tlv is add\n");
                 }
-                tlv_destroy(&tlv);
-                printf("1 tlv is add\n");
         }
 
         if (dz_close(&daz_buf) < 0) {
