@@ -129,12 +129,14 @@
  **/
 #define NFREE(p) { free(p);(p) = NULL; }
 
-const char *get_tlv_type(const char *path);
 /**
  * Check path is a good tlv args,test :
  *      - exist file
  *      - regular file
  *      - not to large
+ * @param path : file path
+ * @param flag_access : flag to straight file
+ * @return size of future tlv
  **/
 int check_tlv_path(const char * path, int flag_access);
 
@@ -143,6 +145,9 @@ int check_tlv_path(const char * path, int flag_access);
  *      - exist file
  *      - regular file
  *      - not to large
+ * @param path : file dazibao path
+ * @param flag_access : flag to straight file
+ * @return size of future tlv compound
  **/
 int check_dz_path(const char * path, int flag_access);
 

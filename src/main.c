@@ -14,16 +14,12 @@
 #define BUFFSIZE 512
 int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 int *f_ty, int *f_in) {
-        int args_co = 0,  /* element to tlv compound */
-            args_dz = 0,
-            args_ty = 0,
-            ad_tmp = 0,
+        int ad_tmp = 0,
             count_args = 0,
             i;
         for (i = 0; i < argc; i++) {
                 if (!strcmp(argv[i],"--type")) {
                         *f_ty = ad_tmp;
-                        args_ty = 1;
                         /* recupérer la chaine type*/
                 } else if ((strcmp(argv[i],"--date") == 0)) {
                         if (*f_d < 0) {
@@ -32,12 +28,10 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                 } else if (strcmp(argv[i],"--dazibao") == 0) {
                         if (*f_dz < 0) {
                                 *f_dz = ad_tmp;
-                                args_dz = 1;
                         }
                 } else if (strcmp(argv[i],"--compound") == 0) {
                         if (*f_co < 0) {
                                 *f_co = ad_tmp;
-                                args_co = argc - i -1;
                         }
                 } else if (strcmp(argv[i],"-") == 0) {
                         if (*f_in < 0) {
@@ -46,27 +40,11 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                                 ad_tmp ++;
                                 count_args++;
                         }
-                } else if (args_ty > 0) {
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
-                } else if (args_dz > 0) { /* check args if good path */
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
-                } else if (args_co > 0) {
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
                 } else {
-                        /* if argv[i] is not option and no args option
-                           check if is a path to tlv */
-                        if (ad_tmp >= 0) {
-                                argv[ad_tmp] = argv[i];
-                                ad_tmp++;
-                                count_args++;
-                        }
-
+                        /* if not a option is consider to a parameters */
+                        argv[ad_tmp] = argv[i];
+                        ad_tmp++;
+                        count_args++;
                 }
         }
         return count_args;
@@ -76,10 +54,8 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char * delim = ",\0";
         char *tmp = strtok(op_type, delim);
         int i = 0;
-        while (1) {
-                if ( tmp == NULL) {
-                        break;
-                } else if (strcmp( tmp , "text") == 0) {
+        while (tmp == NULL) {
+                if (strcmp( tmp , "text") == 0) {
                         type_args[i] = (char)TLV_TEXT;
                 } else if (strcmp( tmp , "jpg") == 0) {
                         type_args[i] = (char)TLV_JPEG;
@@ -96,10 +72,9 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         }
 
         if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
-                printf("args to option type too large %d %d\n",i,argc);
+                printf("args to option type too large\n");
                 return -1;
         }
-
         return 0;
 }
 
@@ -112,43 +87,39 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
                 if (strcmp(argv[i],"-") == 0) {
                         continue;
                 } else if ( i == *f_dz) {
-                        if ((tmp_size = check_dz_path (argv[i], R_OK)) < 0) {
-                                printf("[cmd_add] check path arg failed :%s\n",
-                                        argv[i]);
+                        if ((tmp_size = check_dz_path(argv[i], R_OK)) < 0) {
+                                printf("check dz arg failed :%s\n", argv[i]);
                                 return -1;
                         }
                 } else if ( i >= *f_co) {
-                        if ((tmp_size = check_tlv_path (argv[i], R_OK)) < 0) {
-                                printf("[cmd_add] check dz arg failed :%s\n",
-                                        argv[i]);
+                        if ((tmp_size = check_tlv_path(argv[i], R_OK)) < 0) {
+                                printf("check path arg failed :%s\n", argv[i]);
                                 return -1;
                         }
+                        compound_size += tmp_size;
                 } else {
-                        tmp_size = check_tlv_path (argv[i], R_OK);
+                        tmp_size = check_tlv_path(argv[i], R_OK);
                         if (tmp_size < 0) {
-                                printf("[cmd_add] check arg failed :%s\n",
-                                        argv[i]);
+                                printf("check arg failed :%s\n", argv[i]);
                                 return -1;
                         }
                 }
                 /* check size file for tlv */
-                if (*f_co > 0) {
-                        compound_size += tmp_size;
+                if ((*f_d <= *f_co) && (i >= *f_co)) {
+                        date_size += compound_size +
+                                TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 } else {
-                        date_size = 0;
-                }
-
-                if (*f_d >= 0) {
-                        date_size = date_size + tmp_size;
+                        date_size += tmp_size;
                 }
 
                 if ((compound_size > TLV_MAX_VALUE_SIZE) ||
-                        (date_size > (TLV_MAX_VALUE_SIZE - TLV_SIZEOF_DATE)) ||
+                        (date_size > TLV_MAX_VALUE_SIZE) ||
                         (tmp_size > TLV_MAX_VALUE_SIZE)) {
-                        printf("[cmd_add] tlv too large\n");
+                        printf("tlv too large\n");
                         return -1;
                 }
                 tmp_size = 0;
+                date_size = 0;
         }
         return 0;
 }
@@ -158,30 +129,27 @@ int cmd_add(int argc, char **argv, char * daz) {
             f_compound = -1,
             f_dz = -1,
             f_type = -1,
-            f_input = -1,
-            i;
+            f_input = -1;
         char *type_args;
 
         if (argc < 0) {
-                printf("[cmd_add] error no args for add\n");
+                printf("error no args for add\n");
                 return -1;
         }
 
         argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
                         &f_type, &f_input);
 
-        printf("check option ok %d \n",f_type);
-        for (i = 0; i < argc; i++) {
-                printf("arg %d : %s\n",i,argv[i]);
-        }
         if (f_type >= 0) {
-                type_args = malloc(sizeof(char)* argc);
+                type_args = (char *) malloc(sizeof(*type_args)* argc);
                 char *tmp = argv[f_type];
                 if (f_type < (argc -1)) {
                         /* deleted type args in argv*/
+                        int i;
                         for (i = (f_type + 1); i < (argc); i++) {
                                 argv[i-1] = argv[i];
                         }
+                        /* shift flag if it after type args */
                         f_date  = (f_date > f_type ? f_date -1 : f_date);
                         f_compound = (f_compound > f_type ? f_compound-1 :
                                         f_compound);
@@ -195,27 +163,18 @@ int cmd_add(int argc, char **argv, char * daz) {
                         return -1;
                 }
         } else if ( argc > (f_dz >= 0 ? 1:0) + (f_input >= 0 ? 1:0)) {
-                printf("check_args_no_op failed\n");
+                printf("check_type_args failed\n");
                 return -1;
         }
 
-        printf("check option --type  ok\n");
-        for (i = 0; i < argc; i++) {
-                printf("arg %d : %s\n",i,argv[i]);
-        }
         if (check_args(argc, argv, &f_dz, &f_compound, &f_date)) {
                 printf("check path args failed\n");
                 return -1;
         }
 
-        printf("all test for args is ok\n");
-        for (i = 0; i < argc; i++) {
-                printf("arg %d : %s\n",i,argv[i]);
-        }
-
         if (action_add(argc, argv, f_compound, f_dz, f_date, f_input,
                 type_args, daz) == -1) {
-                printf("[cmd_add] error action add\n");
+                printf("error action add\n");
                 return -1;
         }
         if (f_type >= 0) {
@@ -231,12 +190,10 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
         tlv_t tlv = NULL;
         tlv_t buff_co = NULL;
         tlv_t buff_d = NULL;
-        int i;
-        int j = 0;
+        int i,j = 0;
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
                 fprintf(stderr, "failed open the dazibao\n");
-                tlv_destroy(&tlv);
                 return -1;
         }
 
@@ -244,77 +201,66 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
         f_co = (f_co == -1 ? argc : f_co);
 
         for (i = 0; i < argc; i++) {
-                int tlv_size =0;
+                int tlv_size = 0;
                 /* inizialized tlv */
                 if (tlv_init(&tlv) < 0) {
                       printf("error to init tlv\n");
                         return -1;
                 }
-                printf("1 tlv is initialized\n");
 
+                /* different possibility to create a standard tlv*/
                 if (i == f_in) {
                         tlv_size = tlv_create_input(&tlv, &type[j]);
-                        if (tlv_size < 0) {
-                                printf("error to create tlv - \n");
-                                return -1;
-                        }
                         j++;
-                        printf("tlv input is create\n");
-                }
-                if (i == f_dz) {
+                } else if (i == f_dz) {
                         tlv_size = dz2tlv(argv[i], &tlv);
-                        if (tlv_size < 0) {
-                                printf(" error to create dz compound %s\n",
-                                argv[i]);
-                                return -1;
-                        }
-                        printf("tlv compound form dz is create\n");
-                }
-                if (tlv_size == 0) {
-                        tlv_size = tlv_create_path(argv[i],
-                                        &tlv, &type[j]);
-                        if (tlv_size < 0) {
-                                printf(" error to create tlv with path"
-                                                " %s\n", argv[i]);
-                                return -1;
-                        }
+                } else {
+                        tlv_size = tlv_create_path(argv[i], &tlv, &type[j]);
                         j++;
-                        printf("tlv is create from path\n");
                 }
-                if ((i >= f_d) && (f_d > f_co)) {
-                        if (tlv_init(&buff_d) < 0) {
-                                printf(" error to init tlv compound");
-                                return -1;
-                        }
-                        tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
-                        if (tlv_size < 0) {
-                                printf(" error to create tlv dated"
-                                        "%s\n", argv[i]);
-                                return -1;
-                        }
-                        tlv_destroy(&tlv);
-                        tlv = buff_d;
-                        buff_d = NULL;
-                        printf("1 tlv dated is create\n");
+
+                /* if not tlv as create error */
+                if (tlv_size < 0) {
+                        printf("error to create tlv with path %s\n", argv[i]);
+                        return -1;
                 }
+
+                /* other option who use tlv created */
                 if ( i >= f_co ) {
+                        /* if tlv to insert to compound it type dated*/
+                        if (f_d > f_co) {
+                                if (tlv_init(&buff_d) < 0) {
+                                        printf("error to init tlv compound");
+                                        return -1;
+                                }
+                                tlv_size = tlv_create_date(&buff_d, &tlv,
+                                                tlv_size);
+                                if (tlv_size < 0) {
+                                        printf("error to create tlv dated"
+                                                        "%s\n", argv[i]);
+                                        return -1;
+                                }
+                                tlv_destroy(&tlv);
+                                tlv = buff_d;
+                                buff_d = NULL;
+                        }
+                        unsigned int size_realloc = TLV_SIZEOF_HEADER;
                         if ((f_co == i) && (tlv_init(&buff_co) < 0)) {
                                 printf("error to init tlv compound\n");
                                 return -1;
                         }
-
-                        buff_co = (tlv_t)safe_realloc(buff_co, sizeof(*buff_co)
-                                                * (TLV_SIZEOF_HEADER +
-                                                buff_size_co + tlv_size));
+                        size_realloc += buff_size_co + tlv_size;
+                        buff_co = (tlv_t) safe_realloc(buff_co,
+                                        sizeof(*buff_co) * size_realloc);
                         if (buff_co == NULL) {
                                 ERROR("realloc", -1);
                         }
 
                         memcpy(buff_co + buff_size_co, tlv, tlv_size);
                         buff_size_co += tlv_size;
-                        tlv_size = 0;
                         tlv_destroy(&tlv);
 
+                        /*when all tlv is insert, create tlv compound*/
                         if (i == argc -1) {
                                 if (tlv_init(&tlv) < 0) {
                                         printf(" error to init tlv");
@@ -328,7 +274,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                         return -1;
                                 }
                                 tlv_destroy(&buff_co);
-                                printf("1 tlv compound is create\n");
                         } else {
                                 continue;
                         }
@@ -336,7 +281,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
 
                 if (i >= f_d) {
                         if (tlv_init(&buff_d) < 0) {
-                                printf(" error to init tlv compound");
+                                printf(" error to init tlv dated\n");
                                 return -1;
                         }
                         tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
@@ -348,7 +293,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         tlv_destroy(&tlv);
                         tlv = buff_d;
                         buff_d = NULL;
-                        printf("1 tlv dated is create\n");
                 }
 
                 if (tlv_size > 0) {
@@ -358,7 +302,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 return -1;
                         }
                         tlv_destroy(&tlv);
-                        printf("1 tlv is add\n");
                 }
         }
 
