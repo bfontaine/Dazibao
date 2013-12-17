@@ -35,6 +35,8 @@
 
 #define TLV_MP4    130
 
+#define TLV_BMP    131
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
