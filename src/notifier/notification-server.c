@@ -25,6 +25,22 @@
 static struct ns_config conf;
 int _log_level;
 
+void broadcast(char *str, int len) {
+        int i;
+        for (i = 0; i < conf.client_max; i++) {
+                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_lock() failed.");
+                }
+                if (conf.c_socket[i] != -1) {
+                        send_message(i, str, len);
+                }
+                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_unlock() failed.");
+                }
+        }
+
+}
+
 void send_message(int s_index, char *str, int len) {
 
         if (write(conf.c_socket[s_index], str, len) < len) {
@@ -42,21 +58,12 @@ void *notify(void *arg) {
         int len = strlen(file) + 2;
         char *str = malloc(sizeof(*str) * len);
         int i;
+
         str[0] = 'C';
         memcpy(&str[1], file, len - 2);
         str[len - 1] = '\n';
 
-        for (i = 0; i < conf.client_max; i++) {
-                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
-                        LOGERROR("pthread_mutex_lock() failed.");
-                }
-                if (conf.c_socket[i] != -1) {
-                        send_message(i, str, len);
-                }
-                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
-                        LOGERROR("pthread_mutex_unlock() failed.");
-                }
-        }
+        broadcast(str, len);
 
         free(str);
         return (void *)NULL;

@@ -44,6 +44,7 @@ struct ns_config {
         int s_socket;
         /** file descriptors of clients */
         int *c_socket;
+        /** one mutex per client fd */
         pthread_mutex_t *c_mtx;
 
         /* waiting time */
@@ -58,6 +59,15 @@ struct ns_config {
 
 static struct ns_config conf;
 int _log_level;
+
+/**
+ * Send a message to all clients connected
+ * using send_message
+ * @see send_message
+ * @param str
+ * @param len
+ */
+void broadcast(char *str, int len);
 
 /**
  * Send a message to a client.
