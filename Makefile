@@ -38,7 +38,8 @@ DAZICLI=dazicli
 TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
 TESTS=$(TSRC)/utils.test \
-      $(TSRC)/logging.test
+      $(TSRC)/logging.test \
+      $(TSRC)/tlv.test
 
 ifndef UNUSED
 #ifndef STRICT
@@ -131,6 +132,8 @@ tests: $(TESTS)
 		./$$f; \
 	 done
 
+$(TSRC)/tlv.test: $(TSRC)/test-tlv.o $(SRC)/tlv.o $(SRC)/utils.o \
+	$(SRC)/logging.o
 $(TSRC)/%.test: $(TSRC)/test-%.o $(SRC)/%.o
 	$(CC) $(CFLAGS) -o $@ $^
 
