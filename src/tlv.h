@@ -259,7 +259,7 @@ int tlv_import_from_file(tlv_t *tlv, int fd);
  * @param fd file descriptor used for reading
  * @param type type of the tlv wanted
  * @param date date to use (if 0, not included in a dated tlv).
- * @return 0 on succes, -1 on error 
+ * @return 0 on succes, -1 on error
  */
 int tlv_from_file(tlv_t *tlv, int fd, char type, uint32_t date);
 

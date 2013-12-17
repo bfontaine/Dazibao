@@ -21,7 +21,8 @@ const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
 const char *JPG_SIGNATURE = "\255\216\255";
 const char *GIF_SIGNATURE = "GIF";
 */
-/** 
+
+/**
  * All recognized TLV types.
  **/
 struct tlv_type tlv_types[] = {
@@ -258,7 +259,6 @@ const char *tlv_type2str(int tlv_type) {
         }
         return "unknown";
 }
-
 
 char tlv_str2type(char *tlv_type) {
         if (tlv_type == NULL) {

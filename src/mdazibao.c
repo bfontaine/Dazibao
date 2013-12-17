@@ -218,7 +218,7 @@ time_t dz_read_date_at(dz_t *d, off_t offset) {
 char dz_check_tlv_type(dz_t *dz, off_t offset) {
         tlv_t t;
         char ok = 1;
-        unsigned int length, header_len;
+        unsigned int length;
 
         tlv_init(&t);
         if (dz_tlv_at(dz, &t, offset) != 0) {
