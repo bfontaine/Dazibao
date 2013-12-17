@@ -47,7 +47,7 @@ struct type_signature sigs[] =  {
 };
 
 
-char guess_type(char *src, unsigned int len) {
+unsigned char guess_type(char *src, unsigned int len) {
 
         unsigned int i;
         for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {

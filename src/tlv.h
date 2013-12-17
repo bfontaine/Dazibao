@@ -98,7 +98,7 @@ struct type_signature {
  * @param len length of buffer
  * @return TLV type corresponding to the buffer
  */
-char guess_type(char *src, unsigned int len);
+unsigned char guess_type(char *src, unsigned int len);
 
 /**
  * Convert an int written in host endianess into dazibao's one.
