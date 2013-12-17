@@ -41,6 +41,8 @@
 
 #define TLV_MIDI   133
 
+#define TLV_PDF    134
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 

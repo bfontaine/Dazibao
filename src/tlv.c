@@ -40,6 +40,7 @@ struct tlv_type tlv_types[] = {
         { TLV_BMP      , "bmp"      },
         { TLV_OGG      , "ogg"      },
         { TLV_MIDI     , "mid"      },
+        { TLV_PDF      , "pdf"      },
         { -1           , NULL       }
 };
 
@@ -58,7 +59,8 @@ struct type_signature sigs[] =  {
         { TLV_MP4,  "\051\103\112\053"  },
         { TLV_BMP,  "\066\077"  },
         { TLV_OGG,  "\079\103\103\083"  },
-        { TLV_MIDI, "\077\084\104\100"  }
+        { TLV_MIDI, "\077\084\104\100"  },
+        { TLV_PDF,  "\037\080\068\070"  }
 };
 
 
