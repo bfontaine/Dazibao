@@ -37,6 +37,8 @@
 
 #define TLV_BMP    131
 
+#define TLV_OGG    132
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
