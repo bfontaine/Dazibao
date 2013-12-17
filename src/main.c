@@ -59,13 +59,14 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                         ad_tmp ++;
                         count_args++;
                 } else {
-                        /* if argv[i] if no option and no args option
+                        /* if argv[i] is not option and no args option
                            check if is a path to tlv */
                         if (ad_tmp >= 0) {
                                 argv[ad_tmp] = argv[i];
                                 ad_tmp++;
                                 count_args++;
                         }
+
                 }
         }
         return count_args;
@@ -280,12 +281,26 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         j++;
                         printf("tlv is create from path\n");
                 }
+                if ((i >= f_d) && (f_d > f_co)) {
+                        if (tlv_init(&buff_d) < 0) {
+                                printf(" error to init tlv compound");
+                                return -1;
+                        }
+                        tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
+                        if (tlv_size < 0) {
+                                printf(" error to create tlv dated"
+                                        "%s\n", argv[i]);
+                                return -1;
+                        }
+                        tlv_destroy(&tlv);
+                        tlv = buff_d;
+                        buff_d = NULL;
+                        printf("1 tlv dated is create\n");
+                }
                 if ( i >= f_co ) {
-                        if (f_co == i) {
-                                if (tlv_init(&buff_co) < 0) {
-                                        printf("error to init tlv compound\n");
-                                        return -1;
-                                }
+                        if ((f_co == i) && (tlv_init(&buff_co) < 0)) {
+                                printf("error to init tlv compound\n");
+                                return -1;
                         }
 
                         buff_co = (tlv_t)safe_realloc(buff_co, sizeof(*buff_co)
@@ -314,6 +329,8 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                                 }
                                 tlv_destroy(&buff_co);
                                 printf("1 tlv compound is create\n");
+                        } else {
+                                continue;
                         }
                 }
 
