@@ -38,9 +38,26 @@
         "            -r, --recursive: (todo)\n"
 
 /**
- * @param argc arguments count
- * @param argv arguments array
- * @param daz
+ * check if add option have a goof formation
+ * and keep only args and cut option but keep
+ * timekeepper in flag matching
+ * @param argc : lenght to argv
+ * @param argv : parameters to line command
+ * @param f_d  : flag to option date
+ * @param f_co : flag to option compound
+ * @param f_dz : flag to option dazibao
+ * @param f_ty : flag to option type
+ * @param f_in : flag to option "-" -> input
+ * @return 0 is good or -1 to error
+ **/
+int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
+                int *f_ty, int *f_in);
+/**
+ * manage to all check verification to parameters command line
+ * @param argc : lenght to argv
+ * @param argv : parameters to line command
+ * @param daz : path from dazibao to execute action add
+ * @return 0 is good or -1 to error
  **/
 int cmd_add(int argc, char **argv, char *daz);
 
