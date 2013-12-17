@@ -7,6 +7,7 @@
 
 /** @file */
 int check_tlv_path(const char * path, int flag_access) {
+        int tlv_size = TLV_SIZEOF_HEADER;
         struct stat st_path;
         if (access(path,F_OK | flag_access) < 0) {
                 printf("[utils.c|check_tlv_path]file %s not exist\n",path);
@@ -26,10 +27,12 @@ int check_tlv_path(const char * path, int flag_access) {
                 printf("[utils.c|check_tlv_path]file %s is to large\n",path);
                 return -1;
         }
-        return st_path.st_size;
+        tlv_size = st_path.st_size;
+        return tlv_size;
 }
 
 int check_dz_path(const char * path, int flag_access) {
+        int tlv_size = TLV_SIZEOF_HEADER;
         struct stat st_path;
         if (access(path,F_OK | flag_access) < 0) {
                 printf("[utils.c|check_dz_path]file %s not exist\n",path);
@@ -49,7 +52,8 @@ int check_dz_path(const char * path, int flag_access) {
                 printf("[utils.c|check_dz_path]file %s is to large\n",path);
                 return -1;
         }
-        return st_path.st_size;
+        tlv_size = st_path.st_size - DAZIBAO_HEADER_SIZE;
+        return tlv_size;
 }
 
 void *safe_realloc(void *ptr, size_t size) {
