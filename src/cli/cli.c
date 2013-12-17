@@ -33,7 +33,6 @@ int cli_add_all(int argc, char **argv) {
                 len = 0,
                 ptr_compound,
                 write_ptr,
-                rc,
                 status = 0;
         int *fd;
         uint32_t timestamp;
@@ -52,7 +51,7 @@ int cli_add_all(int argc, char **argv) {
                 goto OUT;
         }
 
-        if (file == NULL || type == NULL) {
+        if (file == NULL) {
                 LOGERROR("Missing arguments (see manual).");
                 status = -1;
                 goto OUT;
@@ -121,7 +120,6 @@ int cli_add_all(int argc, char **argv) {
         }
 
         write_ptr = 0;
-        rc = 0;
 
         if (argc > 1) {
                 write_ptr += TLV_SIZEOF_HEADER;
@@ -133,7 +131,29 @@ int cli_add_all(int argc, char **argv) {
 
         for (i = 0; i < argc; i++) {
 
-                char typ = tlv_str2type(strtok((i == 0 ? type : NULL), delim));
+                char typ;
+                unsigned int tlv_len;
+
+                write_ptr += TLV_SIZEOF_HEADER;
+
+                if (fd[i] == -1) {
+                        tlv_len = strlen(argv[i]);
+                        memcpy(buf + write_ptr, argv[i], tlv_len);
+                } else {
+                        tlv_len = read(fd[i], buf + write_ptr, len - write_ptr);
+                        if (tlv_len == (unsigned int)-1) {
+                                PERROR("read");
+                                status = -1;
+                                goto FREEBUF;
+                        }
+                }
+
+                if (type != NULL) {
+                        typ = tlv_str2type(strtok((i == 0 ? type : NULL),
+                                                                delim));
+                } else {
+                        typ = guess_type(buf + write_ptr, len);
+                }
                 
                 if (typ == -1) {
                         LOGERROR("Undefined type.");
@@ -141,31 +161,11 @@ int cli_add_all(int argc, char **argv) {
                         goto FREEBUF;
                 }
 
-                if (fd[i] == -1) {
-                        buf[write_ptr++] = typ;
-                        htod(strlen(argv[i]), &buf[write_ptr]);
-                        write_ptr += TLV_SIZEOF_LENGTH;
-                        memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
-                        write_ptr += strlen(argv[i]);
-                        continue;
-                }
-
-                write_ptr += TLV_SIZEOF_LENGTH;
-                
-                rc = read(fd[i], buf + write_ptr, len - write_ptr);
-                
-                if (rc == -1) {
-                        PERROR("read");
-                        status = -1;
-                        goto FREEBUF;
-                }
-
-                write_ptr -= TLV_SIZEOF_LENGTH;
+                write_ptr -= TLV_SIZEOF_HEADER;
                 buf[write_ptr++] = typ;
-                htod(rc, &buf[write_ptr]);
+                htod(tlv_len, &buf[write_ptr]);
                 write_ptr += TLV_SIZEOF_LENGTH;
-
-                write_ptr += rc;
+                write_ptr += tlv_len;
 
         }
 
