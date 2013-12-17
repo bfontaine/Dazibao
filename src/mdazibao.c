@@ -241,7 +241,7 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                 break;
         case TLV_TEXT:
                 ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_PNG;
+                                length) == TLV_TEXT;
                 break;
         case TLV_PNG:
                 ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
