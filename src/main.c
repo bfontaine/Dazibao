@@ -40,10 +40,12 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
                                 args_co = argc - i -1;
                         }
                 } else if (strcmp(argv[i],"-") == 0) {
-                        *f_in = ad_tmp;
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp ++;
-                        count_args++;
+                        if (*f_in < 0) {
+                                *f_in = ad_tmp;
+                                argv[ad_tmp] = argv[i];
+                                ad_tmp ++;
+                                count_args++;
+                        }
                 } else if (args_ty > 0) {
                         argv[ad_tmp] = argv[i];
                         ad_tmp ++;
