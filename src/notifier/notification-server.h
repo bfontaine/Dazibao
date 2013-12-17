@@ -23,7 +23,7 @@
 #define WATCH_SLEEP_MAX 60
 
 #define NS_ERR_FULL "EServer is full\n"
-
+#define NS_ERR_EXIT "EServer us shutting down\n"
 
 /** general config of notification server */
 struct ns_config {
@@ -56,9 +56,12 @@ struct ns_config {
         int w_sleep_max;
 };
 
-
-static struct ns_config conf;
-int _log_level;
+/**
+ * Signal handler to send message
+ * and do some cleaning on exit
+ * @param unused unused variable needed by signal handlers
+ */
+void ns_exit(int unused);
 
 /**
  * Send a message to all clients connected
