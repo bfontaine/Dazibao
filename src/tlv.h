@@ -94,6 +94,8 @@ extern const char *JPG_SIGNATURE;
 /** GIF file signature */
 extern const char *GIF_SIGNATURE;
 
+char guess_type(char *src, unsigned int len);
+
 /**
  * Convert an int written in host endianess into dazibao's one.
  * @param n length

@@ -31,6 +31,35 @@ const char *PNG_SIGNATURE = "\211PNG\r\n\032\n";
 const char *JPG_SIGNATURE = "\255\216\255";
 const char *GIF_SIGNATURE = "GIF";
 
+struct type_signature {
+        char type;
+        char *signature;
+};
+
+struct type_signature sigs[] =  {
+        { TLV_PNG      , "\211PNG\r\n\032\n"},
+        { TLV_JPEG     , "\255\216\255"      },
+        { TLV_GIF      , "GIF"      }
+};
+
+char guess_type(char *src, unsigned int len) {
+
+        unsigned int i;
+        for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
+                if (len < strlen(sigs[i].signature)) {
+                        continue;
+                }
+                if (strncmp(sigs[i].signature, src,
+                                strlen(sigs[i].signature)) == 0) {
+                        return sigs[i].type;
+                }
+        }
+
+        /* TODO: Check for type text. */
+        return TLV_TEXT;
+}
+
+
 void htod(unsigned int n, char *len) {
         union {
                 unsigned int i;
