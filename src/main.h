@@ -86,7 +86,17 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d);
 int cmd_add(int argc, char **argv, char *daz);
 
 /**
- * @param daz
+ * create all tlv to ask to command line
+ * and add to dazibao daz
+ * @param argc : lenght to argv
+ * @param argv : parameters to command line
+ * @param f_co  : flag to option date
+ * @param f_dz : flag to option compound
+ * @param f_d : flag to option dazibao
+ * @param f_in : flag to option - -> input
+ * @param type : tab to type to args
+ * @param daz : path to dazibao to execute add
+ * @return 0 is good or -1 to error
  **/
 int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 char *type , char *daz);
