@@ -21,6 +21,10 @@
 
 int cli_add_all(int argc, char **argv) {
 
+        /**
+         * TODO: lock file
+         */
+
         char date = 0;
         char
                 *type = NULL,
@@ -34,6 +38,7 @@ int cli_add_all(int argc, char **argv) {
                 write_ptr,
                 rc,
                 status = 0;
+        int *fd;
         uint32_t timestamp;
 
         struct s_option opt[] = {
@@ -72,27 +77,45 @@ int cli_add_all(int argc, char **argv) {
                 timestamp = 0;
         }
 
+        fd = malloc(sizeof(*fd) * argc);
 
-        /* Compute needed size */
+        if (fd == NULL) {
+                PERROR("malloc");
+                status = -1;
+                goto OUT;
+        }
+
         for (i = 0; i < argc; i++) {
-                struct stat st;
-                if (stat(argv[i], &st) == -1) {
-                        if (errno == ENOENT) {
-                                len += strlen(argv[i]);
-                        } else {
+                fd[i] = open(argv[i], O_RDONLY);
+                if (fd[i] == -1) {
+                        if (access(argv[i], F_OK) == 0) {
+                                LOGERROR("Failed opening %s", argv[i]);
                                 status = -1;
-                                goto OUT;
+                                goto FREEFD;
                         }
+                        len += strlen(argv[i]);
                 } else {
+                        struct stat st;
+                        if (fstat(fd[i], &st) == -1) {
+                                PERROR("fstat");
+                                status = -1;
+                                goto FREEFD;
+                        }
                         len += st.st_size;
                 }
+                len += TLV_SIZEOF_HEADER;
+        }
+
+        if (argc > 1) {
                 len += TLV_SIZEOF_HEADER;
         }
 
         buf = malloc(len);
 
         if (buf == NULL) {
-                return -1;
+                PERROR("malloc");
+                status = -1;
+                goto FREEFD;
         }
 
         write_ptr = 0;
@@ -116,28 +139,23 @@ int cli_add_all(int argc, char **argv) {
                         goto FREEBUF;
                 }
 
-                int fd = open(argv[i], O_RDONLY);
-
-                if (fd == -1) {
-                        if (access(argv[i], F_OK) == 0) {
-                                LOGERROR("Failed opening %s", argv[i]);
-                                return -1;
-                        } else {
-                                buf[write_ptr++] = typ;
-                                htod(strlen(argv[i]), &buf[write_ptr]);
-                                write_ptr += TLV_SIZEOF_LENGTH;
-                                memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
-                                write_ptr += strlen(argv[i]);
-                                continue;
-                        }
+                if (fd[i] == -1) {
+                        buf[write_ptr++] = typ;
+                        htod(strlen(argv[i]), &buf[write_ptr]);
+                        write_ptr += TLV_SIZEOF_LENGTH;
+                        memcpy(buf + write_ptr, argv[i], strlen(argv[i]));
+                        write_ptr += strlen(argv[i]);
+                        continue;
                 }
-                
+
                 write_ptr += TLV_SIZEOF_LENGTH;
                 
-                rc = read(fd, buf + write_ptr, len - write_ptr);
+                rc = read(fd[i], buf + write_ptr, len - write_ptr);
                 
                 if (rc == -1) {
-                        return -1;
+                        PERROR("read");
+                        status = -1;
+                        goto FREEBUF;
                 }
 
                 write_ptr -= TLV_SIZEOF_LENGTH;
@@ -146,9 +164,7 @@ int cli_add_all(int argc, char **argv) {
                 write_ptr += TLV_SIZEOF_LENGTH;
 
                 write_ptr += rc;
-                if (close(fd) == -1) {
-                        PERROR("close");
-                }
+
         }
 
         if (timestamp != 0) {
@@ -168,6 +184,8 @@ int cli_add_all(int argc, char **argv) {
 
 FREEBUF:
         free(buf);
+FREEFD:
+        free(fd);
 OUT:
         return status;
 
