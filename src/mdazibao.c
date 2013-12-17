@@ -988,7 +988,7 @@ int dz2tlv(char *d, tlv_t *tlv) {
         }
 
         tlv_set_type(tlv, (char) TLV_COMPOUND);
-        tlv_set_length(tlv, dz.len);
+        tlv_set_length(tlv, dz.len - DAZIBAO_HEADER_SIZE );
         tlv_mread(tlv, dz.data + DAZIBAO_HEADER_SIZE );
 
         if (dz_close(&dz) < 0) {
