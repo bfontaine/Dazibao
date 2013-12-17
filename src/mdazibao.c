@@ -996,7 +996,7 @@ int dz2tlv(char *d, tlv_t *tlv) {
                 return -1;
         }
 
-        return tlv_get_length(tlv);
+        return TLV_SIZEOF(tlv);
 }
 
 int dz_hash(dz_t *dz, hash_t *oldhash) {

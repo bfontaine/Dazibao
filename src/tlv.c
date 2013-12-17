@@ -242,11 +242,10 @@ char tlv_str2type(char *tlv_type) {
 }
 
 int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
-        unsigned int tlv_size;
         tlv_set_type(tlv_c, (unsigned char) TLV_COMPOUND);
         tlv_set_length(tlv_c, buff_size);
-        tlv_size = tlv_mread(tlv_c, *value);
-        return tlv_size;
+        tlv_mread(tlv_c, *value);
+        return TLV_SIZEOF(tlv_c);
 }
 
 int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
@@ -261,14 +260,14 @@ int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
 
         tlv_set_type(tlv_d, (unsigned char) TLV_DATED );
         tlv_set_length(tlv_d, tlv_size);
-        tlv_size = tlv_mread(tlv_d, buff);
+        tlv_mread(tlv_d, buff);
         free(buff);
-        return tlv_size;
+        return TLV_SIZEOF(tlv_d);
 }
 
 int tlv_create_path(char *path, tlv_t *tlv, char *type) {
         tlv_t buff;
-        int tlv_size, fd;
+        int fd;
         struct stat st_path;
 
         fd = open(path, O_RDONLY);
@@ -289,16 +288,17 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type) {
 
         tlv_set_type(tlv,(unsigned char)  *type);
         tlv_set_length(tlv, st_path.st_size);
-        tlv_size = tlv_mread(tlv, buff);
+        tlv_mread(tlv, buff);
         close(fd);
-        return tlv_size;
+        return TLV_SIZEOF(tlv);
 }
 
 int tlv_create_input(tlv_t *tlv, char *type) {
         char reader[BUFFSIZE],
              *buff = NULL;
         unsigned int buff_size = 0;
-        int read_size, tlv_size;
+        int read_size;
+
 
         while ((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
 
@@ -321,9 +321,9 @@ int tlv_create_input(tlv_t *tlv, char *type) {
 
         tlv_set_type(tlv, (unsigned char) *type);
         tlv_set_length(tlv, buff_size);
-        tlv_size = tlv_mread(tlv, buff);
+        tlv_mread(tlv, buff);
         free(buff);
-        return tlv_size;
+        return TLV_SIZEOF(tlv);
 }
 
 
