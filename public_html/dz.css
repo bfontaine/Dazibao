@@ -13,7 +13,7 @@ ol, ul {
     list-style: none;
 }
 
-body > .tlvs {
+.dazibao > .tlvs {
     max-width: 800px;
     margin:auto;
 }
@@ -59,7 +59,7 @@ blockquote .sep {
 }
 
 /* Actions bars */
-.actions {
+.tlv .actions {
     visibility: hidden;
 }
 
@@ -67,6 +67,19 @@ blockquote .sep {
     visibility: visible;
 }
 
-.actions li {
+.tlv .actions li {
     cursor: pointer;
+}
+
+/* Global settings */
+#settings {
+    position: fixed;
+    top: 4px;
+    left: 4px;
+}
+#settings .actions {
+    display: none;
+}
+#settings:hover .actions {
+    display: block;
 }

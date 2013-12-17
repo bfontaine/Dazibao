@@ -52,5 +52,47 @@ _dazibao() {
     return 0
 }
 
+_notification-server() {
+    local cur prev
+
+    COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    OPTS='--path --max --reliable --wtimemin --wtimedef --wtimemax'
+
+    case "$prev" in
+        --*)
+            return 0;; # we can't complete options' arguments
+        *)
+            COMPREPLY=( $( compgen -W "$OPTS" -f -o plusdirs -- $cur ));;
+    esac
+
+    return 0
+}
+
+_notification-client() {
+    local cur prev
+
+    COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    OPTS='--path --notifier'
+
+    case "$prev" in
+        --path)
+            COMPREPLY=( $( compgen -f -o plusdirs -- $cur ));;
+        --*)
+            ;; # we can't complete options' arguments
+        *)
+            COMPREPLY=( $( compgen -W "$OPTS" -- $cur ));;
+    esac
+
+    return 0
+}
+
 complete -F _daziweb -o filenames daziweb
 complete -F _dazibao -o filenames dazibao
+complete -F _notification-server -o filenames notification-server
+complete -F _notification-client -o filenames notification-client

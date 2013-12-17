@@ -1,9 +1,13 @@
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "mdazibao.h"
+#include "utils.h"
 #include "main.h"
 
 /** @file */
-
-/** buffer size used in various functions */
-#define BUFFSIZE 512
 
 int cmd_add(int argc, char **argv, char * daz) {
         int flag_date = -1,
@@ -173,7 +177,7 @@ int action_add(int argc, char **argv, int flag_compound, int flag_dazibao
 
 int action_no_option_add(char *daz, unsigned char type) {
         dz_t daz_buf;
-        char reader[BUFFSIZE],
+        char reader[BUFFLEN],
              *buff = NULL;
         unsigned int buff_size = 0;
         int read_size, st;
@@ -182,7 +186,7 @@ int action_no_option_add(char *daz, unsigned char type) {
                 exit(EXIT_FAILURE);
         }
 
-        while ((read_size = read(STDIN_FILENO, reader, BUFFSIZE)) > 0) {
+        while ((read_size = read(STDIN_FILENO, reader, BUFFLEN)) > 0) {
 
                 buff_size += read_size;
 

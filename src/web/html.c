@@ -3,6 +3,7 @@
 #include "mdazibao.h"
 #include "tlv.h"
 #include "logging.h"
+#include "utils.h"
 #include "webutils.h"
 
 /** @file */
@@ -54,6 +55,7 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor) {
         int type = tlv_get_type(t), w;
         char *ext;
+        struct img_info info;
 
         switch (type) {
                 case TLV_PNG:
@@ -73,10 +75,15 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
         LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %li.", ext,
                         (long)*off);
 
-        /* TODO add height & width attributes */
+        if (dz_get_tlv_img_infos(&dz, *off, &info) == 0) {
+                w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
+                                HTML_TLV_IMG_DIMS_FMT, (long)*off, ext,
+                                info.height, info.width);
+        } else {
+                w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
+                                HTML_TLV_IMG_FMT, (long)*off, ext);
+        }
 
-        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                        HTML_TLV_IMG_FMT, (long)*off, ext);
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
         return 0;

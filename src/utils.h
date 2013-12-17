@@ -193,9 +193,21 @@ const char *get_ext(const char *path);
  **/
 #define STR(x) _STR(x)
 
+/* == Images == */
+
+/** this struct is used to store an TLV image's info. */
+struct img_info {
+        /** width */
+        int width;
+        /** height */
+        int height;
+};
+
+/* == CLI == */
+
 /** type of a command-line argument */
 enum arg_type {
-        ARG_TYPE_INT,
+        ARG_TYPE_LLINT,
         ARG_TYPE_FLAG,
         ARG_TYPE_STRING
 };

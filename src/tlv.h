@@ -32,6 +32,8 @@
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
+#define TLV_MIN_PADN_LENGTH 2
+
 /** test that a TLV type is valid */
 #define TLV_VALID_TYPE(type) (0 < (type) && (type) <= 255)
 
@@ -112,7 +114,28 @@ struct tlv_type {
  **/
 extern struct tlv_type tlv_types[];
 
+/** PNG file signature */
+extern const char *PNG_SIGNATURE;
+/** JPG/JPEG file signature */
+extern const char *JPG_SIGNATURE;
+/** GIF file signature */
+extern const char *GIF_SIGNATURE;
+
+/**
+ * Convert an int written in host endianess into dazibao's one.
+ * @param n length
+ * @param len result parameter
+ * @deprecated use tlv_set_length instead
+ **/
 void htod(unsigned int n, char *len);
+
+/**
+ * Convert an int written in dazibao's endianess to host endianess.
+ * @param len int using dazibao's endianess
+ * @return value of length
+ * @deprecated use get_length
+ **/
+unsigned int dtoh(char *len);
 
 /**
  * Initialize a TLV. If the TLV was previously initialized/filled, call
@@ -225,9 +248,16 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
  * Return a string representation for a TLV type
  * @param tlv_type the type
  * @return a string representation of this type
+ * @see tlv_str2type
  **/
 const char *tlv_type2str(int tlv_type);
 
+/**
+ * get a code from a string describing a TLV type
+ * @param tlv_type
+ * @return code
+ * @see tlv_type2str
+ **/
 char tlv_str2type(char *tlv_type);
 
 int tlv_from_file(tlv_t *tlv, int fd);
