@@ -169,6 +169,8 @@ int parse_request(int sock, struct http_request *req) {
                 goto MALFORMED;
         }
 
+        LOGTRACE("adding line '%.*s' into the beginning of the body (eoh=%d)",
+                        eoh, line, eoh);
         memcpy(req->body, line, eoh);
         NFREE(line);
 
@@ -296,6 +298,13 @@ RETURN_LINE:
                 if (memcpy(line, buff, len) == NULL) {
                         perror("memcpy");
                 }
+
+                if (len > 2 && line[0] == CR && line[1] == LF) {
+                        len -= 2;
+                        /* shift the line two chars to the right */
+                        memmove(line, line+2, len);
+                }
+
                 *eoh = len;
                 return line;
         }
