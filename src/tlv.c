@@ -382,6 +382,16 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 w_ptr = 0,
                 r_ptr = 0;
 
+        *tlv = safe_realloc(*tlv,
+                        len
+                        + nb_chunks * TLV_SIZEOF_HEADER
+                        + TLV_SIZEOF_HEADER
+                        + TLV_SIZEOF_TYPE + sizeof(int));
+
+        if (*tlv == NULL) {
+                return -1;
+        }
+
         /* Set TLV_LONGH header */
         tlv_set_type(tlv, TLV_LONGH);
         tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(int));
