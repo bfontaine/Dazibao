@@ -54,18 +54,13 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char * delim = ",\0";
         char *tmp = strtok(op_type, delim);
         int i = 0;
-        while (tmp == NULL) {
-                if (strcmp( tmp , "text") == 0) {
-                        type_args[i] = (char)TLV_TEXT;
-                } else if (strcmp( tmp , "jpg") == 0) {
-                        type_args[i] = (char)TLV_JPEG;
-                } else if (strcmp( tmp , "png") == 0) {
-                        type_args[i] = (char)TLV_PNG;
-                } else if (strcmp( tmp , "gif") == 0) {
-                        type_args[i] = (char)TLV_GIF;
-                } else {
+        while (tmp != NULL) {
+                char tmp_type = tlv_str2type(tmp);
+                if (tmp_type == (char) -1) {
                         printf("unrecognized type %s\n", tmp);
                         return -1;
+                } else {
+                        type_args[i] = tmp_type;
                 }
                 tmp = strtok(NULL, delim);
                 i++;
