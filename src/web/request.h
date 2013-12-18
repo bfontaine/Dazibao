@@ -21,6 +21,16 @@ struct http_request {
         int body_len;
 };
 
+/** a parameter, as send in a multipart/form-data request */
+struct http_param {
+        /** name */
+        char *name;
+        /** value */
+        char *value;
+        /** length of the value */
+        int value_len;
+};
+
 /**
  * Create a new request: allocate enough memory and initialize all fields.
  * @return a pointer on the request
@@ -80,7 +90,25 @@ int parse_header(char *line, struct http_headers *hs);
  **/
 char *get_request_boundary(struct http_request *req);
 
-/** handy shortcut to get a particular header in a request */
-#define REQ_HEADER(req, h) ((req).headers->headers[h])
+/**
+ * Free a 'struct http_param' array, as returned by parse_form_data. It frees
+ * each struct pointer but not its parameters because they're pointers on the
+ * request body.
+ * @param ps
+ * @return 0
+ * @see parse_form_data
+ **/
+int destroy_http_params(struct http_param **ps, int count);
+
+/**
+ * Parse a multipart/form-data -formatted body and return an array of pointers
+ * on 'http_param' structures.
+ * @param req the request
+ * @return than array of HTTP parameters with the last one having NULL
+ * name and value, or NULL if an error occurred.
+ * @see struct http_param
+ * @see get_request_boundary
+ **/
+struct http_param **parse_form_data(struct http_request *req);
 
 #endif
