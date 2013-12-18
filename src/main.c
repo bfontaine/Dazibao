@@ -53,24 +53,19 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char * delim = ",\0";
         char *tmp = strtok(op_type, delim);
         int i = 0;
-        while (tmp == NULL) {
-                if (strcmp( tmp , "text") == 0) {
-                        type_args[i] = (char)TLV_TEXT;
-                } else if (strcmp( tmp , "jpg") == 0) {
-                        type_args[i] = (char)TLV_JPEG;
-                } else if (strcmp( tmp , "png") == 0) {
-                        type_args[i] = (char)TLV_PNG;
-                } else if (strcmp( tmp , "gif") == 0) {
-                        type_args[i] = (char)TLV_GIF;
-                } else {
+        while (tmp != NULL) {
+                int tmp_type = tlv_str2type(tmp);
+                if (tmp_type == (char) -1) {
                         printf("unrecognized type %s\n", tmp);
                         return -1;
+                } else {
+                        type_args[i] = tmp_type;
                 }
                 tmp = strtok(NULL, delim);
                 i++;
         }
 
-        if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
+        if (i != (argc + (f_dz >= 0 ? -1 : 0))) {
                 printf("args to option type too large\n");
                 return -1;
         }
@@ -111,10 +106,14 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
                         date_size += tmp_size;
                 }
 
-                if ((compound_size > TLV_MAX_VALUE_SIZE) ||
-                        (date_size > TLV_MAX_VALUE_SIZE) ||
-                        (tmp_size > TLV_MAX_VALUE_SIZE)) {
-                        printf("tlv too large\n");
+                if (tmp_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv too large, %s\n",argv[i]);
+                        return -1;
+                } else if (date_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv date too large, %s\n",argv[i]);
+                        return -1;
+                } else if (compound_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv compound too large, %s\n",argv[i]);
                         return -1;
                 }
                 tmp_size = 0;
@@ -227,7 +226,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 /* other option who use tlv created */
                 if ( i >= f_co ) {
                         /* if tlv to insert to compound it type dated*/
-                        if (f_d > f_co) {
+                        if ((i >= f_d) && (f_d > f_co)) {
                                 if (tlv_init(&buff_d) < 0) {
                                         printf("error to init tlv compound");
                                         return -1;
@@ -278,7 +277,7 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                         }
                 }
 
-                if (i >= f_d) {
+                if ((i >= f_d) && (f_d <= f_co)) {
                         if (tlv_init(&buff_d) < 0) {
                                 printf(" error to init tlv dated\n");
                                 return -1;
