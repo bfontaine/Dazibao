@@ -3,116 +3,312 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "mdazibao.h"
+#include <string.h>
 #include "utils.h"
+#include "mdazibao.h"
 #include "main.h"
 
 /** @file */
 
-int cmd_add(int argc, char **argv, char * daz) {
-        int flag_date = -1,
-            flag_compound = -1,
-            flag_dazibao = -1,
-            args = 0,
+/** buffer size used in various functions */
+#define BUFFSIZE 512
+int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
+                int *f_ty, int *f_in) {
+        int ad_tmp = 0,
+            count_args = 0,
             i;
-        /* if argc = 1 means command it like that
-        .dazibao add <number type TLV> daz
-        */
-        if (argc == 1) {
-                long tmp_type = str2dec_positive(argv[0]);
-                if (!IN_RANGE(tmp_type, 1, 256)) {
-                        fprintf(stderr, "unrecognized type\n");
-                        return DZ_ARGS_ERROR;
+        for (i = 0; i < argc; i++) {
+                if (!strcmp(argv[i],"--type")) {
+                        *f_ty = ad_tmp;
+                        /* recupérer la chaine type*/
+                } else if ((strcmp(argv[i],"--date") == 0)) {
+                        if (*f_d < 0) {
+                                *f_d = ad_tmp;
+                        }
+                } else if (strcmp(argv[i],"--dazibao") == 0) {
+                        if (*f_dz < 0) {
+                                *f_dz = ad_tmp;
+                        }
+                } else if (strcmp(argv[i],"--compound") == 0) {
+                        if (*f_co < 0) {
+                                *f_co = ad_tmp;
+                        }
+                } else if (strcmp(argv[i],"-") == 0) {
+                        if (*f_in < 0) {
+                                *f_in = ad_tmp;
+                                argv[ad_tmp] = argv[i];
+                                ad_tmp ++;
+                                count_args++;
+                        }
+                } else {
+                        /* if not a option is consider to a parameters */
+                        argv[ad_tmp] = argv[i];
+                        ad_tmp++;
+                        count_args++;
                 }
-                if (action_add(daz, tmp_type) < 0) {
-                        fprintf(stderr, "action_add error\n");
+        }
+        return count_args;
+}
+
+int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
+        char * delim = ",\0";
+        char *tmp = strtok(op_type, delim);
+        int i = 0;
+        while (tmp == NULL) {
+                if (strcmp( tmp , "text") == 0) {
+                        type_args[i] = (char)TLV_TEXT;
+                } else if (strcmp( tmp , "jpg") == 0) {
+                        type_args[i] = (char)TLV_JPEG;
+                } else if (strcmp( tmp , "png") == 0) {
+                        type_args[i] = (char)TLV_PNG;
+                } else if (strcmp( tmp , "gif") == 0) {
+                        type_args[i] = (char)TLV_GIF;
+                } else {
+                        printf("unrecognized type %s\n", tmp);
                         return -1;
                 }
+                tmp = strtok(NULL, delim);
+                i++;
         }
-        for (i = 0; i < argc; i++) {
-                /* check args for dazibao or compound*/
-                if (args > 0) {
-                        /* TODO add function
-                        to check fic:
-                                - normaly fic
-                                - exist fic
-                                - exist type TLV fic
-                        */
-                } else if ((!strcmp(argv[i],"--date") ||
-                        !strcmp(argv[i],"-d")) && (flag_date != 1)) {
-                        flag_date = 1;
-                } else if ((!strcmp(argv[i],"--dazibao") ||
-                        !strcmp(argv[i],"-D")) && (flag_dazibao != 1)) {
-                        flag_dazibao = 1;
-                        /* add check to args fic tlv */
-                        args = argc - i -1;
-                } else if ((!strcmp(argv[i],"--compound") ||
-                        !strcmp(argv[i],"-c")) && (flag_compound != 1)) {
-                        flag_compound = 1;
-                        /* add check to args fic dazibao */
-                        args = 1;
-                } else {
-                        /* TODO args[i] is not option and args
-                                or already use
-                                ERROR
-                        */
-                }
-        }
-        if ((flag_dazibao == 1) && (flag_compound == 1)) {
-                /* help message 2 flag not it the same time*/
+
+        if (i != (argc + (f_dz >= 0 ? 1 : 0))) {
+                printf("args to option type too large\n");
                 return -1;
         }
         return 0;
 }
 
+int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
+        int date_size = 0,
+            compound_size = 0,
+            tmp_size = 0,
+            i;
+        for (i = 0; i < argc; i++) {
+                if (strcmp(argv[i],"-") == 0) {
+                        continue;
+                } else if ( i == *f_dz) {
+                        if ((tmp_size = check_dz_path(argv[i], R_OK)) < 0) {
+                                printf("check dz arg failed :%s\n", argv[i]);
+                                return -1;
+                        }
+                } else if ( i >= *f_co) {
+                        if ((tmp_size = check_tlv_path(argv[i], R_OK)) < 0) {
+                                printf("check path arg failed :%s\n", argv[i]);
+                                return -1;
+                        }
+                        compound_size += tmp_size;
+                } else {
+                        tmp_size = check_tlv_path(argv[i], R_OK);
+                        if (tmp_size < 0) {
+                                printf("check arg failed :%s\n", argv[i]);
+                                return -1;
+                        }
+                }
+                /* check size file for tlv */
+                if ((*f_d <= *f_co) && (i >= *f_co)) {
+                        date_size += compound_size +
+                                TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                } else {
+                        date_size += tmp_size;
+                }
 
-int action_add(char *daz, unsigned char type) {
+                if ((compound_size > TLV_MAX_VALUE_SIZE) ||
+                        (date_size > TLV_MAX_VALUE_SIZE) ||
+                        (tmp_size > TLV_MAX_VALUE_SIZE)) {
+                        printf("tlv too large\n");
+                        return -1;
+                }
+                tmp_size = 0;
+                date_size = 0;
+        }
+        return 0;
+}
+
+int cmd_add(int argc, char **argv, char * daz) {
+        int f_date = -1,
+            f_compound = -1,
+            f_dz = -1,
+            f_type = -1,
+            f_input = -1;
+        char *type_args;
+
+        if (argc < 0) {
+                printf("error no args for add\n");
+                return -1;
+        }
+
+        argc = check_option_add(argc, argv, &f_date, &f_compound, &f_dz,
+                        &f_type, &f_input);
+
+        if (f_type >= 0) {
+                type_args = (char *) malloc(sizeof(*type_args)* argc);
+                char *tmp = argv[f_type];
+                if (f_type < (argc -1)) {
+                        /* deleted type args in argv*/
+                        int i;
+                        for (i = (f_type + 1); i < (argc); i++) {
+                                argv[i-1] = argv[i];
+                        }
+                        /* shift flag if it after type args */
+                        f_date  = (f_date > f_type ? f_date -1 : f_date);
+                        f_compound = (f_compound > f_type ? f_compound-1 :
+                                        f_compound);
+                        f_input = (f_input > f_type ? f_input-1 : f_input);
+                        f_dz = (f_dz > f_type ? f_dz-1 : f_dz);
+                }
+                argc--;
+                if (check_type_args(argc, type_args, tmp, f_dz) < 0) {
+                        printf("check_args_no_op failed\n");
+                        free(type_args);
+                        return -1;
+                }
+        } else if ( argc > (f_dz >= 0 ? 1:0) + (f_input >= 0 ? 1:0)) {
+                printf("check_type_args failed\n");
+                return -1;
+        }
+
+        if (check_args(argc, argv, &f_dz, &f_compound, &f_date)) {
+                printf("check path args failed\n");
+                return -1;
+        }
+
+        if (action_add(argc, argv, f_compound, f_dz, f_date, f_input,
+                type_args, daz) == -1) {
+                printf("error action add\n");
+                return -1;
+        }
+        if (f_type >= 0) {
+                free(type_args);
+        }
+        return 0;
+}
+
+int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
+                char *type, char *daz) {
         dz_t daz_buf;
-        char reader[BUFFLEN],
-             *buff = NULL;
-        unsigned int buff_size = 0;
-        int read_size, st;
+        unsigned int buff_size_co = 0;
+        tlv_t tlv = NULL;
+        tlv_t buff_co = NULL;
+        tlv_t buff_d = NULL;
+        int i,j = 0;
 
         if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "failed open the dazibao\n");
+                return -1;
         }
 
-        while ((read_size = read(STDIN_FILENO, reader, BUFFLEN)) > 0) {
+        f_d = (f_d == -1 ? argc : f_d);
+        f_co = (f_co == -1 ? argc : f_co);
 
-                buff_size += read_size;
-
-                if (buff_size > TLV_MAX_VALUE_SIZE) {
-                        fprintf(stderr, "tlv too large\n");
-                        exit(EXIT_FAILURE);
+        for (i = 0; i < argc; i++) {
+                int tlv_size = 0;
+                /* inizialized tlv */
+                if (tlv_init(&tlv) < 0) {
+                      printf("error to init tlv\n");
+                        return -1;
                 }
 
-                buff = safe_realloc(buff, sizeof(*buff) * buff_size);
-
-                if (buff == NULL) {
-                        perror("realloc");
-                        return DZ_MEMORY_ERROR;
+                /* different possibility to create a standard tlv*/
+                if (i == f_in) {
+                        tlv_size = tlv_create_input(&tlv, &type[j]);
+                        j++;
+                } else if (i == f_dz) {
+                        tlv_size = dz2tlv(argv[i], &tlv);
+                } else {
+                        tlv_size = tlv_create_path(argv[i], &tlv, &type[j]);
+                        j++;
                 }
 
-                memcpy(buff + (buff_size - read_size), reader, read_size);
+                /* if not tlv as create error */
+                if (tlv_size < 0) {
+                        printf("error to create tlv with path %s\n", argv[i]);
+                        return -1;
+                }
+
+                /* other option who use tlv created */
+                if ( i >= f_co ) {
+                        /* if tlv to insert to compound it type dated*/
+                        if (f_d > f_co) {
+                                if (tlv_init(&buff_d) < 0) {
+                                        printf("error to init tlv compound");
+                                        return -1;
+                                }
+                                tlv_size = tlv_create_date(&buff_d, &tlv,
+                                                tlv_size);
+                                if (tlv_size < 0) {
+                                        printf("error to create tlv dated"
+                                                        "%s\n", argv[i]);
+                                        return -1;
+                                }
+                                tlv_destroy(&tlv);
+                                tlv = buff_d;
+                                buff_d = NULL;
+                        }
+                        unsigned int size_realloc = TLV_SIZEOF_HEADER;
+                        if ((f_co == i) && (tlv_init(&buff_co) < 0)) {
+                                printf("error to init tlv compound\n");
+                                return -1;
+                        }
+                        size_realloc += buff_size_co + tlv_size;
+                        buff_co = (tlv_t) safe_realloc(buff_co,
+                                        sizeof(*buff_co) * size_realloc);
+                        if (buff_co == NULL) {
+                                ERROR("realloc", -1);
+                        }
+
+                        memcpy(buff_co + buff_size_co, tlv, tlv_size);
+                        buff_size_co += tlv_size;
+                        tlv_destroy(&tlv);
+
+                        /*when all tlv is insert, create tlv compound*/
+                        if (i == argc -1) {
+                                if (tlv_init(&tlv) < 0) {
+                                        printf(" error to init tlv");
+                                        return -1;
+                                }
+                                tlv_size = tlv_create_compound(&tlv, &buff_co,
+                                        buff_size_co);
+                                if (tlv_size < 0) {
+                                        printf(" error to create compound"
+                                        " %s\n", argv[i]);
+                                        return -1;
+                                }
+                                tlv_destroy(&buff_co);
+                        } else {
+                                continue;
+                        }
+                }
+
+                if (i >= f_d) {
+                        if (tlv_init(&buff_d) < 0) {
+                                printf(" error to init tlv dated\n");
+                                return -1;
+                        }
+                        tlv_size = tlv_create_date(&buff_d, &tlv, tlv_size);
+                        if (tlv_size < 0) {
+                                printf(" error to create tlv dated"
+                                        "%s\n", argv[i]);
+                                return -1;
+                        }
+                        tlv_destroy(&tlv);
+                        tlv = buff_d;
+                        buff_d = NULL;
+                }
+
+                if (tlv_size > 0) {
+                        if (dz_add_tlv(&daz_buf, &tlv) == -1) {
+                                fprintf(stderr, "failed adding the tlv\n");
+                                tlv_destroy(&tlv);
+                                return -1;
+                        }
+                        tlv_destroy(&tlv);
+                }
         }
 
-
-        tlv_t tlv = malloc((buff_size + TLV_SIZEOF_HEADER) * sizeof(*tlv));
-        tlv_set_type(&tlv, type);
-        tlv_set_length(&tlv, buff_size);
-
-        memcpy(tlv_get_value_ptr(&tlv), buff, buff_size);
-
-        st = dz_add_tlv(&daz_buf, &tlv);
-        if (st < 0) {
-                fprintf(stderr, "failed adding the tlv\n");
-                free(tlv);
-                free(buff);
-                return st;
+        if (dz_close(&daz_buf) < 0) {
+                fprintf(stderr, "failed closing the dazibao\n");
+                return -1;
         }
-
-        free(tlv);
-        free(buff);
         return 0;
 }
 
@@ -146,7 +342,13 @@ int cmd_rm(int argc, char **argv, char *daz) {
                 return DZ_OFFSET_ERROR;
         }
 
-        if (dz_rm_tlv(&daz_buf, (off_t)off) < 0) {
+        if (dz_check_tlv_at(&daz_buf, off, -1,NULL) <= 0) {
+                fprintf(stderr, "no such TLV\n");
+                dz_close(&daz_buf);
+                return DZ_OFFSET_ERROR;
+        }
+
+        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
                 return -1;
@@ -159,6 +361,7 @@ int cmd_rm(int argc, char **argv, char *daz) {
 
         return 0;
 }
+
 int action_dump(char *daz, int flag_debug, int flag_depth) {
         dz_t daz_buf;
         if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
@@ -303,7 +506,7 @@ int main(int argc, char **argv) {
         } else {
                 argc_cmd = argc - 3;
                 /* shift argv to the right to remove the program name and the
-                 * command */
+                * command */
                 argv_cmd = argv + 2;
         }
         /*
@@ -341,3 +544,4 @@ int main(int argc, char **argv) {
 
         exit(EXIT_SUCCESS);
 }
+

@@ -115,18 +115,16 @@ int dz_create(dz_t *d, char *path) {
         memset(d->data + 1, 0, DAZIBAO_HEADER_SIZE - 1);
         d->len = DAZIBAO_HEADER_SIZE;
 
-        goto OUT;
+        if (dz_sync(d) < 0) {
+                return -1;
+        }
+        return 0;
+
 PANIC:
         if (close(d->fd) == -1) {
                 PERROR("close");
         }
         return -1;
-
-OUT:
-        if (dz_sync(d) < 0) {
-                return -1;
-        }
-        return 0;
 }
 
 int dz_open(dz_t *d, char *path, int flags) {
@@ -220,7 +218,7 @@ time_t dz_read_date_at(dz_t *d, off_t offset) {
 char dz_check_tlv_type(dz_t *dz, off_t offset) {
         tlv_t t;
         char ok = 1;
-        unsigned int length, header_len;
+        unsigned int length;
 
         tlv_init(&t);
         if (dz_tlv_at(dz, &t, offset) != 0) {
@@ -241,45 +239,9 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                         ok = 0;
                 }
                 break;
-        case TLV_TEXT:
-                /* TODO */
-                break;
-        case TLV_PNG:
-                /* see www.libpng.org/pub/png/spec/1.2/
-                               PNG-Rationale.html#R.PNG-file-signature */
-                header_len = strlen(PNG_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        PNG_SIGNATURE, header_len) == 0);
-                break;
-        case TLV_JPEG:
-                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure
-                 */
-                header_len = strlen(JPG_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        JPG_SIGNATURE, header_len) == 0);
-                break;
-        case TLV_GIF:
-                /* see www.onicos.com/staff/iz/formats/gif.html#header
-                 */
-                header_len = strlen(GIF_SIGNATURE);
-                if (length < header_len) {
-                        ok = 0;
-                        break;
-                }
-
-                ok = (strncmp(dz->data + offset + TLV_SIZEOF_HEADER,
-                                        GIF_SIGNATURE, header_len) == 0);
-                break;
+        default:
+                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                length) == tlv_get_type(&t);
         }
 
         tlv_destroy(&t);
@@ -339,6 +301,10 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 break;
         case TLV_JPEG:
                 /* see stackoverflow.com/a/692013/735926 */
+                st = -1;
+                break;
+        case TLV_TIFF:
+                /* TODO */
                 st = -1;
                 break;
         }
@@ -789,9 +755,6 @@ static int dz_memmove(dz_t *d, off_t *reader, off_t *writer, int count) {
 static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 off_t max_off) {
 
-        /* XXX this works only a dazibao with no padN/pad1, which is not quite
-         * we're expecting */
-
         int type = -1,
             len = 0,
             saved = 0,
@@ -867,6 +830,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                          * because it may change */
                         *writer += TLV_SIZEOF_LENGTH;
                         *reader += TLV_SIZEOF_LENGTH;
+                        max_off = tlv_off + TLV_SIZEOF_HEADER + len;
                 }
                 while (*reader < max_off) {
                         saved += compact_helper(d, reader, writer, max_off);
@@ -886,7 +850,12 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 }
                 goto EOCOMPACT;
         default: /* other TLVs */
-                dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                if (len == 0) {
+                        saved += TLV_SIZEOF_HEADER;
+                        *reader += TLV_SIZEOF_HEADER;
+                } else {
+                        dz_memmove(d, reader, writer, TLV_SIZEOF_HEADER + len);
+                }
         }
 
 EOCOMPACT:
@@ -979,6 +948,26 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         return 0;
 }
 
+int dz2tlv(char *d, tlv_t *tlv) {
+        dz_t dz;
+
+        if (dz_open(&dz, d, O_RDWR) < 0) {
+                fprintf(stderr, "Error while opening the dazibao\n");
+                return -1;
+        }
+
+        tlv_set_type(tlv, (char) TLV_COMPOUND);
+        tlv_set_length(tlv, dz.len - DAZIBAO_HEADER_SIZE );
+        tlv_mread(tlv, dz.data + DAZIBAO_HEADER_SIZE );
+
+        if (dz_close(&dz) < 0) {
+                fprintf(stderr, "Error while closing the dazibao\n");
+                return -1;
+        }
+
+        return TLV_SIZEOF(tlv);
+}
+
 int dz_hash(dz_t *dz, hash_t *oldhash) {
         hash_t len;
         if (dz == NULL || oldhash == NULL) {
@@ -998,3 +987,4 @@ int dz_hash(dz_t *dz, hash_t *oldhash) {
         *oldhash = len;
         return 1;
 }
+#undef BUFFLEN

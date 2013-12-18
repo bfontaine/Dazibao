@@ -1,9 +1,60 @@
 #include <string.h>
 #include <stdlib.h>
+#include "tlv.h"
 #include <limits.h>
 #include "utils.h"
+#include "mdazibao.h"
 
 /** @file */
+int check_tlv_path(const char * path, int flag_access) {
+        int tlv_size = TLV_SIZEOF_HEADER;
+        struct stat st_path;
+        if (access(path,F_OK | flag_access) < 0) {
+                printf("[utils.c|check_tlv_path]file %s not exist\n",path);
+                return -1;
+        }
+        if (stat(path, &st_path) < 0) {
+                printf("[utils.c|check_tlv_path] error stat \n");
+                return -1;
+        }
+
+        if (!S_ISREG(st_path.st_mode)) {
+                printf("[utils.c|check_tlv_path]file %s not regular\n",path);
+                return -1;
+        }
+
+        if (st_path.st_size > TLV_MAX_VALUE_SIZE) {
+                printf("[utils.c|check_tlv_path]file %s is to large\n",path);
+                return -1;
+        }
+        tlv_size = st_path.st_size;
+        return tlv_size;
+}
+
+int check_dz_path(const char * path, int flag_access) {
+        int tlv_size = TLV_SIZEOF_HEADER;
+        struct stat st_path;
+        if (access(path,F_OK | flag_access) < 0) {
+                printf("[utils.c|check_dz_path]file %s not exist\n",path);
+                return -1;
+        }
+        if (stat(path, &st_path) < 0) {
+                printf("[utils.c|check_dz_path] error stat \n");
+                return -1;
+        }
+
+        if (!S_ISREG(st_path.st_mode)) {
+                printf("[utils.c|check_dz_path]file %s not regular\n",path);
+                return -1;
+        }
+
+        if (st_path.st_size < DAZIBAO_HEADER_SIZE) {
+                printf("[utils.c|check_dz_path]file %s is to large\n",path);
+                return -1;
+        }
+        tlv_size = st_path.st_size - DAZIBAO_HEADER_SIZE;
+        return tlv_size;
+}
 
 void *safe_realloc(void *ptr, size_t size) {
         void *newptr = realloc(ptr, size);
@@ -115,6 +166,9 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 }
 
                 if (!is_opt) {
+                        if (strcmp("--", argv[next_arg]) == 0) {
+                                next_arg++;
+                        }
                         if (res->argc != NULL && res->argv != NULL) {
                                 *res->argc = argc - next_arg;
                                 *(res->argv) = *res->argc > 0 ?

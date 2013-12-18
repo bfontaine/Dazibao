@@ -17,11 +17,16 @@
         "            -m, --merge: (todo)\n" \
         "\n" \
         "    add: add a TLV\n" \
-        "        command: add [--date] [--compound] <tlv args> <dazibao>\n" \
+        "        command: add [--type] <type args> [--dazibao] <dazibo> " \
+        "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
-        "            -d, --date: (todo)\n" \
-        "            -c, --compound: (todo)\n" \
-        "            -C, --dazibao: (todo)\n" \
+        "            --type: allow to give a type with parameters, by order" \
+        "                       for all args excepted to dazibao option " \
+        "            --date: create a tlv dated with all args after option\n" \
+        "            --compound: create a tlv compound with alla args " \
+        "                       after option\n" \
+        "            --dazibao: insert a dazibao when size is respected" \
+        "                       with tlv compound\n" \
         "\n" \
         "    rm: remove a TLV\n" \
         "        command: rm <offset> <dazibao>\n" \
@@ -29,27 +34,75 @@
         "    dump: dump a Dazibao\n" \
         "        command: dump [--debug ] [--depth] <depth> <dazibao>\n" \
         "        options:\n" \
-        "            -D, --depth: (todo)\n" \
-        "            -d, --debug: (todo)\n" \
+        "            -D, --depth: allow to show inside tlv\n" \
+        "            -d, --debug: show tlv PAD1 and PADN\n" \
         "\n" \
         "    compact: compact a dazibao\n" \
-        "        command: compact [--recusive] <dazibao>\n" \
-        "        options:\n" \
-        "            -r, --recursive: (todo)\n"
+        "        command: compact <dazibao>\n"
 
 /**
- * @param argc arguments count
- * @param argv arguments array
- * @param daz
+ * check if add option have a good formation
+ * and keep only args and cut option but keep
+ * timekeepper in flag matching
+ * @param argc : lenght to argv
+ * @param argv : parameters to command line
+ * @param f_d  : flag to option date
+ * @param f_co : flag to option compound
+ * @param f_dz : flag to option dazibao
+ * @param f_ty : flag to option type
+ * @param f_in : flag to option "-" -> input
+ * @return count to parameters
+ **/
+int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
+                int *f_ty, int *f_in);
+
+/**
+ * check if option type counter of args exist
+ * @param argc : lenght to argv
+ * @param type_args : to write a good version of type after to check
+ * @param op_type : type write to command line
+ * @param f_dz : flag to option dazibao
+ * @return 0 is good or -1 to error
+ **/
+int check_type_args(int argc, char *type_args, char *op_type, int f_dz);
+
+/**
+ * check 2 point:
+ *      - if path have a goof file
+ *      - if tlv to create will be a good size
+ * @param argc : lenght to argv
+ * @param argv : parameters to command line
+ * @param f_d  : flag to option date
+ * @param f_co : flag to option compound
+ * @param f_dz : flag to option dazibao
+ * @return 0 is good or -1 to error
+ **/
+int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d);
+
+/**
+ * manage to all check verification to parameters command line
+ * @param argc : lenght to argv
+ * @param argv : parameters to line command
+ * @param daz : path from dazibao to execute action add
+ * @return 0 is good or -1 to error
  **/
 int cmd_add(int argc, char **argv, char *daz);
 
 /**
- * @param daz
- * @param type
+ * create all tlv to ask to command line
+ * and add to dazibao daz
+ * @param argc : lenght to argv
+ * @param argv : parameters to command line
+ * @param f_co  : flag to option date
+ * @param f_dz : flag to option compound
+ * @param f_d : flag to option dazibao
+ * @param f_in : flag to option - -> input
+ * @param type : tab to type to args
+ * @param daz : path to dazibao to execute add
+ * @return 0 is good or -1 to error
  **/
-
-int action_add(char *daz, unsigned char type);
+int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
+                char *type , char *daz);
 
 /**
  * @param argc arguments count

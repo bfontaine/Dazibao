@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -128,6 +130,28 @@
 #define NFREE(p) { free(p);(p) = NULL; }
 
 /**
+ * Check path is a good tlv args,test :
+ *      - exist file
+ *      - regular file
+ *      - not to large
+ * @param path : file path
+ * @param flag_access : flag to straight file
+ * @return size of future tlv
+ **/
+int check_tlv_path(const char * path, int flag_access);
+
+/**
+ * Check path is a good dazibao args,test :
+ *      - exist file
+ *      - regular file
+ *      - not to large
+ * @param path : file dazibao path
+ * @param flag_access : flag to straight file
+ * @return size of future tlv compound
+ **/
+int check_dz_path(const char * path, int flag_access);
+
+/**
  * Wrapper around realloc(3) which frees the original pointer if the request
  * fails. See #35.
  * @param ptr the pointer to realloc
@@ -218,7 +242,9 @@ struct s_args {
  * @param argc arguments count
  * @param argv arguments
  * @param res the structure which will be filled
- * @param nb_opt
+ * @param nb_opt number of options avaible (in struct s_args *res)
+ * @return 0 on success
+ * @return -1 on error
  **/
 int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt);
 

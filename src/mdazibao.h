@@ -241,6 +241,15 @@ int dz_dump_all(dz_t *d, int depth, int flag_debug);
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
 /**
+ * Create TLV with using dz for tlv type compound
+ * Return size of value tlv compound
+ * @param path
+ * @param tlv
+ * @return sizeof new tlv create
+ **/
+int dz2tlv(char *dz, tlv_t *tlv);
+
+/**
  * Test if a Dazibao changed using an hash.
  * @param dz a pointer on the dazibao
  * @param oldhash a pointer to a int containing the previous hash. If it's set
