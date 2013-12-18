@@ -55,7 +55,7 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
         char *tmp = strtok(op_type, delim);
         int i = 0;
         while (tmp != NULL) {
-                char tmp_type = tlv_str2type(tmp);
+                int tmp_type = tlv_str2type(tmp);
                 if (tmp_type == (char) -1) {
                         printf("unrecognized type %s\n", tmp);
                         return -1;
