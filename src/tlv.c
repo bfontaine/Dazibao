@@ -276,7 +276,7 @@ const char *tlv_type2str(int tlv_type) {
         return "unknown";
 }
 
-char tlv_str2type(char *tlv_type) {
+int tlv_str2type(char *tlv_type) {
         if (tlv_type == NULL) {
                 return -1;
         }
@@ -297,12 +297,15 @@ int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size) {
 
 int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size) {
         unsigned int tlv_size ;
-        int real_time = htonl(time(NULL));
+        uint32_t timestamp;
         char *buff;
+
+        timestamp = (uint32_t) time(NULL);
+        timestamp = htonl(timestamp);
 
         tlv_size = TLV_SIZEOF_DATE + value_size;
         buff = (char *)malloc(sizeof(*buff)* tlv_size);
-        memcpy(buff, &real_time, TLV_SIZEOF_DATE);
+        memcpy(buff, &timestamp, TLV_SIZEOF_DATE);
         memcpy(buff + TLV_SIZEOF_DATE, *value_tlv, value_size);
 
         tlv_set_type(tlv_d, (unsigned char) TLV_DATED );
