@@ -330,4 +330,6 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
 
 int tlv_long_mwrite(tlv_t *tlv, char *dst);
 
+int tlv_long_fwrite(tlv_t *tlv, int fd);
+
 #endif

@@ -426,3 +426,11 @@ int tlv_long_mwrite(tlv_t *tlv, char *dst) {
         memcpy(dst, *tlv, len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
         return len;
 }
+
+int tlv_long_fwrite(tlv_t *tlv, int fd) {
+        int len;
+        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
+        len = ntohl(len);
+        return write_all(fd, *tlv,
+                        len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
+}
