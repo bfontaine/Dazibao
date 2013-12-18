@@ -40,6 +40,14 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
+int dz_set_offset(dz_t *d, size_t off) {
+        if (off > d->len) {
+                return -1;
+        }
+        d->offset = off;
+        return 0;
+}
+
 int dz_sync(dz_t *d) {
         if (ftruncate(d->fd, d->len) == -1) {
                 PERROR("ftruncate");
