@@ -43,9 +43,9 @@
 
 #define TLV_PDF    134
 
-#define TLV_LONGH  255
+#define TLV_LONGH  254
 
-#define TLV_LONGC  254
+#define TLV_LONGC  253
 
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140

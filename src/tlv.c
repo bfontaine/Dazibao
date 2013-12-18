@@ -376,15 +376,20 @@ int tlv_create_input(tlv_t *tlv, char *type) {
 
 int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         int
-                nb_chunks = len / TLV_MAX_VALUE_SIZE,
-                l = htonl(len),
+                nb_chunks =
+                len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE)
+,
+                chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
+                be_chunks_len = htonl(chunks_len),
                 remaining = len,
                 w_ptr = 0,
                 r_ptr = 0;
 
+        LOGINFO("entering mk_long_tlv");
+
         *tlv = safe_realloc(*tlv,
-                        len
-                        + nb_chunks * TLV_SIZEOF_HEADER
+                        chunks_len
                         + TLV_SIZEOF_HEADER
                         + TLV_SIZEOF_TYPE + sizeof(int));
 
@@ -396,12 +401,13 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         tlv_set_type(tlv, TLV_LONGH);
         tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(int));
         (*tlv)[TLV_SIZEOF_HEADER] = type;
-        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &l, sizeof(uint32_t));
+        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &be_chunks_len, sizeof(uint32_t));
 
         w_ptr = TLV_SIZEOF(tlv);
 
         for (int i = 0; i < nb_chunks; i++) {
                 int size = MIN(TLV_MAX_VALUE_SIZE, remaining);
+                LOGINFO("Writing chunk %d/%d (size: %d)", i+1, nb_chunks, size);
                 tlv_t false_tlv = *tlv + w_ptr;
                 (*tlv)[w_ptr] = TLV_LONGC;
                 tlv_set_length(&false_tlv, size);
@@ -409,13 +415,14 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 memcpy(&((*tlv)[w_ptr]), src + r_ptr, size);
                 r_ptr += size;
                 w_ptr += size;
+                remaining -= size;
         }
 
         if (r_ptr != len) {
                 LOGERROR("read: %d, size: %d", r_ptr, len);
                 return -1;
         }
-
+        LOGINFO("exiting mk_long_tlv");
         return 0;
 }
 
@@ -429,8 +436,15 @@ int tlv_long_mwrite(tlv_t *tlv, char *dst) {
 
 int tlv_long_fwrite(tlv_t *tlv, int fd) {
         int len;
+        LOGINFO("Start:%d %d %d %d %d",
+                (*tlv)[0],
+                (*tlv)[1],
+                (*tlv)[2],
+                (*tlv)[3],
+                (*tlv)[4]);
         memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
         len = ntohl(len);
+        LOGINFO("len: %d + %d", len, TLV_SIZEOF(tlv));
         return write_all(fd, *tlv,
-                        len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
+                        len + TLV_SIZEOF(tlv));
 }
