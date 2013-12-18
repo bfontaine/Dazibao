@@ -20,7 +20,6 @@ int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
         for (i = 0; i < argc; i++) {
                 if (!strcmp(argv[i],"--type")) {
                         *f_ty = ad_tmp;
-                        /* recupérer la chaine type*/
                 } else if ((strcmp(argv[i],"--date") == 0)) {
                         if (*f_d < 0) {
                                 *f_d = ad_tmp;
