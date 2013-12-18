@@ -41,6 +41,7 @@ struct tlv_type tlv_types[] = {
         { TLV_OGG      , "ogg"      },
         { TLV_MIDI     , "mid"      },
         { TLV_PDF      , "pdf"      },
+        { TLV_LONGH    , "long_tlv" },
         { -1           , NULL       }
 };
 
@@ -57,7 +58,7 @@ struct type_signature sigs[] =  {
         { TLV_MP3,  "\255\251"          },
         { TLV_MP3,  "\073\068\051"      },
         { TLV_MP4,  "\051\103\112\053"  },
-        { TLV_BMP,  "\066\077"  },
+        { TLV_BMP,  "\066\077"          },
         { TLV_OGG,  "\079\103\103\083"  },
         { TLV_MIDI, "\077\084\104\100"  },
         { TLV_PDF,  "\037\080\068\070"  }
@@ -373,4 +374,45 @@ int tlv_create_input(tlv_t *tlv, char *type) {
         return TLV_SIZEOF(tlv);
 }
 
+int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
+        int
+                nb_chunks = len / TLV_MAX_VALUE_SIZE,
+                l = htonl(len),
+                remaining = len,
+                w_ptr = 0,
+                r_ptr = 0;
 
+        /* Set TLV_LONGH header */
+        tlv_set_type(tlv, TLV_LONGH);
+        tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(int));
+        (*tlv)[TLV_SIZEOF_HEADER] = type;
+        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &l, sizeof(uint32_t));
+
+        w_ptr = TLV_SIZEOF(tlv);
+
+        for (int i = 0; i < nb_chunks; i++) {
+                int size = MIN(TLV_MAX_VALUE_SIZE, remaining);
+                tlv_t false_tlv = *tlv + w_ptr;
+                (*tlv)[w_ptr] = TLV_LONGC;
+                tlv_set_length(&false_tlv, size);
+                w_ptr += TLV_SIZEOF_HEADER;
+                memcpy(&((*tlv)[w_ptr]), src + r_ptr, size);
+                r_ptr += size;
+                w_ptr += size;
+        }
+
+        if (r_ptr != len) {
+                LOGERROR("read: %d, size: %d", r_ptr, len);
+                return -1;
+        }
+
+        return 0;
+}
+
+int tlv_long_mwrite(tlv_t *tlv, char *dst) {
+        int len;
+        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
+        len = ntohl(len);
+        memcpy(dst, *tlv, len);
+        return len;
+}

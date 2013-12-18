@@ -43,6 +43,10 @@
 
 #define TLV_PDF    134
 
+#define TLV_LONGH  255
+
+#define TLV_LONGC  254
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
@@ -321,5 +325,9 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  * @return sizeof new tlv create
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
+
+int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
+
+int tlv_long_mwrite(tlv_t *tlv, char *dst);
 
 #endif
