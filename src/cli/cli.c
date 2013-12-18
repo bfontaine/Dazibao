@@ -456,32 +456,29 @@ int main(int argc, char **argv) {
                         LOGERROR("TLV addition failed.");
                         return EXIT_FAILURE;
                 }
-                return EXIT_SUCCESS;
         } else if (strcmp(cmd, "dump_tlv") == 0) {
                 if (cli_dump_tlv(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
                         LOGERROR("TLV dumping failed.");
                         return EXIT_FAILURE;
                 }
-                return EXIT_SUCCESS;
         } else if (strcmp(cmd, "dump") == 0) {
                 if (cli_dump_dz(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
                         LOGERROR("Dazibao dumping failed.");
                         return EXIT_FAILURE;
                 }
-                return EXIT_SUCCESS;
         } else if (strcmp(cmd, "compact") == 0) {
                 if (cli_compact_dz(argv[2]) == -1) {
                         LOGERROR("Dazibao dumping failed.");
                         return EXIT_FAILURE;
                 }
-                return EXIT_SUCCESS;
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
                         return EXIT_FAILURE;
                 }
-                return EXIT_SUCCESS;
         } else {
+                LOGERROR("%s is not a valid command.", cmd);
                 return EXIT_FAILURE;
         }
+                return EXIT_SUCCESS;
 }
