@@ -365,3 +365,33 @@ int parse_header(char *line, struct http_headers *hs) {
         free(value);
         return st;
 }
+
+char *get_request_boundary(struct http_request *req) {
+        int len, blen;
+        char *ct,
+             *b;
+        const char boundary[] = "boundary=";
+
+        if (req == NULL || req->headers == NULL) {
+                return NULL;
+        }
+
+        ct = req->headers->headers[HTTP_H_CONTENT_TYPE];
+
+        if (ct == NULL || (b = strstr(ct, boundary)) == NULL) {
+                return NULL;
+        }
+
+        len  = strlen(b); /* length of "boundary=..." */
+        blen = strlen(boundary); /* length of "boundary=" */
+
+        if (len == blen) {
+                /* if the line ends with "... boundary=", i.e. the boundary is
+                 * empty */
+                return NULL;
+        }
+
+        /* shift 'strlen("boundary=")' to the right to keep only the boundary
+         * string. */
+        return b + blen;
+}
