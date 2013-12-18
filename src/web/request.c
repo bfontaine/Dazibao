@@ -395,3 +395,168 @@ char *get_request_boundary(struct http_request *req) {
          * string. */
         return b + blen;
 }
+
+int destroy_http_params(struct http_param **ps, int count) {
+        if (ps == NULL) {
+                return 0;
+        }
+
+        while (--count >= 0 && ps[count] != NULL) {
+                NFREE(ps[count]);
+        }
+        NFREE(ps);
+        return 0;
+}
+
+/**
+ * Helper for parse_form_data. It takes a pointer on a form part and return a
+ * a pointer on a new struct http_param, or NULL if it can't parse it. The part
+ * should begin by either CR LF or two hyphens (which means we're at the end).
+ * @param start pointer on the first character of the part
+ * @param end pointer on the last character of the part
+ * @return a new http_param structure.
+ **/
+static struct http_param *parse_form_data_part(char *start, char *end) {
+        struct http_param *param;
+        int len;
+
+        if (start == NULL || end == NULL) {
+                return NULL;
+        }
+
+        len = end - start;
+        if (len <= 2) {
+                return NULL;
+        }
+
+        if (start[0] == '-' && start[1] == '-') {
+                LOGTRACE("Got the last boundary");
+                return NULL;
+        }
+        if (start[0] != CR || start[1] != LF) {
+                LOGDEBUG("Malformed form part, first two bytes are %d %d",
+                                start[0], start[1]);
+                return NULL;
+        }
+        start += 2;
+
+        /**
+         * TODO parse the part, which is something like:
+         *
+         * Content-Disposition: form-data; name="<name>"[; filename="..."] CRLF
+         * [Content-Type: ... CR LF]
+         * CR LF
+         * <data>
+         *
+         * We can use parse_header/2 to parse the headers.
+         *
+         * Only <name> and <data> are interesting here. */
+
+        return NULL;
+}
+
+struct http_param **parse_form_data(struct http_request *req) {
+        struct http_param **params = NULL;
+        char *boundary,
+             *sep, /* separator string */
+             *cursor,
+             *next_sep; /* pointer on the next separator */
+        int sep_len,
+            params_max_count,
+            params_count;
+
+        /* shortcut for shorter lines */
+        size_t hp_ptr_size = sizeof(struct http_param*);
+
+        LOGTRACE("Parsing form data from request");
+
+        if (req == NULL || req->headers == NULL) {
+                return NULL;
+        }
+
+        if ((boundary = get_request_boundary(req)) == NULL) {
+                LOGERROR("cannot find a boundary");
+                return NULL;
+        }
+        sep_len = strlen(boundary) + 4; /* "\r\n--" + boundary + "\r\n" */
+
+        /* "--" + boundary + "\0" */
+        sep = (char*)malloc(sizeof(char)*(sep_len + 1));
+        if (sep == NULL) {
+                perror("malloc");
+                return NULL;
+        }
+
+        /* XXX We need to fix 'sep' to allow for "--" at its end to correctly
+         * recognize the end of the body. */
+
+        /* we're constructing the separator as follow:
+         *          CR LF <hyphen> <hyphen> <boundary> \0
+         * indexes: 0  1  2        3        4    ...   len-1
+         *
+         * The trailing CR LF is not included, because the last boundary ends
+         * with <hyphen> <hyphen> instead.
+         */
+        memcpy(sep, "\013\010--", 4); /* CR LF <hyphen> <hyphen> */
+        sep[sep_len - 1] = '\0';
+
+        memcpy(sep + 4, boundary, sep_len - 7);
+
+        if (req->body_len < (sep_len+2) * 2) {
+                /* we need at least one separator at the beginning and one at
+                 * the end, with CR LF after the first one and two hyphens
+                 * after the last one. */
+                LOGERROR("Body length is too short.");
+                free(sep);
+                return NULL;
+        }
+
+        cursor = req->body;
+        params_max_count = 8; /* arbitrary limit, we may increase this later */
+        params_count = 0;
+        params = (struct http_param**)malloc(hp_ptr_size*params_max_count);
+
+        if (params == NULL) {
+                free(sep);
+                return NULL;
+        }
+
+        cursor = strstr(req->body, sep);
+
+        if (cursor == NULL) {
+                destroy_http_params(params, params_count);
+                free(sep);
+                return NULL;
+        }
+
+        while ((next_sep = strstr(cursor, sep)) != NULL) {
+                if (params_count + 1 == params_max_count) {
+                        struct http_param **params2;
+
+                        params_max_count *= 2;
+                        params2 = (struct http_param**)realloc(params,
+                                        hp_ptr_size*params_max_count);
+                        if (params2 == NULL) {
+                                perror("realloc");
+                                destroy_http_params(params, params_count);
+                                free(sep);
+                                return NULL;
+                        }
+                        params = params2;
+                }
+
+                params[params_count++] =
+                        parse_form_data_part(cursor + sep_len, next_sep - 1);
+
+                if (params[params_count] == NULL) {
+                        LOGTRACE("parse_form_data_part failed");
+                        break;
+                }
+
+                cursor = next_sep;
+        }
+
+        params[params_count] = NULL;
+        free(sep);
+        return params;
+}
