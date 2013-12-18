@@ -30,11 +30,11 @@ static int routes_cpt = 0;
  this number.
  */
 
-int add_route(char mth, char *path_suffix, route_handler route) {
+int add_route(char mth, char *path_prefix, route_handler route) {
         if (routes_cpt >= MAX_ROUTES) {
                 return -1;
         }
-        if (path_suffix == NULL || path_suffix[0] != '/' || mth == 0) {
+        if (path_prefix == NULL || path_prefix[0] != '/' || mth == 0) {
                 return -1;
         }
 
@@ -44,9 +44,9 @@ int add_route(char mth, char *path_suffix, route_handler route) {
         }
 
         LOGTRACE("Route handler for method %d and suffix '%s' added.",
-                        mth, path_suffix);
+                        mth, path_prefix);
 
-        routes_paths[routes_cpt] = strdup(path_suffix);
+        routes_paths[routes_cpt] = strdup(path_prefix);
         routes_paths[routes_cpt][0] = mth;
 
 

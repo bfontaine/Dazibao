@@ -35,13 +35,13 @@ extern char _log_newline;
 /** Don't use this macro directly */
 #define _LOG(lvl, s, fmt, ...) { \
         if ((lvl) <= (_log_level)) { \
-        struct tm ts; \
-        time_t t = time(NULL); \
-        char h[16], nl = _log_newline?'\n':' '; \
-        localtime_r(&t, &ts); \
-        strftime(h, 16, "%T", &ts); \
+        struct tm __ts; \
+        time_t __t = time(NULL); \
+        char __h[16], __nl = _log_newline?'\n':' '; \
+        localtime_r(&__t, &__ts); \
+        strftime(__h, 16, "%T", &__ts); \
         fprintf(stderr, "[%5s][%8s] %s%c %-17s:%03d] " fmt "\n", \
-                        s, h, __func__, nl, __FILE__, __LINE__, \
+                        s, __h, __func__, __nl, __FILE__, __LINE__, \
                         ##__VA_ARGS__); }}
 
 /* Use these instead.

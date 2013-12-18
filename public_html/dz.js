@@ -3,7 +3,7 @@
      * project so we'll avoid spending too much time in JS code. */
 
     var api = {
-        call: function(method, path, callback) {
+        call: function(method, path, data, callback) {
             var xhr = new XMLHttpRequest();
             xhr.open(method, path);
             xhr.onreadystatechange = function() {
@@ -11,12 +11,12 @@
                     callback(xhr);
                 }
             };
-            xhr.send(null);
+            xhr.send(data);
         },
         del: function(tlv_el) {
             var off = +tlv_el.getAttribute('data-offset');
             if (isNaN(off)) { return; }
-            api.call('post', '/tlv/delete/'+off, function(xhr) {
+            api.call('post', '/tlv/delete/'+off, null, function(xhr) {
                 if (xhr.status == 204) {
                     tlv_el.parentElement.removeChild(tlv_el);
                 } else {
@@ -25,14 +25,19 @@
             });
         },
         compact: function(callback) {
-            api.call('post', '/compact', function(xhr) {
+            api.call('post', '/compact', null, function(xhr) {
                 callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
             });
         },
         hash: function(callback) {
-            api.call('get', '/hash', function(xhr) {
+            api.call('get', '/hash', null, function(xhr) {
                 callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
             });
+        },
+        addText: function(text, callback) {
+            api.call('post', '/tlv/add/text/', text, function(xhr) {
+                callback(xhr.status == 204);
+            })
         }
     };
 
@@ -95,6 +100,7 @@
             }
         }, false);
 
+        /* -- compacting -- */
         addButton('Compact', 'cpct', function() {
             api.compact(function( saved, xhr ) {
                 if (saved < 0) {
@@ -103,6 +109,16 @@
                 } else {
                     alert("Saved " + saved + " bytes.");
                 }
+            });
+        });
+
+        /* -- adding a TLV -- */
+        addButton('Add a TLV', 'addtlv', function() {
+            // only text for now
+            var text = prompt("Text?");
+
+            api.addText(text, function( ok ) {
+                alert(ok ? "ok, refresh!" : "oh no, an error :(");
             });
         });
     }();
