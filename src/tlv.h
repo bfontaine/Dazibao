@@ -212,6 +212,12 @@ int tlv_mwrite(tlv_t *tlv, void *data);
  **/
 int tlv_mread(tlv_t *tlv, char *data);
 
+
+void tlv_mdump(tlv_t *tlv, char *dst);
+
+void tlv_mdump_value(tlv_t *tlv, char *dst);
+
+
 /**
  * Write a TLV.
  * Offset of {fd} when returning is unspecified.
@@ -328,8 +334,10 @@ int tlv_create_input(tlv_t *tlv, char *type);
 
 int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
 
-int tlv_long_mwrite(tlv_t *tlv, char *dst);
+uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst);
 
-int tlv_long_fwrite(tlv_t *tlv, int fd);
+uint32_t tlv_long_fwrite(tlv_t *tlv, int fd);
+
+uint32_t tlv_long_real_data_length(tlv_t *tlv);
 
 #endif

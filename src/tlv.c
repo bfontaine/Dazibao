@@ -160,6 +160,7 @@ int tlv_mread(tlv_t *tlv, char *src) {
         if (tlv_get_type(tlv) == TLV_PAD1) {
                 return len;
         }
+
         *tlv = (tlv_t)safe_realloc(*tlv, sizeof(**tlv)
                                                 * (TLV_SIZEOF_HEADER + len));
         if (*tlv == NULL) {
@@ -266,6 +267,14 @@ int tlv_fdump(tlv_t *tlv, int fd) {
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {
         return write_all(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+}
+
+void tlv_mdump(tlv_t *tlv, char *dst) {
+        memcpy(dst, *tlv, TLV_SIZEOF(tlv));
+}
+
+void tlv_mdump_value(tlv_t *tlv, char *dst) {
+        memcpy(dst, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
 const char *tlv_type2str(int tlv_type) {
@@ -381,12 +390,10 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 + MIN(1, len % TLV_MAX_VALUE_SIZE)
 ,
                 chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
-                be_chunks_len = htonl(chunks_len),
+                be_len = htonl(len),
                 remaining = len,
-                w_ptr = 0,
-                r_ptr = 0;
-
-        LOGINFO("entering mk_long_tlv");
+                w_idx = 0,
+                r_idx = 0;
 
         *tlv = safe_realloc(*tlv,
                         chunks_len
@@ -401,50 +408,53 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         tlv_set_type(tlv, TLV_LONGH);
         tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(int));
         (*tlv)[TLV_SIZEOF_HEADER] = type;
-        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &be_chunks_len, sizeof(uint32_t));
+        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &be_len, sizeof(uint32_t));
 
-        w_ptr = TLV_SIZEOF(tlv);
+        w_idx = TLV_SIZEOF(tlv);
 
         for (int i = 0; i < nb_chunks; i++) {
                 int size = MIN(TLV_MAX_VALUE_SIZE, remaining);
-                LOGINFO("Writing chunk %d/%d (size: %d)", i+1, nb_chunks, size);
-                tlv_t false_tlv = *tlv + w_ptr;
-                (*tlv)[w_ptr] = TLV_LONGC;
+                LOGINFO("Writing chunk %d/%d (size: %d)",
+                        i+1, nb_chunks, size);
+                tlv_t false_tlv = *tlv + w_idx;
+                (*tlv)[w_idx] = TLV_LONGC;
                 tlv_set_length(&false_tlv, size);
-                w_ptr += TLV_SIZEOF_HEADER;
-                memcpy(&((*tlv)[w_ptr]), src + r_ptr, size);
-                r_ptr += size;
-                w_ptr += size;
+                w_idx += TLV_SIZEOF_HEADER;
+                memcpy(&((*tlv)[w_idx]), src + r_idx, size);
+                r_idx += size;
+                w_idx += size;
                 remaining -= size;
         }
 
-        if (r_ptr != len) {
-                LOGERROR("read: %d, size: %d", r_ptr, len);
+        if (r_idx != len) {
+                LOGERROR("read: %d, size: %d", r_idx, len);
                 return -1;
         }
-        LOGINFO("exiting mk_long_tlv");
         return 0;
 }
 
-int tlv_long_mwrite(tlv_t *tlv, char *dst) {
-        int len;
+uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst) {
+        uint32_t len;
         memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
         len = ntohl(len);
+        len += (len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
         memcpy(dst, *tlv, len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
+
         return len;
 }
 
-int tlv_long_fwrite(tlv_t *tlv, int fd) {
-        int len;
-        LOGINFO("Start:%d %d %d %d %d",
-                (*tlv)[0],
-                (*tlv)[1],
-                (*tlv)[2],
-                (*tlv)[3],
-                (*tlv)[4]);
+uint32_t tlv_long_fwrite(tlv_t *tlv, int fd) {
+        uint32_t len;
         memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
         len = ntohl(len);
-        LOGINFO("len: %d + %d", len, TLV_SIZEOF(tlv));
-        return write_all(fd, *tlv,
-                        len + TLV_SIZEOF(tlv));
+        len += (len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
+        return write_all(fd, *tlv, len + TLV_SIZEOF(tlv));
+}
+
+uint32_t tlv_long_real_data_length(tlv_t *tlv) {
+        return ntohl(*((uint32_t *)((*tlv) + TLV_SIZEOF_HEADER + 1)));
 }
