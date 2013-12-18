@@ -434,6 +434,29 @@ OUT:
 }
 
 
+int cli_mk_long_tlv(char *file) {
+        int fd;
+        int type;
+        char *map;
+        tlv_t tlv;
+        struct stat st;
+        LOGINFO("cli_mk_long_tlv");
+        fd = open(file, O_RDONLY);
+        flock(fd, LOCK_SH);
+        fstat(fd, &st);
+        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        LOGINFO("mmap");
+        type = guess_type(map, st.st_size);
+        tlv_init(&tlv);
+        mk_long_tlv(&tlv, map, type, st.st_size);
+        munmap(map, st.st_size);
+        tlv_long_fwrite(&tlv, STDOUT_FILENO);
+        tlv_destroy(&tlv);
+        close(fd);
+        return 0;
+}
+
+
 int main(int argc, char **argv) {
 
         char *cmd;
@@ -472,6 +495,11 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
+                        return EXIT_FAILURE;
+                }
+        }  else if (strcmp(cmd, "mk_long") == 0) {
+                if (cli_mk_long_tlv(argv[2]) == -1) {
+                        LOGERROR("Failed making long_tlv TLV.");
                         return EXIT_FAILURE;
                 }
         } else {
