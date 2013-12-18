@@ -276,7 +276,7 @@ const char *tlv_type2str(int tlv_type) {
         return "unknown";
 }
 
-char tlv_str2type(char *tlv_type) {
+int tlv_str2type(char *tlv_type) {
         if (tlv_type == NULL) {
                 return -1;
         }
