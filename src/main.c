@@ -106,10 +106,14 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d) {
                         date_size += tmp_size;
                 }
 
-                if ((compound_size > TLV_MAX_VALUE_SIZE) ||
-                        (date_size > TLV_MAX_VALUE_SIZE) ||
-                        (tmp_size > TLV_MAX_VALUE_SIZE)) {
-                        printf("tlv too large\n");
+                if (tmp_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv too large, %s\n",argv[i]);
+                        return -1;
+                } else if (date_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv date too large, %s\n",argv[i]);
+                        return -1;
+                } else if (compound_size > TLV_MAX_VALUE_SIZE) {
+                        printf("tlv compound too large, %s\n",argv[i]);
                         return -1;
                 }
                 tmp_size = 0;
