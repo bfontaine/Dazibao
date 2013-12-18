@@ -12,42 +12,41 @@
 
 /** buffer size used in various functions */
 #define BUFFSIZE 512
-int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
-                int *f_ty, int *f_in) {
-        int ad_tmp = 0,
-            count_args = 0,
-            i;
-        for (i = 0; i < argc; i++) {
-                if (!strcmp(argv[i],"--type")) {
-                        *f_ty = ad_tmp;
-                        /* recupérer la chaine type*/
-                } else if ((strcmp(argv[i],"--date") == 0)) {
-                        if (*f_d < 0) {
-                                *f_d = ad_tmp;
+
+int check_option_add(int argc, char **argv, int *date_idx, int *compound_idx,
+                int *dz_idx, int *type_idx, int *input_idx) {
+        int idx = 0,
+            args_count = 0;
+        for (int i = 0; i < argc; i++) {
+                if (!strcmp(argv[i], "--type")) {
+                        *type_idx = idx;
+                } else if ((strcmp(argv[i], "--date") == 0)) {
+                        if (*date_idx < 0) {
+                                *date_idx = idx;
                         }
-                } else if (strcmp(argv[i],"--dazibao") == 0) {
-                        if (*f_dz < 0) {
-                                *f_dz = ad_tmp;
+                } else if (strcmp(argv[i], "--dazibao") == 0) {
+                        if (*dz_idx < 0) {
+                                *dz_idx = idx;
                         }
-                } else if (strcmp(argv[i],"--compound") == 0) {
-                        if (*f_co < 0) {
-                                *f_co = ad_tmp;
+                } else if (strcmp(argv[i], "--compound") == 0) {
+                        if (*compound_idx < 0) {
+                                *compound_idx = idx;
                         }
-                } else if (strcmp(argv[i],"-") == 0) {
-                        if (*f_in < 0) {
-                                *f_in = ad_tmp;
-                                argv[ad_tmp] = argv[i];
-                                ad_tmp ++;
-                                count_args++;
+                } else if (strcmp(argv[i], "-") == 0) {
+                        if (*input_idx < 0) {
+                                *input_idx = idx;
+                                argv[idx] = argv[i];
+                                idx++;
+                                args_count++;
                         }
                 } else {
-                        /* if not a option is consider to a parameters */
-                        argv[ad_tmp] = argv[i];
-                        ad_tmp++;
-                        count_args++;
+                        /* if the current parameter is not an option */
+                        argv[idx] = argv[i];
+                        idx++;
+                        args_count++;
                 }
         }
-        return count_args;
+        return args_count;
 }
 
 int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
