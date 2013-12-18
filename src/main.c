@@ -130,7 +130,7 @@ int cmd_add(int argc, char **argv, char * daz) {
             f_dz = -1,
             f_type = -1,
             f_input = -1;
-        char *type_args;
+        char *type_args = NULL;
 
         if (argc < 0) {
                 printf("error no args for add\n");

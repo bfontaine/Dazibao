@@ -27,7 +27,7 @@ int cli_add_all(int argc, char **argv) {
                 *type = NULL,
                 *file = NULL,
                 *delim = ",",
-                *buf;
+                *buf = NULL;
         int
                 i,
                 len = 0,
