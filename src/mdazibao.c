@@ -239,26 +239,9 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                         ok = 0;
                 }
                 break;
-        case TLV_TEXT:
+        default:
                 ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_PNG;
-                break;
-        case TLV_PNG:
-                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_PNG;
-                /* see www.libpng.org/pub/png/spec/1.2/
-                               PNG-Rationale.html#R.PNG-file-signature */
-                break;
-        case TLV_JPEG:
-                /* see en.wikipedia.org/wiki/JPEG#Syntax_and_structure */
-                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_JPEG;
-                break;
-        case TLV_GIF:
-                /* see www.onicos.com/staff/iz/formats/gif.html#header */
-                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == TLV_GIF;
-                break;
+                                length) == tlv_get_type(&t);
         }
 
         tlv_destroy(&t);
@@ -318,6 +301,10 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 break;
         case TLV_JPEG:
                 /* see stackoverflow.com/a/692013/735926 */
+                st = -1;
+                break;
+        case TLV_TIFF:
+                /* TODO */
                 st = -1;
                 break;
         }

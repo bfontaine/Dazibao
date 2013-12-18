@@ -14,12 +14,20 @@
 #include "notification-client.h"
 
 static char notifier_enabled = 1;
-static char *notifier = "/usr/bin/notify-send \"%s\" \"%s\"";
+static char *notifier = NULL;
 static char cmd[NC_BUFFLEN*2];
 
 int check_notifier(void) {
-        LOGINFO("Looking for %s", notifier);
-        return (notify("Welcome!", "dazibao-client") == 0) ? 1 : 0;
+        if (notifier == NULL) {
+                LOGINFO("No notifier enabled.");
+                return 0;
+        } else if (notify("Welcome!", "dazibao-client") == 0) {
+                LOGINFO("Notifier enabled.");
+                return 1;
+        } else {
+                LOGERROR("Failed using %s. Disabled notifier.", notifier);
+                return 0;
+        }
 }
 
 void print_notification(char *title, char *msg) {

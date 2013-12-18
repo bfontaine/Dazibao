@@ -27,7 +27,7 @@ int cli_add_all(int argc, char **argv) {
                 *type = NULL,
                 *file = NULL,
                 *delim = ",",
-                *buf;
+                *buf = NULL;
         int
                 i,
                 len = 0,
@@ -87,7 +87,7 @@ int cli_add_all(int argc, char **argv) {
                         if (access(argv[i], F_OK) == 0) {
                                 LOGERROR("Failed opening %s", argv[i]);
                                 status = -1;
-                                goto FREEFD;
+                                goto CLOSEFD;
                         }
                         len += strlen(argv[i]);
                 } else {
@@ -95,12 +95,12 @@ int cli_add_all(int argc, char **argv) {
                         if (fstat(fd[i], &st) == -1) {
                                 PERROR("fstat");
                                 status = -1;
-                                goto FREEFD;
+                                goto CLOSEFD;
                         }
                         if (flock(fd[1], LOCK_SH)) {
                                 PERROR("flock");
                                 status = -1;
-                                goto UNLOCK;
+                                goto CLOSEFD;
                         }
                         len += st.st_size;
                 }
@@ -116,7 +116,7 @@ int cli_add_all(int argc, char **argv) {
         if (buf == NULL) {
                 PERROR("malloc");
                 status = -1;
-                goto FREEFD;
+                goto CLOSEFD;
         }
 
         write_ptr = 0;
@@ -184,17 +184,15 @@ int cli_add_all(int argc, char **argv) {
                 status = -1;
         }
 
-UNLOCK:
+FREEBUF:
+        free(buf);
+CLOSEFD:
         for (i = 0; i < argc; i++) {
-                if (fd[i] != -1 && flock(fd[i], LOCK_SH) == -1) {
-                        PERROR("flock");
+                if (fd[i] != -1 && close(fd[i]) == -1) {
+                        PERROR("close");
                         status = -1;
                 }
         }
-
-FREEBUF:
-        free(buf);
-FREEFD:
         free(fd);
 OUT:
         return status;

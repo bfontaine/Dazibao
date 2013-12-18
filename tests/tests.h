@@ -66,7 +66,7 @@ extern int __tests_success;
 /** 'long' test. x = expression, e = expected */
 #define LONGTEST(x,e) MYTEST(long, N_CMP, "%li", x, e)
 /** 'char' test. x = expression, e = expected */
-#define CHARTEST(x,e)  MYTEST(char, N_CMP, "%c", x, e)
+#define CHARTEST(x,e) MYTEST(char, N_CMP, "%c", x, e)
 /** 'char*' test. x = expression, e = expected */
 #define STRTEST(x,e)  MYTEST(char*, S_CMP, "%s", x, e)
 

@@ -34,6 +34,13 @@ struct tlv_type tlv_types[] = {
         { TLV_COMPOUND , "compound" },
         { TLV_DATED    , "dated"    },
         { TLV_GIF      , "gif"      },
+        { TLV_TIFF     , "tiff"     },
+        { TLV_MP3      , "mp3"      },
+        { TLV_MP4      , "mp4"      },
+        { TLV_BMP      , "bmp"      },
+        { TLV_OGG      , "ogg"      },
+        { TLV_MIDI     , "mid"      },
+        { TLV_PDF      , "pdf"      },
         { -1           , NULL       }
 };
 
@@ -44,7 +51,16 @@ struct type_signature sigs[] =  {
         { TLV_PNG,  "\211PNG\r\n\032\n" },
         { TLV_JPEG, "\255\216\255"      },
         { TLV_GIF,  "GIF87a"            },
-        { TLV_GIF,  "GIF89a"            }
+        { TLV_GIF,  "GIF89a"            },
+        { TLV_TIFF, "\073\073\042\000"  },
+        { TLV_TIFF, "\077\077\000\042"  },
+        { TLV_MP3,  "\255\251"          },
+        { TLV_MP3,  "\073\068\051"      },
+        { TLV_MP4,  "\051\103\112\053"  },
+        { TLV_BMP,  "\066\077"  },
+        { TLV_OGG,  "\079\103\103\083"  },
+        { TLV_MIDI, "\077\084\104\100"  },
+        { TLV_PDF,  "\037\080\068\070"  }
 };
 
 

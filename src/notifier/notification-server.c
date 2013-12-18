@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <fcntl.h>
+#include <sys/file.h>
 #include "utils.h"
 #include "logging.h"
 #include "notifutils.h"
@@ -23,6 +24,37 @@
 
 static struct ns_config conf;
 int _log_level;
+
+void ns_exit(int unused) {
+
+        broadcast(NS_ERR_EXIT, strlen(NS_ERR_EXIT));
+
+        LOGINFO("Unlinking %s", conf.s_path);
+
+        if (unlink(conf.s_path) == -1) {
+                PERROR("unlink");
+                exit(EXIT_FAILURE);
+        }
+
+        exit(EXIT_SUCCESS);
+
+}
+
+void broadcast(char *str, int len) {
+        int i;
+        for (i = 0; i < conf.client_max; i++) {
+                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_lock() failed.");
+                }
+                if (conf.c_socket[i] != -1) {
+                        send_message(i, str, len);
+                }
+                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
+                        LOGERROR("pthread_mutex_unlock() failed.");
+                }
+        }
+
+}
 
 void send_message(int s_index, char *str, int len) {
 
@@ -40,22 +72,12 @@ void *notify(void *arg) {
         char *file = (char *)arg;
         int len = strlen(file) + 2;
         char *str = malloc(sizeof(*str) * len);
-        int i;
+
         str[0] = 'C';
         memcpy(&str[1], file, len - 2);
         str[len - 1] = '\n';
 
-        for (i = 0; i < conf.client_max; i++) {
-                if (pthread_mutex_lock(&(conf.c_mtx[i])) != 0) {
-                        LOGERROR("pthread_mutex_lock() failed.");
-                }
-                if (conf.c_socket[i] != -1) {
-                        send_message(i, str, len);
-                }
-                if (pthread_mutex_unlock(&(conf.c_mtx[i])) != 0) {
-                        LOGERROR("pthread_mutex_unlock() failed.");
-                }
-        }
+        broadcast(str, len);
 
         free(str);
         return (void *)NULL;
@@ -96,6 +118,12 @@ int reliable_watch(char *file, uint32_t *old_hash) {
                 ERROR("open", -1);
         }
 
+        if (flock(fd, LOCK_SH) == -1) {
+                PERROR("flock");
+                status = -1;
+                goto CLOSE;
+        }
+
         if (fstat(fd, &st) < 0) {
                 PERROR("fstat");
                 status = -1;
@@ -126,6 +154,10 @@ int reliable_watch(char *file, uint32_t *old_hash) {
                 PERROR("munmap");
         }
 
+        if (flock(fd, LOCK_UN) == -1) {
+                PERROR("flock");
+        }
+
 CLOSE:
         if (close(fd) == -1) {
                 PERROR("close");
@@ -152,12 +184,9 @@ void *watch_file(void *arg) {
 
         while (1) {
                 LOGDEBUG("watching %s", path);
-                if (conf.reliable) {
-                        changed = reliable_watch(path, &(value.hash));
-                } else {
-                        changed = unreliable_watch(path, &(value.time));
-                }
-
+                changed = conf.reliable ?
+                        reliable_watch(path, &(value.hash)):
+                        unreliable_watch(path, &(value.time));
                 if (changed == 1) {
                         sleeping_time =
                                 MAX(MIN(sleeping_time / 2,
@@ -174,7 +203,7 @@ void *watch_file(void *arg) {
                 sleep(sleeping_time);
         }
 
-        return (void *)NULL;
+        return NULL;
 }
 
 
@@ -212,6 +241,13 @@ int set_up_server() {
 
         LOGDEBUG("Setting up server");
 
+        action.sa_handler = ns_exit;
+        sigfillset(&action.sa_mask);
+
+        if (sigaction(SIGINT, &action, 0)) {
+                ERROR("sigaction", -1);
+        }
+
         action.sa_handler = SIG_IGN;
         sigfillset(&action.sa_mask);
 
@@ -223,13 +259,17 @@ int set_up_server() {
         saddr.sun_family = AF_UNIX;
 
         if (conf.s_path == NULL) {
-                strncpy(saddr.sun_path, getenv("HOME"), UNIX_PATH_MAX - 1);
-                strncat(saddr.sun_path, "/", UNIX_PATH_MAX - 1);
-                strncat(saddr.sun_path, ".dazibao-notification-socket",
+                conf.s_path = calloc(UNIX_PATH_MAX, sizeof(char));
+                if (conf.s_path == NULL) {
+                        ERROR("malloc", -1);
+                }
+                strncpy(conf.s_path, getenv("HOME"), UNIX_PATH_MAX - 1);
+                strncat(conf.s_path, "/", UNIX_PATH_MAX - 1);
+                strncat(conf.s_path, ".dazibao-notification-socket",
                         UNIX_PATH_MAX - 1);
-        } else {
-                strncpy(saddr.sun_path, conf.s_path, UNIX_PATH_MAX - 1);
         }
+
+        strncpy(saddr.sun_path, conf.s_path, UNIX_PATH_MAX - 1);
 
         conf.s_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 

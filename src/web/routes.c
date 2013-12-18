@@ -230,6 +230,47 @@ int route_post_compact_dz(dz_t *dz, struct http_request req,
         return 0;
 }
 
+int route_post_new_tlv_text(dz_t *dz, struct http_request req,
+                struct http_response *resp) {
+
+        tlv_t t;
+        int st;
+
+        LOGTRACE("trying to add a new text TLV");
+
+        if (req.body_len == -1 || req.body == NULL) {
+                LOGERROR("Got an empty POST request.");
+                return HTTP_S_BADREQ;
+        }
+
+        LOGTRACE("tlv_init: %d", tlv_init(&t));
+
+        tlv_set_type(&t, TLV_TEXT);
+        tlv_set_length(&t, req.body_len);
+
+        LOGTRACE("len=%d, text: %.*s", req.body_len, req.body_len, req.body);
+
+        LOGTRACE("tlv_mread: %d", tlv_mread(&t, req.body));
+
+        st = dz_add_tlv(dz, &t);
+        LOGTRACE("dz_add_tlv: %d", st);
+
+        tlv_destroy(&t);
+        resp->body_len = -1;
+
+        if (st == 0) {
+                /* HTTP 1.0 suggests to return a 201 Created along with a
+                 * representation of the created resource (preferably in
+                 * text/html) */
+                resp->status = HTTP_S_NO_CT;
+                return 0;
+        }
+
+        resp->status = HTTP_S_ERR;
+
+        return 0;
+}
+
 int register_routes(void) {
         int st = 0;
 
@@ -239,13 +280,15 @@ int register_routes(void) {
          * a route matches '/foo/bar', place it *before* another route which
          * matches '/foo/' or it will never match '/foo/bar*' paths.
          */
-        st |= add_route(HTTP_M_GET,  "/index.html",  route_get_index);
+        st |= add_route(HTTP_M_GET,  "/index.html", route_get_index);
 
         st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
-        st |= add_route(HTTP_M_GET,  "/tlv/",        route_get_image_tlv);
+        st |= add_route(HTTP_M_POST, "/tlv/add/text/",
+                        route_post_new_tlv_text);
+        st |= add_route(HTTP_M_GET,  "/tlv/", route_get_image_tlv);
 
-        st |= add_route(HTTP_M_POST, "/compact",     route_post_compact_dz);
-        st |= add_route(HTTP_M_GET,  "/hash",        route_get_hash);
+        st |= add_route(HTTP_M_POST, "/compact", route_post_compact_dz);
+        st |= add_route(HTTP_M_GET,  "/hash", route_get_hash);
 
         return st;
 }

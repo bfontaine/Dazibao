@@ -29,6 +29,20 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
+#define TLV_TIFF   128
+
+#define TLV_MP3    129
+
+#define TLV_MP4    130
+
+#define TLV_BMP    131
+
+#define TLV_OGG    132
+
+#define TLV_MIDI   133
+
+#define TLV_PDF    134
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 

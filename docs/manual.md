@@ -41,7 +41,8 @@ Available options:
     First %s is the place where message title will be include.
     Second %s is the place where message body will be include.
 ```
-NB: If no `--notifier` option is provided, default is `"notify-send \"%s\" \"%s\""`
+Notifier examples :
+* On ubuntu: `notification-client --notifier "notify-send \"%s\" \"%s\""`
 
 ## Command line interface
 
