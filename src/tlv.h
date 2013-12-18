@@ -266,7 +266,7 @@ const char *tlv_type2str(int tlv_type);
  * @return code
  * @see tlv_type2str
  **/
-char tlv_str2type(char *tlv_type);
+int tlv_str2type(char *tlv_type);
 
 
 /**

@@ -41,20 +41,23 @@
         "        command: compact <dazibao>\n"
 
 /**
- * check if add option have a good formation
- * and keep only args and cut option but keep
- * timekeepper in flag matching
- * @param argc : lenght to argv
- * @param argv : parameters to command line
- * @param f_d  : flag to option date
- * @param f_co : flag to option compound
- * @param f_dz : flag to option dazibao
- * @param f_ty : flag to option type
- * @param f_in : flag to option "-" -> input
- * @return count to parameters
+ * Parse the 'add' command options and return the number of trailing arguments.
+ * @param argc length of argv
+ * @param argv parameters from the command line
+ * @param date_idx result parameter. Will be filled with the index of the date
+ * in the resulting argv.
+ * @param compound_idx result parameter. Will be filled with the index of the
+ * '--compound' argument in the resulting argv.
+ * @param dz_idx result parameter. Will be filled with the dazibao index name
+ * in the resulting argv.
+ * @param type_idx result parameter. Will be filled with the type index in the
+ * resulting argv.
+ * @param input_idx result parameter. Will be filled with the input index of
+ * the in the resulting argv.
+ * @return parameters count
  **/
-int check_option_add(int argc, char **argv, int *f_d, int *f_co, int *f_dz,
-                int *f_ty, int *f_in);
+int check_option_add(int argc, char **argv, int *date_idx, int *compound_idx,
+                int *dz_idx, int *type_idx, int *input_idx);
 
 /**
  * check if option type counter of args exist

@@ -8,6 +8,7 @@ function _check() {
     grep -EIn "$1" \
             src/*.c src/*.h \
             src/web/*.c src/web/*.h \
+            src/cli/*.c src/cli/*.h \
             src/notifier/*.c src/notifier/*.h > $T
     if [ "$?" -eq "0" ]; then
             echo "$2"

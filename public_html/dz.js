@@ -136,7 +136,7 @@
                 var changed = false;
 
                 if (prev_hash != 0) {
-                    changed = (hash != prev_hash);
+                    changed = hash > -1 && (hash != prev_hash);
                 }
                 prev_hash = hash;
 
