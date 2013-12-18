@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
                 }
                 LOGDEBUG("Got method %d, path %s, body length %d",
                                req->method, req->path, req->body_len);
-                LOGDEBUG("User-Agent: %s", REQ_HEADER(*req, HTTP_H_UA));
+                LOGDEBUG("User-Agent: %s", req->headers->headers[HTTP_H_UA]);
 
                 /* opening the dazibao for use in responses */
 
