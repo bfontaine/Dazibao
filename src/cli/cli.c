@@ -314,7 +314,7 @@ CLOSE:
         return status;
 }
 
-int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
+int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
 
         /**
          * FIXME: This function breaks
@@ -336,6 +336,12 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
                 }
 
                 int type = tlv_get_type(&tlv);
+
+                if ((type == TLV_PAD1 || type == TLV_PADN)
+                        && !debug) {
+                        continue;
+                }
+
                 int len = tlv_get_length(&tlv);
 
                 for (int i = 0; i <= indent; i++) {
@@ -359,7 +365,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
                                         -1,
                                         dz->data
                                 };
-                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1);
+                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1, debug);
                         }
                         break;
                 case TLV_COMPOUND:
@@ -374,7 +380,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
                                         + TLV_SIZEOF_HEADER,
                                         -1,
                                         dz->data
-                                };                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1);
+                                };                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1, debug);
                         }
                         break;
                 }
@@ -413,7 +419,7 @@ int cli_dump_dz(int argc, char **argv, int out) {
                 return -1;
         }
 
-        cli_print_all_tlv(&dz, 0, depth);
+        cli_print_all_tlv(&dz, 0, depth, debug);
 
         if (dz_close(&dz) == -1) {
                 LOGERROR("Failed closing dazibao.");
