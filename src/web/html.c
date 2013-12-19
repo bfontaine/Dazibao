@@ -277,11 +277,14 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
 
 int dz2html(dz_t dz, char **html) {
         tlv_t t;
-        off_t dz_off;
+        off_t dz_off,
+              *tlvs_offs;
         int htmlsize = 0,
             htmlcursor = 0,
             written = 0,
-            html_bottom_len;
+            html_bottom_len,
+            tlvs_count,
+            tlvs_max_count;
 
         if (dz.fd < 0 || html == NULL || tlv_init(&t) < 0) {
                 tlv_destroy(&t);
@@ -313,13 +316,43 @@ int dz2html(dz_t dz, char **html) {
         }
         htmlcursor += written;
 
+        /* Ttop-level LVs are displayed in reverse order, so we need to walk
+         * the TLV once and store their offset in an array before adding them.
+         */
+        tlvs_count = 0;
+        tlvs_max_count = 16;
+        tlvs_offs = (off_t*)malloc(sizeof(off_t)*tlvs_max_count);
+
+        LOGTRACE("getting all TLVs' offsets");
         while ((dz_off = dz_next_tlv(&dz, &t)) > 0) {
+                if (tlvs_count == tlvs_max_count) {
+                        tlvs_max_count *= 2;
+                        tlvs_offs = (off_t*)safe_realloc(tlvs_offs,
+                                        sizeof(off_t)*tlvs_max_count);
+                }
+
+                tlvs_offs[tlvs_count++] = dz_off;
+        }
+        LOGTRACE("got %d TLVs", tlvs_count);
+
+        while (--tlvs_count >= 0) {
+                dz_off = tlvs_offs[tlvs_count];
+
+                if (dz_off < DAZIBAO_HEADER_SIZE) {
+                        LOGDEBUG("dz_off < dazibao header size, stopping. "
+                                        "(%d)", (int)dz_off);
+                        break;
+                }
+
+                dz_tlv_at(&dz, &t, dz_off);
                 if (html_add_tlv(dz, &t, &dz_off, html, &htmlsize,
                                         &htmlcursor) != 0) {
+                        NFREE(tlvs_offs);
                         return -1;
                 }
         }
 
+        NFREE(tlvs_offs);
         tlv_destroy(&t);
 
         html_bottom_len = strlen(HTML_DZ_BOTTOM);

@@ -293,13 +293,53 @@ int cli_dump_tlv(int argc, char **argv, int out) {
         default:
                 break;
         };
-        
-        dz_read_tlv(&dz, &tlv, offset);
-        
-        if (value) {
-                tlv_fdump_value(&tlv, out);
+
+        if (tlv_get_type(&tlv) == TLV_LONGH && value) {
+                dz_read_tlv(&dz, &tlv, offset);
+                uint32_t len = tlv_long_real_data_length(&tlv);
+                char *buff = malloc(sizeof(*buff) * len);
+                
+                size_t off;
+                
+                uint32_t write_idx = 0;
+
+                if (buff == NULL) {
+                        PERROR("malloc");
+                        status = -1;
+                        goto DESTROY;
+                }
+
+                if (dz_set_offset(&dz, offset) == -1) {
+                        LOGERROR("dz_set_offset failed");
+                        status = -1;
+                        free(buff);
+                }
+
+                dz_next_tlv(&dz, &tlv);
+
+                while ((off = dz_next_tlv(&dz, &tlv)) != EOD) {
+                        if (tlv_get_type(&tlv) == TLV_LONGC) {
+                                dz_read_tlv(&dz, &tlv, off);
+                                tlv_mdump_value(&tlv, buff + write_idx);
+                                write_idx += tlv_get_length(&tlv);
+                        } else {
+                                break;
+                        }
+                }
+                if (write_idx != len) {
+                        LOGERROR("Read: %u, expected %u", write_idx, len);
+                } else if ((uint32_t)write_all(out, buff, len) != len) {
+                        LOGERROR("write_all failed");
+                }
+                free(buff);
         } else {
-                tlv_fdump(&tlv, out);
+                dz_read_tlv(&dz, &tlv, offset);
+        
+                if (value) {
+                        tlv_fdump_value(&tlv, out);
+                } else {
+                        tlv_fdump(&tlv, out);
+                }
         }
 
 DESTROY:
@@ -505,6 +545,27 @@ OUT:
 }
 
 
+int cli_mk_long_tlv(char *file) {
+        int fd;
+        int type;
+        char *map;
+        tlv_t tlv;
+        struct stat st;
+        fd = open(file, O_RDONLY);
+        flock(fd, LOCK_SH);
+        fstat(fd, &st);
+        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        type = guess_type(map, st.st_size);
+        tlv_init(&tlv);
+        mk_long_tlv(&tlv, map, type, st.st_size);
+        munmap(map, st.st_size);
+        tlv_long_fwrite(&tlv, STDOUT_FILENO);
+        tlv_destroy(&tlv);
+        close(fd);
+        return 0;
+}
+
+
 int main(int argc, char **argv) {
 
         char *cmd;
@@ -543,6 +604,11 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
+                        return EXIT_FAILURE;
+                }
+        }  else if (strcmp(cmd, "mk_long") == 0) {
+                if (cli_mk_long_tlv(argv[2]) == -1) {
+                        LOGERROR("Failed making long_tlv TLV.");
                         return EXIT_FAILURE;
                 }
         } else {

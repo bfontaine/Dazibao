@@ -46,6 +46,8 @@ typedef struct {
 /** type of a Dazibao hash */
 typedef int hash_t;
 
+int dz_set_offset(dz_t *d, size_t off);
+
 /**
  * @param d the dazibao
  **/

@@ -43,6 +43,10 @@
 
 #define TLV_PDF    134
 
+#define TLV_LONGH  254
+
+#define TLV_LONGC  253
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
@@ -208,6 +212,12 @@ int tlv_mwrite(tlv_t *tlv, void *data);
  **/
 int tlv_mread(tlv_t *tlv, char *data);
 
+
+void tlv_mdump(tlv_t *tlv, char *dst);
+
+void tlv_mdump_value(tlv_t *tlv, char *dst);
+
+
 /**
  * Write a TLV.
  * Offset of {fd} when returning is unspecified.
@@ -256,7 +266,7 @@ const char *tlv_type2str(int tlv_type);
  * @return code
  * @see tlv_type2str
  **/
-char tlv_str2type(char *tlv_type);
+int tlv_str2type(char *tlv_type);
 
 
 /**
@@ -321,5 +331,16 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  * @return sizeof new tlv create
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
+
+int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
+
+uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst);
+
+uint32_t tlv_long_fwrite(tlv_t *tlv, int fd);
+
+uint32_t tlv_long_real_data_length(tlv_t *tlv);
+
+int tlv_long_real_data_type(tlv_t *tlv);
+
 
 #endif
