@@ -341,7 +341,8 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
                 for (int i = 0; i <= indent; i++) {
                         printf("--");
                 }
-                printf(" @%d: %s (%d by)\n", (int)off, tlv_type2str(type), len);
+
+                printf(" @[%10li]: %8s (%d bytes)\n", off, tlv_type2str(type), len);
 
                 switch (type) {
                 case TLV_DATED:
