@@ -1,9 +1,11 @@
-#include <string.h>
-#include <stdlib.h>
-#include "tlv.h"
 #include <limits.h>
-#include "utils.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "mdazibao.h"
+#include "tlv.h"
+#include "utils.h"
 
 /** @file */
 int check_tlv_path(const char * path, int flag_access) {
@@ -65,9 +67,9 @@ void *safe_realloc(void *ptr, size_t size) {
         return newptr;
 }
 
-int write_all(int fd, char *buff, int len) {
-        int wrote = 0,
-            w;
+ssize_t write_all(int fd, char *buff, int len) {
+        ssize_t wrote = 0,
+                w;
 
         while (len > 0 && (w = write(fd, buff+wrote, len)) > 0) {
                 wrote += w;
