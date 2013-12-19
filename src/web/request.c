@@ -401,8 +401,10 @@ int destroy_http_params(struct http_param **ps, int count) {
                 return 0;
         }
 
-        while (--count >= 0 && ps[count] != NULL) {
-                NFREE(ps[count]);
+        for (int i=0; ps[i] != NULL && (count == -1 || i<count); i++) {
+                NFREE(ps[i]->name);
+                NFREE(ps[i]->value);
+                NFREE(ps[i]);
         }
         NFREE(ps);
         return 0;
@@ -417,15 +419,23 @@ int destroy_http_params(struct http_param **ps, int count) {
  * @return a new http_param structure.
  **/
 static struct http_param *parse_form_data_part(char *start, char *end) {
-        struct http_param *param;
-        int len;
+        struct http_param *param = NULL;
+        struct http_headers *hs = NULL;
+        int len_cache; /* this is used to cache the result of 'strlen' */
+        unsigned int len, cursor;
+        char *ct_dispo,
+             *name = NULL;
 
-        if (start == NULL || end == NULL) {
+        if (start == NULL || end == NULL || start > end) {
+                LOGDEBUG("start=NULL or end=NULL or start (%p) > end (%p)",
+                                start, end);
                 return NULL;
         }
 
         len = end - start;
+        LOGTRACE("len=%d", len);
         if (len <= 2) {
+                LOGDEBUG("length is too small (%d)", len);
                 return NULL;
         }
 
@@ -439,28 +449,98 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
                 return NULL;
         }
         start += 2;
+        len -= 2;
 
-        /**
-         * TODO parse the part, which is something like:
-         *
-         * Content-Disposition: form-data; name="<name>"[; filename="..."] CRLF
-         * [Content-Type: ... CR LF]
-         * CR LF
-         * <data>
-         *
-         * We can use parse_header/2 to parse the headers.
-         *
-         * Only <name> and <data> are interesting here. */
+        http_init_headers(hs);
+        cursor = 0;
 
-        return NULL;
+        /* parse headers */
+        while (cursor < len) {
+               if (is_crlf(start, cursor, len)) {
+                        if (cursor == 0) {
+                                LOGTRACE("CR LF on one line = end of headers");
+                                start += 2;
+                                len -= 2;
+                                break;
+                        }
+                        LOGTRACE("CR LF at cursor=%d", cursor);
+                        start[cursor] = '\0';
+                        LOGTRACE("header line: '%s'", start);
+                        parse_header(start, hs);
+                        start[cursor] = CR;
+                        start += cursor + 2;
+                        len -= cursor + 2;
+                        cursor = 0;
+                        continue;
+               }
+               cursor++;
+        }
+
+        if (hs->headers[HTTP_H_CT_DISPO] == NULL) {
+                LOGERROR("No 'Content-Disposition' header found.");
+                destroy_http_headers(hs);
+                return NULL;
+        }
+
+        /* parsing 'Content-Disposition' */
+        ct_dispo = strdup(hs->headers[HTTP_H_CT_DISPO]);
+        destroy_http_headers(hs);
+        cursor = 0;
+        len_cache = strlen("form-data;");
+        if (strncmp(ct_dispo, "form-data;", len_cache) != 0) {
+                LOGDEBUG("Malformed 'Content-Disposition header'");
+                LOGTRACE("'Content-Disposition': '%s'", ct_dispo);
+                free(ct_dispo);
+                return NULL;
+        }
+
+        cursor += len_cache;
+        while (ct_dispo[cursor++] == ' '); /* skip spaces */
+
+        name = (char*)malloc(sizeof(char)*32);
+        if (name == NULL) {
+                perror("malloc");
+                NFREE(ct_dispo);
+                return NULL;
+        }
+        if (sscanf(ct_dispo + cursor, "name=\"%32s\"", name) != 1) {
+                LOGDEBUG("Cannot sscanf the name");
+                NFREE(name);
+                NFREE(ct_dispo);
+                return NULL;
+        }
+
+        NFREE(ct_dispo);
+
+        param = (struct http_param*)malloc(sizeof(struct http_param));
+        if (param == NULL) {
+                perror("malloc");
+                NFREE(name);
+                return NULL;
+        }
+
+        param->name = name;
+        param->value_len = end - start;
+
+        param->value = (char*)malloc(sizeof(char)*(param->value_len));
+        if (param->value == NULL) {
+                NFREE(param->name);
+                NFREE(param);
+                return NULL;
+        }
+
+        memcpy(param->value, start, param->value_len);
+
+        return param;
 }
 
 struct http_param **parse_form_data(struct http_request *req) {
         struct http_param **params = NULL;
         char *boundary,
              *sep, /* separator string */
-             *cursor,
-             *next_sep; /* pointer on the next separator */
+             *rest,
+             *next_sep, /* pointer on the next separator */
+             last_body_char;
         int sep_len,
             params_max_count,
             params_count;
@@ -471,6 +551,7 @@ struct http_param **parse_form_data(struct http_request *req) {
         LOGTRACE("Parsing form data from request");
 
         if (req == NULL || req->headers == NULL) {
+                LOGTRACE("Got NULL request or headers");
                 return NULL;
         }
 
@@ -487,9 +568,6 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        /* XXX We need to fix 'sep' to allow for "--" at its end to correctly
-         * recognize the end of the body. */
-
         /* we're constructing the separator as follow:
          *          CR LF <hyphen> <hyphen> <boundary> \0
          * indexes: 0  1  2        3        4    ...   len-1
@@ -497,10 +575,13 @@ struct http_param **parse_form_data(struct http_request *req) {
          * The trailing CR LF is not included, because the last boundary ends
          * with <hyphen> <hyphen> instead.
          */
-        memcpy(sep, "\013\010--", 4); /* CR LF <hyphen> <hyphen> */
-        sep[sep_len - 1] = '\0';
+        memcpy(sep, "\015\012--", 4); /* CR LF (in base 8) <hyphen> <hyphen> */
 
-        memcpy(sep + 4, boundary, sep_len - 7);
+        memcpy(sep + 4, boundary, sep_len - 4);
+        sep[sep_len] = '\0';
+
+        LOGTRACE("(separator) first 2 bytes: %u %u", sep[0], sep[1]);
+        LOGTRACE("separator: '%s'", sep);
 
         if (req->body_len < (sep_len+2) * 2) {
                 /* we need at least one separator at the beginning and one at
@@ -511,25 +592,42 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        cursor = req->body;
-        params_max_count = 8; /* arbitrary limit, we may increase this later */
+        params_max_count = 8; /* arbitrary limit */
         params_count = 0;
         params = (struct http_param**)malloc(hp_ptr_size*params_max_count);
 
         if (params == NULL) {
+                perror("malloc");
                 free(sep);
                 return NULL;
         }
 
-        cursor = strstr(req->body, sep);
+        last_body_char = req->body[req->body_len - 1];
+        req->body[req->body_len - 1] = '\0'; /* needed by strstr */
+        rest = strstr(req->body, sep);
 
-        if (cursor == NULL) {
+        if (rest == NULL) {
+                int l = MIN(req->body_len, 50);
+                LOGERROR("Cannot find the separator in request body");
+                LOGTRACE("First %d bytes of body: '%.*s'", l, l, req->body);
+                LOGTRACE("First 2 bytes of body: %u %u",
+                                req->body[0], req->body[1]);
+                LOGTRACE("First 2 bytes of sep:  %u %u", sep[0], sep[1]);
                 destroy_http_params(params, params_count);
                 free(sep);
+                req->body[req->body_len - 1] = last_body_char;
                 return NULL;
         }
 
-        while ((next_sep = strstr(cursor, sep)) != NULL) {
+        LOGTRACE("need %d, got %d", rest + sep_len - req->body, req->body_len);
+        LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
+                        rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
+
+        while ((rest += sep_len) - req->body < req->body_len
+                        && (next_sep = strstr(rest, sep)) != NULL) {
+
+                LOGTRACE("In the parts loop");
+
                 if (params_count + 1 == params_max_count) {
                         struct http_param **params2;
 
@@ -540,23 +638,33 @@ struct http_param **parse_form_data(struct http_request *req) {
                                 perror("realloc");
                                 destroy_http_params(params, params_count);
                                 free(sep);
+                                req->body[req->body_len - 1] = last_body_char;
                                 return NULL;
                         }
                         params = params2;
                 }
 
-                params[params_count++] =
-                        parse_form_data_part(cursor + sep_len, next_sep - 1);
+                LOGTRACE("rest=%p, next_sep=%p", rest, next_sep);
+                params[params_count] =
+                        parse_form_data_part(rest, next_sep - 1);
 
                 if (params[params_count] == NULL) {
-                        LOGTRACE("parse_form_data_part failed");
+                        LOGTRACE("parse_form_data_part %d failed",
+                                        params_count);
                         break;
                 }
 
-                cursor = next_sep;
+                params_count++;
+                rest = next_sep;
         }
 
+        if (params_count == 0) {
+                LOGWARN("parsed 0 parameters");
+        } else {
+                LOGTRACE("parsed %d parameters", params_count);
+        }
         params[params_count] = NULL;
         free(sep);
+        req->body[req->body_len - 1] = last_body_char;
         return params;
 }

@@ -91,10 +91,9 @@ int parse_header(char *line, struct http_headers *hs);
 char *get_request_boundary(struct http_request *req);
 
 /**
- * Free a 'struct http_param' array, as returned by parse_form_data. It frees
- * each struct pointer but not its parameters because they're pointers on the
- * request body.
+ * Free a 'struct http_param' array, as returned by parse_form_data.
  * @param ps
+ * @param count the number of parameters, or -1 if you don't know it
  * @return 0
  * @see parse_form_data
  **/

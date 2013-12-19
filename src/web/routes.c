@@ -271,6 +271,27 @@ int route_post_new_tlv_text(dz_t *dz, struct http_request req,
         return 0;
 }
 
+/** route for TLVs submitted via HTML forms */
+int route_post_form_tlv(dz_t *dz, struct http_request req,
+                struct http_response *resp) {
+
+        struct http_param **params;
+
+        params = parse_form_data(&req);
+
+        if (params == NULL) {
+                return HTTP_S_BADREQ;
+        }
+
+        for (int i=0; params[i] != NULL; i++) {
+                LOGTRACE("param name='%s', valuelen=%d",
+                                params[i]->name, params[i]->value_len);
+        }
+
+        destroy_http_params(params, -1);
+        return -1;
+}
+
 int register_routes(void) {
         int st = 0;
 
@@ -280,15 +301,13 @@ int register_routes(void) {
          * a route matches '/foo/bar', place it *before* another route which
          * matches '/foo/' or it will never match '/foo/bar*' paths.
          */
-        st |= add_route(HTTP_M_GET,  "/index.html", route_get_index);
-
-        st |= add_route(HTTP_M_POST, "/tlv/delete/", route_post_rm_tlv);
-        st |= add_route(HTTP_M_POST, "/tlv/add/text/",
-                        route_post_new_tlv_text);
-        st |= add_route(HTTP_M_GET,  "/tlv/", route_get_image_tlv);
-
-        st |= add_route(HTTP_M_POST, "/compact", route_post_compact_dz);
-        st |= add_route(HTTP_M_GET,  "/hash", route_get_hash);
+        st |= add_route(HTTP_M_GET,  "/index.html",   route_get_index);
+        st |= add_route(HTTP_M_POST, "/tlv/delete/",  route_post_rm_tlv);
+        st |= add_route(HTTP_M_POST, "/tlv/add/text", route_post_new_tlv_text);
+        st |= add_route(HTTP_M_POST, "/tlv/add/form", route_post_form_tlv);
+        st |= add_route(HTTP_M_GET,  "/tlv/",         route_get_image_tlv);
+        st |= add_route(HTTP_M_POST, "/compact",      route_post_compact_dz);
+        st |= add_route(HTTP_M_GET,  "/hash",         route_get_hash);
 
         return st;
 }
