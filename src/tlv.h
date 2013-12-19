@@ -340,4 +340,7 @@ uint32_t tlv_long_fwrite(tlv_t *tlv, int fd);
 
 uint32_t tlv_long_real_data_length(tlv_t *tlv);
 
+int tlv_long_real_data_type(tlv_t *tlv);
+
+
 #endif

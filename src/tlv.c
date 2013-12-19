@@ -461,3 +461,7 @@ uint32_t tlv_long_fwrite(tlv_t *tlv, int fd) {
 uint32_t tlv_long_real_data_length(tlv_t *tlv) {
         return ntohl(*((uint32_t *)((*tlv) + TLV_SIZEOF_HEADER + 1)));
 }
+
+int tlv_long_real_data_type(tlv_t *tlv) {
+        return (*tlv)[TLV_SIZEOF_HEADER + 1];
+}
