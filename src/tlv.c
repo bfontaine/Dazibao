@@ -391,8 +391,7 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         int
                 nb_chunks =
                 len / TLV_MAX_VALUE_SIZE
-                + MIN(1, len % TLV_MAX_VALUE_SIZE)
-,
+                + MIN(1, len % TLV_MAX_VALUE_SIZE),
                 chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
                 be_len = htonl(len),
                 remaining = len,
