@@ -40,11 +40,23 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
-int dz_set_offset(dz_t *d, size_t off) {
+int dz_set_offset(dz_t *d, off_t off) {
         if (off > d->len) {
                 return -1;
         }
         d->offset = off;
+        return 0;
+}
+
+off_t dz_get_offset(dz_t *d) {
+        return d->offset;
+}
+
+int dz_update_offset(dz_t *d, off_t off) {
+        if (off > d->len) {
+                return -1;
+        }
+        d->offset += off;
         return 0;
 }
 
@@ -370,12 +382,12 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
         dz_t tmp = {
-                0,
+                -1,
                 d->fflags,
-                d->len - offset,
-                0,
-                d->space - offset,
-                d->data + offset
+                d->len,
+                offset,
+                d->space,
+                d->data
         };
         return dz_next_tlv(&tmp, tlv);
 }
