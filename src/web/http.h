@@ -76,6 +76,8 @@ struct http_status {
 #define HTTP_S_CONFLICT      409
 /** 411 HTTP status */
 #define HTTP_S_LENGTHREQD    411
+/** 413 HTTP status */
+#define HTTP_S_TOO_LARGE     413
 /** 415 HTTP status */
 #define HTTP_S_URITOOLONG    414
 
@@ -116,8 +118,10 @@ struct http_status {
 /** code for a "Last Modified" HTTP header */
 #define HTTP_H_LASTMODIF     10
 
-/* code for a "Content-Disposition" HTT header */
+/* code for a "Content-Disposition" HTTP header */
 #define HTTP_H_CT_DISPO      11
+/* code for a "Location" HTTP header */
+#define HTTP_H_LOCATION      12
 
 /* arbitrary extentions/limits */
 /** maximum number of HTTP headers in a request/response */
