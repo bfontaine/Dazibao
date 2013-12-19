@@ -283,11 +283,11 @@ int cli_dump_tlv(int argc, char **argv, int out) {
 
         switch (dz_tlv_at(&dz, &tlv, offset)) {
         case -1:
-/*
-  Fixme: dz_tlv_at should always return EOD since it is 0
-  case EOD:
- */
                 LOGERROR("dz_tlv_at %d failed.", (int)offset);
+                status = -1;
+                goto DESTROY;
+        case EOD:
+                LOGINFO("EOD reached.");
                 status = -1;
                 goto DESTROY;
         default:
