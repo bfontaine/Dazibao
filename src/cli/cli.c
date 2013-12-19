@@ -31,8 +31,8 @@ int cli_add_all(int argc, char **argv) {
         int
                 i,
                 len = 0,
-                ptr_compound,
-                write_ptr,
+                compound_idx,
+                write_idx,
                 status = 0;
         int *fd;
         uint32_t timestamp;
@@ -59,7 +59,7 @@ int cli_add_all(int argc, char **argv) {
 
         /* set date and update pointers */
         if (date) {
-                ptr_compound = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                compound_idx = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 len = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 timestamp = (uint32_t) time(NULL);
                 timestamp = htonl(timestamp);
@@ -69,7 +69,7 @@ int cli_add_all(int argc, char **argv) {
                 }
         } else {
                 len = 0;
-                ptr_compound = 0;
+                compound_idx = 0;
                 timestamp = 0;
         }
 
@@ -119,14 +119,14 @@ int cli_add_all(int argc, char **argv) {
                 goto CLOSEFD;
         }
 
-        write_ptr = 0;
+        write_idx = 0;
 
         if (argc > 1) {
-                write_ptr += TLV_SIZEOF_HEADER;
+                write_idx += TLV_SIZEOF_HEADER;
         }
 
         if (date) {
-                write_ptr += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                write_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
         }
 
         for (i = 0; i < argc; i++) {
@@ -134,13 +134,13 @@ int cli_add_all(int argc, char **argv) {
                 char typ;
                 unsigned int tlv_len;
 
-                write_ptr += TLV_SIZEOF_HEADER;
+                write_idx += TLV_SIZEOF_HEADER;
 
                 if (fd[i] == -1) {
                         tlv_len = strlen(argv[i]);
-                        memcpy(buf + write_ptr, argv[i], tlv_len);
+                        memcpy(buf + write_idx, argv[i], tlv_len);
                 } else {
-                        tlv_len = read(fd[i], buf + write_ptr, len - write_ptr);
+                        tlv_len = read(fd[i], buf + write_idx, len - write_idx);
                         if (tlv_len == (unsigned int)-1) {
                                 PERROR("read");
                                 status = -1;
@@ -152,7 +152,7 @@ int cli_add_all(int argc, char **argv) {
                         typ = tlv_str2type(strtok((i == 0 ? type : NULL),
                                                                 delim));
                 } else {
-                        typ = guess_type(buf + write_ptr, len);
+                        typ = guess_type(buf + write_idx, len);
                 }
                 
                 if (typ == -1) {
@@ -161,11 +161,11 @@ int cli_add_all(int argc, char **argv) {
                         goto FREEBUF;
                 }
 
-                write_ptr -= TLV_SIZEOF_HEADER;
-                buf[write_ptr++] = typ;
-                htod(tlv_len, &buf[write_ptr]);
-                write_ptr += TLV_SIZEOF_LENGTH;
-                write_ptr += tlv_len;
+                write_idx -= TLV_SIZEOF_HEADER;
+                buf[write_idx++] = typ;
+                htod(tlv_len, &buf[write_idx]);
+                write_idx += TLV_SIZEOF_LENGTH;
+                write_idx += tlv_len;
 
         }
 
@@ -176,8 +176,8 @@ int cli_add_all(int argc, char **argv) {
         }
 
         if (argc > 1) {
-                buf[ptr_compound] = TLV_COMPOUND;
-                htod(len - ptr_compound - TLV_SIZEOF_HEADER, &buf[ptr_compound + 1]);
+                buf[compound_idx] = TLV_COMPOUND;
+                htod(len - compound_idx - TLV_SIZEOF_HEADER, &buf[compound_idx + 1]);
         }
         
         if (cli_add_tlv(file, buf) != 0) {
