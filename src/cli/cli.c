@@ -358,12 +358,7 @@ CLOSE:
 
 int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
-        /**
-         * FIXME: This function breaks
-         * abstraction of dazibao type
-         */
-
-        dz_read_tlv(dz, tlv, dz->offset);
+        dz_read_tlv(dz, tlv, dz_get_offset(dz));
 
         int len = tlv_long_real_data_length(tlv);
         int type = tlv_long_real_data_type(tlv);
@@ -373,7 +368,7 @@ int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         }
         
         printf(" @[%10li]: %8s (%d bytes)\n",
-                dz->offset, tlv_type2str(type), len);
+                dz_get_offset(dz), tlv_type2str(type), len);
         return len
                 + (len / TLV_MAX_VALUE_SIZE
                         + MIN(1, len % TLV_MAX_VALUE_SIZE))
@@ -414,9 +409,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                         dz_set_offset(dz, off);
                         off_t next = cli_print_long_tlv(
                                 dz, &tlv, indent, lvl, debug);
-                        dz_set_offset(
-                                dz,
-                                dz->offset + TLV_SIZEOF_HEADER + len + next);
+                        dz_update_offset(dz, TLV_SIZEOF_HEADER + len + next);
                         continue;
                 }
 
