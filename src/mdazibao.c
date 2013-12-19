@@ -49,7 +49,7 @@ int dz_set_offset(dz_t *d, off_t off) {
 }
 
 off_t dz_get_offset(dz_t *d) {
-        return off > d->len;
+        return d->offset;
 }
 
 int dz_update_offset(dz_t *d, off_t off) {
