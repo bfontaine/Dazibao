@@ -232,6 +232,7 @@ int route_post_compact_dz(dz_t *dz, struct http_request req,
 
 int route_post_new_tlv_text(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
+        /* TODO remove this route and use the generic /tlv/add/form instead */
 
         tlv_t t;
         int st;
@@ -271,11 +272,13 @@ int route_post_new_tlv_text(dz_t *dz, struct http_request req,
         return 0;
 }
 
-/** route for TLVs submitted via HTML forms */
+/** route for TLVs submitted via HTML forms (through AJAX) */
 int route_post_form_tlv(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
 
         struct http_param **params;
+        int params_count, st;
+        tlv_t t;
 
         params = parse_form_data(&req);
 
@@ -290,8 +293,46 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
                                 params[i]->value);
         }
 
+        for (params_count=0; params[params_count] != NULL; params_count++) {
+                if (params[params_count]->value_len > TLV_MAX_VALUE_SIZE) {
+                        LOGDEBUG("params[%d] is too large", params_count);
+                        resp->status = HTTP_S_TOO_LARGE;
+                        destroy_http_params(params, -1);
+                        return 0;
+                }
+        }
+
+        if (params_count == 0) {
+                /* empty request */
+                LOGDEBUG("Got an empty request (no parameters)");
+                resp->status = HTTP_S_BADREQ;
+                destroy_http_params(params, -1);
+                return 0;
+        }
+
+        if (params_count > 1) {
+                /* compound TLVs -> unsupported right now */
+                LOGERROR("compound TLVs are not supported for now");
+                resp->status = HTTP_S_BADREQ;
+                resp->body_len = -1;
+                destroy_http_params(params, -1);
+                return 0;
+        }
+
+        LOGTRACE("tlv_init: %d", tlv_init(&t));
+        tlv_set_type(&t, tlv_guess_type(params[0]->value,
+                                params[0]->value_len));
+
+        tlv_set_length(&t, params[0]->value_len);
+        LOGTRACE("tlv_mread: %d", tlv_mread(&t, params[0]->value));
+
+        st = dz_add_tlv(dz, &t);
+        LOGTRACE("dz_add_tlv: %d", st);
+
+        resp->status = st == 0 ? HTTP_S_CREATED : HTTP_S_ERR;
+        tlv_destroy(&t);
         destroy_http_params(params, -1);
-        return -1;
+        return 0;
 }
 
 int register_routes(void) {
