@@ -17,6 +17,31 @@ idependant of the implementation. A programm using the Dazibao (or TLV) API
 does not have to know about the structure used, and the Dazibao API does not
 have to know how a TLV actually is represented.
 
+## User Interfaces
+
+### Command-Line Interface
+
+### Web Server
+
+We implemented a Web server to have a more user-friendly interface to a
+Dazibao. It serves it as an HTML page, and allows the user to interact with it
+using AJAX request.
+
+#### Features
+
+- Compact a Dazibao, remove a TLV, add a text TLV
+- Get notifications when the Dazibao changes
+- Static files are served from a `public_html` directory
+
+#### Limitations
+
+- The server is synchronous and mono-threaded
+- Only a subset of HTTP 1.0 is supported. We implemented only features we need
+  for this project.
+- `POST` query parameters cannot contain quotes (`"`)
+- multiple files in a `POST` request are not supported
+- `GET` query parameters are not supported
+
 ## Notifications
 
 ### Notification server
