@@ -433,6 +433,7 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 LOGERROR("read: %d, size: %d", r_idx, len);
                 return -1;
         }
+
         return 0;
 }
 
@@ -463,5 +464,5 @@ uint32_t tlv_long_real_data_length(tlv_t *tlv) {
 }
 
 int tlv_long_real_data_type(tlv_t *tlv) {
-        return (*tlv)[TLV_SIZEOF_HEADER + 1];
+        return (*tlv)[TLV_SIZEOF_HEADER];
 }
