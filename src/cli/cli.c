@@ -140,7 +140,10 @@ int cli_add_all(int argc, char **argv) {
                         tlv_len = strlen(argv[i]);
                         memcpy(buf + write_idx, argv[i], tlv_len);
                 } else {
-                        tlv_len = read(fd[i], buf + write_idx, len - write_idx);
+                        tlv_len = read(
+                                fd[i],
+                                buf + write_idx,
+                                len - write_idx);
                         if (tlv_len == (unsigned int)-1) {
                                 PERROR("read");
                                 status = -1;
@@ -154,7 +157,7 @@ int cli_add_all(int argc, char **argv) {
                 } else {
                         typ = guess_type(buf + write_idx, len);
                 }
-                
+
                 if (typ == -1) {
                         LOGERROR("Undefined type.");
                         status = -1;
@@ -172,14 +175,16 @@ int cli_add_all(int argc, char **argv) {
         if (timestamp != 0) {
                 buf[0] = TLV_DATED;
                 htod(len - 1, &buf[1]);
-                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp, sizeof(timestamp));
+                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp,
+                        sizeof(timestamp));
         }
 
         if (argc > 1) {
                 buf[compound_idx] = TLV_COMPOUND;
-                htod(len - compound_idx - TLV_SIZEOF_HEADER, &buf[compound_idx + 1]);
+                htod(len - compound_idx - TLV_SIZEOF_HEADER,
+                        &buf[compound_idx + 1]);
         }
-        
+
         if (cli_add_tlv(file, buf) != 0) {
                 status = -1;
         }
@@ -241,12 +246,11 @@ DESTROY:
         }
 OUT:
         return status;
-                
 }
 
 
 int cli_dump_tlv(int argc, char **argv, int out) {
-        
+
         dz_t dz;
         tlv_t tlv;
         int status = 0;
@@ -298,9 +302,7 @@ int cli_dump_tlv(int argc, char **argv, int out) {
                 dz_read_tlv(&dz, &tlv, offset);
                 uint32_t len = tlv_long_real_data_length(&tlv);
                 char *buff = malloc(sizeof(*buff) * len);
-                
                 size_t off;
-                
                 uint32_t write_idx = 0;
 
                 if (buff == NULL) {
@@ -334,7 +336,7 @@ int cli_dump_tlv(int argc, char **argv, int out) {
                 free(buff);
         } else {
                 dz_read_tlv(&dz, &tlv, offset);
-        
+
                 if (value) {
                         tlv_fdump_value(&tlv, out);
                 } else {
@@ -352,6 +354,30 @@ CLOSE:
         }
 
         return status;
+}
+
+int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
+
+        /**
+         * FIXME: This function breaks
+         * abstraction of dazibao type
+         */
+
+        dz_read_tlv(dz, tlv, dz->offset);
+
+        int len = tlv_long_real_data_length(tlv);
+        int type = tlv_long_real_data_type(tlv);
+
+        for (int i = 0; i <= indent; i++) {
+                printf("--");
+        }
+        
+        printf(" @[%10li]: %8s (%d bytes)\n",
+                dz->offset, tlv_type2str(type), len);
+        return len
+                + (len / TLV_MAX_VALUE_SIZE
+                        + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
 }
 
 int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
@@ -384,11 +410,23 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
 
                 int len = tlv_get_length(&tlv);
 
+                if (type == TLV_LONGH) {
+                        dz_set_offset(dz, off);
+                        off_t next = cli_print_long_tlv(
+                                dz, &tlv, indent, lvl, debug);
+                        dz_set_offset(
+                                dz,
+                                dz->offset + TLV_SIZEOF_HEADER + len + next);
+                        continue;
+                }
+
                 for (int i = 0; i <= indent; i++) {
                         printf("--");
                 }
 
-                printf(" @[%10li]: %8s (%d bytes)\n", off, tlv_type2str(type), len);
+                printf(" @[%10li]: %8s (%d bytes)\n",
+                        off, tlv_type2str(type), len);
+
 
                 switch (type) {
                 case TLV_DATED:
@@ -405,7 +443,11 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                                         -1,
                                         dz->data
                                 };
-                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1, debug);
+                                cli_print_all_tlv(
+                                        &cmpnd,
+                                        indent + 1,
+                                        lvl - 1,
+                                        debug);
                         }
                         break;
                 case TLV_COMPOUND:
@@ -420,7 +462,12 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                                         + TLV_SIZEOF_HEADER,
                                         -1,
                                         dz->data
-                                };                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1, debug);
+                                };
+                                cli_print_all_tlv(
+                                        &cmpnd,
+                                        indent + 1,
+                                        lvl - 1,
+                                        debug);
                         }
                         break;
                 }
@@ -431,7 +478,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
 }
 
 int cli_dump_dz(int argc, char **argv, int out) {
-        
+
         dz_t dz;
         int status = 0;
         long long int depth = -1;
@@ -578,7 +625,7 @@ int main(int argc, char **argv) {
                 LOGERROR(CLI_USAGE_FMT);
                 exit(EXIT_FAILURE);
         }
-        
+
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
