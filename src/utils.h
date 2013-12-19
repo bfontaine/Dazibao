@@ -1,12 +1,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H 1
 
-#include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
 
 /** @file
  * Set of utilities
@@ -140,7 +135,7 @@ void *safe_realloc(void *ptr, size_t size);
  * @param buff the buffer to write from
  * @param len the length of the written data
  **/
-int write_all(int fd, char *buff, int len);
+ssize_t write_all(int fd, char *buff, int len);
 
 /**
  * Wrapper around 'strtol' which tries to parse a string as a positive decimal
