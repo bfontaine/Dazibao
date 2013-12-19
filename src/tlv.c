@@ -393,11 +393,15 @@ int tlv_create_input(tlv_t *tlv, char *type) {
         return TLV_SIZEOF(tlv);
 }
 
+
+int ltlv_nb_chunks(size_t size) {
+        return size / TLV_MAX_VALUE_SIZE
+                + MIN(1, size % TLV_MAX_VALUE_SIZE);
+}
+
 int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         int
-                nb_chunks =
-                len / TLV_MAX_VALUE_SIZE
-                + MIN(1, len % TLV_MAX_VALUE_SIZE),
+                nb_chunks = ltlv_nb_chunks(len),
                 chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
                 be_len = htonl(len),
                 remaining = len,
@@ -447,9 +451,7 @@ uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst) {
         uint32_t len;
         memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
         len = ntohl(len);
-        len += (len / TLV_MAX_VALUE_SIZE
-                + MIN(1, len % TLV_MAX_VALUE_SIZE))
-                * TLV_SIZEOF_HEADER;
+        len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
         memcpy(dst, *tlv, len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
 
         return len;
@@ -459,9 +461,7 @@ uint32_t tlv_long_fwrite(tlv_t *tlv, int fd) {
         uint32_t len;
         memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
         len = ntohl(len);
-        len += (len / TLV_MAX_VALUE_SIZE
-                + MIN(1, len % TLV_MAX_VALUE_SIZE))
-                * TLV_SIZEOF_HEADER;
+        len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
         return write_all(fd, *tlv, len + TLV_SIZEOF(tlv));
 }
 
