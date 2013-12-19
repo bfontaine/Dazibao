@@ -284,8 +284,10 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
         }
 
         for (int i=0; params[i] != NULL; i++) {
-                LOGTRACE("param name='%s', valuelen=%d",
-                                params[i]->name, params[i]->value_len);
+                LOGTRACE("param name='%s', value_len=%d value=%.*s...",
+                                params[i]->name, params[i]->value_len,
+                                MIN(params[i]->value_len, 10),
+                                params[i]->value);
         }
 
         destroy_http_params(params, -1);

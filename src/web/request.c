@@ -169,7 +169,7 @@ int parse_request(int sock, struct http_request *req) {
                 goto MALFORMED;
         }
 
-        LOGTRACE("adding line '%.*s' into the beginning of the body (eoh=%d)",
+        LOGTRACE("adding '%.*s' into the beginning of the body (eoh=%d)",
                         eoh, line, eoh);
         memcpy(req->body, line, eoh);
         NFREE(line);
@@ -450,8 +450,18 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
         }
         start += 2;
         len -= 2;
+        hs = (struct http_headers*)malloc(sizeof(struct http_headers));
 
-        http_init_headers(hs);
+        if (hs == NULL) {
+                perror("malloc");
+                return NULL;
+        }
+
+        if (http_init_headers(hs) < 0) {
+                LOGERROR("Cannot init HTTP headers");
+                free(hs);
+                return NULL;
+        }
         cursor = 0;
 
         /* parse headers */
@@ -503,8 +513,9 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
                 NFREE(ct_dispo);
                 return NULL;
         }
-        if (sscanf(ct_dispo + cursor, "name=\"%32s\"", name) != 1) {
+        if (sscanf(ct_dispo + cursor - 1, "name=\"%32s\"", name) != 1) {
                 LOGDEBUG("Cannot sscanf the name");
+                LOGTRACE("First 7 bytes: %.7s", ct_dispo + cursor - 1);
                 NFREE(name);
                 NFREE(ct_dispo);
                 return NULL;
@@ -520,7 +531,7 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
         }
 
         param->name = name;
-        param->value_len = end - start;
+        param->value_len = end + 1 - start;
 
         param->value = (char*)malloc(sizeof(char)*(param->value_len));
         if (param->value == NULL) {
