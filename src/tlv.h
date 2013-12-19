@@ -67,6 +67,10 @@
 /** size of a TLV header */
 #define TLV_SIZEOF_HEADER (TLV_SIZEOF_TYPE + TLV_SIZEOF_LENGTH)
 
+/** Size of a long TLV header (which contain type + real length) */
+#define TLV_SIZEOF_LONGH (TLV_SIZEOF_HEADER \
+                                + TLV_SIZEOF_TYPE + sizeof(uint32_t))
+
 /** size of a whole TLV */
 #define TLV_SIZEOF(t) (TLV_SIZEOF_TYPE+(tlv_get_type(t)==TLV_PAD1 \
                                 ? 0                               \
