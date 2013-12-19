@@ -1,23 +1,24 @@
-#include <locale.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdio.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/mman.h>
-#include <stdint.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <locale.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "utils.h"
-#include "logging.h"
-#include "tlv.h"
 #include "cli.h"
+#include "logging.h"
 #include "mdazibao.h"
+#include "tlv.h"
+#include "utils.h"
 
 
 int cli_add_all(int argc, char **argv) {

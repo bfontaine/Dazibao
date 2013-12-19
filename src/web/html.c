@@ -1,8 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "html.h"
+#include "logging.h"
 #include "mdazibao.h"
 #include "tlv.h"
-#include "logging.h"
 #include "utils.h"
 #include "webutils.h"
 

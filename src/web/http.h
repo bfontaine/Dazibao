@@ -116,6 +116,9 @@ struct http_status {
 /** code for a "Last Modified" HTTP header */
 #define HTTP_H_LASTMODIF     10
 
+/* code for a "Content-Disposition" HTT header */
+#define HTTP_H_CT_DISPO      11
+
 /* arbitrary extentions/limits */
 /** maximum number of HTTP headers in a request/response */
 #define HTTP_MAX_HEADERS 16
