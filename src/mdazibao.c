@@ -48,6 +48,18 @@ int dz_set_offset(dz_t *d, size_t off) {
         return 0;
 }
 
+off_t dz_get_offset(dz_t *d) {
+        return off > d->len;
+}
+
+int dz_update_offset(dz_t *d, size_t off) {
+        if (off > d->len) {
+                return -1;
+        }
+        d->offset += off;
+        return 0;
+}
+
 int dz_sync(dz_t *d) {
         if (ftruncate(d->fd, d->len) == -1) {
                 PERROR("ftruncate");

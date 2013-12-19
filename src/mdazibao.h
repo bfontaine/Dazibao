@@ -48,6 +48,10 @@ typedef int hash_t;
 
 int dz_set_offset(dz_t *d, size_t off);
 
+off_t dz_get_offset(dz_t *d);
+
+int dz_update_offset(dz_t *d, size_t off);
+
 /**
  * @param d the dazibao
  **/
