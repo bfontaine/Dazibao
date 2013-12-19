@@ -347,12 +347,12 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
         dz_t tmp = {
-                0,
+                -1,
                 d->fflags,
-                d->len - offset,
-                0,
-                d->space - offset,
-                d->data + offset
+                d->len,
+                offset,
+                d->space,
+                d->data
         };
         return dz_next_tlv(&tmp, tlv);
 }
