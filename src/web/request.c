@@ -421,7 +421,8 @@ int destroy_http_params(struct http_param **ps, int count) {
 static struct http_param *parse_form_data_part(char *start, char *end) {
         struct http_param *param = NULL;
         struct http_headers *hs = NULL;
-        int len_cache; /* this is used to cache the result of 'strlen' */
+        int len_cache, /* this is used to cache the result of 'strlen' */
+            i;
         unsigned int len, cursor;
         char *ct_dispo,
              *name = NULL;
@@ -513,13 +514,21 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
                 NFREE(ct_dispo);
                 return NULL;
         }
-        if (sscanf(ct_dispo + cursor - 1, "name=\"%32s\"", name) != 1) {
-                LOGDEBUG("Cannot sscanf the name");
-                LOGTRACE("First 7 bytes: %.7s", ct_dispo + cursor - 1);
-                NFREE(name);
-                NFREE(ct_dispo);
-                return NULL;
+
+        cursor += strlen("name=\"") - 1;
+        i = 0;
+
+        /* we parse by hand because sscanf doesn't work here */
+        while (i < 32) {
+                if (ct_dispo[cursor + i] != '"') {
+                        name[i] = ct_dispo[cursor + i];
+                        i++;
+                } else {
+                        name[i] = '\0';
+                        break;
+                }
         }
+        LOGTRACE("name: '%s'", name);
 
         NFREE(ct_dispo);
 
