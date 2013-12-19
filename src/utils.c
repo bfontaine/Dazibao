@@ -112,15 +112,19 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 
         int next_arg = 0;
 
-
         while (next_arg < argc) {
+
                 char is_opt = 0;
+
                 for (int i = 0; i < nb_opt; i++) {
+
                         if (strcmp(argv[next_arg],
                                         res->options[i].name) != 0) {
                                 continue;
                         }
+
                         is_opt = 1;
+
                         switch (res->options[i].type) {
                         case ARG_TYPE_LLINT:
                                 if (next_arg > argc - 2) {
@@ -168,17 +172,19 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 }
 
                 if (!is_opt) {
-                        if (strcmp("--", argv[next_arg]) == 0) {
-                                next_arg++;
-                        }
-                        if (res->argc != NULL && res->argv != NULL) {
-                                *res->argc = argc - next_arg;
-                                *(res->argv) = *res->argc > 0 ?
-                                        &argv[next_arg] : NULL;
-                        }
                         break;
                 }
         }
 
+        if (next_arg < argc
+                && strcmp("--", argv[next_arg]) == 0) {
+                next_arg++;
+        }
+
+        if (res->argc != NULL && res->argv != NULL) {
+                *res->argc = argc - next_arg;
+                *(res->argv) = *res->argc > 0 ?
+                        &argv[next_arg] : NULL;
+        }
         return 0;
 }
