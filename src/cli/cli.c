@@ -314,11 +314,80 @@ CLOSE:
         return status;
 }
 
+int cli_print_all_tlv(dz_t *dz, int indent, int lvl) {
+
+        /**
+         * FIXME: This function breaks
+         * abstraction of dazibao type
+         */
+
+        tlv_t tlv;
+        off_t off;
+
+        if (tlv_init(&tlv) == -1) {
+                LOGERROR("tlv_init");
+                return -1;
+        }
+
+        while ((off = dz_next_tlv(dz, &tlv)) != EOD) {
+
+                if (off == -1) {
+                        return -1;
+                }
+
+                int type = tlv_get_type(&tlv);
+                int len = tlv_get_length(&tlv);
+
+                for (int i = 0; i <= indent; i++) {
+                        printf("--");
+                }
+                printf(" @%d: %s (%d by)\n", (int)off, tlv_type2str(type), len);
+
+                switch (type) {
+                case TLV_DATED:
+                        if (lvl != 0) {
+                                dz_t cmpnd = {
+                                        -1,
+                                        0,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + len,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + TLV_SIZEOF_DATE,
+                                        -1,
+                                        dz->data
+                                };
+                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1);
+                        }
+                        break;
+                case TLV_COMPOUND:
+                        if (lvl != 0) {
+                                dz_t cmpnd = {
+                                        -1,
+                                        0,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + len,
+                                        off
+                                        + TLV_SIZEOF_HEADER,
+                                        -1,
+                                        dz->data
+                                };                                cli_print_all_tlv(&cmpnd, indent + 1, lvl - 1);
+                        }
+                        break;
+                }
+        }
+
+        tlv_destroy(&tlv);
+        return 0;
+}
+
 int cli_dump_dz(int argc, char **argv, int out) {
         
         dz_t dz;
         int status = 0;
-        long long int depth = 0;
+        long long int depth = -1;
         int debug = 0;
 
         struct s_option opt[] = {
@@ -343,13 +412,8 @@ int cli_dump_dz(int argc, char **argv, int out) {
                 return -1;
         }
 
-        if (dz_dump_all(&dz, depth, debug)) {
-                LOGERROR("dz_dump_all failed");
-                status = -1;
-                goto CLOSE;
-        }
+        cli_print_all_tlv(&dz, 0, depth);
 
-CLOSE:
         if (dz_close(&dz) == -1) {
                 LOGERROR("Failed closing dazibao.");
                 status = -1;
