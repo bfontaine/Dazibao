@@ -40,7 +40,7 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
-int dz_set_offset(dz_t *d, size_t off) {
+int dz_set_offset(dz_t *d, off_t off) {
         if (off > d->len) {
                 return -1;
         }
@@ -52,7 +52,7 @@ off_t dz_get_offset(dz_t *d) {
         return off > d->len;
 }
 
-int dz_update_offset(dz_t *d, size_t off) {
+int dz_update_offset(dz_t *d, off_t off) {
         if (off > d->len) {
                 return -1;
         }
