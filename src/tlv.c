@@ -50,19 +50,20 @@ struct tlv_type tlv_types[] = {
  * "Associative array" of TLV type / file signature
  **/
 struct type_signature sigs[] =  {
-        { TLV_PNG,  "\211PNG\r\n\032\n" },
-        { TLV_JPEG, "\255\216\255"      },
+        { TLV_BMP,  "BM"                },
         { TLV_GIF,  "GIF87a"            },
         { TLV_GIF,  "GIF89a"            },
+        { TLV_JPEG, "\255\216\255"      },
+        { TLV_MIDI, "MThd"              },
+        { TLV_MP3,  "ID3"               },
+        { TLV_MP3,  "\255\251"          },
+        { TLV_MP4,  "\051\103\112\053"  },
+        { TLV_OGG,  "OggS"              },
+        { TLV_PDF,  "%PDF"              },
+        { TLV_PNG,  "\211PNG\r\n\032\n" },
+        { TLV_TEXT, "\xEF\xBB\xBF"      }, /* UTF-8 BOM */
         { TLV_TIFF, "\073\073\042\000"  },
         { TLV_TIFF, "\077\077\000\042"  },
-        { TLV_MP3,  "\255\251"          },
-        { TLV_MP3,  "\073\068\051"      },
-        { TLV_MP4,  "\051\103\112\053"  },
-        { TLV_BMP,  "\066\077"          },
-        { TLV_OGG,  "\079\103\103\083"  },
-        { TLV_MIDI, "\077\084\104\100"  },
-        { TLV_PDF,  "\037\080\068\070"  }
 };
 
 

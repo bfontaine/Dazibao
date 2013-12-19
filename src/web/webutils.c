@@ -17,14 +17,18 @@ int get_image_tlv_type(const char *path) {
         }
         LOGTRACE("Determining the TLV type of ext '%s'...", ext);
 
-        if (strcasecmp(ext, PNG_EXT + 1) == 0) {
-                return TLV_PNG;
+        /* we might be able to improve the code below by using a loop */
+        if (strcasecmp(ext, BMP_EXT + 1) == 0) {
+                return TLV_BMP;
+        }
+        if (strcasecmp(ext, GIF_EXT + 1) == 0) {
+                return TLV_GIF;
         }
         if (strcasecmp(ext, JPEG_EXT + 1) == 0) {
                 return TLV_JPEG;
         }
-        if (strcasecmp(ext, GIF_EXT + 1) == 0) {
-                return TLV_GIF;
+        if (strcasecmp(ext, PNG_EXT + 1) == 0) {
+                return TLV_PNG;
         }
         return -1;
 }

@@ -171,9 +171,9 @@ const char *get_ext(const char *path);
 /** this struct is used to store an TLV image's info. */
 struct img_info {
         /** width */
-        int width;
+        unsigned int width;
         /** height */
-        int height;
+        unsigned int height;
 };
 
 /* == CLI == */

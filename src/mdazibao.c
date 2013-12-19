@@ -292,19 +292,18 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
         val_off = offset + TLV_SIZEOF_HEADER;
 
         switch (tlv_get_type(&t)) {
-        case TLV_PNG:
-                /* see stackoverflow.com/a/5354657/735926 */
-                if (length < 24) {
+        case TLV_BMP:
+                /* see second table at
+                 *      en.wikipedia.org/wiki/BMP_file_format
+                 *              #DIB_header_.28bitmap_information_header.29 */
+                if (length < 0x20) {
                         st = -1;
                         break;
                 }
                 info->width = 0;
                 info->height = 0;
-                memcpy(&(info->width), dz->data + val_off + 16, 4);
-                memcpy(&(info->height), dz->data + val_off + 20, 4);
-
-                info->width = ntohl(info->width);
-                info->height = ntohl(info->height);
+                memcpy(&(info->width), dz->data + val_off + 0x12, 4);
+                memcpy(&(info->height), dz->data + val_off + 0x16, 4);
                 st = 0;
                 break;
         case TLV_GIF:
@@ -320,8 +319,24 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 st = 0;
                 break;
         case TLV_JPEG:
-                /* see stackoverflow.com/a/692013/735926 */
+                /* TODO
+                 * see stackoverflow.com/a/692013/735926 */
                 st = -1;
+                break;
+        case TLV_PNG:
+                /* see stackoverflow.com/a/5354657/735926 */
+                if (length < 24) {
+                        st = -1;
+                        break;
+                }
+                info->width = 0;
+                info->height = 0;
+                memcpy(&(info->width), dz->data + val_off + 16, 4);
+                memcpy(&(info->height), dz->data + val_off + 20, 4);
+
+                info->width = ntohl(info->width);
+                info->height = ntohl(info->height);
+                st = 0;
                 break;
         case TLV_TIFF:
                 /* TODO */
