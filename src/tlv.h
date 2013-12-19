@@ -111,12 +111,17 @@ struct type_signature {
 };
 
 /**
+ * @deprecated use tlv_guess_type instead
+ **/
+unsigned char guess_type(char *src, unsigned int len);
+
+/**
  * Guess type from a buffer
  * @param src data to test
  * @param len length of buffer
  * @return TLV type corresponding to the buffer
  */
-unsigned char guess_type(char *src, unsigned int len);
+unsigned char tlv_guess_type(char *src, unsigned int len);
 
 /**
  * Convert an int written in host endianess into dazibao's one.

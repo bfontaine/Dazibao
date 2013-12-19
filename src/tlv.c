@@ -67,7 +67,12 @@ struct type_signature sigs[] =  {
 };
 
 
+/* deprecated */
 unsigned char guess_type(char *src, unsigned int len) {
+        return tlv_guess_type(src, len);
+}
+
+unsigned char tlv_guess_type(char *src, unsigned int len) {
 
         unsigned int i;
         for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
