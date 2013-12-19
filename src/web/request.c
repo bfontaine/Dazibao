@@ -161,8 +161,9 @@ int parse_request(int sock, struct http_request *req) {
                 goto EOPARSING;
         }
 
-        /* request body */
-        req->body = (char*)malloc(sizeof(char)*(MAX(req->body_len, eoh)));
+        /* request body -- we're adding 1 for functions which parse the body as
+         * a string and need a NULL char at the end */
+        req->body = (char*)malloc(sizeof(char)*(MAX(req->body_len, eoh)+1));
         if (req->body == NULL) {
                 LOGERROR("Cannot alloc for the request body");
                 perror("malloc");
@@ -184,6 +185,8 @@ int parse_request(int sock, struct http_request *req) {
         if (body_len < req->body_len) {
                 goto MALFORMED;
         }
+
+        req->body[req->body_len] = '\0';
 
         next_header(-1, NULL);
         return 0;
@@ -559,8 +562,7 @@ struct http_param **parse_form_data(struct http_request *req) {
         char *boundary,
              *sep, /* separator string */
              *rest,
-             *next_sep, /* pointer on the next separator */
-             last_body_char;
+             *next_sep; /* pointer on the next separator */
         int sep_len,
             params_max_count,
             params_count;
@@ -601,7 +603,7 @@ struct http_param **parse_form_data(struct http_request *req) {
         sep[sep_len] = '\0';
 
         LOGTRACE("(separator) first 2 bytes: %u %u", sep[0], sep[1]);
-        LOGTRACE("separator: '%s'", sep);
+        LOGTRACE("separator+2: '%s'", sep+2);
 
         if (req->body_len < (sep_len+2) * 2) {
                 /* we need at least one separator at the beginning and one at
@@ -622,7 +624,6 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        last_body_char = req->body[req->body_len - 1];
         req->body[req->body_len - 1] = '\0'; /* needed by strstr */
         rest = strstr(req->body, sep);
 
@@ -635,7 +636,6 @@ struct http_param **parse_form_data(struct http_request *req) {
                 LOGTRACE("First 2 bytes of sep:  %u %u", sep[0], sep[1]);
                 destroy_http_params(params, params_count);
                 free(sep);
-                req->body[req->body_len - 1] = last_body_char;
                 return NULL;
         }
 
@@ -643,6 +643,8 @@ struct http_param **parse_form_data(struct http_request *req) {
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
 
+        /* FIXME we sometimes don't enter in this loop due to the strstr call
+         * returning null. */
         while ((rest += sep_len) - req->body < req->body_len
                         && (next_sep = strstr(rest, sep)) != NULL) {
 
@@ -658,7 +660,6 @@ struct http_param **parse_form_data(struct http_request *req) {
                                 perror("realloc");
                                 destroy_http_params(params, params_count);
                                 free(sep);
-                                req->body[req->body_len - 1] = last_body_char;
                                 return NULL;
                         }
                         params = params2;
@@ -685,6 +686,5 @@ struct http_param **parse_form_data(struct http_request *req) {
         }
         params[params_count] = NULL;
         free(sep);
-        req->body[req->body_len - 1] = last_body_char;
         return params;
 }
