@@ -60,7 +60,8 @@ static const char *headers_strs[] = {
         "If-Modified-Since",
         /* HTTP_H_LASTMODIF     10 */
         "Last-Modified",
-
+        /* HTTP_H_CT_DISPO      11 */
+        "Content-Disposition",
         NULL
 };
 
