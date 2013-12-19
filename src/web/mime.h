@@ -17,6 +17,8 @@ static const char *mime_types_ext[][2] = {
         { "html" , "text/html; charset=utf-8" },
 
         /* TLVs */
+        { "bmp"  , "image/bmp"                },
+        { "dib"  , "image/bmp"                },
         { "jpeg" , "image/jpeg"               },
         { "jpg"  , "image/jpeg"               },
         { "png"  , "image/png"                },

@@ -39,12 +39,14 @@ struct wserver_info WSERVER;
 
 /* = Other helpers = */
 
+/** default extension of a BMP image */
+#define BMP_EXT  ".bmp"
+/** default extension of a GIF image */
+#define GIF_EXT  ".gif"
 /** default extension of a JPEG image */
 #define JPEG_EXT ".jpg"
 /** default extension of a PNG image */
 #define PNG_EXT  ".png"
-/** default extension of a GIF image */
-#define GIF_EXT  ".gif"
 /** default extension of a file */
 #define DEFAULT_EXT ""
 

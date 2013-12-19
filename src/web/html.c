@@ -60,14 +60,17 @@ int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
         struct img_info info;
 
         switch (type) {
-                case TLV_PNG:
-                        ext = PNG_EXT;
+                case TLV_BMP:
+                        ext = BMP_EXT;
+                        break;
+                case TLV_GIF:
+                        ext = GIF_EXT;
                         break;
                 case TLV_JPEG:
                         ext = JPEG_EXT;
                         break;
-                case TLV_GIF:
-                        ext = GIF_EXT;
+                case TLV_PNG:
+                        ext = PNG_EXT;
                         break;
                 default:
                         ext = DEFAULT_EXT;
@@ -240,9 +243,10 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                         st = html_add_text_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
-                case TLV_PNG:
-                case TLV_JPEG:
+                case TLV_BMP:
                 case TLV_GIF:
+                case TLV_JPEG:
+                case TLV_PNG:
                         st = html_add_img_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
