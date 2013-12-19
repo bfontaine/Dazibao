@@ -57,12 +57,12 @@ struct type_signature sigs[] =  {
         { TLV_TIFF, "\073\073\042\000"  },
         { TLV_TIFF, "\077\077\000\042"  },
         { TLV_MP3,  "\255\251"          },
-        { TLV_MP3,  "\073\068\051"      },
+        { TLV_MP3,  "ID3"               },
         { TLV_MP4,  "\051\103\112\053"  },
-        { TLV_BMP,  "\066\077"          },
-        { TLV_OGG,  "\079\103\103\083"  },
-        { TLV_MIDI, "\077\084\104\100"  },
-        { TLV_PDF,  "\037\080\068\070"  }
+        { TLV_BMP,  "BM"                },
+        { TLV_OGG,  "OggS"              },
+        { TLV_MIDI, "MThd"              },
+        { TLV_PDF,  "%PDF"              }
 };
 
 
