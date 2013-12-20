@@ -1,0 +1,10 @@
+quote
+%{text}<br/><br/>
+<span class="author"><span><span class="sep">—</span>&nbsp;%{author}</span></span>
+--
+settings
+<div id="settings">
+    <img src="/settings.png" width="48" height="48" />
+    <ul class="actions">
+    </ul>
+</div>
