@@ -341,16 +341,18 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
 
-int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
+int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len);
 
-uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst);
+size_t ltlv_mwrite(tlv_t *tlv, char *dst);
 
-uint32_t tlv_long_fwrite(tlv_t *tlv, int fd);
+size_t ltlv_fwrite(tlv_t *tlv, int fd);
 
-uint32_t tlv_long_real_data_length(tlv_t *tlv);
+uint32_t ltlv_real_data_length(tlv_t *tlv);
 
-int tlv_long_real_data_type(tlv_t *tlv);
+int ltlv_real_data_type(tlv_t *tlv);
 
 int ltlv_nb_chunks(size_t size);
+
+size_t ltlv_get_length(tlv_t *tlv);
 
 #endif

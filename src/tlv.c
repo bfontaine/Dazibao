@@ -399,7 +399,7 @@ int ltlv_nb_chunks(size_t size) {
                 + MIN(1, size % TLV_MAX_VALUE_SIZE);
 }
 
-int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
+int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
         int
                 nb_chunks = ltlv_nb_chunks(len),
                 chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
@@ -409,9 +409,7 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 r_idx = 0;
 
         *tlv = safe_realloc(*tlv,
-                        chunks_len
-                        + TLV_SIZEOF_HEADER
-                        + TLV_SIZEOF_TYPE + sizeof(int));
+                        chunks_len + TLV_SIZEOF_LONGH);
 
         if (*tlv == NULL) {
                 return -1;
@@ -439,6 +437,8 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
                 remaining -= size;
         }
 
+        /* For debug: to remove in stable version */
+
         if (r_idx != len) {
                 LOGERROR("read: %d, size: %d", r_idx, len);
                 return -1;
@@ -447,28 +447,33 @@ int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
         return 0;
 }
 
-uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst) {
-        uint32_t len;
-        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
-        len = ntohl(len);
-        len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
-        memcpy(dst, *tlv, len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
-
+size_t ltlv_mwrite(tlv_t *tlv, char *dst) {
+        size_t len = ltlv_get_length(tlv);
+        memcpy(dst, *tlv, len);
         return len;
 }
 
-uint32_t tlv_long_fwrite(tlv_t *tlv, int fd) {
-        uint32_t len;
-        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
-        len = ntohl(len);
-        len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
-        return write_all(fd, *tlv, len + TLV_SIZEOF(tlv));
+size_t ltlv_fwrite(tlv_t *tlv, int fd) {
+        size_t len = ltlv_get_length(tlv);
+        return write_all(fd, *tlv, len);
 }
 
-uint32_t tlv_long_real_data_length(tlv_t *tlv) {
+uint32_t ltlv_real_data_length(tlv_t *tlv) {
         return ntohl(*((uint32_t *)((*tlv) + TLV_SIZEOF_HEADER + 1)));
 }
 
-int tlv_long_real_data_type(tlv_t *tlv) {
+int ltlv_real_data_type(tlv_t *tlv) {
         return (*tlv)[TLV_SIZEOF_HEADER];
+}
+
+size_t ltlv_get_length(tlv_t *tlv) {
+
+        size_t len;
+
+        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
+        len = ntohl(len);
+
+        return len
+                + ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER
+                + TLV_SIZEOF_LONGH;
 }
