@@ -164,6 +164,7 @@ int route_post_rm_tlv(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
 
         unsigned long off = -1;
+        int st = 0;
 
         /* This route returns 204 No Content if the TLV was successfully
            removed. */
@@ -181,8 +182,9 @@ int route_post_rm_tlv(dz_t *dz, struct http_request req,
                 return -1;
         }
 
-        if (dz_rm_tlv(dz, off) < 0) {
-                LOGERROR("Cannot delete TLV at offset %li", (long)off);
+        if ((st = dz_rm_tlv(dz, off)) < 0) {
+                LOGERROR("Cannot delete TLV at offset %li, st=%d",
+                                (long)off, st);
                 return -1;
         }
 
