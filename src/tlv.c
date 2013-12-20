@@ -53,7 +53,7 @@ struct type_signature sigs[] =  {
         { TLV_BMP,  "BM"                },
         { TLV_GIF,  "GIF87a"            },
         { TLV_GIF,  "GIF89a"            },
-        { TLV_JPEG, "\255\216\255"      },
+        { TLV_JPEG, "\xFF\xD8\xFF"      },
         { TLV_MIDI, "MThd"              },
         { TLV_MP3,  "ID3"               },
         { TLV_MP3,  "\255\251"          },
