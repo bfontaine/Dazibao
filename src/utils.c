@@ -96,6 +96,28 @@ long str2dec_positive(char *s) {
         return ret >= 0 ? ret : -1;
 }
 
+char *my_memmem(char *haystack, size_t hlen, char *needle, size_t nlen) {
+        int i, max;
+        if (haystack == NULL || needle == NULL || nlen > hlen) {
+                return NULL;
+        }
+
+        if (nlen == 0) {
+                return haystack;
+        }
+
+        max = hlen - nlen + 1;
+
+        for (i=0; i<max; i++) {
+                if (haystack[i] == needle[0]
+                                && memcmp(haystack + i, needle, nlen) == 0) {
+                        return haystack + i;
+                }
+        }
+
+        return NULL;
+}
+
 const char *get_ext(const char *path) {
         const char *dot;
         if (path == NULL) {
