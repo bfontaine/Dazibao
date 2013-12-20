@@ -161,9 +161,8 @@ int parse_request(int sock, struct http_request *req) {
                 goto EOPARSING;
         }
 
-        /* request body -- we're adding 1 for functions which parse the body as
-         * a string and need a NULL char at the end */
-        req->body = (char*)malloc(sizeof(char)*(MAX(req->body_len, eoh)+1));
+        /* request body */
+        req->body = (char*)malloc(sizeof(char)*(MAX(req->body_len, eoh)));
         if (req->body == NULL) {
                 LOGERROR("Cannot alloc for the request body");
                 perror("malloc");
@@ -185,8 +184,6 @@ int parse_request(int sock, struct http_request *req) {
         if (body_len < req->body_len) {
                 goto MALFORMED;
         }
-
-        req->body[req->body_len] = '\0';
 
         next_header(-1, NULL);
         return 0;
@@ -543,7 +540,7 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
         }
 
         param->name = name;
-        param->value_len = end + 1 - start;
+        param->value_len = end - start + 1;
 
         param->value = (char*)malloc(sizeof(char)*(param->value_len));
         if (param->value == NULL) {
@@ -566,6 +563,7 @@ struct http_param **parse_form_data(struct http_request *req) {
         int sep_len,
             params_max_count,
             params_count;
+        unsigned int rest_len;
 
         /* shortcut for shorter lines */
         size_t hp_ptr_size = sizeof(struct http_param*);
@@ -624,8 +622,7 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        req->body[req->body_len - 1] = '\0'; /* needed by strstr */
-        rest = strstr(req->body, sep);
+        rest = my_memmem(req->body, req->body_len, sep, sep_len);
 
         if (rest == NULL) {
                 int l = MIN(req->body_len, 50);
@@ -639,18 +636,24 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
+        rest_len = req->body_len - (rest - req->body);
+
         LOGTRACE("need %d, got %d", rest + sep_len - req->body, req->body_len);
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
 
         /* FIXME we sometimes don't enter in this loop due to the strstr call
-         * returning null. */
+         * returning null. I think this is because strstr works on *strings*
+         * and we have here a piece of memory with some '\0' in it. */
         while ((rest += sep_len) - req->body < req->body_len
-                        && (next_sep = strstr(rest, sep)) != NULL) {
+                        && (next_sep = my_memmem(rest, rest_len - sep_len,
+                                        sep, sep_len)) != NULL) {
 
                 LOGTRACE("In the parts loop");
 
                 if (params_count + 1 == params_max_count) {
+                        /* reallocate memory if there are too many parameters
+                         */
                         struct http_param **params2;
 
                         params_max_count *= 2;
@@ -677,6 +680,7 @@ struct http_param **parse_form_data(struct http_request *req) {
 
                 params_count++;
                 rest = next_sep;
+                rest_len = req->body_len - (next_sep - req->body);
         }
 
         if (params_count == 0) {

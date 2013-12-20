@@ -286,11 +286,11 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
                 return HTTP_S_BADREQ;
         }
 
+        /* we don't care of parameters names for the moment */
+
         for (int i=0; params[i] != NULL; i++) {
-                LOGTRACE("param name='%s', value_len=%d value=%.*s...",
-                                params[i]->name, params[i]->value_len,
-                                MIN(params[i]->value_len, 10),
-                                params[i]->value);
+                LOGTRACE("param name='%s', value_len=%d",
+                                params[i]->name, params[i]->value_len)
         }
 
         for (params_count=0; params[params_count] != NULL; params_count++) {
@@ -322,6 +322,8 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
         LOGTRACE("tlv_init: %d", tlv_init(&t));
         tlv_set_type(&t, tlv_guess_type(params[0]->value,
                                 params[0]->value_len));
+
+        LOGTRACE("type: %d", tlv_get_type(&t));
 
         tlv_set_length(&t, params[0]->value_len);
         LOGTRACE("tlv_mread: %d", tlv_mread(&t, params[0]->value));
