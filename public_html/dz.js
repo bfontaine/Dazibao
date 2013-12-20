@@ -1,4 +1,5 @@
 (function(cb, main) {
+    /* load templates */
     var xhr = new XMLHttpRequest();
     xhr.open('get', '/js_tpls');
     xhr.onreadystatechange = function() {
@@ -24,6 +25,9 @@
 
     /* tpl('<p>%{name}</p>', {name: 'foo'}) -> '<p>foo</p>' */
     window.tpl = function(name, params) {
+        if (arguments.length == 0) {
+            return tpls;
+        }
         if (!tpls.hasOwnProperty(name)) {
             return '';
         }
@@ -34,6 +38,26 @@
             return params.hasOwnProperty(v) ? params[v] : '';
         });
     };
+
+    /* Basic DOM manipulation function */
+    $obj = function ( el ) {
+        if (''+el === el) {
+            // html
+            var div = document.createElement('div');
+            div.innerHTML = el;
+            el = div.firstChild;
+        }
+        this.el = el;
+        this.wrapped = true;
+    }
+    window.$ = function ( el ) {
+        if (el.wrapped) { return el; }
+        return new $obj(el);
+    }
+    $obj.prototype.addTo = function( other ) {
+        $(other).el.appendChild(this.el);
+        return this;
+    }
 
     main(document.getElementsByTagName('body')[0]);
 },
@@ -156,7 +180,7 @@ function(body) {
         });
 
         /* -- adding a text TLV -- */
-        addButton('Add a text', 'addtlv', function() {
+        addButton('Add a text', 'addtxttlv', function() {
             var text = prompt("Text?");
 
             api.addText(text, function( ok ) {
@@ -165,9 +189,41 @@ function(body) {
         });
 
         /* -- adding a TLV -- */
+        var $modal = $(tpl('newtlv_modal')),
+            form;
+        $modal.addTo(body);
+
+        document.getElementById('newtlv-cancel')
+                    .addEventListener('click', function() {
+            var inps = $modal.el.getElementsByTagName('input');
+            $modal.el.className += ' hidden';
+            for (var i=0, l=inps.length; i<l; i++) {
+                if (inps[i].hasAttribute('name')) {
+                    inps[i].value = '';
+                }
+            }
+            
+        }, false);
+
+        form = document.getElementById('newtlv-form');
+        form.addEventListener('submit', function( ev ) {
+
+            var data = new FormData(form);
+
+            ev.preventDefault();
+
+            api.addTLV(data, function(xhr) {
+                alert(xhr.status);
+            });
+
+            return false;
+
+        }, false);
+
         addButton('Add a file', 'addtlv', function() {
-            //
+            $modal.el.className = $modal.el.className.replace(/\s*hidden/, '');
         });
+
     }();
 
     /* Notifications */

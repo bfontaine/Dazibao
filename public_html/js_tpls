@@ -8,3 +8,12 @@ settings
     <ul class="actions">
     </ul>
 </div>
+--
+newtlv_modal
+<div class="modal hidden" id="newtlv-modal">
+    <form action="#" id="newtlv-form" name="newtlv-form" enctype="multipart/form-data">
+        <input type="file" name="tlv" />
+        <input type="button" value="Cancel" id="newtlv-cancel" />
+        <input type="submit" value="Post" id="newtlv-post" />
+    </form>
+</div>

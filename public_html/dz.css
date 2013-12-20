@@ -71,6 +71,16 @@ blockquote .sep {
     cursor: pointer;
 }
 
+.modal {
+    display: block;
+    background-color: #FFF;
+    position: fixed;
+    top: 100px;
+    width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* Global settings */
 #settings {
     position: fixed;
@@ -83,3 +93,5 @@ blockquote .sep {
 #settings:hover .actions {
     display: block;
 }
+
+.hidden { display: none; }
