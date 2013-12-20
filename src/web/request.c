@@ -540,7 +540,7 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
         }
 
         param->name = name;
-        param->value_len = end + 1 - start;
+        param->value_len = end - start + 1;
 
         param->value = (char*)malloc(sizeof(char)*(param->value_len));
         if (param->value == NULL) {
@@ -559,11 +559,11 @@ struct http_param **parse_form_data(struct http_request *req) {
         char *boundary,
              *sep, /* separator string */
              *rest,
-             *next_sep, /* pointer on the next separator */
-             last_body_char;
+             *next_sep; /* pointer on the next separator */
         int sep_len,
             params_max_count,
             params_count;
+        unsigned int rest_len;
 
         /* shortcut for shorter lines */
         size_t hp_ptr_size = sizeof(struct http_param*);
@@ -601,7 +601,7 @@ struct http_param **parse_form_data(struct http_request *req) {
         sep[sep_len] = '\0';
 
         LOGTRACE("(separator) first 2 bytes: %u %u", sep[0], sep[1]);
-        LOGTRACE("separator: '%s'", sep);
+        LOGTRACE("separator+2: '%s'", sep+2);
 
         if (req->body_len < (sep_len+2) * 2) {
                 /* we need at least one separator at the beginning and one at
@@ -622,9 +622,7 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        last_body_char = req->body[req->body_len - 1];
-        req->body[req->body_len - 1] = '\0'; /* needed by strstr */
-        rest = strstr(req->body, sep);
+        rest = my_memmem(req->body, req->body_len, sep, sep_len);
 
         if (rest == NULL) {
                 int l = MIN(req->body_len, 50);
@@ -635,20 +633,27 @@ struct http_param **parse_form_data(struct http_request *req) {
                 LOGTRACE("First 2 bytes of sep:  %u %u", sep[0], sep[1]);
                 destroy_http_params(params, params_count);
                 free(sep);
-                req->body[req->body_len - 1] = last_body_char;
                 return NULL;
         }
+
+        rest_len = req->body_len - (rest - req->body);
 
         LOGTRACE("need %d, got %d", rest + sep_len - req->body, req->body_len);
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
 
+        /* FIXME we sometimes don't enter in this loop due to the strstr call
+         * returning null. I think this is because strstr works on *strings*
+         * and we have here a piece of memory with some '\0' in it. */
         while ((rest += sep_len) - req->body < req->body_len
-                        && (next_sep = strstr(rest, sep)) != NULL) {
+                        && (next_sep = my_memmem(rest, rest_len - sep_len,
+                                        sep, sep_len)) != NULL) {
 
                 LOGTRACE("In the parts loop");
 
                 if (params_count + 1 == params_max_count) {
+                        /* reallocate memory if there are too many parameters
+                         */
                         struct http_param **params2;
 
                         params_max_count *= 2;
@@ -658,7 +663,6 @@ struct http_param **parse_form_data(struct http_request *req) {
                                 perror("realloc");
                                 destroy_http_params(params, params_count);
                                 free(sep);
-                                req->body[req->body_len - 1] = last_body_char;
                                 return NULL;
                         }
                         params = params2;
@@ -676,6 +680,7 @@ struct http_param **parse_form_data(struct http_request *req) {
 
                 params_count++;
                 rest = next_sep;
+                rest_len = req->body_len - (next_sep - req->body);
         }
 
         if (params_count == 0) {
@@ -685,6 +690,5 @@ struct http_param **parse_form_data(struct http_request *req) {
         }
         params[params_count] = NULL;
         free(sep);
-        req->body[req->body_len - 1] = last_body_char;
         return params;
 }

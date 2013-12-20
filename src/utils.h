@@ -146,6 +146,18 @@ ssize_t write_all(int fd, char *buff, int len);
 long str2dec_positive(char *s);
 
 /**
+ * This is an implementation of memmem(3). We don't want to use GNU-specific
+ * functions, so we're writing our own here.
+ * @param haystack: piece of memory we want to search in
+ * @param hlen: length of haystack
+ * @param needle: piece of memory we want to search in haystack
+ * @param nlen: length of needle
+ * @return a pointer to the beginning of the first occurrence of 'needle' in
+ * 'haystack' if it exists, or NULL if not.
+ **/
+char *my_memmem(char *haystack, size_t hlen, char *needle, size_t nlen);
+
+/**
  * Return the extension of a file.
  * @param path path of the file (filename)
  * @return a pointer to the part of the filename which represents the

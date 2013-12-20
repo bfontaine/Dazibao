@@ -1,4 +1,43 @@
-(function(body) {
+(function(cb, main) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('get', '/js_tpls');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            cb(xhr.responseText, main);
+        }
+    };
+    xhr.send(null);
+})(function(strs, main) {
+    /* basic templating system. Writing HTML in templates is easier than
+     * adding it in html.h and compile everything again */
+
+    var tpls = {},
+        re_first_nl = /\n([\s\S]+)/,
+        re_tpl_var = /%\{(\w+)\}/g;
+
+    strs = strs.split(/\n+--\n+/);
+
+    for (var i=0, l=strs.length, parts; i<l; i++) {
+        parts = strs[i].split(re_first_nl);
+        tpls[parts[0]] = parts[1];
+    }
+
+    /* tpl('<p>%{name}</p>', {name: 'foo'}) -> '<p>foo</p>' */
+    window.tpl = function(name, params) {
+        if (!tpls.hasOwnProperty(name)) {
+            return '';
+        }
+
+        if (!params) { return tpls[name]; }
+
+        return tpls[name].replace(re_tpl_var, function(_, v) {
+            return params.hasOwnProperty(v) ? params[v] : '';
+        });
+    };
+
+    main(document.getElementsByTagName('body')[0]);
+},
+function(body) {
     /* Note: the code here is not meant to be perfect, we're not doing a Web
      * project so we'll avoid spending too much time in JS code. */
 
@@ -35,9 +74,14 @@
             });
         },
         addText: function(text, callback) {
-            api.call('post', '/tlv/add/text/', text, function(xhr) {
+            api.call('post', '/tlv/add/text', text, function(xhr) {
                 callback(xhr.status == 204);
             })
+        },
+        addTLV: function(data, callback) {
+            api.call('post', '/tlv/add/form', data, function(xhr) {
+                callback(xhr);
+            });
         }
     };
 
@@ -69,17 +113,16 @@
             res = quote_re.exec(b.innerHTML);
 
         if (res && res.length == 3) {
-            b.innerHTML = res[1] + '<br/><br/><span class="author">'
-                        + '<span><span class="sep">—</span> '
-                        + res[2] + '</span></span>';
+            b.innerHTML = tpl('quote', {
+                text: res[1],
+                author: res[2]
+            });
         }
     }
 
     /* Dazibao settings */
     !function() {
-        var html = '<div id="settings"><img src="/settings.png" width="48"'
-                 + '  height="48" /><ul class="actions"></ul></div>',
-            actions, buttons = {};
+        var html = tpl('settings'), actions, buttons = {};
 
         document.body.innerHTML += html;
         actions = document.querySelector('#settings .actions');
@@ -112,14 +155,18 @@
             });
         });
 
-        /* -- adding a TLV -- */
-        addButton('Add a TLV', 'addtlv', function() {
-            // only text for now
+        /* -- adding a text TLV -- */
+        addButton('Add a text', 'addtlv', function() {
             var text = prompt("Text?");
 
             api.addText(text, function( ok ) {
                 alert(ok ? "ok, refresh!" : "oh no, an error :(");
             });
+        });
+
+        /* -- adding a TLV -- */
+        addButton('Add a file', 'addtlv', function() {
+            //
         });
     }();
 
@@ -158,4 +205,4 @@
         check_hash();
     }();
 
-})(document.getElementsByTagName('body')[0]);
+});
