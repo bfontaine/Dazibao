@@ -75,10 +75,19 @@ blockquote .sep {
     display: block;
     background-color: #FFF;
     position: fixed;
-    top: 100px;
+    top: 200px;
     width: 400px;
-    margin-left: auto;
-    margin-right: auto;
+    min-height: 300px;
+    left: 200px;
+
+    padding: 10px 6px;
+
+    border: 1px solid lightblue;
+    border-radius: 2px;
+    box-shadow: 2px 2px 10px #333;
+}
+.modal h3 {
+    margin-top: 5px;
 }
 
 /* Global settings */

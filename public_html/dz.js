@@ -235,6 +235,8 @@ function(body) {
             timeout = 10000; // 10 seconds
 
         function check_hash() {
+            if (window.hash_check === false) { return; }
+
             api.hash(function( hash ) {
                 var changed = false;
 
