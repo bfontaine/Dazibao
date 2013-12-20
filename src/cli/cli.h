@@ -8,6 +8,12 @@
 /** format of the help text */
 #define CLI_USAGE_FMT "RTFM"
 
+struct cli_in_info {
+        int fd;
+        size_t size;
+        char *src;
+};
+
 int add_all(int argc, char **argv);
 int cli_add_tlv(char *file, char *buf);
 int add(char *file, int in);
