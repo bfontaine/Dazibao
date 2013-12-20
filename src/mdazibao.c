@@ -396,7 +396,48 @@ int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
         return tlv_mwrite(tlv, d->data + offset);
 }
 
+int dz_add_ltlv(dz_t *d, tlv_t *tlv) {
+
+        /**
+         * FIXME:
+         * TLV type abstraction not respected.
+         */
+
+        off_t pad_off, eof_off;
+        size_t tlv_size = ltlv_get_length(tlv);
+        size_t available;
+
+        eof_off = d->len;
+
+        /* find offset of pad serie leading to EOF */
+        pad_off = dz_pad_serie_start(d, eof_off, 0);
+        available = d->space - pad_off;
+
+        if (available < tlv_size) {
+                if (dz_remap(d, d->space + (tlv_size - available)) == -1) {
+                        return -1;
+                }
+        }
+
+        d->len = pad_off + tlv_size;
+
+        /* write */
+        if (ltlv_mwrite(tlv, d->data + pad_off) < tlv_size) {
+                return -1;
+        }
+
+        if (dz_sync(d) < 0) {
+                return -1;
+        }
+        return 0;
+
+}
+
 int dz_add_tlv(dz_t *d, tlv_t *tlv) {
+
+        if (tlv_get_type(tlv) == TLV_LONGH) {
+                return dz_add_ltlv(d, tlv);
+        }
 
         off_t pad_off, eof_off;
         unsigned int tlv_size = TLV_SIZEOF(tlv);
@@ -414,7 +455,7 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
                 }
         }
 
-        d->len = pad_off + TLV_SIZEOF(tlv);
+        d->len = pad_off + tlv_size;
 
         /* write */
         if (dz_write_tlv_at(d, tlv, pad_off) < 0) {
