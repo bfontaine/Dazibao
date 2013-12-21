@@ -58,10 +58,10 @@
 /** HTML format for a text TLV */
 #define HTML_TLV_TEXT_FMT "<blockquote>%.*s</blockquote>"
 /** HTML format for an image TLV */
-#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%li%s\" />"
+#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%li\" />"
 /** HTML format for an image TLV with height/width attributes */
 #define HTML_TLV_IMG_DIMS_FMT \
-        "<img src=\"/tlv/%li%s\" height=\"%d\" width=\"%d\" />"
+        "<img src=\"/tlv/%li\" height=\"%d\" width=\"%d\" />"
 /** HTML format for the top of a dated TLV */
 #define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>" \
                                  "<ol class=\"subtlv\">"

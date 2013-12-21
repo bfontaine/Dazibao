@@ -55,38 +55,18 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor) {
-        int type = tlv_get_type(t), w;
-        char *ext;
+        int w;
         struct img_info info;
 
-        switch (type) {
-                case TLV_BMP:
-                        ext = BMP_EXT;
-                        break;
-                case TLV_GIF:
-                        ext = GIF_EXT;
-                        break;
-                case TLV_JPEG:
-                        ext = JPEG_EXT;
-                        break;
-                case TLV_PNG:
-                        ext = PNG_EXT;
-                        break;
-                default:
-                        ext = DEFAULT_EXT;
-                        break;
-        }
-
-        LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %li.", ext,
-                        (long)*off);
+        LOGDEBUG("Adding HTML of img TLV at offset %li.", (long)*off);
 
         if (dz_get_tlv_img_infos(&dz, *off, &info) == 0) {
                 w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                                HTML_TLV_IMG_DIMS_FMT, (long)*off, ext,
+                                HTML_TLV_IMG_DIMS_FMT, (long)*off,
                                 info.height, info.width);
         } else {
                 w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                                HTML_TLV_IMG_FMT, (long)*off, ext);
+                                HTML_TLV_IMG_FMT, (long)*off);
         }
 
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
