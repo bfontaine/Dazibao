@@ -14,7 +14,7 @@
 
     var tpls = {},
         re_first_nl = /\n([\s\S]+)/,
-        re_tpl_var = /%\{(\w+)\}/g;
+        re_tpl_var = /%\{(\w+)\}/g, dz;
 
     strs = strs.split(/\n+--\n+/);
 
@@ -59,13 +59,15 @@
         return this;
     }
 
-    main(document.getElementsByTagName('body')[0]);
+    dz = window.dz || {};
+
+    main(document.getElementsByTagName('body')[0], dz);
 },
-function(body) {
+function(body, dz) {
     /* Note: the code here is not meant to be perfect, we're not doing a Web
      * project so we'll avoid spending too much time in JS code. */
 
-    var api = {
+    dz.api = {
         call: function(method, path, data, callback) {
             var xhr = new XMLHttpRequest();
             xhr.open(method, path);
@@ -213,7 +215,9 @@ function(body) {
             ev.preventDefault();
 
             api.addTLV(data, function(xhr) {
-                alert(xhr.status);
+                alert(xhr.status == 204 ? 'ok' : 'error');
+                dz.prev_hash = 0;
+                $modal.el.className += ' hidden';
             });
 
             return false;
@@ -229,10 +233,11 @@ function(body) {
     /* Notifications */
     !function() {
 
-        var prev_hash = 0,
-            min_timeout = 2000,
+        var min_timeout = 2000,
             max_timeout = 30000,
             timeout = 10000; // 10 seconds
+
+        dz.prev_hash = 0;
 
         function check_hash() {
             if (window.hash_check === false) { return; }
@@ -240,10 +245,10 @@ function(body) {
             api.hash(function( hash ) {
                 var changed = false;
 
-                if (prev_hash != 0) {
-                    changed = hash > -1 && (hash != prev_hash);
+                if (dz.prev_hash != 0) {
+                    changed = hash > -1 && (hash != dz.prev_hash);
                 }
-                prev_hash = hash;
+                dz.prev_hash = hash;
 
                 if (changed) {
                     timeout = Math.max(min_timeout, timeout/2);
