@@ -367,9 +367,9 @@ int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         for (int i = 0; i <= indent; i++) {
                 printf("--");
         }
-        
+
         printf(" @[%10li]: %8s (%d bytes)\n",
-                dz_get_offset(dz), tlv_type2str(type), len);
+                (unsigned long)dz_get_offset(dz), tlv_type2str(type), len);
         return len
                 + (len / TLV_MAX_VALUE_SIZE
                         + MIN(1, len % TLV_MAX_VALUE_SIZE))
@@ -419,7 +419,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                 }
 
                 printf(" @[%10li]: %8s (%d bytes)\n",
-                        off, tlv_type2str(type), len);
+                        (unsigned long)off, tlv_type2str(type), len);
 
 
                 switch (type) {

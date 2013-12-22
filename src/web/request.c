@@ -640,8 +640,9 @@ struct http_param **parse_form_data(struct http_request *req) {
 
         rest_len = req->body_len - (rest - req->body);
 
-        LOGTRACE("first separator at %d", rest - req->body);
-        LOGTRACE("need %d, got %d", rest + sep_len - req->body, req->body_len);
+        LOGTRACE("first separator at %li", (long)(rest - req->body));
+        LOGTRACE("need %li, got %d", (long)(rest + sep_len - req->body),
+                        req->body_len);
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
 
