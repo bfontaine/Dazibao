@@ -477,6 +477,66 @@ int cmd_compact(int argc , char **argv, char *daz) {
 
 }
 
+int cmd_extract(int argc , char **argv, char *daz) {
+        dz_t daz_buf;
+        long off;
+        const char path;
+
+        if (argc != 2) {
+                fprintf(stderr, "cmd extract : <offset> <path> <dazibao>\n");
+                return DZ_ARGS_ERROR;
+        }
+
+        /* If the offset doesn't start with a character between '0' and '9', it
+         * must be wrong. The user probably used 'rm <dz> <offset>' instead of
+         * 'rm <offset> <dz>'.
+         */
+        if (argv[0][0] < 48 || argv[0][0] > 57) {
+                fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
+                return DZ_ARGS_ERROR;
+        }
+
+        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+                fprintf(stderr, "Error while opening the dazibao\n");
+                return -1;
+        }
+
+        off = str2dec_positive(argv[argc - 1]);
+
+        if (off < DAZIBAO_HEADER_SIZE) {
+                fprintf(stderr, "wrong offset\n");
+                return DZ_OFFSET_ERROR;
+        }
+
+        if (dz_check_tlv_at(&daz_buf, off, -1,NULL) <= 0) {
+                fprintf(stderr, "no such TLV\n");
+                dz_close(&daz_buf);
+                return DZ_OFFSET_ERROR;
+        }
+
+        path = argv[1];
+        if (access(path,F_OK) < 0) {
+                printf("file %s already exist\n",path);
+                return -1;
+
+        }
+
+
+        /*
+        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
+                fprintf(stderr, "rm failed\n");
+                dz_close(&daz_buf);
+                return -1;
+        }
+        */
+        if (dz_close(&daz_buf) < 0) {
+                fprintf(stderr, "Error while closing the dazibao\n");
+                return -1;
+        }
+
+        return 0;
+}
+
 void print_usage(char *name) {
         printf(CLI_USAGE_FMT, name);
 }
@@ -507,9 +567,7 @@ int main(int argc, char **argv) {
                 * command */
                 argv_cmd = argv + 2;
         }
-        /*
-        TODO : management error write request
-        */
+
         if (!strcmp(cmd, "add")) {
                 if (cmd_add(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_add failed\n");
@@ -532,6 +590,11 @@ int main(int argc, char **argv) {
                 }
         } else if (!strcmp(cmd, "compact")) {
                 if (cmd_compact(argc_cmd, argv_cmd, daz) < 0) {
+                        fprintf(stderr, "cmd_compact failed\n");
+                        exit(EXIT_FAILURE);
+                }
+        } else if (!strcmp(cmd, "extract")) {
+                if (cmd_extract(argc_cmd, argv_cmd, daz) < 0) {
                         fprintf(stderr, "cmd_compact failed\n");
                         exit(EXIT_FAILURE);
                 }
