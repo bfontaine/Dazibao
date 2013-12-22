@@ -20,85 +20,6 @@
 #include "tlv.h"
 #include "utils.h"
 
-/**
- * Write a tlv in dst
- * @return written byte on success, -1 on error.
- */
-off_t cli_mk_tlv(struct cli_in_info inf, int type, char *dst) {
-
-        /**
-         * FIXME:
-         * - Does not respect tlv type abstraction.
-         * - Useless multiple copies.
-         * - Only works with input file
-         */
-
-        off_t write_idx = 0;
-
-        if (inf.size > TLV_MAX_VALUE_SIZE) {
-                char *data;
-
-
-                if (inf.fd == -1) {
-                        data = strdup(inf.src);
-                } else {
-                        data = malloc(sizeof(*data) * inf.size);
-
-                        if (data == NULL) {
-                                /* TODO */
-                        }
-                        int rc;
-                        rc = read(inf.fd, data, inf.size);
-
-                        if (rc == -1) {
-                                /* TODO */
-                        } else if (rc < inf.size) {
-                                /* TODO */
-                        }
-                }
-                
-                if (type == -1) {
-                        type = guess_type(data, inf.size);
-                }
-
-                write_idx = ltlv_mk_tlv(&dst, data, type, inf.size);
-                free(data);
-                return write_idx;
-        }
-
-        write_idx += TLV_SIZEOF_HEADER;
-
-        if (inf.fd == -1) {
-                memcpy(dst + write_idx, inf.src, inf.size);
-        } else {
-                int rc = read(inf.fd, dst + write_idx, inf.size);
-
-                if (rc == -1) {
-                        PERROR("read");
-                        return -1;
-                }
-                if (rc < (int)inf.size) {
-                        LOGERROR("Read %d rc, expected %d",
-                                (int)rc, (int)inf.size);
-                        return -1;
-                }
-        }
-
-        if (type == -1 &&
-                (type = guess_type(dst + write_idx, inf.size)) == -1) {
-                LOGERROR("Undefined type.");
-                return -1;
-        }
-
-        write_idx -= TLV_SIZEOF_HEADER;
-        dst[write_idx++] = type;
-        htod(inf.size, &dst[write_idx]);
-        write_idx += TLV_SIZEOF_LENGTH;
-        write_idx += inf.size;
-
-        return write_idx;
-}
-
 
 int cli_add_all(int argc, char **argv) {
 
@@ -106,20 +27,12 @@ int cli_add_all(int argc, char **argv) {
         char
                 *type = NULL,
                 *file = NULL,
-                *delim = ",",
-                *buf = NULL;
+                *delim = ",";
         int
-                i,
-                len = 0,
-                cmpnd_len = 0,
-                compound_idx = 0,
-                write_idx = 0,
-                status = 0,
-                nb_lhead = 0,
-                nb_lcontent = 0,
-                content_idx = 0;
-        struct cli_in_info *in_info;
-        uint32_t timestamp;
+                status = 0;
+        uint32_t timestamp = 0;
+        struct tlv_input *inputs;
+        int *fd;
 
         /* Parsing arguments. */
 
@@ -143,84 +56,7 @@ int cli_add_all(int argc, char **argv) {
                 goto OUT;
         }
 
-        /* Open files.
-         * Save file descriptor (or -1).
-         * Save input size.
-         * Get total size.
-         * Get number of large tlvs headers.
-         * Get number of large tlvs containers.
-         * Set offset of real content */
-
-        in_info = malloc(sizeof(*in_info) * argc);
-
-        if (in_info == NULL) {
-                PERROR("malloc");
-                status = -1;
-                goto OUT;
-        }
-
-        for (i = 0; i < argc; i++) {
-                in_info[i].src = argv[i];
-                in_info[i].fd = open(in_info[i].src = argv[i], O_RDONLY);
-                if (in_info[i].fd == -1) {
-                        if (access(in_info[i].src = argv[i], F_OK) == 0) {
-                                LOGERROR("Failed opening %s", argv[i]);
-                                status = -1;
-                                goto CLOSEFD;
-                        }
-                        int l = strlen(argv[i]);
-                        in_info[i].size = l;
-                        if (l > TLV_MAX_VALUE_SIZE) {
-                                nb_lhead++;
-                                nb_lcontent += ltlv_nb_chunks(l);
-                        }
-
-                        len += l;
-                } else {
-                        struct stat st;
-                        if (fstat(in_info[i].fd, &st) == -1) {
-                                PERROR("fstat");
-                                status = -1;
-                                goto CLOSEFD;
-                        }
-                        if (flock(in_info[i].fd, LOCK_SH)) {
-                                PERROR("flock");
-                                status = -1;
-                                goto CLOSEFD;
-                        }
-
-                        in_info[i].size = st.st_size;
-
-                        if (st.st_size > TLV_MAX_VALUE_SIZE) {
-                                nb_lhead++;
-                                nb_lcontent += ltlv_nb_chunks(st.st_size);
-                        }
-                        len += st.st_size;
-                }
-
-                /* Add space for header ONLY if there will be a header
-                 * (i.e. this tlv is not a long tlv) */
-
-                if (in_info[i].size <= TLV_MAX_VALUE_SIZE) {
-                        len += TLV_SIZEOF_HEADER;
-                }
-
-        }
-
-        cmpnd_len = len;
-
-        if (argc > 1) {
-                /* If more than one input
-                 * we make a compound */
-                len += TLV_SIZEOF_HEADER;
-                content_idx += TLV_SIZEOF_HEADER;
-        }
-
-        /* Set date and update pointers if needed. */
         if (date) {
-                compound_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
-                content_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
-                len += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 timestamp = (uint32_t) time(NULL);
                 timestamp = htonl(timestamp);
                 if (timestamp == (uint32_t) -1) {
@@ -229,127 +65,94 @@ int cli_add_all(int argc, char **argv) {
                 }
         }
 
+        inputs = malloc(sizeof(*inputs) * argc);
 
-        /* Add space needed by large tlv headers */
-        len += nb_lcontent * TLV_SIZEOF_HEADER;
-        len += nb_lhead * TLV_SIZEOF_LONGH;
+        fd = malloc(sizeof(*fd) * argc);
 
-        /* If we are making a compound with large content
-         * we will need to include it in a large tlv
-         * But we wont need space for compound header
-         * as it will be included in LONGH value
-         * content_idx will move TLV_SIZEOF_LONGH
-         * since it will still remain a header before (TLV_LONGC) */
+        /* prepare inputs information */
 
-        if (len > TLV_MAX_SIZE && argc > 1) {
-                nb_lhead++;
-                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
-                content_idx += TLV_SIZEOF_LONGH;
-                nb_lcontent += ltlv_nb_chunks(len);
-                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
-        }
+        for (int i = 0; i < argc; i++) {
 
-        /* Same behavior with a date,
-         * but compound_idx move as well */
-        if (len > TLV_MAX_SIZE && date) {
-                nb_lhead++;
-                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
-                content_idx += TLV_SIZEOF_LONGH;
-                compound_idx += TLV_SIZEOF_LONGH;
-                nb_lcontent += ltlv_nb_chunks(len);
-                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
-        }
-
-        /* Fill the buffer */
-
-        buf = malloc(len);
-
-        if (buf == NULL) {
-                PERROR("malloc");
-                status = -1;
-                goto CLOSEFD;
-        }
-
-        write_idx = content_idx;
-
-        for (i = 0; i < argc; i++) {
-                char typ;
                 if (type != NULL) {
                         char *str = i == 0 ? type : NULL;
                         char *tok = strtok(str, delim);
-                        typ = tlv_str2type(tok);
-
-                        if (typ == -1) {
+                        inputs[i].type = tlv_str2type(tok);
+                        
+                        if (inputs[i].type == -1) {
                                 LOGERROR("Undefined type.");
                                 /* TODO: Free ressources.*/
                                 return -1;
                         }
                 } else {
-                        typ = -1;
+                        inputs[i].type = -1;
                 }
+                
+                fd[i] = open(argv[i], O_RDONLY);
+                
+                if (fd[i] == -1) {
+                        if (access(argv[i], F_OK) == 0) {
+                                LOGERROR("Failed opening %s", argv[i]);
+                                status = -1;
+                                goto CLOSEFD;
+                        }
+                        inputs[i].len = strlen(argv[i]);
+                } else {
+                        struct stat st;
+                        if (fstat(fd[i], &st) == -1) {
+                                PERROR("fstat");
+                                status = -1;
+                                goto CLOSEFD;
+                        }
+                        if (flock(fd[i], LOCK_SH)) {
+                                PERROR("flock");
+                                status = -1;
+                                goto CLOSEFD;
+                        }
+                        inputs[i].len = st.st_size;
+                        inputs[i].data = mmap(NULL, inputs[i].len,
+                                        PROT_READ, MAP_PRIVATE, fd[i], 0);
 
-                off_t off = cli_mk_tlv(in_info[i], typ, buf + write_idx);
-                write_idx += off;
+                        if (inputs[i].data == MAP_FAILED) {
+                                PERROR("mmap");
+                                status = -1;
+                                goto CLOSEFD;
+                        }
+
+                }
         }
 
-        /**
-         * If needed, make a compound tlv from buf
-         * If needed, make a dated tlv from this compound (or buf)
-         * FIXME: Really not efficient
-         */
-
-        int _len = cmpnd_len + ltlv_nb_chunks(cmpnd_len) * TLV_SIZEOF_HEADER
-                + TLV_SIZEOF_LONGH;
-
-        if (argc > 1) {
-                char *cmpnd = malloc(1);
-                ltlv_mk_tlv(&cmpnd,
-                        buf + content_idx,
-                        TLV_COMPOUND,
-                        cmpnd_len);
-                memcpy(buf + compound_idx, cmpnd, _len);
-                free(cmpnd);
+        tlv_t tlv;
+        if (tlv_init(&tlv) == -1) {
+                /* TODO */
         }
 
-        char *final;
-
-        if (date) {
-                final = malloc(1);
-                ltlv_mk_tlv(&final, buf + compound_idx, TLV_DATED, _len);
-        } else {
-                final = buf + compound_idx;
+        if (tlv_from_inputs(&tlv, inputs, argc, timestamp)) {
         }
 
-        if (cli_add_tlv(file, final) != 0) {
+        if (cli_add_tlv(file, &tlv) != 0) {
                 status = -1;
         }
 
-        if (date) {
-                free (final);
+        if (tlv_destroy(&tlv) == -1) {
+                /* TODO */
         }
 
-
-FREEBUF:
-        free(buf);
 CLOSEFD:
-        for (i = 0; i < argc; i++) {
-                if (in_info[i].fd != -1 && close(in_info[i].fd) == -1) {
-                        PERROR("close");
-                        status = -1;
-                }
+        for (int i = 0; i < argc; i++) {
+                if (fd[i] != -1)
+                /* TODO: munmap */
+                        if (close(fd[i]) == -1) {
+                                PERROR("close");
+                                status = -1;
+                        }
         }
-        free(in_info);
+        free(fd);
 OUT:
         return status;
 
 }
 
-int cli_add_tlv(char *file, char *buf) {
-
-        /**
-         * FIXME:
-         * - tlv abstraction type not respected
-         */
+int cli_add_tlv(char *file, tlv_t *tlv) {
 
         int status = 0;
         dz_t dz;
@@ -360,7 +163,7 @@ int cli_add_tlv(char *file, char *buf) {
                 goto OUT;
         }
 
-        if (dz_add_tlv(&dz, &buf) != 0) {
+        if (dz_add_tlv(&dz, tlv) != 0) {
                 LOGERROR("Failed adding TLV.");
                 status = -1;
                 goto CLOSE;
@@ -497,7 +300,8 @@ int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         printf(" @[%10li]: %8s (%d bytes)\n",
                 dz_get_offset(dz), tlv_type2str(type), len);
 
-        return len + ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
+        return ltlv_get_total_length(tlv);
+
 }
 
 int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
@@ -534,7 +338,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                         dz_set_offset(dz, off);
                         off_t next = cli_print_long_tlv(
                                 dz, &tlv, indent, lvl, debug);
-                        dz_update_offset(dz, TLV_SIZEOF_HEADER + len + next);
+                        dz_incr_offset(dz, next);
                         continue;
                 }
 

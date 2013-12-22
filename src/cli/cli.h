@@ -8,6 +8,8 @@
 /** format of the help text */
 #define CLI_USAGE_FMT "RTFM"
 
+#include "tlv.h"
+
 struct cli_in_info {
         int fd;
         size_t size;
@@ -15,7 +17,7 @@ struct cli_in_info {
 };
 
 int add_all(int argc, char **argv);
-int cli_add_tlv(char *file, char *buf);
+int cli_add_tlv(char *file, tlv_t *tlv);
 int add(char *file, int in);
 int mk_tlv(int argc, char **argv, int in, int out);
 int dump_tlv(int argc, char **argv, int out);
