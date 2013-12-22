@@ -444,13 +444,10 @@ static struct http_param *parse_form_data_part(char *start, char *end) {
                 LOGTRACE("Got the last boundary");
                 return NULL;
         }
-        if (start[0] != CR || start[1] != LF) {
-                LOGDEBUG("Malformed form part, first two bytes are %d %d",
-                                start[0], start[1]);
-                return NULL;
+        if (start[0] == CR && start[1] == LF) {
+                start += 2;
+                len -= 2;
         }
-        start += 2;
-        len -= 2;
         hs = (struct http_headers*)malloc(sizeof(struct http_headers));
 
         if (hs == NULL) {
@@ -622,7 +619,8 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
-        rest = my_memmem(req->body, req->body_len, sep, sep_len);
+        /* Chrome doesn't send CR LF before the first separator */
+        rest = my_memmem(req->body, req->body_len, sep + 2, sep_len - 2);
 
         if (rest == NULL) {
                 int l = MIN(req->body_len, 50);
@@ -636,8 +634,13 @@ struct http_param **parse_form_data(struct http_request *req) {
                 return NULL;
         }
 
+        LOGTRACE("req->body[0..2]: %u %u %u",
+                        req->body[0], req->body[1], req->body[2]);
+        LOGTRACE("rest[0..2]:      %u %u %u", rest[0], rest[1], rest[2]);
+
         rest_len = req->body_len - (rest - req->body);
 
+        LOGTRACE("first separator at %d", rest - req->body);
         LOGTRACE("need %d, got %d", rest + sep_len - req->body, req->body_len);
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);

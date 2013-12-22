@@ -655,7 +655,7 @@ static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
         tlv_init(&t);
 
         /* at the end of the loop, we'll have 'start < offset < next' */
-        while (next <= offset && (st = dz_tlv_at(d, &t, next)) == 0
+        while (next <= offset && (st = dz_tlv_at(d, &t, next)) > 0
                         && next <= end) {
                 start = next;
                 next += TLV_SIZEOF(&t);

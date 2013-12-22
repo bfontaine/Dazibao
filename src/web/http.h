@@ -109,7 +109,8 @@ struct http_status {
 #define HTTP_H_DATE           5
 /** code for a "Server" HTTP header */
 #define HTTP_H_SERVER         6
-/** code for an "X-Powered-By" HTTP header */
+/** code for an "X-Powered-By" HTTP header. Note that X- prefixed headers were
+ * recently deprecated, but we're working with HTTP 1.0 here. */
 #define HTTP_H_POWEREDBY      7
 /** code for an "Accept" HTTP header */
 #define HTTP_H_ACCEPT         8

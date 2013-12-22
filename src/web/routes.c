@@ -39,12 +39,12 @@ int route_get_index(dz_t *dz, struct http_request req,
 }
 
 /** route for GET /tlv/.* */
-int route_get_image_tlv(dz_t *dz, struct http_request req,
+int route_get_media_tlv(dz_t *dz, struct http_request req,
                         struct http_response *resp) {
 
         tlv_t tlv;
         unsigned long off = -1;
-        int tlv_type, tlv_real_type;
+        int tlv_type;
 
         if (tlv_init(&tlv) < 0) {
                 LOGERROR("Cannot allocate memory for a TLV");
@@ -52,17 +52,7 @@ int route_get_image_tlv(dz_t *dz, struct http_request req,
                 return HTTP_S_ERR;
         }
 
-        tlv_type = get_image_tlv_type(req.path);
-
-        if (tlv_type == -1) {
-                LOGERROR("Cannot get the TLV type from '%s'", req.path);
-                tlv_destroy(&tlv);
-                return -1;
-        }
-
-        /* We assume that we use only extensions of 3 characters like .png and
-         * .jpg (not .jpeg) */
-        if (sscanf(req.path, "/tlv/%16lu.%*3s", &off) == 0) {
+        if (sscanf(req.path, "/tlv/%16lu", &off) == 0) {
                 LOGERROR("Cannot parse the request path");
                 tlv_destroy(&tlv);
                 return -1;
@@ -80,13 +70,7 @@ int route_get_image_tlv(dz_t *dz, struct http_request req,
                 return -1;
         }
 
-        tlv_real_type = tlv_get_type(&tlv);
-        if (tlv_real_type != tlv_type) {
-                LOGERROR("Wrong TLV type. Expected %d, got %d",
-                                tlv_type, tlv_real_type);
-                tlv_destroy(&tlv);
-                return -1;
-        }
+        tlv_type = tlv_get_type(&tlv);
 
         if (req.method != HTTP_M_HEAD) {
                 resp->body_len = tlv_get_length(&tlv);
@@ -164,6 +148,7 @@ int route_post_rm_tlv(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
 
         unsigned long off = -1;
+        int st = 0;
 
         /* This route returns 204 No Content if the TLV was successfully
            removed. */
@@ -181,8 +166,9 @@ int route_post_rm_tlv(dz_t *dz, struct http_request req,
                 return -1;
         }
 
-        if (dz_rm_tlv(dz, off) < 0) {
-                LOGERROR("Cannot delete TLV at offset %li", (long)off);
+        if ((st = dz_rm_tlv(dz, off)) < 0) {
+                LOGERROR("Cannot delete TLV at offset %li, st=%d",
+                                (long)off, st);
                 return -1;
         }
 
@@ -350,7 +336,7 @@ int register_routes(void) {
         st |= add_route(HTTP_M_POST, "/tlv/delete/",  route_post_rm_tlv);
         st |= add_route(HTTP_M_POST, "/tlv/add/text", route_post_new_tlv_text);
         st |= add_route(HTTP_M_POST, "/tlv/add/form", route_post_form_tlv);
-        st |= add_route(HTTP_M_GET,  "/tlv/",         route_get_image_tlv);
+        st |= add_route(HTTP_M_GET,  "/tlv/",         route_get_media_tlv);
         st |= add_route(HTTP_M_POST, "/compact",      route_post_compact_dz);
         st |= add_route(HTTP_M_GET,  "/hash",         route_get_hash);
 
