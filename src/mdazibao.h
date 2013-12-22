@@ -50,7 +50,7 @@ int dz_set_offset(dz_t *d, off_t off);
 
 off_t dz_get_offset(dz_t *d);
 
-int dz_update_offset(dz_t *d, off_t off);
+int dz_incr_offset(dz_t *d, off_t off);
 
 /**
  * @param d the dazibao

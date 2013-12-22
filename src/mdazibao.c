@@ -52,7 +52,7 @@ off_t dz_get_offset(dz_t *d) {
         return d->offset;
 }
 
-int dz_update_offset(dz_t *d, off_t off) {
+int dz_incr_offset(dz_t *d, off_t off) {
         if (off < 0 || (unsigned long)off > d->len) {
                 return -1;
         }
@@ -404,7 +404,7 @@ int dz_add_ltlv(dz_t *d, tlv_t *tlv) {
          */
 
         off_t pad_off, eof_off;
-        size_t tlv_size = ltlv_get_length(tlv);
+        size_t tlv_size = ltlv_get_total_length(tlv);
         size_t available;
 
         eof_off = d->len;
