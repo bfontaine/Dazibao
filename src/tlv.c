@@ -399,7 +399,7 @@ int ltlv_nb_chunks(size_t size) {
                 + MIN(1, size % TLV_MAX_VALUE_SIZE);
 }
 
-int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
+size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
         int
                 nb_chunks = ltlv_nb_chunks(len),
                 chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
@@ -407,10 +407,10 @@ int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
                 remaining = len,
                 w_idx = 0,
                 r_idx = 0;
-
+/*
         *tlv = safe_realloc(*tlv,
-                        chunks_len + TLV_SIZEOF_LONGH);
-
+                         chunks_len + TLV_SIZEOF_LONGH);
+*/
         if (*tlv == NULL) {
                 return -1;
         }
@@ -444,17 +444,17 @@ int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
                 return -1;
         }
 
-        return 0;
+        return chunks_len + TLV_SIZEOF_LONGH;
 }
 
 size_t ltlv_mwrite(tlv_t *tlv, char *dst) {
-        size_t len = ltlv_get_length(tlv);
+        size_t len = ltlv_get_total_length(tlv);
         memcpy(dst, *tlv, len);
         return len;
 }
 
 size_t ltlv_fwrite(tlv_t *tlv, int fd) {
-        size_t len = ltlv_get_length(tlv);
+        size_t len = ltlv_get_total_length(tlv);
         return write_all(fd, *tlv, len);
 }
 
@@ -466,7 +466,7 @@ int ltlv_real_data_type(tlv_t *tlv) {
         return (*tlv)[TLV_SIZEOF_HEADER];
 }
 
-size_t ltlv_get_length(tlv_t *tlv) {
+size_t ltlv_get_total_length(tlv_t *tlv) {
 
         size_t len;
 
@@ -476,4 +476,191 @@ size_t ltlv_get_length(tlv_t *tlv) {
         return len
                 + ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER
                 + TLV_SIZEOF_LONGH;
+}
+
+int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
+                time_t date) {
+
+        char
+                *type = NULL,
+                *file = NULL,
+                *delim = ",",
+                *buf = NULL;
+        int
+                i,
+                len = 0,
+                cmpnd_len = 0,
+                cmpnd_idx = 0,
+                write_idx = 0,
+                status = 0,
+                nb_lhead = 0,
+                nb_lcontent = 0,
+                content_idx = 0;
+
+        /* Compute needed length */
+
+        for (int i = 0; i < nb_inputs; i++) {
+                if (inputs[i].len > TLV_MAX_VALUE_SIZE) {
+                        nb_lhead++;
+                        nb_lcontent += ltlv_nb_chunks(inputs[i].len);
+                } else {
+                        len += TLV_SIZEOF_HEADER;
+                }
+
+                len += inputs[i].len;
+        }
+
+        if (nb_inputs > 1) {
+                /* If more than one input
+                 * we make a compound */
+                len += TLV_SIZEOF_HEADER;
+                content_idx += TLV_SIZEOF_HEADER;
+        }
+
+        /* Set date and update pointers if needed. */
+        if (date) {
+                cmpnd_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                content_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                len += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+        }
+
+        /* Add space needed by large tlv headers */
+        len += nb_lcontent * TLV_SIZEOF_HEADER;
+        len += nb_lhead * TLV_SIZEOF_LONGH;
+
+        /* If we are making a compound with large content
+         * we will need to include it in a large tlv
+         * But we wont need space for compound header
+         * as it will be included in LONGH value
+         * content_idx will move TLV_SIZEOF_LONGH
+         * since it will still remain a header before (TLV_LONGC) */
+
+        if (len > TLV_MAX_SIZE && nb_inputs > 1) {
+                nb_lhead++;
+                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                content_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                nb_lcontent += ltlv_nb_chunks(len);
+                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
+        }
+
+        /* Same behavior with a date,
+         * but cmpnd_idx move as well */
+        if (len > TLV_MAX_SIZE && date) {
+                nb_lhead++;
+                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                content_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                cmpnd_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                nb_lcontent += ltlv_nb_chunks(len);
+                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
+        }
+
+        *tlv = safe_realloc(*tlv, sizeof(**tlv) * len);
+
+        write_idx = content_idx;
+
+        LOGINFO("cmpnd_idx:%d, content_idx:%d", cmpnd_idx, content_idx);
+
+        /* Copy inputs value and add TLV headers */
+
+        for (i = 0; i < nb_inputs; i++) {
+                LOGINFO("Making TLV %d/%d at %d.", i + 1, nb_inputs, write_idx);
+                if (inputs[i].len > TLV_MAX_VALUE_SIZE) {
+
+                        LOGINFO("Wrapping n°%d in a long tlv.", i);
+                        char *false_tlv = *tlv + write_idx;
+
+                        /* Need to insert TLV in a long TLV */
+                        int wrote = ltlv_mk_tlv(
+                                &false_tlv,
+                                inputs[i].data,
+                                inputs[i].type,
+                                inputs[i].len);
+                        write_idx += wrote;
+                } else {
+                        (*tlv)[write_idx] = inputs[i].type;
+                        write_idx += TLV_SIZEOF_TYPE;
+                        htod(inputs[i].len, *tlv + write_idx);
+                        write_idx += TLV_SIZEOF_LENGTH;
+                        memcpy(*tlv + write_idx, inputs[i].data, inputs[i].len);
+                        write_idx += inputs[i].len;
+                }
+        }
+
+        /* Write compound header if needed */
+
+        if (nb_inputs > 1) {
+                int content_len = write_idx - content_idx;
+
+                if (content_len > TLV_MAX_VALUE_SIZE) {
+                        uint32_t be_len = htonl(content_len);
+                        char *false_tlv = *tlv + cmpnd_idx;
+                        tlv_set_type(&false_tlv, TLV_LONGH);
+                        tlv_set_length(&false_tlv, TLV_SIZEOF_LONGH);
+                        *(tlv_get_value_ptr(&false_tlv)) = TLV_COMPOUND;
+                        memcpy(tlv_get_value_ptr(&false_tlv) + 1,
+                                &be_len,
+                                sizeof(be_len));
+                        uint32_t new_size = ltlv_split_value(
+                                false_tlv + TLV_SIZEOF_LONGH,
+                                content_len);
+                        write_idx = content_idx + new_size;
+                } else {
+                        char *false_tlv = *tlv + cmpnd_idx;
+                        tlv_set_type(&false_tlv, TLV_COMPOUND);
+                        tlv_set_length(&false_tlv, content_len);
+                }
+        }
+
+        if (date != 0) {
+                LOGINFO("cmpnd_idx:%d", cmpnd_idx);
+                int content_len = write_idx - cmpnd_idx;
+                if (content_len > TLV_MAX_VALUE_SIZE) {
+                        uint32_t be_len = htonl(content_len);
+                                tlv_set_type(tlv, TLV_LONGH);
+                                tlv_set_length(tlv, TLV_SIZEOF_LONGH);
+                                *tlv_get_value_ptr(tlv) = TLV_DATED;
+                                memcpy(tlv_get_value_ptr(tlv) + 1,
+                                        &be_len,
+                                        sizeof(be_len));
+                                memcpy(tlv_get_value_ptr(tlv) + 1 + sizeof(be_len),
+                                        &date,
+                                        sizeof(date));
+                                uint32_t new_size = ltlv_split_value(
+                                        *tlv + TLV_SIZEOF_LONGH,
+                                        content_len);
+                                write_idx = cmpnd_idx + new_size;
+                } else {
+                        tlv_set_type(tlv, TLV_DATED);
+                        tlv_set_length(tlv, content_len);
+                }
+        }
+
+        return 0;
+
+}
+
+/**
+ * Split src in multiple LONGC tlvs
+ * @return New size of tlv list
+ */
+
+uint32_t ltlv_split_value(char *src, uint32_t len) {
+        
+        int
+                nb_chunks = ltlv_nb_chunks(len),
+                w_idx = 0;
+        uint32_t remaining = len;
+
+        for (int i = 0; i < nb_chunks; i++) {
+                uint32_t size = MIN(TLV_MAX_VALUE_SIZE, remaining);
+                /* shift memory */
+                memmove(src + w_idx + TLV_SIZEOF_HEADER, src + w_idx, remaining);
+                /* write LONGC header */
+                src[w_idx] = TLV_LONGC;
+                htod(size, src + w_idx);
+                /* update counters */
+                w_idx += size + TLV_SIZEOF_HEADER;
+                remaining -= size;
+        }
+        return w_idx;
 }

@@ -114,6 +114,15 @@ struct type_signature {
         char *signature;
 };
 
+struct tlv_input {
+        /* value of the tlv */
+        char *data;
+        /* length of data */
+        size_t len;
+        /* if type != -1, force tlv type */
+        int type;
+};
+
 /**
  * @deprecated use tlv_guess_type instead
  **/
@@ -341,7 +350,7 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
 
-int ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len);
+size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len);
 
 size_t ltlv_mwrite(tlv_t *tlv, char *dst);
 
@@ -353,6 +362,11 @@ int ltlv_real_data_type(tlv_t *tlv);
 
 int ltlv_nb_chunks(size_t size);
 
-size_t ltlv_get_length(tlv_t *tlv);
+size_t ltlv_get_total_length(tlv_t *tlv);
+
+int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
+                time_t date);
+
+uint32_t ltlv_split_value(char *src, uint32_t len);
 
 #endif
