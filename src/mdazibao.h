@@ -14,6 +14,7 @@
  * Size of a Dazibao header
  **/
 #define DAZIBAO_HEADER_SIZE 4
+#define DZ_HEADER_SIZE 4
 
 /**
  * code used to represent "End Of Dazibao", similarly to EOF.
