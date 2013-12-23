@@ -407,10 +407,7 @@ size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
                 remaining = len,
                 w_idx = 0,
                 r_idx = 0;
-/*
-        *tlv = safe_realloc(*tlv,
-                         chunks_len + TLV_SIZEOF_LONGH);
-*/
+
         if (*tlv == NULL) {
                 return -1;
         }
@@ -435,13 +432,6 @@ size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
                 r_idx += size;
                 w_idx += size;
                 remaining -= size;
-        }
-
-        /* For debug: to remove in stable version */
-
-        if (r_idx != len) {
-                LOGERROR("read: %d, size: %d", r_idx, len);
-                return -1;
         }
 
         return chunks_len + TLV_SIZEOF_LONGH;

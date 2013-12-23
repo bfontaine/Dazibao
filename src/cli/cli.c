@@ -21,40 +21,13 @@
 #include "utils.h"
 
 
-int cli_add_all(int argc, char **argv) {
+int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
-        char date = 0;
-        char
-                *type = NULL,
-                *file = NULL,
-                *delim = ",";
-        int
-                status = 0;
+        int status = 0;
         uint32_t timestamp = 0;
         struct tlv_input *inputs;
         int *fd;
-
-        /* Parsing arguments. */
-
-        struct s_option opt[] = {
-                {"--date", ARG_TYPE_FLAG, (void *)&date},
-                {"--type", ARG_TYPE_STRING, (void *)&type},
-                {"--dazibao", ARG_TYPE_STRING, (void *)&file}
-        };
-
-        struct s_args args = {&argc, &argv, opt};
-
-        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) == -1) {
-                LOGERROR("jparse_args failed.");
-                status = -1;
-                goto OUT;
-        }
-
-        if (file == NULL) {
-                LOGERROR("Missing arguments (see manual).");
-                status = -1;
-                goto OUT;
-        }
+        char *delim = ",";
 
         if (date) {
                 timestamp = (uint32_t) time(NULL);
@@ -65,9 +38,22 @@ int cli_add_all(int argc, char **argv) {
                 }
         }
 
-        inputs = malloc(sizeof(*inputs) * argc);
+        fd = calloc(argc, sizeof(*fd));
 
-        fd = malloc(sizeof(*fd) * argc);
+        if (fd == NULL) {
+                PERROR("malloc");
+                status = -1;
+                goto OUT;
+        }
+
+        inputs = calloc(argc, sizeof(*inputs));
+
+        if (inputs == NULL) {
+                PERROR("malloc");
+                status = -1;
+                goto CLOSEFD;
+        }
+
 
         /* prepare inputs information */
 
@@ -80,8 +66,8 @@ int cli_add_all(int argc, char **argv) {
                         
                         if (inputs[i].type == -1) {
                                 LOGERROR("Undefined type.");
-                                /* TODO: Free ressources.*/
-                                return -1;
+                                status = -1;
+                                goto CLOSEFD;
                         }
                 } else {
                         inputs[i].type = -1;
@@ -121,41 +107,71 @@ int cli_add_all(int argc, char **argv) {
                 }
         }
 
-        tlv_t tlv;
-        if (tlv_init(&tlv) == -1) {
-                /* TODO */
-        }
-
-        if (tlv_from_inputs(&tlv, inputs, argc, timestamp)) {
-        }
-
-        if (cli_add_tlv(file, &tlv) != 0) {
+        if (tlv_from_inputs(tlv, inputs, argc, timestamp) == -1 ) {
+                LOGERROR("tlv_from_inputs failed");
                 status = -1;
-        }
-
-        if (tlv_destroy(&tlv) == -1) {
-                /* TODO */
+                goto CLOSEFD;
         }
 
 CLOSEFD:
         for (int i = 0; i < argc; i++) {
-                if (fd[i] != -1)
-                /* TODO: munmap */
+                if (fd[i] != -1) {
+                        if (inputs[i].len != 0
+                                && munmap(inputs[i].data,
+                                        inputs[i].len) == -1) {
+                                PERROR("munmap");
+                                status = -1;
+                        }
                         if (close(fd[i]) == -1) {
                                 PERROR("close");
                                 status = -1;
                         }
+                }
         }
+
         free(fd);
+
+        free(inputs);
+
 OUT:
         return status;
 
 }
 
-int cli_add_tlv(char *file, tlv_t *tlv) {
+int cli_add(int argc, char **argv) {
 
         int status = 0;
         dz_t dz;
+        tlv_t tlv;
+        char date = 0;
+        char *type = NULL;
+        char *file;
+        char **inputs;
+        int nb_inputs;
+        /* Parsing arguments. */
+
+        struct s_option opt[] = {
+                {"--date", ARG_TYPE_FLAG, (void *)&date},
+                {"--type", ARG_TYPE_STRING, (void *)&type},
+                {"--dazibao", ARG_TYPE_STRING, (void *)&file}
+        };
+
+        struct s_args args = {&nb_inputs, &inputs, opt};
+
+        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) == -1) {
+                LOGERROR("jparse_args failed.");
+                status = -1;
+                goto OUT;
+        }
+
+        LOGINFO("--date:%d, --type:%s, --dazibao:%s", date, type, file);
+
+        if (file == NULL) {
+                LOGERROR("Missing arguments (see manual).");
+                status = -1;
+                goto OUT;
+        }
+
 
         if (dz_open(&dz, file, O_RDWR) != 0) {
                 LOGERROR("Failed opening %s.", file);
@@ -163,11 +179,27 @@ int cli_add_tlv(char *file, tlv_t *tlv) {
                 goto OUT;
         }
 
-        if (dz_add_tlv(&dz, tlv) != 0) {
-                LOGERROR("Failed adding TLV.");
+        if (tlv_init(&tlv) == -1) {
+                LOGERROR("tlv_init failed.");
                 status = -1;
                 goto CLOSE;
         }
+
+        if (cli_mk_tlv(&tlv, nb_inputs, inputs, type, date) == -1) {
+                LOGERROR("cli_mk_tlv failed.");
+                status = -1;
+                goto DESTROY;
+        }
+
+
+        if (dz_add_tlv(&dz, &tlv) != 0) {
+                LOGERROR("Failed adding TLV.");
+                status = -1;
+                goto DESTROY;
+        }
+
+DESTROY:
+        tlv_destroy(&tlv);
 
 CLOSE:
         if (dz_close(&dz) == -1) {
@@ -513,28 +545,6 @@ OUT:
         return status;
 }
 
-
-int cli_mk_long_tlv(char *file) {
-        int fd;
-        int type;
-        char *map;
-        tlv_t tlv;
-        struct stat st;
-        fd = open(file, O_RDONLY);
-        flock(fd, LOCK_SH);
-        fstat(fd, &st);
-        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        type = guess_type(map, st.st_size);
-        tlv_init(&tlv);
-        ltlv_mk_tlv(&tlv, map, type, st.st_size);
-        munmap(map, st.st_size);
-        ltlv_fwrite(&tlv, STDOUT_FILENO);
-        tlv_destroy(&tlv);
-        close(fd);
-        return 0;
-}
-
-
 int main(int argc, char **argv) {
 
         char *cmd;
@@ -551,7 +561,7 @@ int main(int argc, char **argv) {
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
-                if (cli_add_all(argc - 2, &argv[2]) != 0) {
+                if (cli_add(argc - 2, &argv[2]) != 0) {
                         LOGERROR("TLV addition failed.");
                         return EXIT_FAILURE;
                 }
@@ -573,11 +583,6 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
-                        return EXIT_FAILURE;
-                }
-        }  else if (strcmp(cmd, "mk_long") == 0) {
-                if (cli_mk_long_tlv(argv[2]) == -1) {
-                        LOGERROR("Failed making long_tlv TLV.");
                         return EXIT_FAILURE;
                 }
         } else {
