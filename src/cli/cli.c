@@ -58,20 +58,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
         for (int i = 0; i < argc; i++) {
 
-                if (type != NULL) {
-                        char *str = i == 0 ? type : NULL;
-                        char *tok = strtok(str, delim);
-                        inputs[i].type = tlv_str2type(tok);
-                        
-                        if (inputs[i].type == -1) {
-                                LOGERROR("Undefined type.");
-                                status = -1;
-                                goto CLOSEFD;
-                        }
-                } else {
-                        inputs[i].type = -1;
-                }
-                
                 fd[i] = open(argv[i], O_RDONLY);
                 
                 if (fd[i] == -1) {
@@ -102,8 +88,24 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                                 status = -1;
                                 goto CLOSEFD;
                         }
-
                 }
+
+                if (type != NULL) {
+                        char *str = i == 0 ? type : NULL;
+                        char *tok = strtok(str, delim);
+                        inputs[i].type = tlv_str2type(tok);
+                        
+                        if (inputs[i].type == -1) {
+                                LOGERROR("Undefined type.");
+                                status = -1;
+                                goto CLOSEFD;
+                        }
+                } else {
+                        inputs[i].type = tlv_guess_type(
+                                inputs[i].data,
+                                inputs[i].len);
+                }
+
         }
 
         if (tlv_from_inputs(tlv, inputs, argc, timestamp) == -1 ) {
@@ -335,7 +337,7 @@ int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
 }
 
-int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
+int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
 
         /**
          * FIXME: This function breaks
@@ -396,7 +398,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                                         -1,
                                         dz->data
                                 };
-                                cli_print_all_tlv(
+                                cli_print_dz(
                                         &cmpnd,
                                         indent + 1,
                                         lvl - 1,
@@ -416,7 +418,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                                         -1,
                                         dz->data
                                 };
-                                cli_print_all_tlv(
+                                cli_print_dz(
                                         &cmpnd,
                                         indent + 1,
                                         lvl - 1,
@@ -459,7 +461,7 @@ int cli_dump_dz(int argc, char **argv, int out) {
                 return -1;
         }
 
-        cli_print_all_tlv(&dz, 0, depth, debug);
+        cli_print_dz(&dz, 0, depth, debug);
 
         if (dz_close(&dz) == -1) {
                 LOGERROR("Failed closing dazibao.");
