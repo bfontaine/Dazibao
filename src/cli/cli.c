@@ -172,8 +172,6 @@ int cli_add(int argc, char **argv) {
 
         file = inputs[--nb_inputs];
         
-        LOGINFO("--date:%d, --type:%s, dazibao: %s", date, type, file);
-
         if (dz_open(&dz, file, O_RDWR) != 0) {
                 LOGERROR("Failed opening %s.", file);
                 status = -1;
@@ -254,7 +252,7 @@ int cli_dump_tlv(int argc, char **argv, int out) {
                 status = -1;
                 goto DESTROY;
         case EOD:
-                LOGINFO("EOD reached.");
+                LOGERROR("EOD reached.");
                 status = -1;
                 goto DESTROY;
         default:
