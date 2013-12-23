@@ -472,9 +472,6 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                 time_t date) {
 
         char
-                *type = NULL,
-                *file = NULL,
-                *delim = ",",
                 *buf = NULL;
         int
                 i,
@@ -546,17 +543,19 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
         *tlv = safe_realloc(*tlv, sizeof(**tlv) * len);
 
-        write_idx = content_idx;
+        if (*tlv == NULL) {
+                PERROR("safe_realloc");
+                return -1;
+        }
 
-        LOGINFO("cmpnd_idx:%d, content_idx:%d", cmpnd_idx, content_idx);
+        write_idx = content_idx;
 
         /* Copy inputs value and add TLV headers */
 
         for (i = 0; i < nb_inputs; i++) {
-                LOGINFO("Making TLV %d/%d at %d.", i + 1, nb_inputs, write_idx);
+
                 if (inputs[i].len > TLV_MAX_VALUE_SIZE) {
 
-                        LOGINFO("Wrapping n°%d in a long tlv.", i);
                         char *false_tlv = *tlv + write_idx;
 
                         /* Need to insert TLV in a long TLV */
@@ -602,7 +601,6 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
         }
 
         if (date != 0) {
-                LOGINFO("cmpnd_idx:%d", cmpnd_idx);
                 int content_len = write_idx - cmpnd_idx;
                 if (content_len > TLV_MAX_VALUE_SIZE) {
                         uint32_t be_len = htonl(content_len);
