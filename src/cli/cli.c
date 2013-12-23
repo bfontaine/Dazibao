@@ -358,18 +358,20 @@ CLOSE:
 }
 
 int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
+        int len, type;
+        const char *type_str;
 
         dz_read_tlv(dz, tlv, dz_get_offset(dz));
 
-        int len = tlv_long_real_data_length(tlv);
-        int type = tlv_long_real_data_type(tlv);
+        len = tlv_long_real_data_length(tlv);
+        type = tlv_long_real_data_type(tlv);
+        type_str = tlv_type2str(type);
 
         for (int i = 0; i <= indent; i++) {
                 printf("--");
         }
-
-        printf(" @[%10li]: %8s (%d bytes)\n",
-                (unsigned long)dz_get_offset(dz), tlv_type2str(type), len);
+        printf(" @[%10li]: %8s (%d bytes)\n", (unsigned long)dz_get_offset(dz),
+                type_str ? type_str : "unknown", len);
         return len
                 + (len / TLV_MAX_VALUE_SIZE
                         + MIN(1, len % TLV_MAX_VALUE_SIZE))
@@ -392,6 +394,7 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
         }
 
         while ((off = dz_next_tlv(dz, &tlv)) != EOD) {
+                const char *type_str;
 
                 if (off == -1) {
                         return -1;
@@ -418,8 +421,9 @@ int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
                         printf("--");
                 }
 
-                printf(" @[%10li]: %8s (%d bytes)\n",
-                        (unsigned long)off, tlv_type2str(type), len);
+                type_str = tlv_type2str(type);
+                printf(" @[%10li]: %8s (%d bytes)\n", (unsigned long)off,
+                        type_str ? type_str : "unknown", len);
 
 
                 switch (type) {

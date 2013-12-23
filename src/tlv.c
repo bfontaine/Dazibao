@@ -290,7 +290,7 @@ const char *tlv_type2str(int tlv_type) {
                         return tlv_types[i].name;
                 }
         }
-        return "unknown";
+        return NULL;
 }
 
 int tlv_str2type(char *tlv_type) {
