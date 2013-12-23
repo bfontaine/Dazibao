@@ -398,11 +398,6 @@ int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 
 int dz_add_ltlv(dz_t *d, tlv_t *tlv) {
 
-        /**
-         * FIXME:
-         * TLV type abstraction not respected.
-         */
-
         off_t pad_off, eof_off;
         size_t tlv_size = ltlv_get_total_length(tlv);
         size_t available;
@@ -426,9 +421,6 @@ int dz_add_ltlv(dz_t *d, tlv_t *tlv) {
                 return -1;
         }
 
-        if (dz_sync(d) < 0) {
-                return -1;
-        }
         return 0;
 
 }
@@ -462,9 +454,6 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
                 ERROR(NULL, -1);
         }
 
-        if (dz_sync(d) < 0) {
-                return -1;
-        }
         return 0;
 }
 
