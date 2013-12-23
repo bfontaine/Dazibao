@@ -40,6 +40,26 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
  */
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
 
+int dz_set_offset(dz_t *d, off_t off) {
+        if (off < 0 || (unsigned long)off > d->len) {
+                return -1;
+        }
+        d->offset = off;
+        return 0;
+}
+
+off_t dz_get_offset(dz_t *d) {
+        return d->offset;
+}
+
+int dz_update_offset(dz_t *d, off_t off) {
+        if (off < 0 || (unsigned long)off > d->len) {
+                return -1;
+        }
+        d->offset += off;
+        return 0;
+}
+
 int dz_sync(dz_t *d) {
         if (ftruncate(d->fd, d->len) == -1) {
                 PERROR("ftruncate");
@@ -272,19 +292,18 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
         val_off = offset + TLV_SIZEOF_HEADER;
 
         switch (tlv_get_type(&t)) {
-        case TLV_PNG:
-                /* see stackoverflow.com/a/5354657/735926 */
-                if (length < 24) {
+        case TLV_BMP:
+                /* see second table at
+                 *      en.wikipedia.org/wiki/BMP_file_format
+                 *              #DIB_header_.28bitmap_information_header.29 */
+                if (length < 0x20) {
                         st = -1;
                         break;
                 }
                 info->width = 0;
                 info->height = 0;
-                memcpy(&(info->width), dz->data + val_off + 16, 4);
-                memcpy(&(info->height), dz->data + val_off + 20, 4);
-
-                info->width = ntohl(info->width);
-                info->height = ntohl(info->height);
+                memcpy(&(info->width), dz->data + val_off + 0x12, 4);
+                memcpy(&(info->height), dz->data + val_off + 0x16, 4);
                 st = 0;
                 break;
         case TLV_GIF:
@@ -300,8 +319,24 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 st = 0;
                 break;
         case TLV_JPEG:
-                /* see stackoverflow.com/a/692013/735926 */
+                /* TODO
+                 * see stackoverflow.com/a/692013/735926 */
                 st = -1;
+                break;
+        case TLV_PNG:
+                /* see stackoverflow.com/a/5354657/735926 */
+                if (length < 24) {
+                        st = -1;
+                        break;
+                }
+                info->width = 0;
+                info->height = 0;
+                memcpy(&(info->width), dz->data + val_off + 16, 4);
+                memcpy(&(info->height), dz->data + val_off + 20, 4);
+
+                info->width = ntohl(info->width);
+                info->height = ntohl(info->height);
+                st = 0;
                 break;
         case TLV_TIFF:
                 /* TODO */
@@ -347,12 +382,12 @@ off_t dz_next_tlv(dz_t *d, tlv_t *tlv) {
 
 int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
         dz_t tmp = {
-                0,
+                -1,
                 d->fflags,
-                d->len - offset,
-                0,
-                d->space - offset,
-                d->data + offset
+                d->len,
+                offset,
+                d->space,
+                d->data
         };
         return dz_next_tlv(&tmp, tlv);
 }
@@ -579,7 +614,7 @@ static int dz_limited_check_tlv_at(dz_t *d, off_t offset, int type,
         tlv_init(&t);
 
         /* at the end of the loop, we'll have 'start < offset < next' */
-        while (next <= offset && (st = dz_tlv_at(d, &t, next)) == 0
+        while (next <= offset && (st = dz_tlv_at(d, &t, next)) > 0
                         && next <= end) {
                 start = next;
                 next += TLV_SIZEOF(&t);

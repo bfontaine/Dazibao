@@ -10,26 +10,27 @@
 
 /** array containing all HTTP statuses with their code and phrase */
 static const struct http_status http_statuses[] = {
-        { HTTP_S_OK            , "OK"                    },
-        { HTTP_S_CREATED       , "Created"               },
-        { HTTP_S_NO_CT         , "No Content"            },
-        { HTTP_S_RESET_CT      , "Reset Content"         },
+        { HTTP_S_OK            , "OK"                       },
+        { HTTP_S_CREATED       , "Created"                  },
+        { HTTP_S_NO_CT         , "No Content"               },
+        { HTTP_S_RESET_CT      , "Reset Content"            },
 
-        { HTTP_S_MLTPL_CHOICES , "Multiple Choices"      },
-        { HTTP_S_MOVED         , "Moved Permanently"     },
-        { HTTP_S_FOUND         , "Not Found"             },
+        { HTTP_S_MLTPL_CHOICES , "Multiple Choices"         },
+        { HTTP_S_MOVED         , "Moved Permanently"        },
+        { HTTP_S_FOUND         , "Not Found"                },
 
-        { HTTP_S_BADREQ        , "Bad Request"           },
-        { HTTP_S_FORBIDDEN     , "Forbidden"             },
-        { HTTP_S_NOTFOUND      , "Not Found"             },
-        { HTTP_S_NOTALLOWED    , "Not Allowed"           },
-        { HTTP_S_CONFLICT      , "Conflict"              },
-        { HTTP_S_LENGTHREQD    , "Length Required"       },
-        { HTTP_S_URITOOLONG    , "Request-URI Too Long"  },
+        { HTTP_S_BADREQ        , "Bad Request"              },
+        { HTTP_S_FORBIDDEN     , "Forbidden"                },
+        { HTTP_S_NOTFOUND      , "Not Found"                },
+        { HTTP_S_NOTALLOWED    , "Not Allowed"              },
+        { HTTP_S_CONFLICT      , "Conflict"                 },
+        { HTTP_S_LENGTHREQD    , "Length Required"          },
+        { HTTP_S_URITOOLONG    , "Request-URI Too Long"     },
+        { HTTP_S_TOO_LARGE     , "Request Entity Too Large" },
 
-        { HTTP_S_ERR           , "Internal Server Error" },
-        { HTTP_S_NOTIMPL       , "Not Implemented"       },
-        { HTTP_UNSUPP_VER      , "Version Not Supported" }
+        { HTTP_S_ERR           , "Internal Server Error"    },
+        { HTTP_S_NOTIMPL       , "Not Implemented"          },
+        { HTTP_UNSUPP_VER      , "Version Not Supported"    }
 };
 
 /** length of http_statuses */
@@ -60,7 +61,10 @@ static const char *headers_strs[] = {
         "If-Modified-Since",
         /* HTTP_H_LASTMODIF     10 */
         "Last-Modified",
-
+        /* HTTP_H_CT_DISPO      11 */
+        "Content-Disposition",
+        /* HTTP_H_LOCATION      12 */
+        "Location",
         NULL
 };
 

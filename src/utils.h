@@ -1,12 +1,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H 1
 
-#include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
 
 /** @file
  * Set of utilities
@@ -82,25 +77,6 @@
         }
 
 /**
- * SAVE_OFFSET/1 and RESTORE_OFFSET/1 macros can be used together to save
- * the current offset of a dazibao and restore it later. They MUST occur
- * in the same function, and SAVE_OFFSET MUST be called at the very beginning
- * of the function (i.e. right after the variables declarations). They use
- * a '__s' variable to save the offset, so please don't use this variable
- * in your function (this is very unlikely).
- * @param d the dazibao (not a pointer)
- **/
-#define SAVE_OFFSET(d) \
-                off_t __s = (d).offset
-
-/**
- * @param d the dazibao (not a pointer)
- * @see SAVE_OFFSET
- */
-#define RESTORE_OFFSET(d) \
-                (d).offset = __s
-
-/**
  * Return the current offset in a file
  * @param fd file descriptor
  * @see SET_OFFSET
@@ -116,21 +92,13 @@
 #define SET_OFFSET(d,o) ((d).offset=o)
 
 /**
- * wrapper to save and restore the current offset in a dazibao after a piece
- * of code
- * @param d the dazibao
- * @param code the code to wrap
- **/
-#define PRESERVE_OFFSET(d,code) {SAVE_OFFSET(d);{code};RESTORE_OFFSET(d);}
-
-/**
  * free a pointer and set it to NULL
  * @param p the pointer
  **/
 #define NFREE(p) { free(p);(p) = NULL; }
 
 /**
- * Check path is a good tlv args,test :
+ * Check path is a good tlv args, test:
  *      - exist file
  *      - regular file
  *      - not to large
@@ -138,7 +106,7 @@
  * @param flag_access : flag to straight file
  * @return size of future tlv
  **/
-int check_tlv_path(const char * path, int flag_access);
+int check_tlv_path(const char *path, int flag_access);
 
 /**
  * Check path is a good dazibao args,test :
@@ -149,7 +117,7 @@ int check_tlv_path(const char * path, int flag_access);
  * @param flag_access : flag to straight file
  * @return size of future tlv compound
  **/
-int check_dz_path(const char * path, int flag_access);
+int check_dz_path(const char *path, int flag_access);
 
 /**
  * Wrapper around realloc(3) which frees the original pointer if the request
@@ -167,7 +135,7 @@ void *safe_realloc(void *ptr, size_t size);
  * @param buff the buffer to write from
  * @param len the length of the written data
  **/
-int write_all(int fd, char *buff, int len);
+ssize_t write_all(int fd, char *buff, int len);
 
 /**
  * Wrapper around 'strtol' which tries to parse a string as a positive decimal
@@ -176,6 +144,18 @@ int write_all(int fd, char *buff, int len);
  * @return -1 on error, the parsed number on success
  **/
 long str2dec_positive(char *s);
+
+/**
+ * This is an implementation of memmem(3). We don't want to use GNU-specific
+ * functions, so we're writing our own here.
+ * @param haystack: piece of memory we want to search in
+ * @param hlen: length of haystack
+ * @param needle: piece of memory we want to search in haystack
+ * @param nlen: length of needle
+ * @return a pointer to the beginning of the first occurrence of 'needle' in
+ * 'haystack' if it exists, or NULL if not.
+ **/
+char *my_memmem(char *haystack, size_t hlen, char *needle, size_t nlen);
 
 /**
  * Return the extension of a file.
@@ -203,9 +183,9 @@ const char *get_ext(const char *path);
 /** this struct is used to store an TLV image's info. */
 struct img_info {
         /** width */
-        int width;
+        unsigned int width;
         /** height */
-        int height;
+        unsigned int height;
 };
 
 /* == CLI == */

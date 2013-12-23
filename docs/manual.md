@@ -43,6 +43,7 @@ Available options:
 ```
 Notifier examples :
 * On ubuntu: `notification-client --notifier "notify-send \"%s\" \"%s\""`
+* On Mac OS X: `terminal-notifier -title '%s' -message '%s'` (need terminal-notifier)
 
 ## Command line interface
 

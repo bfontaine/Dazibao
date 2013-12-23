@@ -76,6 +76,8 @@ struct http_status {
 #define HTTP_S_CONFLICT      409
 /** 411 HTTP status */
 #define HTTP_S_LENGTHREQD    411
+/** 413 HTTP status */
+#define HTTP_S_TOO_LARGE     413
 /** 415 HTTP status */
 #define HTTP_S_URITOOLONG    414
 
@@ -107,7 +109,8 @@ struct http_status {
 #define HTTP_H_DATE           5
 /** code for a "Server" HTTP header */
 #define HTTP_H_SERVER         6
-/** code for an "X-Powered-By" HTTP header */
+/** code for an "X-Powered-By" HTTP header. Note that X- prefixed headers were
+ * recently deprecated, but we're working with HTTP 1.0 here. */
 #define HTTP_H_POWEREDBY      7
 /** code for an "Accept" HTTP header */
 #define HTTP_H_ACCEPT         8
@@ -115,6 +118,11 @@ struct http_status {
 #define HTTP_H_IFMODIFSINCE   9
 /** code for a "Last Modified" HTTP header */
 #define HTTP_H_LASTMODIF     10
+
+/* code for a "Content-Disposition" HTTP header */
+#define HTTP_H_CT_DISPO      11
+/* code for a "Location" HTTP header */
+#define HTTP_H_LOCATION      12
 
 /* arbitrary extentions/limits */
 /** maximum number of HTTP headers in a request/response */

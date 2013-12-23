@@ -1,8 +1,73 @@
-(function(body) {
+(function(cb, main) {
+    /* load templates */
+    var xhr = new XMLHttpRequest();
+    xhr.open('get', '/js_tpls');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            cb(xhr.responseText, main);
+        }
+    };
+    xhr.send(null);
+})(function(strs, main) {
+    /* basic templating system. Writing HTML in templates is easier than
+     * adding it in html.h and compile everything again */
+
+    var tpls = {},
+        re_first_nl = /\n([\s\S]+)/,
+        re_tpl_var = /%\{(\w+)\}/g, dz;
+
+    strs = strs.split(/\n+--\n+/);
+
+    for (var i=0, l=strs.length, parts; i<l; i++) {
+        parts = strs[i].split(re_first_nl);
+        tpls[parts[0]] = parts[1];
+    }
+
+    /* tpl('<p>%{name}</p>', {name: 'foo'}) -> '<p>foo</p>' */
+    window.tpl = function(name, params) {
+        if (arguments.length == 0) {
+            return tpls;
+        }
+        if (!tpls.hasOwnProperty(name)) {
+            return '';
+        }
+
+        if (!params) { return tpls[name]; }
+
+        return tpls[name].replace(re_tpl_var, function(_, v) {
+            return params.hasOwnProperty(v) ? params[v] : '';
+        });
+    };
+
+    /* Basic DOM manipulation function */
+    $obj = function ( el ) {
+        if (''+el === el) {
+            // html
+            var div = document.createElement('div');
+            div.innerHTML = el;
+            el = div.firstChild;
+        }
+        this.el = el;
+        this.wrapped = true;
+    }
+    window.$ = function ( el ) {
+        if (el.wrapped) { return el; }
+        return new $obj(el);
+    }
+    $obj.prototype.addTo = function( other ) {
+        $(other).el.appendChild(this.el);
+        return this;
+    }
+
+    dz = window.dz || {};
+
+    main(document.getElementsByTagName('body')[0], dz);
+},
+function(body, dz) {
     /* Note: the code here is not meant to be perfect, we're not doing a Web
      * project so we'll avoid spending too much time in JS code. */
 
-    var api = {
+    dz.api = {
         call: function(method, path, data, callback) {
             var xhr = new XMLHttpRequest();
             xhr.open(method, path);
@@ -35,9 +100,14 @@
             });
         },
         addText: function(text, callback) {
-            api.call('post', '/tlv/add/text/', text, function(xhr) {
+            api.call('post', '/tlv/add/text', text, function(xhr) {
                 callback(xhr.status == 204);
             })
+        },
+        addTLV: function(data, callback) {
+            api.call('post', '/tlv/add/form', data, function(xhr) {
+                callback(xhr);
+            });
         }
     };
 
@@ -69,17 +139,16 @@
             res = quote_re.exec(b.innerHTML);
 
         if (res && res.length == 3) {
-            b.innerHTML = res[1] + '<br/><br/><span class="author">'
-                        + '<span><span class="sep">—</span> '
-                        + res[2] + '</span></span>';
+            b.innerHTML = tpl('quote', {
+                text: res[1],
+                author: res[2]
+            });
         }
     }
 
     /* Dazibao settings */
     !function() {
-        var html = '<div id="settings"><img src="/settings.png" width="48"'
-                 + '  height="48" /><ul class="actions"></ul></div>',
-            actions, buttons = {};
+        var html = tpl('settings'), actions, buttons = {};
 
         document.body.innerHTML += html;
         actions = document.querySelector('#settings .actions');
@@ -112,33 +181,74 @@
             });
         });
 
-        /* -- adding a TLV -- */
-        addButton('Add a TLV', 'addtlv', function() {
-            // only text for now
+        /* -- adding a text TLV -- */
+        addButton('Add a text', 'addtxttlv', function() {
             var text = prompt("Text?");
 
             api.addText(text, function( ok ) {
                 alert(ok ? "ok, refresh!" : "oh no, an error :(");
             });
         });
+
+        /* -- adding a TLV -- */
+        var $modal = $(tpl('newtlv_modal')),
+            form;
+        $modal.addTo(body);
+
+        document.getElementById('newtlv-cancel')
+                    .addEventListener('click', function() {
+            var inps = $modal.el.getElementsByTagName('input');
+            $modal.el.className += ' hidden';
+            for (var i=0, l=inps.length; i<l; i++) {
+                if (inps[i].hasAttribute('name')) {
+                    inps[i].value = '';
+                }
+            }
+            
+        }, false);
+
+        form = document.getElementById('newtlv-form');
+        form.addEventListener('submit', function( ev ) {
+
+            var data = new FormData(form);
+
+            ev.preventDefault();
+
+            api.addTLV(data, function(xhr) {
+                alert(xhr.status == 204 ? 'ok' : 'error');
+                dz.prev_hash = 0;
+                $modal.el.className += ' hidden';
+            });
+
+            return false;
+
+        }, false);
+
+        addButton('Add a file', 'addtlv', function() {
+            $modal.el.className = $modal.el.className.replace(/\s*hidden/, '');
+        });
+
     }();
 
     /* Notifications */
     !function() {
 
-        var prev_hash = 0,
-            min_timeout = 2000,
+        var min_timeout = 2000,
             max_timeout = 30000,
             timeout = 10000; // 10 seconds
 
+        dz.prev_hash = 0;
+
         function check_hash() {
+            if (window.hash_check === false) { return; }
+
             api.hash(function( hash ) {
                 var changed = false;
 
-                if (prev_hash != 0) {
-                    changed = hash > -1 && (hash != prev_hash);
+                if (dz.prev_hash != 0) {
+                    changed = hash > -1 && (hash != dz.prev_hash);
                 }
-                prev_hash = hash;
+                dz.prev_hash = hash;
 
                 if (changed) {
                     timeout = Math.max(min_timeout, timeout/2);
@@ -158,4 +268,4 @@
         check_hash();
     }();
 
-})(document.getElementsByTagName('body')[0]);
+});

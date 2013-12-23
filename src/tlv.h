@@ -43,6 +43,10 @@
 
 #define TLV_PDF    134
 
+#define TLV_LONGH  254
+
+#define TLV_LONGC  253
+
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
@@ -107,12 +111,17 @@ struct type_signature {
 };
 
 /**
+ * @deprecated use tlv_guess_type instead
+ **/
+unsigned char guess_type(char *src, unsigned int len);
+
+/**
  * Guess type from a buffer
  * @param src data to test
  * @param len length of buffer
  * @return TLV type corresponding to the buffer
  */
-unsigned char guess_type(char *src, unsigned int len);
+unsigned char tlv_guess_type(char *src, unsigned int len);
 
 /**
  * Convert an int written in host endianess into dazibao's one.
@@ -207,6 +216,12 @@ int tlv_mwrite(tlv_t *tlv, void *data);
  * @return 0 on succes, -1 on error
  **/
 int tlv_mread(tlv_t *tlv, char *data);
+
+
+void tlv_mdump(tlv_t *tlv, char *dst);
+
+void tlv_mdump_value(tlv_t *tlv, char *dst);
+
 
 /**
  * Write a TLV.
@@ -321,5 +336,16 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  * @return sizeof new tlv create
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
+
+int mk_long_tlv(tlv_t *tlv, char *src, int type, int len);
+
+uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst);
+
+uint32_t tlv_long_fwrite(tlv_t *tlv, int fd);
+
+uint32_t tlv_long_real_data_length(tlv_t *tlv);
+
+int tlv_long_real_data_type(tlv_t *tlv);
+
 
 #endif

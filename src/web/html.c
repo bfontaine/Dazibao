@@ -1,8 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "html.h"
+#include "logging.h"
 #include "mdazibao.h"
 #include "tlv.h"
-#include "logging.h"
 #include "utils.h"
 #include "webutils.h"
 
@@ -53,36 +55,42 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor) {
-        int type = tlv_get_type(t), w;
-        char *ext;
+        int w;
         struct img_info info;
 
-        switch (type) {
-                case TLV_PNG:
-                        ext = PNG_EXT;
-                        break;
-                case TLV_JPEG:
-                        ext = JPEG_EXT;
-                        break;
-                case TLV_GIF:
-                        ext = GIF_EXT;
-                        break;
-                default:
-                        ext = DEFAULT_EXT;
-                        break;
-        }
-
-        LOGDEBUG("Adding HTML of img TLV (ext=%s) at offset %li.", ext,
-                        (long)*off);
+        LOGTRACE("Adding HTML of img TLV at offset %li.", (long)*off);
 
         if (dz_get_tlv_img_infos(&dz, *off, &info) == 0) {
                 w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                                HTML_TLV_IMG_DIMS_FMT, (long)*off, ext,
+                                HTML_TLV_IMG_DIMS_FMT, (long)*off,
                                 info.height, info.width);
         } else {
                 w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE,
-                                HTML_TLV_IMG_FMT, (long)*off, ext);
+                                HTML_TLV_IMG_FMT, (long)*off);
         }
+
+        *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
+
+        return 0;
+}
+
+int html_add_other_tlv(dz_t dz, tlv_t *t, off_t *off, char **html,
+                int *htmlsize, int *htmlcursor) {
+
+        int w, type = tlv_get_type(t);
+        const char *type_str = tlv_type2str(type);
+
+        /* regarding the second part of this 'if', see #152 */
+        if (type_str == NULL || strcmp(type_str, "unknown") == 0) {
+                LOGTRACE("skipping TLV at offset %li, unknown type (%d)",
+                                (long)*off, type);
+        }
+
+        LOGTRACE("Adding HTML of TLV at offset %li, type='%s'.",
+                        (long)*off, type_str);
+
+        w = snprintf(*html+(*htmlcursor), HTML_CHUNK_SIZE, HTML_TLV_OTHER_FMT,
+                        (long)*off, type_str);
 
         *htmlcursor += MIN(w, HTML_CHUNK_SIZE);
 
@@ -238,9 +246,10 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                         st = html_add_text_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
-                case TLV_PNG:
-                case TLV_JPEG:
+                case TLV_BMP:
                 case TLV_GIF:
+                case TLV_JPEG:
+                case TLV_PNG:
                         st = html_add_img_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
@@ -252,6 +261,9 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                         st = html_add_compound_tlv(dz, t, dz_off,
                                         html, htmlsize, htmlcursor);
                         break;
+                default:
+                        st = html_add_other_tlv(dz, t, dz_off, html,
+                                        htmlsize, htmlcursor);
         };
 
         if (st != 0) {
@@ -316,8 +328,8 @@ int dz2html(dz_t dz, char **html) {
         }
         htmlcursor += written;
 
-        /* Ttop-level LVs are displayed in reverse order, so we need to walk
-         * the TLV once and store their offset in an array before adding them.
+        /* Top-level TLVs are displayed in reverse order, so we need to walk
+         * all TLVs once and store their offset in an array before adding them.
          */
         tlvs_count = 0;
         tlvs_max_count = 16;

@@ -109,7 +109,7 @@ check: cleantmp
 	./utils/stylecheck.sh
 	@# avoid a failed build because cppcheck doesn't exist or is a wrong
 	@# version
-	$(CPPCHECK) -I$(SRC) -I$(WEBSRC) -I$(NSRC) $(SRC) $(WEBSRC) $(NSRC) || true
+	$(CPPCHECK) $(SRC) $(WEBSRC) $(NSRC) $(DCSRC) || true
 
 memcheck-%: %
 	$(VALGRIND) $(VALFLAGS) ./$< $(CLI_OPTS)

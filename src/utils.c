@@ -1,9 +1,11 @@
-#include <string.h>
-#include <stdlib.h>
-#include "tlv.h"
 #include <limits.h>
-#include "utils.h"
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "mdazibao.h"
+#include "tlv.h"
+#include "utils.h"
 
 /** @file */
 int check_tlv_path(const char * path, int flag_access) {
@@ -65,9 +67,9 @@ void *safe_realloc(void *ptr, size_t size) {
         return newptr;
 }
 
-int write_all(int fd, char *buff, int len) {
-        int wrote = 0,
-            w;
+ssize_t write_all(int fd, char *buff, int len) {
+        ssize_t wrote = 0,
+                w;
 
         while (len > 0 && (w = write(fd, buff+wrote, len)) > 0) {
                 wrote += w;
@@ -94,6 +96,28 @@ long str2dec_positive(char *s) {
         return ret >= 0 ? ret : -1;
 }
 
+char *my_memmem(char *haystack, size_t hlen, char *needle, size_t nlen) {
+        int i, max;
+        if (haystack == NULL || needle == NULL || nlen > hlen) {
+                return NULL;
+        }
+
+        if (nlen == 0) {
+                return haystack;
+        }
+
+        max = hlen - nlen + 1;
+
+        for (i=0; i<max; i++) {
+                if (haystack[i] == needle[0]
+                                && memcmp(haystack + i, needle, nlen) == 0) {
+                        return haystack + i;
+                }
+        }
+
+        return NULL;
+}
+
 const char *get_ext(const char *path) {
         const char *dot;
         if (path == NULL) {
@@ -110,15 +134,19 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
 
         int next_arg = 0;
 
-
         while (next_arg < argc) {
+
                 char is_opt = 0;
+
                 for (int i = 0; i < nb_opt; i++) {
+
                         if (strcmp(argv[next_arg],
                                         res->options[i].name) != 0) {
                                 continue;
                         }
+
                         is_opt = 1;
+
                         switch (res->options[i].type) {
                         case ARG_TYPE_LLINT:
                                 if (next_arg > argc - 2) {
@@ -166,17 +194,19 @@ int jparse_args(int argc, char **argv, struct s_args *res, int nb_opt) {
                 }
 
                 if (!is_opt) {
-                        if (strcmp("--", argv[next_arg]) == 0) {
-                                next_arg++;
-                        }
-                        if (res->argc != NULL && res->argv != NULL) {
-                                *res->argc = argc - next_arg;
-                                *(res->argv) = *res->argc > 0 ?
-                                        &argv[next_arg] : NULL;
-                        }
                         break;
                 }
         }
 
+        if (next_arg < argc
+                && strcmp("--", argv[next_arg]) == 0) {
+                next_arg++;
+        }
+
+        if (res->argc != NULL && res->argv != NULL) {
+                *res->argc = argc - next_arg;
+                *(res->argv) = *res->argc > 0 ?
+                        &argv[next_arg] : NULL;
+        }
         return 0;
 }
