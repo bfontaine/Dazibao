@@ -49,7 +49,7 @@ Notifier examples :
 
 ### Dazicli
 
-#### `dazicli add [OPTION] [FILE]`
+#### `dazicli add [OPTION] [FILE] DAZIBAO`
 
 Produce a tlv with a list of TLV and add it to a dazibao.  
 If more than one TLV is provided, they will be merge into a compound TLV.
@@ -57,13 +57,11 @@ If more than one TLV is provided, they will be merge into a compound TLV.
 Options:
 
 ```
---dazibao <file> Specify path of dazibao to use.
 --type <type>    Force types of tlvs (text, jpg, compound, ...), separated by comma.
 --date           If present, will include the TLV in a DATED TLV (using current time)
 ```
 
 NB:
-* Since `--dazibao` *MUST* be provided by user, it is not really an option.
 * If `--type` is provided, it **MUST** provide type for each input.
   If it is not, program will guess all the types.
 

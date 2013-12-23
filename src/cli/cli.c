@@ -54,7 +54,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                 goto CLOSEFD;
         }
 
-
         /* prepare inputs information */
 
         for (int i = 0; i < argc; i++) {
@@ -153,7 +152,6 @@ int cli_add(int argc, char **argv) {
         struct s_option opt[] = {
                 {"--date", ARG_TYPE_FLAG, (void *)&date},
                 {"--type", ARG_TYPE_STRING, (void *)&type},
-                {"--dazibao", ARG_TYPE_STRING, (void *)&file}
         };
 
         struct s_args args = {&nb_inputs, &inputs, opt};
@@ -164,12 +162,15 @@ int cli_add(int argc, char **argv) {
                 goto OUT;
         }
 
-        if (file == NULL) {
-                LOGERROR("Missing arguments (see manual).");
+        if (nb_inputs < 2) {
+                LOGERROR("Missing parameters (see manual).");
                 status = -1;
                 goto OUT;
         }
 
+        file = inputs[--nb_inputs];
+        
+        LOGINFO("--date:%d, --type:%s, dazibao: %s", date, type, file);
 
         if (dz_open(&dz, file, O_RDWR) != 0) {
                 LOGERROR("Failed opening %s.", file);
