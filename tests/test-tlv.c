@@ -125,7 +125,7 @@ void tlv_set_get_length_tests(void) {
 
 void tlv_type2str_tests(void) {
         INTTEST(tlv_type2str(1)  != NULL, 1);
-        INTTEST(tlv_type2str(42) != NULL, 1);
+        INTTEST(tlv_type2str(42) == NULL, 1);
 }
 
 void tlv_str2type_tests(void) {

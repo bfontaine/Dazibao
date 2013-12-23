@@ -273,7 +273,7 @@ int tlv_fdump_value(tlv_t *tlv, int fd);
 /**
  * Return a string representation for a TLV type
  * @param tlv_type the type
- * @return a string representation of this type
+ * @return a string representation of this type or NULL if it's not known
  * @see tlv_str2type
  **/
 const char *tlv_type2str(int tlv_type);

@@ -939,16 +939,14 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
 
                 int tlv_type, len;
-                const char *tlv_str;
 
                 tlv_type = tlv_get_type(&tlv);
                 len = tlv_get_length(&tlv);
 
-                tlv_str = tlv_type2str(tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (!TLV_IS_EMPTY_PAD(tlv_type) || flag_debug) {
                         printf("%s%9li | %8s | %8d\n",
-                                ind, (long)off, tlv_str, len);
+                                ind, (long)off, tlv_type2str(tlv_type), len);
                 }
 
                 switch (tlv_type) {

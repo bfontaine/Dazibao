@@ -483,7 +483,7 @@ void print_usage(char *name) {
 
 int main(int argc, char **argv) {
         char *cmd, *daz, **argv_cmd;
-        int argc_cmd;
+        int argc_cmd, st = 0;
 
         if (setlocale(LC_ALL, "") == NULL) {
                 perror("setlocale");
@@ -507,36 +507,25 @@ int main(int argc, char **argv) {
                 * command */
                 argv_cmd = argv + 2;
         }
-        /*
-        TODO : management error write request
-        */
+        /* TODO factorize this code */
         if (!strcmp(cmd, "add")) {
-                if (cmd_add(argc_cmd, argv_cmd, daz) < 0) {
-                        fprintf(stderr, "cmd_add failed\n");
-                        exit(EXIT_FAILURE);
-                }
+                st = cmd_add(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "rm")) {
-                if (cmd_rm(argc_cmd, argv_cmd, daz) < 0) {
-                        fprintf(stderr, "cmd_rm failed\n");
-                        exit(EXIT_FAILURE);
-                }
+                st = cmd_rm(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "dump")) {
-                if (cmd_dump(argc_cmd, argv_cmd, daz)) {
-                        fprintf(stderr, "cmd_dump failed\n");
-                        exit(EXIT_FAILURE);
-                }
+                st = cmd_dump(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "create")) {
-                if (cmd_create(argc_cmd, argv_cmd, daz) < 0) {
-                        fprintf(stderr, "cmd_create failed\n");
-                        exit(EXIT_FAILURE);
-                }
+                st = cmd_create(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "compact")) {
-                if (cmd_compact(argc_cmd, argv_cmd, daz) < 0) {
-                        fprintf(stderr, "cmd_compact failed\n");
-                        exit(EXIT_FAILURE);
-                }
+                st = cmd_compact(argc_cmd, argv_cmd, daz);
+        /* /factorize */
         } else {
                 print_usage(argv[0]);
+                exit(EXIT_FAILURE);
+        }
+
+        if (st < 0) {
+                fprintf(stderr, "Error %d\n", st);
                 exit(EXIT_FAILURE);
         }
 
