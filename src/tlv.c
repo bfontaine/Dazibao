@@ -584,7 +584,8 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                         uint32_t be_len = htonl(content_len);
                         char *false_tlv = *tlv + cmpnd_idx;
                         tlv_set_type(&false_tlv, TLV_LONGH);
-                        tlv_set_length(&false_tlv, TLV_SIZEOF_LONGH);
+                        tlv_set_length(&false_tlv,
+                                TLV_SIZEOF_TYPE + sizeof(uint32_t));
                         *(tlv_get_value_ptr(&false_tlv)) = TLV_COMPOUND;
                         memcpy(tlv_get_value_ptr(&false_tlv) + 1,
                                 &be_len,
@@ -605,7 +606,8 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                 if (content_len > TLV_MAX_VALUE_SIZE) {
                         uint32_t be_len = htonl(content_len);
                                 tlv_set_type(tlv, TLV_LONGH);
-                                tlv_set_length(tlv, TLV_SIZEOF_LONGH);
+                                tlv_set_length(tlv,
+                                        TLV_SIZEOF_TYPE + sizeof(uint32_t));
                                 *tlv_get_value_ptr(tlv) = TLV_DATED;
                                 memcpy(tlv_get_value_ptr(tlv) + 1,
                                         &be_len,
@@ -630,6 +632,8 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
 /**
  * Split src in multiple LONGC tlvs
+ * src MUST be large enough to contain
+ * the result
  * @return New size of tlv list
  */
 
