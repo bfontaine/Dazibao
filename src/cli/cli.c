@@ -164,8 +164,6 @@ int cli_add(int argc, char **argv) {
                 goto OUT;
         }
 
-        LOGINFO("--date:%d, --type:%s, --dazibao:%s", date, type, file);
-
         if (file == NULL) {
                 LOGERROR("Missing arguments (see manual).");
                 status = -1;
