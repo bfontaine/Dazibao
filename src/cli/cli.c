@@ -317,9 +317,13 @@ CLOSE:
         return status;
 }
 
-int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
+int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         int len, type;
         const char *type_str;
+        char *buf;
+        int buf_idx = 0;
+        tlv_t tlv_tmp;
+        off_t off;
 
         dz_read_tlv(dz, tlv, dz_get_offset(dz));
 
@@ -327,15 +331,45 @@ int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         type = ltlv_real_data_type(tlv);
         type_str = tlv_type2str(type);
 
+        printf(" @[%10li]: %8s (%d bytes)\n",
+                dz_get_offset(dz),
+                type_str != NULL ? type_str : "unknown",
+                len);
 
-        for (int i = 0; i <= indent; i++) {
-                printf("--");
+        if (type != TLV_COMPOUND && type != TLV_DATED) {
+                goto OUT;
         }
 
-        printf(" @[%10li]: %8s (%d bytes)\n", (unsigned long)dz_get_offset(dz),
-                type_str != NULL ? type_str : "unknown", len);
-        return ltlv_get_total_length(tlv);
+        if (tlv_init(&tlv_tmp) == -1) {
+                goto OUT;
+        }
 
+        buf = malloc(sizeof(*buf) * (len));
+
+        if (buf == NULL) {
+                ERROR("malloc", -1);
+        }
+
+        off = dz_next_tlv(dz, &tlv_tmp);
+
+        while (buf_idx != len) {
+                off = dz_next_tlv(dz, &tlv_tmp);
+                int tmp_len = tlv_get_length(&tlv_tmp);
+                dz_read_tlv(dz, &tlv_tmp, off);
+                memcpy(buf + buf_idx, tlv_get_value_ptr(&tlv_tmp), tmp_len);
+                buf_idx += tmp_len;
+        }
+
+        dz_t dz_tmp = {-1, 0, len, 0, 0, buf};
+
+        cli_print_dz(&dz_tmp, indent + 1, lvl - 1, debug);
+
+        free(buf);
+
+        if (tlv_destroy(&tlv_tmp) == -1) {
+        }
+OUT:
+        return ltlv_get_total_length(tlv);
 }
 
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
@@ -367,11 +401,9 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                         continue;
                 }
 
-                int len = tlv_get_length(&tlv);
-
                 if (type == TLV_LONGH) {
                         dz_set_offset(dz, off);
-                        off_t next = cli_print_long_tlv(
+                        off_t next = cli_print_ltlv(
                                 dz, &tlv, indent, lvl, debug);
                         dz_incr_offset(dz, next);
                         continue;
@@ -380,6 +412,9 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                 for (int i = 0; i <= indent; i++) {
                         printf("--");
                 }
+
+
+                int len = tlv_get_length(&tlv);
 
                 type_str = tlv_type2str(type);
                 printf(" @[%10li]: %8s (%d bytes)\n", (unsigned long)off,
