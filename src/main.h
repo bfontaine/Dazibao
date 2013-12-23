@@ -17,15 +17,15 @@
         "            -m, --merge: (todo)\n" \
         "\n" \
         "    add: add a TLV\n" \
-        "        command: add [--type] <type args> [--dazibao] <dazibo> " \
+        "        command: add [--type] <type args> [--dazibao] <dazibo>\n" \
         "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
-        "            --type: allow to give a type with parameters, by order" \
-        "                       for all args excepted to dazibao option " \
+        "            --type: allow to give a type with parameters, by\n" \
+        "                    order for all args excepted to dazibao option\n" \
         "            --date: create a tlv dated with all args after option\n" \
-        "            --compound: create a tlv compound with alla args " \
-        "                       after option\n" \
-        "            --dazibao: insert a dazibao when size is respected" \
+        "            --compound: create a tlv compound with alla args\n" \
+        "                        after option\n" \
+        "            --dazibao: insert a dazibao when size is respected\n" \
         "                       with tlv compound\n" \
         "\n" \
         "    rm: remove a TLV\n" \
@@ -38,7 +38,8 @@
         "            -d, --debug: show tlv PAD1 and PADN\n" \
         "\n" \
         "    compact: compact a dazibao\n" \
-        "        command: compact <dazibao>\n"
+        "        command: compact <dazibao>\n" \
+        "\n"
 
 /**
  * Parse the 'add' command options and return the number of trailing arguments.
