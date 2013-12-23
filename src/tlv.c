@@ -601,7 +601,7 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
         }
 
         if (date != 0) {
-                int content_len = write_idx - cmpnd_idx;
+                int content_len = write_idx - (cmpnd_idx - TLV_SIZEOF_DATE);
                 if (content_len > TLV_MAX_VALUE_SIZE) {
                         uint32_t be_len = htonl(content_len);
                                 tlv_set_type(tlv, TLV_LONGH);
@@ -618,6 +618,7 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                                         content_len);
                                 write_idx = cmpnd_idx + new_size;
                 } else {
+                        tlv_set_date(tlv, date);
                         tlv_set_type(tlv, TLV_DATED);
                         tlv_set_length(tlv, content_len);
                 }
