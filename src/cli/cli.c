@@ -68,6 +68,7 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                                 goto CLOSEFD;
                         }
                         inputs[i].len = strlen(argv[i]);
+                        inputs[i].data = argv[i];
                 } else {
                         struct stat st;
                         if (fstat(fd[i], &st) == -1) {
