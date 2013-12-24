@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "cli.h"
 #include "logging.h"
@@ -543,34 +544,48 @@ OUT:
 
 int cli_rm_tlv(int argc, char **argv) {
         dz_t dz;
-        long long int off = -1;
         int status = 0;
+        char **offset;
+        int nb_tlv;
+        char *file;
 
-        struct s_option opt[] = {
-                {"--offset", ARG_TYPE_LLINT, (void *)&off}
-        };
-
-        struct s_args args = {&argc, &argv, opt};
-
-        if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) != 0) {
-                LOGERROR("jparse_args failed");
+        if (argc < 2) {
+                LOGERROR("Missing parameter(s).");
                 return -1;
         }
 
-        if (argv == NULL || off == -1) {
-                LOGERROR("Wrong arguments.");
-                return -1;
-        }
+        file = argv[argc - 1];
 
-        if (dz_open(&dz, argv[0], O_RDWR) < 0) {
+        offset = argv;
+
+        nb_tlv = argc - 1;
+
+        if (dz_open(&dz, file, O_RDWR) < 0) {
                 LOGERROR("dz_open failed.");
                 return -1;
         }
 
-        if (dz_rm_tlv(&dz, (off_t)off) < 0) {
-                LOGERROR("dz_rm_tlv failed.");
-                status = -1;
-                goto CLOSE;
+        for (int i = 0; i < nb_tlv; i++) {
+
+                char *endptr = NULL;
+                long long int off = strtoll(offset[i], &endptr, 10);
+                if (endptr != NULL && *endptr != '\0') {
+                        fprintf(stderr, "Invalid argument: %s\n", offset[i]);
+                        status = -1;
+                        goto CLOSE;
+                }
+                if (off == LLONG_MIN || off == LLONG_MAX) {
+                        fprintf(stderr, "Overflow: %s\n", offset[i]);
+                        status = -1;
+                        goto CLOSE;
+                }
+
+                if (dz_rm_tlv(&dz, (off_t)off) < 0) {
+                        LOGERROR("dz_rm_tlv failed (%d/%d tlv removed).",
+                                i, nb_tlv);
+                        status = -1;
+                        goto CLOSE;
+                }
         }
 
 CLOSE:

@@ -86,16 +86,10 @@ Options:
 --debug     Flag to force PAD1 and PADN printing.
 ```
 
-### `dazicli rm [OPTION] DAZIBAO`
+### `dazicli rm [OFFSET] DAZIBAO`
 
-Remove a TLV from DAZIBAO.
-
-Options:
-```
---offset <n> Specify the offset of the TLV to remove.
-```
-
-NB: `--offset` is not a real option, it *MUST* be provided by user.
+Remove a list of TLV from DAZIBAO.
+You need to provide offset of each TLV you want to remove.
 
 ### `dazicli compact DAZIBAO`
 
