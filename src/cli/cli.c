@@ -253,7 +253,7 @@ CLOSE:
 /**
  * precondition: next dz read will be the first TLV_LONGC
  */
-static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv) {
+static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
 
         uint32_t len;
         int type;
@@ -271,6 +271,10 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv) {
         if (buff == NULL) {
                 ERROR("malloc", -1);
         }
+
+
+        dz_set_offset(dz, offset + TLV_SIZEOF_LONGH);
+
 
         while (write_idx < len && (off = dz_next_tlv(dz, tlv)) != EOD) {
                 if (tlv_get_type(tlv) == TLV_LONGC) {
@@ -291,10 +295,17 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv) {
         }
 
         switch (type) {
-        default:
+        case TLV_DATED:
+        case TLV_COMPOUND:
                 LOGERROR("Not supported yet");
                 status = -1;
                 goto FREEBUFF;
+        default:
+                if (cli_print_to_file(buff, len, off, type) == -1) {
+                        LOGERROR("cli_print_to_file failed");
+                        status = -1;
+                        goto FREEBUFF;
+                }
         };
 
 FREEBUFF:
@@ -335,12 +346,13 @@ int cli_extract_tlv(dz_t *dz, off_t offset) {
 
         switch (type) {
         case TLV_COMPOUND:
-                status = cli_extract_ltlv(dz, &tlv);
         case TLV_DATED:
-        case TLV_LONGH:
                 LOGERROR("Not supported yet.");
                 status = -1;
                 goto DESTROY;
+        case TLV_LONGH:
+                status = cli_extract_ltlv(dz, &tlv, offset);
+                break;
         default:
                 if (cli_print_to_file(tlv_get_value_ptr(&tlv),
                                         tlv_get_length(&tlv),
