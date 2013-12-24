@@ -286,7 +286,7 @@ void tlv_mdump_value(tlv_t *tlv, char *dst) {
 
 const char *tlv_type2str(int tlv_type) {
         for (int i=0; tlv_types[i].name != NULL; i++) {
-                if (tlv_types[i].code == tlv_type) {
+                if ((char)tlv_types[i].code == (char)tlv_type) {
                         return tlv_types[i].name;
                 }
         }
