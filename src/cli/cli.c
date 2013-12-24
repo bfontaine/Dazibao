@@ -59,7 +59,7 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
         for (int i = 0; i < argc; i++) {
 
                 fd[i] = open(argv[i], O_RDONLY);
-                
+
                 if (fd[i] == -1) {
                         if (access(argv[i], F_OK) == 0) {
                                 LOGERROR("Failed opening %s", argv[i]);
@@ -94,7 +94,7 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                         char *str = i == 0 ? type : NULL;
                         char *tok = strtok(str, delim);
                         inputs[i].type = tlv_str2type(tok);
-                        
+
                         if (inputs[i].type == -1) {
                                 LOGERROR("Undefined type.");
                                 status = -1;
@@ -171,7 +171,7 @@ int cli_add(int argc, char **argv) {
         }
 
         file = inputs[--nb_inputs];
-        
+
         if (dz_open(&dz, file, O_RDWR) != 0) {
                 LOGERROR("Failed opening %s.", file);
                 status = -1;
