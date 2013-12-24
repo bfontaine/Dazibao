@@ -19,7 +19,7 @@
 /**
  * code used to represent "End Of Dazibao", similarly to EOF.
  **/
-#define EOD 0
+#define EOD -2
 
 /**
  * The magic number used to identify a Dazibao file
