@@ -69,11 +69,15 @@ void *safe_realloc(void *ptr, size_t size) {
 
 ssize_t write_all(int fd, char *buff, int len) {
         ssize_t wrote = 0,
-                w;
+                w = 0;
 
         while (len > 0 && (w = write(fd, buff+wrote, len)) > 0) {
                 wrote += w;
                 len -= w;
+        }
+
+        if (w == -1) {
+                return -1;
         }
 
         return wrote;
