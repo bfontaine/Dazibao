@@ -477,10 +477,12 @@ int cmd_compact(int argc , char **argv, char *daz) {
 
 }
 
-int cmd_extract(int argc , char **argv, char *daz) {
-        dz_t daz_buf;
+int cmd_extract(int argc , char **argv, char *dz_path) {
+        dz_t dz;
+        tlv_t tlv;
         long off;
-        const char path;
+        int fd;
+        const char *path;
 
         if (argc != 2) {
                 fprintf(stderr, "cmd extract : <offset> <path> <dazibao>\n");
@@ -496,7 +498,7 @@ int cmd_extract(int argc , char **argv, char *daz) {
                 return DZ_ARGS_ERROR;
         }
 
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
+        if (dz_open(&dz, dz_path, O_RDWR) < 0) {
                 fprintf(stderr, "Error while opening the dazibao\n");
                 return -1;
         }
@@ -508,7 +510,7 @@ int cmd_extract(int argc , char **argv, char *daz) {
                 return DZ_OFFSET_ERROR;
         }
 
-        if (dz_check_tlv_at(&daz_buf, off, -1,NULL) <= 0) {
+        if (dz_check_tlv_at(&dz, off, -1,NULL) <= 0) {
                 fprintf(stderr, "no such TLV\n");
                 dz_close(&daz_buf);
                 return DZ_OFFSET_ERROR;
@@ -518,11 +520,29 @@ int cmd_extract(int argc , char **argv, char *daz) {
         if (access(path,F_OK) < 0) {
                 printf("file %s already exist\n",path);
                 return -1;
+        }
 
+        fd = open(path, O_CREAT | O_EXCL | O_RDWR, 0644);
+
+        if (fd == -1) {
+                ERROR("open", -1);
+        }
+        
+        if (tlv_init(&tlv) < 0) {
+                printf("error to init tlv\n");
+                return -1;
+        }
+
+        if (dz_read_tlv(&dz, &tlv, off) < 0) {
+                printf("error to read tlv\n");
+                return -1;
         }
 
 
-        /*
+         /*TODO:
+                write value from tlv of path
+        */
+        /* 
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
