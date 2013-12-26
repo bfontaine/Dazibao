@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -41,6 +42,7 @@ struct tlv_type tlv_types[] = {
         { TLV_OGG      , "ogg"      },
         { TLV_MIDI     , "mid"      },
         { TLV_PDF      , "pdf"      },
+        { TLV_LONGH    , "long_tlv" },
         { -1           , NULL       }
 };
 
@@ -48,23 +50,29 @@ struct tlv_type tlv_types[] = {
  * "Associative array" of TLV type / file signature
  **/
 struct type_signature sigs[] =  {
-        { TLV_PNG,  "\211PNG\r\n\032\n" },
-        { TLV_JPEG, "\255\216\255"      },
+        { TLV_BMP,  "BM"                },
         { TLV_GIF,  "GIF87a"            },
         { TLV_GIF,  "GIF89a"            },
+        { TLV_JPEG, "\xFF\xD8\xFF"      },
+        { TLV_MIDI, "MThd"              },
+        { TLV_MP3,  "ID3"               },
+        { TLV_MP3,  "\255\251"          },
+        { TLV_MP4,  "\051\103\112\053"  },
+        { TLV_OGG,  "OggS"              },
+        { TLV_PDF,  "%PDF"              },
+        { TLV_PNG,  "\211PNG\r\n\032\n" },
+        { TLV_TEXT, "\xEF\xBB\xBF"      }, /* UTF-8 BOM */
         { TLV_TIFF, "\073\073\042\000"  },
         { TLV_TIFF, "\077\077\000\042"  },
-        { TLV_MP3,  "\255\251"          },
-        { TLV_MP3,  "\073\068\051"      },
-        { TLV_MP4,  "\051\103\112\053"  },
-        { TLV_BMP,  "\066\077"  },
-        { TLV_OGG,  "\079\103\103\083"  },
-        { TLV_MIDI, "\077\084\104\100"  },
-        { TLV_PDF,  "\037\080\068\070"  }
 };
 
 
+/* deprecated */
 unsigned char guess_type(char *src, unsigned int len) {
+        return tlv_guess_type(src, len);
+}
+
+unsigned char tlv_guess_type(char *src, unsigned int len) {
 
         unsigned int i;
         for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
@@ -159,6 +167,7 @@ int tlv_mread(tlv_t *tlv, char *src) {
         if (tlv_get_type(tlv) == TLV_PAD1) {
                 return len;
         }
+
         *tlv = (tlv_t)safe_realloc(*tlv, sizeof(**tlv)
                                                 * (TLV_SIZEOF_HEADER + len));
         if (*tlv == NULL) {
@@ -265,6 +274,14 @@ int tlv_fdump(tlv_t *tlv, int fd) {
 
 int tlv_fdump_value(tlv_t *tlv, int fd) {
         return write_all(fd, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
+}
+
+void tlv_mdump(tlv_t *tlv, char *dst) {
+        memcpy(dst, *tlv, TLV_SIZEOF(tlv));
+}
+
+void tlv_mdump_value(tlv_t *tlv, char *dst) {
+        memcpy(dst, tlv_get_value_ptr(tlv), tlv_get_length(tlv));
 }
 
 const char *tlv_type2str(int tlv_type) {
@@ -376,4 +393,82 @@ int tlv_create_input(tlv_t *tlv, char *type) {
         return TLV_SIZEOF(tlv);
 }
 
+int mk_long_tlv(tlv_t *tlv, char *src, int type, int len) {
+        int
+                nb_chunks =
+                len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE),
+                chunks_len = len + nb_chunks * TLV_SIZEOF_HEADER,
+                be_len = htonl(len),
+                remaining = len,
+                w_idx = 0,
+                r_idx = 0;
 
+        *tlv = safe_realloc(*tlv,
+                        chunks_len
+                        + TLV_SIZEOF_HEADER
+                        + TLV_SIZEOF_TYPE + sizeof(int));
+
+        if (*tlv == NULL) {
+                return -1;
+        }
+
+        /* Set TLV_LONGH header */
+        tlv_set_type(tlv, TLV_LONGH);
+        tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(int));
+        (*tlv)[TLV_SIZEOF_HEADER] = type;
+        memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &be_len, sizeof(uint32_t));
+
+        w_idx = TLV_SIZEOF(tlv);
+
+        for (int i = 0; i < nb_chunks; i++) {
+                int size = MIN(TLV_MAX_VALUE_SIZE, remaining);
+                LOGINFO("Writing chunk %d/%d (size: %d)",
+                        i+1, nb_chunks, size);
+                tlv_t false_tlv = *tlv + w_idx;
+                (*tlv)[w_idx] = TLV_LONGC;
+                tlv_set_length(&false_tlv, size);
+                w_idx += TLV_SIZEOF_HEADER;
+                memcpy(&((*tlv)[w_idx]), src + r_idx, size);
+                r_idx += size;
+                w_idx += size;
+                remaining -= size;
+        }
+
+        if (r_idx != len) {
+                LOGERROR("read: %d, size: %d", r_idx, len);
+                return -1;
+        }
+
+        return 0;
+}
+
+uint32_t tlv_long_mwrite(tlv_t *tlv, char *dst) {
+        uint32_t len;
+        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
+        len = ntohl(len);
+        len += (len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
+        memcpy(dst, *tlv, len + TLV_SIZEOF_HEADER + 1 + sizeof(uint32_t));
+
+        return len;
+}
+
+uint32_t tlv_long_fwrite(tlv_t *tlv, int fd) {
+        uint32_t len;
+        memcpy(&len, &((*tlv)[TLV_SIZEOF_HEADER + 1]), sizeof(uint32_t));
+        len = ntohl(len);
+        len += (len / TLV_MAX_VALUE_SIZE
+                + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
+        return write_all(fd, *tlv, len + TLV_SIZEOF(tlv));
+}
+
+uint32_t tlv_long_real_data_length(tlv_t *tlv) {
+        return ntohl(*((uint32_t *)((*tlv) + TLV_SIZEOF_HEADER + 1)));
+}
+
+int tlv_long_real_data_type(tlv_t *tlv) {
+        return (*tlv)[TLV_SIZEOF_HEADER];
+}

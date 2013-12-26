@@ -1,23 +1,24 @@
-#include <locale.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdio.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/mman.h>
-#include <stdint.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <locale.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "utils.h"
-#include "logging.h"
-#include "tlv.h"
 #include "cli.h"
+#include "logging.h"
 #include "mdazibao.h"
+#include "tlv.h"
+#include "utils.h"
 
 
 int cli_add_all(int argc, char **argv) {
@@ -31,8 +32,8 @@ int cli_add_all(int argc, char **argv) {
         int
                 i,
                 len = 0,
-                ptr_compound,
-                write_ptr,
+                compound_idx,
+                write_idx,
                 status = 0;
         int *fd;
         uint32_t timestamp;
@@ -59,7 +60,7 @@ int cli_add_all(int argc, char **argv) {
 
         /* set date and update pointers */
         if (date) {
-                ptr_compound = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                compound_idx = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 len = TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
                 timestamp = (uint32_t) time(NULL);
                 timestamp = htonl(timestamp);
@@ -69,7 +70,7 @@ int cli_add_all(int argc, char **argv) {
                 }
         } else {
                 len = 0;
-                ptr_compound = 0;
+                compound_idx = 0;
                 timestamp = 0;
         }
 
@@ -119,14 +120,14 @@ int cli_add_all(int argc, char **argv) {
                 goto CLOSEFD;
         }
 
-        write_ptr = 0;
+        write_idx = 0;
 
         if (argc > 1) {
-                write_ptr += TLV_SIZEOF_HEADER;
+                write_idx += TLV_SIZEOF_HEADER;
         }
 
         if (date) {
-                write_ptr += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                write_idx += TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
         }
 
         for (i = 0; i < argc; i++) {
@@ -134,13 +135,16 @@ int cli_add_all(int argc, char **argv) {
                 char typ;
                 unsigned int tlv_len;
 
-                write_ptr += TLV_SIZEOF_HEADER;
+                write_idx += TLV_SIZEOF_HEADER;
 
                 if (fd[i] == -1) {
                         tlv_len = strlen(argv[i]);
-                        memcpy(buf + write_ptr, argv[i], tlv_len);
+                        memcpy(buf + write_idx, argv[i], tlv_len);
                 } else {
-                        tlv_len = read(fd[i], buf + write_ptr, len - write_ptr);
+                        tlv_len = read(
+                                fd[i],
+                                buf + write_idx,
+                                len - write_idx);
                         if (tlv_len == (unsigned int)-1) {
                                 PERROR("read");
                                 status = -1;
@@ -152,34 +156,36 @@ int cli_add_all(int argc, char **argv) {
                         typ = tlv_str2type(strtok((i == 0 ? type : NULL),
                                                                 delim));
                 } else {
-                        typ = guess_type(buf + write_ptr, len);
+                        typ = guess_type(buf + write_idx, len);
                 }
-                
+
                 if (typ == -1) {
                         LOGERROR("Undefined type.");
                         status = -1;
                         goto FREEBUF;
                 }
 
-                write_ptr -= TLV_SIZEOF_HEADER;
-                buf[write_ptr++] = typ;
-                htod(tlv_len, &buf[write_ptr]);
-                write_ptr += TLV_SIZEOF_LENGTH;
-                write_ptr += tlv_len;
+                write_idx -= TLV_SIZEOF_HEADER;
+                buf[write_idx++] = typ;
+                htod(tlv_len, &buf[write_idx]);
+                write_idx += TLV_SIZEOF_LENGTH;
+                write_idx += tlv_len;
 
         }
 
         if (timestamp != 0) {
                 buf[0] = TLV_DATED;
                 htod(len - 1, &buf[1]);
-                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp, sizeof(timestamp));
+                memcpy(&buf[1 + TLV_SIZEOF_LENGTH], &timestamp,
+                        sizeof(timestamp));
         }
 
         if (argc > 1) {
-                buf[ptr_compound] = TLV_COMPOUND;
-                htod(len - ptr_compound - TLV_SIZEOF_HEADER, &buf[ptr_compound + 1]);
+                buf[compound_idx] = TLV_COMPOUND;
+                htod(len - compound_idx - TLV_SIZEOF_HEADER,
+                        &buf[compound_idx + 1]);
         }
-        
+
         if (cli_add_tlv(file, buf) != 0) {
                 status = -1;
         }
@@ -241,12 +247,11 @@ DESTROY:
         }
 OUT:
         return status;
-                
 }
 
 
 int cli_dump_tlv(int argc, char **argv, int out) {
-        
+
         dz_t dz;
         tlv_t tlv;
         int status = 0;
@@ -283,23 +288,61 @@ int cli_dump_tlv(int argc, char **argv, int out) {
 
         switch (dz_tlv_at(&dz, &tlv, offset)) {
         case -1:
-/*
-  Fixme: dz_tlv_at should always return EOD since it is 0
-  case EOD:
- */
                 LOGERROR("dz_tlv_at %d failed.", (int)offset);
+                status = -1;
+                goto DESTROY;
+        case EOD:
+                LOGINFO("EOD reached.");
                 status = -1;
                 goto DESTROY;
         default:
                 break;
         };
-        
-        dz_read_tlv(&dz, &tlv, offset);
-        
-        if (value) {
-                tlv_fdump_value(&tlv, out);
+
+        if (tlv_get_type(&tlv) == TLV_LONGH && value) {
+                dz_read_tlv(&dz, &tlv, offset);
+                uint32_t len = tlv_long_real_data_length(&tlv);
+                char *buff = malloc(sizeof(*buff) * len);
+                size_t off;
+                uint32_t write_idx = 0;
+
+                if (buff == NULL) {
+                        PERROR("malloc");
+                        status = -1;
+                        goto DESTROY;
+                }
+
+                if (dz_set_offset(&dz, offset) == -1) {
+                        LOGERROR("dz_set_offset failed");
+                        status = -1;
+                        free(buff);
+                }
+
+                dz_next_tlv(&dz, &tlv);
+
+                while ((off = dz_next_tlv(&dz, &tlv)) != EOD) {
+                        if (tlv_get_type(&tlv) == TLV_LONGC) {
+                                dz_read_tlv(&dz, &tlv, off);
+                                tlv_mdump_value(&tlv, buff + write_idx);
+                                write_idx += tlv_get_length(&tlv);
+                        } else {
+                                break;
+                        }
+                }
+                if (write_idx != len) {
+                        LOGERROR("Read: %u, expected %u", write_idx, len);
+                } else if ((uint32_t)write_all(out, buff, len) != len) {
+                        LOGERROR("write_all failed");
+                }
+                free(buff);
         } else {
-                tlv_fdump(&tlv, out);
+                dz_read_tlv(&dz, &tlv, offset);
+
+                if (value) {
+                        tlv_fdump_value(&tlv, out);
+                } else {
+                        tlv_fdump(&tlv, out);
+                }
         }
 
 DESTROY:
@@ -314,11 +357,125 @@ CLOSE:
         return status;
 }
 
+int cli_print_long_tlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
+
+        dz_read_tlv(dz, tlv, dz_get_offset(dz));
+
+        int len = tlv_long_real_data_length(tlv);
+        int type = tlv_long_real_data_type(tlv);
+
+        for (int i = 0; i <= indent; i++) {
+                printf("--");
+        }
+
+        printf(" @[%10li]: %8s (%d bytes)\n",
+                (unsigned long)dz_get_offset(dz), tlv_type2str(type), len);
+        return len
+                + (len / TLV_MAX_VALUE_SIZE
+                        + MIN(1, len % TLV_MAX_VALUE_SIZE))
+                * TLV_SIZEOF_HEADER;
+}
+
+int cli_print_all_tlv(dz_t *dz, int indent, int lvl, int debug) {
+
+        /**
+         * FIXME: This function breaks
+         * abstraction of dazibao type
+         */
+
+        tlv_t tlv;
+        off_t off;
+
+        if (tlv_init(&tlv) == -1) {
+                LOGERROR("tlv_init");
+                return -1;
+        }
+
+        while ((off = dz_next_tlv(dz, &tlv)) != EOD) {
+
+                if (off == -1) {
+                        return -1;
+                }
+
+                int type = tlv_get_type(&tlv);
+
+                if ((type == TLV_PAD1 || type == TLV_PADN)
+                        && !debug) {
+                        continue;
+                }
+
+                int len = tlv_get_length(&tlv);
+
+                if (type == TLV_LONGH) {
+                        dz_set_offset(dz, off);
+                        off_t next = cli_print_long_tlv(
+                                dz, &tlv, indent, lvl, debug);
+                        dz_update_offset(dz, TLV_SIZEOF_HEADER + len + next);
+                        continue;
+                }
+
+                for (int i = 0; i <= indent; i++) {
+                        printf("--");
+                }
+
+                printf(" @[%10li]: %8s (%d bytes)\n",
+                        (unsigned long)off, tlv_type2str(type), len);
+
+
+                switch (type) {
+                case TLV_DATED:
+                        if (lvl != 0) {
+                                dz_t cmpnd = {
+                                        -1,
+                                        0,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + len,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + TLV_SIZEOF_DATE,
+                                        -1,
+                                        dz->data
+                                };
+                                cli_print_all_tlv(
+                                        &cmpnd,
+                                        indent + 1,
+                                        lvl - 1,
+                                        debug);
+                        }
+                        break;
+                case TLV_COMPOUND:
+                        if (lvl != 0) {
+                                dz_t cmpnd = {
+                                        -1,
+                                        0,
+                                        off
+                                        + TLV_SIZEOF_HEADER
+                                        + len,
+                                        off
+                                        + TLV_SIZEOF_HEADER,
+                                        -1,
+                                        dz->data
+                                };
+                                cli_print_all_tlv(
+                                        &cmpnd,
+                                        indent + 1,
+                                        lvl - 1,
+                                        debug);
+                        }
+                        break;
+                }
+        }
+
+        tlv_destroy(&tlv);
+        return 0;
+}
+
 int cli_dump_dz(int argc, char **argv, int out) {
-        
+
         dz_t dz;
         int status = 0;
-        long long int depth = 0;
+        long long int depth = -1;
         int debug = 0;
 
         struct s_option opt[] = {
@@ -343,13 +500,8 @@ int cli_dump_dz(int argc, char **argv, int out) {
                 return -1;
         }
 
-        if (dz_dump_all(&dz, depth, debug)) {
-                LOGERROR("dz_dump_all failed");
-                status = -1;
-                goto CLOSE;
-        }
+        cli_print_all_tlv(&dz, 0, depth, debug);
 
-CLOSE:
         if (dz_close(&dz) == -1) {
                 LOGERROR("Failed closing dazibao.");
                 status = -1;
@@ -434,6 +586,27 @@ OUT:
 }
 
 
+int cli_mk_long_tlv(char *file) {
+        int fd;
+        int type;
+        char *map;
+        tlv_t tlv;
+        struct stat st;
+        fd = open(file, O_RDONLY);
+        flock(fd, LOCK_SH);
+        fstat(fd, &st);
+        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        type = guess_type(map, st.st_size);
+        tlv_init(&tlv);
+        mk_long_tlv(&tlv, map, type, st.st_size);
+        munmap(map, st.st_size);
+        tlv_long_fwrite(&tlv, STDOUT_FILENO);
+        tlv_destroy(&tlv);
+        close(fd);
+        return 0;
+}
+
+
 int main(int argc, char **argv) {
 
         char *cmd;
@@ -446,7 +619,7 @@ int main(int argc, char **argv) {
                 LOGERROR(CLI_USAGE_FMT);
                 exit(EXIT_FAILURE);
         }
-        
+
         cmd = argv[1];
 
         if (strcmp(cmd, "add") == 0) {
@@ -472,6 +645,11 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
+                        return EXIT_FAILURE;
+                }
+        }  else if (strcmp(cmd, "mk_long") == 0) {
+                if (cli_mk_long_tlv(argv[2]) == -1) {
+                        LOGERROR("Failed making long_tlv TLV.");
                         return EXIT_FAILURE;
                 }
         } else {

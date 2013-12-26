@@ -58,10 +58,10 @@
 /** HTML format for a text TLV */
 #define HTML_TLV_TEXT_FMT "<blockquote>%.*s</blockquote>"
 /** HTML format for an image TLV */
-#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%li%s\" />"
+#define HTML_TLV_IMG_FMT "<img src=\"/tlv/%li\" />"
 /** HTML format for an image TLV with height/width attributes */
 #define HTML_TLV_IMG_DIMS_FMT \
-        "<img src=\"/tlv/%li%s\" height=\"%d\" width=\"%d\" />"
+        "<img src=\"/tlv/%li\" height=\"%d\" width=\"%d\" />"
 /** HTML format for the top of a dated TLV */
 #define HTML_TLV_DATED_TOP_FMT "<time datetime=\"%s\">%s</time>" \
                                  "<ol class=\"subtlv\">"
@@ -71,6 +71,8 @@
 #define HTML_TLV_COMPOUND_TOP_FMT "<ol class=\"subtlvs\">"
 /** HTML format for the bottom of a compound TLV */
 #define HTML_TLV_COMPOUND_BOTTOM_FMT "</ol>"
+/** HTML format for a generic TLV - offset, type string */
+#define HTML_TLV_OTHER_FMT "<a href=\"/tlv/%li\" />See as %s</a>"
 
 /** maximum size of the HTML top of a TLV */
 #define HTML_TLV_TOP_MAX_LENGTH (strlen(HTML_TLV_TOP_FMT) + 64)
@@ -110,7 +112,7 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
 /**
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,
- * assuming its value is a PNG or JP(E)G image.
+ * assuming its value is an image.
  * @param dz the dazibao
  * @param t a pointer to the TLV with its type and length
  * @param off a pointer to the TLV's offset in the dazibao
@@ -121,6 +123,21 @@ int html_add_text_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
  **/
 int html_add_img_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int *htmlsize,
                 int *htmlcursor);
+
+/**
+ * Add a non-NULL-terminated HTML representation of a TLV to an HTML string.
+ * This is not type-dependent, and you should use other functions when possible
+ * to generate more user-friendly HTML.
+ * @param dz the dazibao
+ * @param t a pointer to the TLV with its type and length
+ * @param off a pointer to the TLV's offset in the dazibao
+ * @param html a pointer to an HTML string
+ * @param htmlsize a pointer to the size of the HTML string
+ * @param htmlcursor the current cursor in the HTML string
+ * @return 0 on success
+ **/
+int html_add_other_tlv(dz_t dz, tlv_t *t, off_t *off, char **html,
+                int *htmlsize, int *htmlcursor);
 
 /**
  * Add a non-NULL-terminated HTML representation of a TLV to an HTML string,

@@ -10,25 +10,6 @@
 
 /** @file */
 
-int get_image_tlv_type(const char *path) {
-        const char *ext = get_ext(path);
-        if (path == NULL || ext == NULL) {
-                return -1;
-        }
-        LOGTRACE("Determining the TLV type of ext '%s'...", ext);
-
-        if (strcasecmp(ext, PNG_EXT + 1) == 0) {
-                return TLV_PNG;
-        }
-        if (strcasecmp(ext, JPEG_EXT + 1) == 0) {
-                return TLV_JPEG;
-        }
-        if (strcasecmp(ext, GIF_EXT + 1) == 0) {
-                return TLV_GIF;
-        }
-        return -1;
-}
-
 /** maximum length of a date string */
 #define MAX_DATE_LENGTH 64
 

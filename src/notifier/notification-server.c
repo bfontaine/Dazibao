@@ -178,11 +178,11 @@ void *watch_file(void *arg) {
         memset(&value, 0, sizeof(value));
 
         int sleeping_time = conf.w_sleep_default;
-        int changed = 0;
 
         LOGINFO("Started watching %s", path);
 
         while (1) {
+                int changed;
                 LOGDEBUG("watching %s", path);
                 changed = conf.reliable ?
                         reliable_watch(path, &(value.hash)):
