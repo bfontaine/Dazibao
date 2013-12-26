@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/mman.h>
 #include "utils.h"
 #include "mdazibao.h"
 #include "main.h"
@@ -481,7 +482,8 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
         dz_t dz;
         tlv_t tlv;
         long off;
-        int fd;
+        int fd, real_size;
+        char *data;
         const char *path;
 
         if (argc != 2) {
@@ -490,17 +492,11 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
         }
 
         /* If the offset doesn't start with a character between '0' and '9', it
-         * must be wrong. The user probably used 'rm <dz> <offset>' instead of
-         * 'rm <offset> <dz>'.
+         * must be wrong.
          */
         if (argv[0][0] < 48 || argv[0][0] > 57) {
                 fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
                 return DZ_ARGS_ERROR;
-        }
-
-        if (dz_open(&dz, dz_path, O_RDWR) < 0) {
-                fprintf(stderr, "Error while opening the dazibao\n");
-                return -1;
         }
 
         off = str2dec_positive(argv[argc - 1]);
@@ -510,46 +506,59 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
                 return DZ_OFFSET_ERROR;
         }
 
+        if (dz_open(&dz, dz_path, O_RDWR) < 0) {
+                fprintf(stderr, "Error while opening the dazibao\n");
+                return -1;
+        }
+
         if (dz_check_tlv_at(&dz, off, -1,NULL) <= 0) {
                 fprintf(stderr, "no such TLV\n");
-                dz_close(&daz_buf);
+                dz_close(&dz);
                 return DZ_OFFSET_ERROR;
         }
 
         path = argv[1];
         if (access(path,F_OK) < 0) {
                 printf("file %s already exist\n",path);
+                dz_close(&dz);
                 return -1;
         }
 
         fd = open(path, O_CREAT | O_EXCL | O_RDWR, 0644);
 
         if (fd == -1) {
+                dz_close(&dz);
                 ERROR("open", -1);
         }
-        
+
         if (tlv_init(&tlv) < 0) {
                 printf("error to init tlv\n");
+                dz_close(&dz);
                 return -1;
         }
 
         if (dz_read_tlv(&dz, &tlv, off) < 0) {
                 printf("error to read tlv\n");
+                dz_close(&dz);
                 return -1;
         }
 
-
-         /*TODO:
+        /*TODO:
                 write value from tlv of path
+                use mmap not write
         */
-        /* 
+        real_size = tlv_get_length(&tlv);
+        data = (char*)mmap(NULL, real_size, PROT_WRITE, MAP_SHARED, fd, 0);
+        memcpy(data,tlv_get_value_ptr(&tlv),real_size);
+        tlv_destroy(&tlv);
+        /*
         if (dz_rm_tlv(&daz_buf, (off_t)off)) {
                 fprintf(stderr, "rm failed\n");
                 dz_close(&daz_buf);
                 return -1;
         }
         */
-        if (dz_close(&daz_buf) < 0) {
+        if (dz_close(&dz) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
                 return -1;
         }
