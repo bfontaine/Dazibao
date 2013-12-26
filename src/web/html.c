@@ -80,8 +80,7 @@ int html_add_other_tlv(dz_t dz, tlv_t *t, off_t *off, char **html,
         int w, type = tlv_get_type(t);
         const char *type_str = tlv_type2str(type);
 
-        /* regarding the second part of this 'if', see #152 */
-        if (type_str == NULL || strcmp(type_str, "unknown") == 0) {
+        if (type_str == NULL) {
                 LOGTRACE("skipping TLV at offset %li, unknown type (%d)",
                                 (long)*off, type);
         }
@@ -205,6 +204,7 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
         int tlv_type = tlv_get_type(t),
             st = 0, written,
             len_bottom;
+        const char *type_str;
 
         if (!TLV_VALID_TYPE(tlv_type)) {
                 LOGWARN("Invalid TLV type: %d", tlv_type);
@@ -224,10 +224,11 @@ int html_add_tlv(dz_t dz, tlv_t *t, off_t *dz_off, char **html, int *htmlsize,
                 return -1;
         }
 
+        type_str = tlv_type2str(tlv_type);
         written = snprintf(*html+(*htmlcursor), *htmlsize - (*htmlcursor),
                         HTML_TLV_TOP_FMT,
                         (long)*dz_off, tlv_get_length(t), tlv_type,
-                        tlv_type2str(tlv_type));
+                        type_str ? type_str : "unknown");
         if (written > *htmlsize) {
                 perror("snprintf");
                 tlv_destroy(t);

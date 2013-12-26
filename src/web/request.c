@@ -646,9 +646,6 @@ struct http_param **parse_form_data(struct http_request *req) {
         LOGTRACE("rest[sep_len..sep_len+2]: %u %u %u",
                         rest[sep_len], rest[sep_len+1], rest[sep_len+2]);
 
-        /* FIXME we sometimes don't enter in this loop due to the strstr call
-         * returning null. I think this is because strstr works on *strings*
-         * and we have here a piece of memory with some '\0' in it. */
         while ((rest += sep_len) - req->body < req->body_len
                         && (next_sep = my_memmem(rest, rest_len - sep_len,
                                         sep, sep_len)) != NULL) {

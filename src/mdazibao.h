@@ -14,11 +14,12 @@
  * Size of a Dazibao header
  **/
 #define DAZIBAO_HEADER_SIZE 4
+#define DZ_HEADER_SIZE 4
 
 /**
  * code used to represent "End Of Dazibao", similarly to EOF.
  **/
-#define EOD 0
+#define EOD -2
 
 /**
  * The magic number used to identify a Dazibao file
@@ -50,7 +51,7 @@ int dz_set_offset(dz_t *d, off_t off);
 
 off_t dz_get_offset(dz_t *d);
 
-int dz_update_offset(dz_t *d, off_t off);
+int dz_incr_offset(dz_t *d, off_t off);
 
 /**
  * @param d the dazibao

@@ -52,7 +52,7 @@ off_t dz_get_offset(dz_t *d) {
         return d->offset;
 }
 
-int dz_update_offset(dz_t *d, off_t off) {
+int dz_incr_offset(dz_t *d, off_t off) {
         if (off < 0 || (unsigned long)off > d->len) {
                 return -1;
         }
@@ -393,13 +393,20 @@ int dz_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
 }
 
 int dz_write_tlv_at(dz_t *d, tlv_t *tlv, off_t offset) {
-        return tlv_mwrite(tlv, d->data + offset);
+        if (tlv_get_type(tlv) == TLV_LONGH) {
+                return ltlv_mwrite(tlv, d->data + offset);
+        } else {
+                return tlv_mwrite(tlv, d->data + offset);
+        }
 }
 
 int dz_add_tlv(dz_t *d, tlv_t *tlv) {
 
         off_t pad_off, eof_off;
-        unsigned int tlv_size = TLV_SIZEOF(tlv);
+        unsigned int tlv_size =
+                tlv_get_type(tlv) == TLV_LONGH ?
+                ltlv_get_total_length(tlv):
+                TLV_SIZEOF(tlv);
         unsigned int available;
 
         eof_off = d->len;
@@ -414,16 +421,12 @@ int dz_add_tlv(dz_t *d, tlv_t *tlv) {
                 }
         }
 
-        d->len = pad_off + TLV_SIZEOF(tlv);
+        d->len = pad_off + tlv_size;
 
-        /* write */
         if (dz_write_tlv_at(d, tlv, pad_off) < 0) {
                 ERROR(NULL, -1);
         }
 
-        if (dz_sync(d) < 0) {
-                return -1;
-        }
         return 0;
 }
 
@@ -936,16 +939,14 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
         while (((off = dz_next_tlv(daz_buf, &tlv)) != end) && (off != EOD)) {
 
                 int tlv_type, len;
-                const char *tlv_str;
 
                 tlv_type = tlv_get_type(&tlv);
                 len = tlv_get_length(&tlv);
 
-                tlv_str = tlv_type2str(tlv_type);
                 /* for option debug print pad n and pad1 only debug = 1 */
                 if (!TLV_IS_EMPTY_PAD(tlv_type) || flag_debug) {
                         printf("%s%9li | %8s | %8d\n",
-                                ind, (long)off, tlv_str, len);
+                                ind, (long)off, tlv_type2str(tlv_type), len);
                 }
 
                 switch (tlv_type) {
