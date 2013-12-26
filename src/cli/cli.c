@@ -150,7 +150,7 @@ int cli_add(int argc, char **argv) {
         char *type = NULL;
         char *file;
         char **inputs;
-        int nb_inputs;
+        int nb_inputs = 0;
         /* Parsing arguments. */
 
         struct s_option opt[] = {
@@ -237,8 +237,8 @@ static int cli_print_to_file(char *buf, size_t len, off_t offset, int type) {
 
         wc = write_all(out_fd, buf, len);
 
-        if (wc != len) {
-                LOGERROR("wrote %d bytes (expected %d)", wc, len);
+        if (wc != (int)len) {
+                LOGERROR("wrote %d bytes (expected %d)", wc, (int)len);
                 status = -1;
                 goto CLOSE;
         }
@@ -449,7 +449,7 @@ int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         }
 
         printf(" @[%10li]: %8s (%d bytes)\n",
-                dz_get_offset(dz),
+                (long)dz_get_offset(dz),
                 type_str != NULL ? type_str : "unknown",
                 len);
 
