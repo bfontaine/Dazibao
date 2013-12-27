@@ -213,7 +213,7 @@ OUT:
 }
 
 
-static int cli_print_to_file(char *buf, size_t len, off_t offset, int type) {
+static int cli_write_file(char *buf, size_t len, off_t offset, int type) {
 
         int wc;
         int out_fd;
@@ -250,11 +250,7 @@ CLOSE:
 }
 
 
-/**
- * precondition: next dz read will be the first TLV_LONGC
- * FIXME: 
- */
-static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
+int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
 
         uint32_t len;
         int type;
@@ -267,31 +263,10 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
 
         type = ltlv_real_data_type(tlv);
 
-        buff = malloc(sizeof(*buff) * len);
+        buff = dz_get_ltlv_value(dz, tlv, len);
 
         if (buff == NULL) {
-                ERROR("malloc", -1);
-        }
-
-        dz_set_offset(dz, offset + TLV_SIZEOF_LONGH);
-
-        while (write_idx < len && (off = dz_next_tlv(dz, tlv)) != EOD) {
-                if (offset == -1) {
-                        status = -1;
-                        goto FREEBUFF;
-                } else if (tlv_get_type(tlv) == TLV_LONGC) {
-                        dz_read_tlv(dz, tlv, off);
-                        tlv_mdump_value(tlv, buff + write_idx);
-                        write_idx += tlv_get_length(tlv);
-                } else {
-                        LOGERROR("Long TLV incomplete.");
-                        status = -1;
-                        goto FREEBUFF;
-                }
-        }
-
-        if (write_idx != len) {
-                LOGERROR("Read: %u, expected %u", write_idx, len);
+                LOGERROR("Failed retriving long TLV value");
                 status = -1;
                 goto FREEBUFF;
         }
@@ -306,7 +281,7 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
                                 -1,
                                 buff
                         };
-                        cli_extract_all(&cmpnd);
+                        cli_extract_all(&cmpnd, offset + name_mod);
                         break;
                 }
                 case TLV_COMPOUND: {
@@ -318,12 +293,12 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
                                 -1,
                                 buff
                         };
-                        cli_extract_all(&cmpnd);
+                        cli_extract_all(&cmpnd, offset + name_mod);
                         break;
                 }
         default:
-                if (cli_print_to_file(buff, len, off + offset, type) == -1) {
-                        LOGERROR("cli_print_to_file failed");
+                if (cli_write_file(buff, len, offset + name_mod, type) == -1) {
+                        LOGERROR("cli_write_file failed");
                         status = -1;
                         goto FREEBUFF;
                 }
@@ -339,8 +314,8 @@ FREEBUFF:
  * Extract every TLV in dazibao
  * Offset *MUST* be poiting to header of first TLV
  */
-int cli_extract_all(dz_t *dz) {
-        
+int cli_extract_all(dz_t *dz, int name_mod) {
+
         /**
          * FIXME: This function breaks
          * abstraction of dazibao type
@@ -370,18 +345,18 @@ int cli_extract_all(dz_t *dz) {
                 }
 
                 if (type == TLV_LONGH) {
-                        if (cli_extract_ltlv(dz,&tlv,dz_get_offset(dz))!=0) {
+                        if (cli_extract_ltlv(dz,
+                                                &tlv,
+                                                dz_get_offset(dz),
+                                                name_mod) != 0) {
                                 LOGERROR("cli_extract_ltlv failed");
                                 status = -1;
                                 goto DESTROY;
                         }
                         dz_incr_offset(dz, ltlv_get_total_length(&tlv));
-                        continue;
+                } else {
+                        cli_extract_tlv(dz, off, name_mod);
                 }
-
-                cli_extract_tlv(dz, off);
-
-
         }
 
 DESTROY:
@@ -389,8 +364,11 @@ DESTROY:
         return status;
 }
 
-
-int cli_extract_tlv(dz_t *dz, off_t offset) {
+/**
+ * FIXME: Avoid name collision
+ * @param name_mod modify offset used for name of file
+ */
+int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
 
         tlv_t tlv;
         int status = 0;
@@ -431,7 +409,7 @@ int cli_extract_tlv(dz_t *dz, off_t offset) {
                         -1,
                         dz->data
                 };
-                cli_extract_all(&cmpnd);
+                cli_extract_all(&cmpnd, offset + name_mod);
                 break;
         }
         case TLV_COMPOUND: {
@@ -447,21 +425,21 @@ int cli_extract_tlv(dz_t *dz, off_t offset) {
                         -1,
                         dz->data
                 };
-                cli_extract_all(&cmpnd);
+                cli_extract_all(&cmpnd, offset + name_mod);
                 break;
         }
         case TLV_LONGH:
-                status = cli_extract_ltlv(dz, &tlv, offset);
+                status = cli_extract_ltlv(dz, &tlv, offset, name_mod);
                 break;
         default:
                 if (dz_read_tlv(dz, &tlv, offset) != 0) {
-                        LOGERROR("dz_read_tlv %s at %d failed.", tlv_type2str(type), offset);
+                        LOGERROR("dz_read_tlv failed");
                         status = -1;
                         goto DESTROY;
-                } 
-                if (cli_print_to_file(tlv_get_value_ptr(&tlv),
+                }
+                if (cli_write_file(tlv_get_value_ptr(&tlv),
                                         tlv_get_length(&tlv),
-                                        offset,
+                                        offset + name_mod,
                                         type) == -1) {
                         LOGERROR("Printing in file failed.");
                         status = -1;
@@ -502,7 +480,7 @@ int cli_extract(int argc, char **argv) {
 
         if (nb_tlv == 0) {
                 /* TODO: handle error */
-                cli_extract_all(&dz);
+                cli_extract_all(&dz, 0);
                 goto CLOSE;
         }
 
@@ -521,7 +499,7 @@ int cli_extract(int argc, char **argv) {
                         goto CLOSE;
                 }
 
-                if (cli_extract_tlv(&dz, off) == -1) {
+                if (cli_extract_tlv(&dz, off, 0) == -1) {
                         LOGERROR("cli_extract failed (%d/%d tlv extracted).",
                                 i, nb_tlv);
                         status = -1;

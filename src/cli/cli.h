@@ -13,7 +13,9 @@
 
 int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date);
 int cli_add(int argc, char **argv);
-int cli_extract_tlv(dz_t *dz, off_t offset);
+int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod);
+int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod);
+int cli_extract_all(dz_t *dz, int name_mod);
 int cli_extract(int argc, char **argv);
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug);
 int cli_dump_dz(int argc, char **argv, int out);
