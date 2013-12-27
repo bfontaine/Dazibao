@@ -287,7 +287,7 @@ char *next_header(int sock, int *eoh) {
                         return NULL;
                 }
 
-        };
+        }
 
         NFREE(line);
         restlen = 0;
