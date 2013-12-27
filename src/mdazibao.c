@@ -226,7 +226,8 @@ int dz_close(dz_t *d) {
 }
 
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
-        return tlv_mread(tlv, d->data + offset + TLV_SIZEOF_HEADER);
+        return tlv_mread(tlv, d->data + offset + TLV_SIZEOF_HEADER)
+                != tlv_get_length(tlv);
 }
 
 time_t dz_read_date_at(dz_t *d, off_t offset) {
