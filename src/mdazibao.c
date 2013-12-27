@@ -111,24 +111,24 @@ int dz_remap(dz_t *d, size_t t) {
 }
 
 int dz_create(dz_t *d, char *path) {
-
-        char header[DAZIBAO_HEADER_SIZE];
-
         d->fd = open(path, O_CREAT | O_EXCL | O_RDWR, 0644);
 
         if (d->fd == -1) {
-                ERROR("open", -1);
+                perror("open");
+                return -1;
         }
 
         if (flock(d->fd, LOCK_EX) == -1) {
-                PERROR("flock");
-                goto PANIC;
+                perror("flock");
+                close(d->fd);
+                return -1;
         }
 
         d->fflags = O_RDWR;
 
-        if (dz_mmap_data(d, DAZIBAO_HEADER_SIZE)) {
-                goto PANIC;
+        if (dz_mmap_data(d, DAZIBAO_HEADER_SIZE) != 0) {
+                close(d->fd);
+                return -1;
         }
 
         d->data[0] = MAGIC_NUMBER;
@@ -139,12 +139,6 @@ int dz_create(dz_t *d, char *path) {
                 return -1;
         }
         return 0;
-
-PANIC:
-        if (close(d->fd) == -1) {
-                PERROR("close");
-        }
-        return -1;
 }
 
 int dz_open(dz_t *d, char *path, int flags) {
@@ -692,7 +686,6 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
 
         int len, status;
         tlv_t buff;
-        char pad1s[TLV_SIZEOF_HEADER-1];
         char *b_val;
         off_t prev = d->offset;
 
@@ -700,8 +693,7 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         b_val = calloc(len, sizeof(char));
 
         if (b_val == NULL) {
-                status = -1;
-                goto OUT;
+                return -1;
         }
 
         tlv_init(&buff);
@@ -710,13 +702,10 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
         tlv_mread(&buff, b_val);
         status = 0;
 
-        if (d == NULL || start < DAZIBAO_HEADER_SIZE || length < 0) {
-                status = -1;
-                goto OUT;
-        }
-
-        if (length == 0) {
-                goto OUT;
+        if (d == NULL || start < DAZIBAO_HEADER_SIZE || length <= 0) {
+                free(b_val);
+                tlv_destroy(&buff);
+                return -1;
         }
 
         d->offset = start;
@@ -733,8 +722,8 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
                 tlv_set_length(&buff, length - TLV_SIZEOF_HEADER);
 
                 if (dz_write_tlv_at(d, &buff, start) == -1) {
-                        status = -1;
-                        goto OUT;
+                        length = -1;
+                        break;
                 }
 
                 start = start + length;
@@ -743,13 +732,12 @@ int dz_do_empty(dz_t *d, off_t start, off_t length) {
 
 
         /* We don't have enough room to store a padN, so we fill it with
-         * pad1's
+         * pad1s
          */
         if (length > 0) {
                 memset(d->data + d->offset, TLV_PAD1, length);
         }
 
-OUT:
         tlv_destroy(&buff);
         free(b_val);
         d->offset = prev;
@@ -795,8 +783,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
         int type = -1,
             len = 0,
             saved = 0,
-            is_dz = 0,
-            bytescount;
+            is_dz = 0;
         tlv_t t;
         off_t tlv_off,   /* offset where the TLV is written */
               value_off; /* offset of the beginning of the value */
@@ -828,11 +815,11 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
         case TLV_PAD1:
                 saved = TLV_SIZEOF_TYPE;
                 *reader += saved;
-                goto EOCOMPACT;
+                break;
         case TLV_PADN:
                 saved = TLV_SIZEOF_HEADER + len;
                 *reader += saved;
-                goto EOCOMPACT;
+                break;
         case TLV_DATED:
                 tlv_off = *writer;
                 /* copy the type */
@@ -856,7 +843,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 tlv_set_length(&t, len);
                 memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
-                goto EOCOMPACT;
+                break;
         case -1:
         case TLV_COMPOUND:
                 tlv_off = *writer;
@@ -885,7 +872,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                         memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
                 }
-                goto EOCOMPACT;
+                break;
         default: /* other TLVs */
                 if (len == 0) {
                         saved += TLV_SIZEOF_HEADER;
@@ -895,7 +882,6 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 }
         }
 
-EOCOMPACT:
         if (!is_dz) {
                 tlv_destroy(&t);
         }
