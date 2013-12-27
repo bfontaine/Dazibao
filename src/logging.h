@@ -16,7 +16,7 @@
  **/
 extern int _log_level;
 
-/* set this to 0 to get each log entry on one line instead of two */
+/** set this to 0 to get each log entry on one line instead of two */
 extern char _log_newline;
 
 /** "trace" log level */

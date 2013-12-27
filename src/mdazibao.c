@@ -1009,9 +1009,6 @@ int dz_hash(dz_t *dz, hash_t *oldhash) {
                 return DZ_NULL_POINTER_ERROR;
         }
 
-        /* TODO this is a basic function, this code should be replaced by a
-         * real hashing function */
-
         len = (hash_t)dz->len;
 
         if (*oldhash == 0 || *oldhash == len) {
@@ -1022,46 +1019,30 @@ int dz_hash(dz_t *dz, hash_t *oldhash) {
         *oldhash = len;
         return 1;
 }
-#undef BUFFLEN
 
-
-/**
- * CAREFUL: This function return a pointer
- * to memory allocated with malloc
- * and should be freed after use
- * offset should be pointing
- * just after the LONGH corresponding
- */
 char *dz_get_ltlv_value(dz_t *dz, tlv_t *tlv, uint32_t len) {
         char *buf;
         uint32_t write_idx = 0;
         off_t off;
 
-        buf = malloc(sizeof(*buf) * len);
+        buf = (char*)malloc(sizeof(*buf) * len);
 
         if (buf == NULL) {
-                goto FAILURE;
+                return NULL;
         }
 
         while (write_idx < len && (off = dz_next_tlv(dz, tlv)) != EOD) {
-                if (off == -1) {
-                        goto FAILURE;
-                } else if (tlv_get_type(tlv) == TLV_LONGC) {
-                        dz_read_tlv(dz, tlv, off);
-                        tlv_mdump_value(tlv, buf + write_idx);
-                        write_idx += tlv_get_length(tlv);
-                } else {
-                        goto FAILURE;
+                if (off < 0 || tlv_get_type(tlv) != TLV_LONGC) {
+                        break;
                 }
+                dz_read_tlv(dz, tlv, off);
+                tlv_mdump_value(tlv, buf + write_idx);
+                write_idx += tlv_get_length(tlv);
         }
 
         if (write_idx != len) {
-                goto FAILURE;
+                NFREE(buf);
         }
 
         return buf;
-
-FAILURE:
-        free(buf);
-        return NULL;
 }
