@@ -252,6 +252,7 @@ CLOSE:
 
 /**
  * precondition: next dz read will be the first TLV_LONGC
+ * FIXME: 
  */
 static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
 
@@ -272,12 +273,13 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
                 ERROR("malloc", -1);
         }
 
-
         dz_set_offset(dz, offset + TLV_SIZEOF_LONGH);
 
-
         while (write_idx < len && (off = dz_next_tlv(dz, tlv)) != EOD) {
-                if (tlv_get_type(tlv) == TLV_LONGC) {
+                if (offset == -1) {
+                        status = -1;
+                        goto FREEBUFF;
+                } else if (tlv_get_type(tlv) == TLV_LONGC) {
                         dz_read_tlv(dz, tlv, off);
                         tlv_mdump_value(tlv, buff + write_idx);
                         write_idx += tlv_get_length(tlv);
@@ -295,13 +297,32 @@ static int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset) {
         }
 
         switch (type) {
-        case TLV_DATED:
-        case TLV_COMPOUND:
-                LOGERROR("Not supported yet");
-                status = -1;
-                goto FREEBUFF;
+                case TLV_DATED: {
+                        dz_t cmpnd = {
+                                -1,
+                                0,
+                                len,
+                                TLV_SIZEOF_DATE,
+                                -1,
+                                buff
+                        };
+                        cli_extract_all(&cmpnd);
+                        break;
+                }
+                case TLV_COMPOUND: {
+                        dz_t cmpnd = {
+                                -1,
+                                0,
+                                len,
+                                0,
+                                -1,
+                                buff
+                        };
+                        cli_extract_all(&cmpnd);
+                        break;
+                }
         default:
-                if (cli_print_to_file(buff, len, off, type) == -1) {
+                if (cli_print_to_file(buff, len, off + offset, type) == -1) {
                         LOGERROR("cli_print_to_file failed");
                         status = -1;
                         goto FREEBUFF;
@@ -314,6 +335,60 @@ FREEBUFF:
         return status;
 }
 
+/**
+ * Extract every TLV in dazibao
+ * Offset *MUST* be poiting to header of first TLV
+ */
+int cli_extract_all(dz_t *dz) {
+        
+        /**
+         * FIXME: This function breaks
+         * abstraction of dazibao type
+         */
+        int status = 0;
+        tlv_t tlv;
+        off_t off;
+
+        if (tlv_init(&tlv) == -1) {
+                LOGERROR("tlv_init");
+                return -1;
+        }
+
+        while ((off = dz_next_tlv(dz, &tlv)) != EOD) {
+                const char *type_str;
+                int type, len;
+
+                if (off == -1) {
+                        status = -1;
+                        goto DESTROY;
+                }
+
+                type = tlv_get_type(&tlv);
+
+                if (type == TLV_PAD1 || type == TLV_PADN) {
+                        continue;
+                }
+
+                if (type == TLV_LONGH) {
+                        if (cli_extract_ltlv(dz,&tlv,dz_get_offset(dz))!=0) {
+                                LOGERROR("cli_extract_ltlv failed");
+                                status = -1;
+                                goto DESTROY;
+                        }
+                        dz_incr_offset(dz, ltlv_get_total_length(&tlv));
+                        continue;
+                }
+
+                cli_extract_tlv(dz, off);
+
+
+        }
+
+DESTROY:
+        tlv_destroy(&tlv);
+        return status;
+}
+
 
 int cli_extract_tlv(dz_t *dz, off_t offset) {
 
@@ -323,7 +398,6 @@ int cli_extract_tlv(dz_t *dz, off_t offset) {
         /* long long int is 10 character max long
          * extension should fit in 8 characters*/
         char out_s[10 + 10];
-        int wc;
         int type;
 
         if (tlv_init(&tlv) != 0) {
@@ -340,20 +414,51 @@ int cli_extract_tlv(dz_t *dz, off_t offset) {
                 goto DESTROY;
         };
 
-        dz_read_tlv(dz, &tlv, offset);
-
         type = tlv_get_type(&tlv);
 
         switch (type) {
-        case TLV_COMPOUND:
-        case TLV_DATED:
-                LOGERROR("Not supported yet.");
-                status = -1;
-                goto DESTROY;
+        case TLV_DATED: {
+                int len = tlv_get_length(&tlv);
+                dz_t cmpnd = {
+                        -1,
+                        0,
+                        offset
+                        + TLV_SIZEOF_HEADER
+                        + len,
+                        offset
+                        + TLV_SIZEOF_HEADER
+                        + TLV_SIZEOF_DATE,
+                        -1,
+                        dz->data
+                };
+                cli_extract_all(&cmpnd);
+                break;
+        }
+        case TLV_COMPOUND: {
+                int len = tlv_get_length(&tlv);
+                dz_t cmpnd = {
+                        -1,
+                        0,
+                        offset
+                        + TLV_SIZEOF_HEADER
+                        + len,
+                        offset
+                        + TLV_SIZEOF_HEADER,
+                        -1,
+                        dz->data
+                };
+                cli_extract_all(&cmpnd);
+                break;
+        }
         case TLV_LONGH:
                 status = cli_extract_ltlv(dz, &tlv, offset);
                 break;
         default:
+                if (dz_read_tlv(dz, &tlv, offset) != 0) {
+                        LOGERROR("dz_read_tlv %s at %d failed.", tlv_type2str(type), offset);
+                        status = -1;
+                        goto DESTROY;
+                } 
                 if (cli_print_to_file(tlv_get_value_ptr(&tlv),
                                         tlv_get_length(&tlv),
                                         offset,
@@ -381,7 +486,7 @@ int cli_extract(int argc, char **argv) {
         int nb_tlv;
         char *file;
 
-        if (argc < 2) {
+        if (argc < 1) {
                 LOGERROR("Missing parameter(s).");
                 return -1;
         }
@@ -395,6 +500,11 @@ int cli_extract(int argc, char **argv) {
                 return -1;
         }
 
+        if (nb_tlv == 0) {
+                /* TODO: handle error */
+                cli_extract_all(&dz);
+                goto CLOSE;
+        }
 
         for (int i = 0; i < nb_tlv; i++) {
 
@@ -496,7 +606,7 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
          * FIXME: This function breaks
          * abstraction of dazibao type
          */
-
+        int status = 0;
         tlv_t tlv;
         off_t off;
 
@@ -509,7 +619,9 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                 const char *type_str;
 
                 if (off == -1) {
-                        return -1;
+                        LOGERROR("dz_next_tlv failed");
+                        status = -1;
+                        goto DESTROY;
                 }
 
                 int type = tlv_get_type(&tlv);
@@ -530,7 +642,6 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                 for (int i = 0; i <= indent; i++) {
                         printf("--");
                 }
-
 
                 int len = tlv_get_length(&tlv);
 
@@ -584,8 +695,9 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                 }
         }
 
+DESTROY:
         tlv_destroy(&tlv);
-        return 0;
+        return status;
 }
 
 int cli_dump_dz(int argc, char **argv, int out) {
