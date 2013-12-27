@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include "utils.h"
 #include "mdazibao.h"
 #include "main.h"
@@ -479,14 +480,38 @@ int cmd_compact(int argc , char **argv, char *daz) {
 
 }
 
+int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off) {
+
+        if (dz_tlv_at(dz, tlv, off) < 0) {
+                printf("error to read type and length tlv\n");
+                dz_close(dz);
+                tlv_destroy(tlv);
+                return -1;
+        }
+
+        switch (tlv_get_type(tlv)) {
+        case TLV_DATED: off = off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                        return choose_tlv_extract(dz,tlv,off);
+        default: break;
+        }
+
+        if (dz_read_tlv(dz, tlv, off) < 0) {
+                printf("error to read value tlv\n");
+                dz_close(dz);
+                tlv_destroy(tlv);
+                return -1;
+        }
+        return 0;
+}
+
 int cmd_extract(int argc , char **argv, char *dz_path) {
         dz_t dz;
         tlv_t tlv;
-        int flag_exist = -1;
         long off;
-        int fd, real_size;
+        int fd;
+        size_t real_size;
         char *data;
-        const char *path;
+        char *path;
 
         if (argc != 2) {
                 fprintf(stderr, "cmd extract : <offset> <path> <dazibao>\n");
@@ -505,7 +530,6 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
         off = str2dec_positive(argv[0]);
 
         if (off < DAZIBAO_HEADER_SIZE) {
-                printf("%d\n",(int) off);
                 fprintf(stderr, "wrong offset\n");
                 return DZ_OFFSET_ERROR;
         }
@@ -521,61 +545,67 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
                 return DZ_OFFSET_ERROR;
         }
 
-        path = argv[1];
-        if (access(path,F_OK) == 0) {
-                flag_exist = 0;
-                fd = open(path, O_RDWR);
-                printf("if %d\n",fd);
-        } else {
-                fd = open(path, O_CREAT | O_EXCL | O_RDWR, 0644);
-                printf("%d\n",fd);
-        }
-
-        if (fd == -1) {
-                dz_close(&dz);
-                ERROR("open", -1);
-        }
-
         if (tlv_init(&tlv) < 0) {
                 printf("error to init tlv\n");
                 dz_close(&dz);
                 return -1;
         }
 
-        if (dz_tlv_at(&dz, &tlv, off) < 0) {
-                printf("error to read type and length tlv\n");
+        if (choose_tlv_extract(&dz,&tlv,off) < 0) {
+                printf("error to init tlv\n");
+                tlv_destroy(&tlv);
                 dz_close(&dz);
                 return -1;
         }
-
-        if (dz_read_tlv(&dz, &tlv, off) < 0) {
-                printf("error to read value tlv\n");
-                dz_close(&dz);
-                return -1;
-        }
-
-        real_size = tlv_get_length(&tlv);
-        printf("type %d\n", tlv_get_type(&tlv));
-        printf("length %d\n", real_size);
-        data = (char*)mmap(NULL, real_size, PROT_WRITE, MAP_SHARED, fd, 0);
-        memcpy(data, tlv_get_value_ptr(&tlv), real_size);
-        tlv_destroy(&tlv);
-
-        if (flag_exist == 0 ) {
-                if (ftruncate(fd, real_size) < 0) {
-                        fprintf(stderr, "Error while ftruncate pathn");
-                        dz_close(&dz);
-                        close(fd);
-                        return -1;
-                }
-        }
-        close(fd);
 
         if (dz_close(&dz) < 0) {
                 fprintf(stderr, "Error while closing the dazibao\n");
+                tlv_destroy(&tlv);
                 return -1;
         }
 
+        if (tlv_get_type(&tlv) == TLV_COMPOUND) {
+                real_size = (size_t)tlv_get_length(&tlv) + DAZIBAO_HEADER_SIZE;
+        } else {
+                real_size = (size_t)tlv_get_length(&tlv);
+        }
+
+        path = argv[1];
+        fd = open(path, O_CREAT | O_TRUNC | O_RDWR, 0644);
+
+        if (fd == -1) {
+                tlv_destroy(&tlv);
+                ERROR("open", -1);
+        }
+
+        if (ftruncate(fd, real_size) < 0) {
+                fprintf(stderr, "Error while ftruncate path");
+                close(fd);
+                return -1;
+        }
+
+        data = (char*)mmap(NULL, real_size, PROT_WRITE,
+                        MAP_SHARED, fd, 0);
+
+        if (data == MAP_FAILED) {
+                fprintf(stderr, "Error while mmap ");
+                close(fd);
+                tlv_destroy(&tlv);
+                return -1;
+        }
+
+        if (tlv_get_type(&tlv) == TLV_COMPOUND) {
+                data[0] = MAGIC_NUMBER;
+                memset(data + 1, 0, DAZIBAO_HEADER_SIZE - 1);
+                real_size = real_size - DAZIBAO_HEADER_SIZE;
+                memcpy(data + DAZIBAO_HEADER_SIZE,
+                        tlv_get_value_ptr(&tlv), real_size);
+        } else {
+                memcpy(data , tlv_get_value_ptr(&tlv), real_size);
+        }
+
+        tlv_destroy(&tlv);
+        close(fd);
         return 0;
 }
 
