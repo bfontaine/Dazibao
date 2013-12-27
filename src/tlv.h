@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 
 /** @file
  * Set of functions used to work with TLVs
