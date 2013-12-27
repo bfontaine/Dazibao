@@ -267,4 +267,18 @@ int dz2tlv(char *dz, tlv_t *tlv);
  **/
 int dz_hash(dz_t *dz, hash_t *oldhash);
 
+
+/**
+ * CAREFUL: This function return a pointer
+ * to memory allocated with malloc
+ * and should be freed after use
+ * offset should be pointing
+ * just after the LONGH corresponding
+ * @param dz dazibao used
+ * @param tlv long tlv to extract
+ * @len length of the tlv value
+ * @return pointer to buffer on success, NULL on error
+ */
+char *dz_get_ltlv_value(dz_t *dz, tlv_t *tlv, uint32_t len);
+
 #endif /* _DAZIBAO_H */
