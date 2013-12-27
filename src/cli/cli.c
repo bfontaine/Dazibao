@@ -213,7 +213,8 @@ OUT:
 }
 
 
-static int cli_write_file(char *buf, size_t len, off_t offset, int type) {
+static int cli_write_file(char *buf, size_t len,
+                        long long unsigned int offset, int type) {
 
         int wc;
         int out_fd;
@@ -221,7 +222,7 @@ static int cli_write_file(char *buf, size_t len, off_t offset, int type) {
         char out_s[20];
 
         wc = snprintf(out_s, 20,
-                "%lli.%s",
+                "%llu.%s",
                 offset,
                 tlv_type2str(type));
 
