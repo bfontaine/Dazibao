@@ -9,12 +9,18 @@
     };
     xhr.send(null);
 })(function(strs, main) {
-    /* basic templating system. Writing HTML in templates is easier than
-     * adding it in html.h and compile everything again */
+    /*************
+     * Utilities *
+     *************/
+    
+    /** basic templating system. **
+     
+     Writing HTML in templates is easier than
+     adding it in html.h and compile everything again */
 
     var tpls = {},
         re_first_nl = /\n([\s\S]+)/,
-        re_tpl_var = /%\{(\w+)\}/g, dz;
+        re_tpl_var = /%\{(\w+)\}/g;
 
     strs = strs.split(/\n+--\n+/);
 
@@ -39,7 +45,7 @@
         });
     };
 
-    /* Basic DOM manipulation function */
+    /** Basic DOM manipulation function **/
     $obj = function ( el ) {
         if (''+el === el) {
             // html
@@ -58,14 +64,21 @@
         $(other).el.appendChild(this.el);
         return this;
     }
-
-    dz = window.dz || {
-        noop: function(){}
+    $obj.prototype.rmClass = function( klass ) {
+        var r = new RegExp('(?:^|\\s+)' + klass + '(?:$|\\s+)', 'gi');
+        this.el.className = this.el.className.replace(r, '');
+    };
+    $obj.prototype.addClass = function( klass ) {
+        this.el.className += ' ' + klass;
     };
 
-    main(document.getElementsByTagName('body')[0], dz);
+    window.dz || (window.dz = {
+        noop: function(){}
+    });
+
+    main(document.getElementsByTagName('body')[0]);
 },
-function(body, dz) {
+function(body) {
     /************************
      * Main Dazibao JS Code *
      ************************/
@@ -118,6 +131,7 @@ function(body, dz) {
         }
     };
 
+    document.body.innerHTML += tpl('settings') + tpl('modal');
 
     /** 'Delete' Buttons **/
     var tlvs = document.getElementsByClassName('tlv'),
@@ -228,11 +242,45 @@ function(body, dz) {
         check_hash();
     }();
 
+    /** Modals **/
+    !function() {
+        var $overlay, $modal;
+
+        $overlay = $(document.getElementById('modal-overlay'));
+        $modal = $($overlay.el.getElementsByClassName('modal')[0]);
+
+        dz.close_modal = function() {
+            $overlay.addClass('hidden');
+        };
+
+        $overlay.el.addEventListener('click', function( e ) {
+            if (e.target == $overlay.el || /close/.test(e.target.className)) {
+                dz.close_modal();
+                e.preventDefault();
+                return false;
+            }
+        }, false);
+
+        // opts: {title: "...", text: "..."}
+        dz.modal = function(title, text, opts) {
+            $modal.el.innerHTML = tpl('modal_content', {
+                title: title,
+                content: text
+            });
+
+            setTimeout(function() {
+                if (opts && typeof opts.ready == 'function') {
+                    opts.ready();
+                }
+                $overlay.rmClass('hidden');
+            }, 50);
+        }
+    }();
+
     /** Dazibao settings **/
     !function() {
-        var html = tpl('settings'), actions, buttons = {};
+        var actions, buttons = {};
 
-        document.body.innerHTML += html;
         actions = document.querySelector('#settings .actions');
 
         function addButton( text, id, callback ) {
@@ -275,6 +323,10 @@ function(body, dz) {
         addButton('Add a text', 'addtxttlv', function() {
             var text = prompt("Text?");
 
+            if (!text) {
+                return;
+            }
+
             dz.api.addText(text, function( ok ) {
                 if (ok) {
                     dz.notify('text added, refresh the page to see it.');
@@ -285,43 +337,34 @@ function(body, dz) {
         });
 
         /* -- adding a TLV -- */
-        var $modal = $(tpl('newtlv_modal')),
-            form;
-        $modal.addTo(body);
-
-        document.getElementById('newtlv-cancel')
-                    .addEventListener('click', function() {
-            var inps = $modal.el.getElementsByTagName('input');
-            $modal.el.className += ' hidden';
-            for (var i=0, l=inps.length; i<l; i++) {
-                if (inps[i].hasAttribute('name')) {
-                    inps[i].value = '';
-                }
-            }
-            
-        }, false);
-
-        form = document.getElementById('newtlv-form');
-        form.addEventListener('submit', function( ev ) {
-
-            var data = new FormData(form);
-
-            ev.preventDefault();
-
-            dz.api.addTLV(data, function(xhr) {
-                dz.notify(xhr.status == 204
-                          ? 'file added, refresh to see it'
-                          : 'got an error while adding your file.');
-                dz.prev_hash = 0;
-                $modal.el.className += ' hidden';
-            });
-
-            return false;
-
-        }, false);
-
         addButton('Add a file', 'addtlv', function() {
-            $modal.el.className = $modal.el.className.replace(/\s*hidden/, '');
+            dz.modal('Post a file', tpl('newtlv_form'), {
+                ready: function() {
+                    document.getElementById('newtlv-cancel')
+                                .addEventListener('click', function() {
+                        dz.close_modal();
+                    }, false);
+
+                    form = document.getElementById('newtlv-form');
+                    form.addEventListener('submit', function( ev ) {
+
+                        var data = new FormData(form);
+
+                        ev.preventDefault();
+
+                        dz.api.addTLV(data, function(xhr) {
+                            dz.close_modal();
+                            dz.notify(xhr.status == 204
+                                      ? 'file added, refresh to see it'
+                                      : 'got an error while adding your file.');
+                            dz.prev_hash = 0;
+                        });
+
+                        return false;
+
+                    }, false);
+                }
+            });
         });
 
     }();
