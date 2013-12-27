@@ -508,8 +508,6 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
               off_eof;
         off_t *parents = NULL;
 
-        /* SAVE_OFFSET(*d); */
-
         if (dz_check_tlv_at(d, offset, -1, &parents) <= 0
                         || parents[0] != offset) {
                 free(parents);
@@ -519,7 +517,6 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
         off_eof = d->len;
 
         if (off_eof == -1) {
-                /* RESTORE_OFFSET(*d); */
                 free(parents);
                 return DZ_OFFSET_ERROR;
         }
