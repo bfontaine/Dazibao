@@ -71,6 +71,14 @@ Available Options:
 * `--date`: if present, the TLV will be included in a dated one, using the
   current time.
 
+### `compact`
+
+```
+dazicli compact <dazibao path>
+```
+
+Compact a dazibao.
+
 ##### `dump_tlv`
 
 ```
@@ -106,14 +114,6 @@ dazicli rm <offset> [<offset> ...] <dazibao path>
 
 Remove a list of TLVs from a Dazibao. You need to provide an offset for each
 TLV you want to remove.
-
-### `compact`
-
-```
-dazicli compact <dazibao path>
-```
-
-Compact a dazibao.
 
 ## Web Server
 
