@@ -81,7 +81,7 @@ function(body, dz) {
         del: function(tlv_el) {
             var off = +tlv_el.getAttribute('data-offset');
             if (isNaN(off)) { return; }
-            api.call('post', '/tlv/delete/'+off, null, function(xhr) {
+            dz.api.call('post', '/tlv/delete/'+off, null, function(xhr) {
                 if (xhr.status == 204) {
                     tlv_el.parentElement.removeChild(tlv_el);
                 } else {
@@ -90,22 +90,22 @@ function(body, dz) {
             });
         },
         compact: function(callback) {
-            api.call('post', '/compact', null, function(xhr) {
+            dz.api.call('post', '/compact', null, function(xhr) {
                 callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
             });
         },
         hash: function(callback) {
-            api.call('get', '/hash', null, function(xhr) {
+            dz.api.call('get', '/hash', null, function(xhr) {
                 callback(xhr.status == 200 ? +xhr.responseText : -1, xhr);
             });
         },
         addText: function(text, callback) {
-            api.call('post', '/tlv/add/text', text, function(xhr) {
+            dz.api.call('post', '/tlv/add/text', text, function(xhr) {
                 callback(xhr.status == 204);
             })
         },
         addTLV: function(data, callback) {
-            api.call('post', '/tlv/add/form', data, function(xhr) {
+            dz.api.call('post', '/tlv/add/form', data, function(xhr) {
                 callback(xhr);
             });
         }
@@ -124,7 +124,7 @@ function(body, dz) {
         var el = e.target, tlv, off;
         if (el.className == 'deleteTLV') {
             tlv = el.parentElement.parentElement;
-            api.del(tlv);
+            dz.api.del(tlv);
         }
     }, false);
 
@@ -171,7 +171,7 @@ function(body, dz) {
 
         /* -- compacting -- */
         addButton('Compact', 'cpct', function() {
-            api.compact(function( saved, xhr ) {
+            dz.api.compact(function( saved, xhr ) {
                 if (saved < 0) {
                     alert("An error occured while compacting a Dazibao");
                     console.log(xhr);
@@ -185,7 +185,7 @@ function(body, dz) {
         addButton('Add a text', 'addtxttlv', function() {
             var text = prompt("Text?");
 
-            api.addText(text, function( ok ) {
+            dz.api.addText(text, function( ok ) {
                 alert(ok ? "ok, refresh!" : "oh no, an error :(");
             });
         });
@@ -214,7 +214,7 @@ function(body, dz) {
 
             ev.preventDefault();
 
-            api.addTLV(data, function(xhr) {
+            dz.api.addTLV(data, function(xhr) {
                 alert(xhr.status == 204 ? 'ok' : 'error');
                 dz.prev_hash = 0;
                 $modal.el.className += ' hidden';
@@ -242,7 +242,7 @@ function(body, dz) {
         function check_hash() {
             if (window.hash_check === false) { return; }
 
-            api.hash(function( hash ) {
+            dz.api.hash(function( hash ) {
                 var changed = false;
 
                 if (dz.prev_hash != 0) {
