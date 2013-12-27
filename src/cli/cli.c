@@ -257,7 +257,7 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
         int type;
         char *buff;
         uint32_t write_idx = 0;
-        off_t off;
+        off_t off = 0;
         int status = 0;
 
         len = ltlv_real_data_length(tlv);
