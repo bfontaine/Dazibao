@@ -292,11 +292,10 @@ int dz_hash(dz_t *dz, hash_t *oldhash);
 
 
 /**
- * CAREFUL: This function return a pointer
- * to memory allocated with malloc
- * and should be freed after use
- * offset should be pointing
- * just after the LONGH corresponding
+ * TODO document this function
+ * CAREFUL: This function return a pointer to memory allocated with malloc and
+ * should be freed after use offset should be pointing just after the LONGH
+ * corresponding
  * @param dz dazibao used
  * @param tlv long tlv to extract
  * @param len length of the tlv value
