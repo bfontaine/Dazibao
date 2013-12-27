@@ -1041,7 +1041,7 @@ char *dz_get_ltlv_value(dz_t *dz, tlv_t *tlv, uint32_t len) {
         if (buf == NULL) {
                 goto FAILURE;
         }
-        
+
         while (write_idx < len && (off = dz_next_tlv(dz, tlv)) != EOD) {
                 if (off == -1) {
                         goto FAILURE;
