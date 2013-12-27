@@ -39,6 +39,9 @@
         "\n" \
         "    compact: compact a dazibao\n" \
         "        command: compact <dazibao>\n" \
+        "\n" \
+        "    extract: extract tlv from dazibao\n" \
+        "        command: extract <offset> <path futur file> <dazibao>\n" \
         "\n"
 
 /**
