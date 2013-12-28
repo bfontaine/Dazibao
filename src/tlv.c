@@ -418,15 +418,9 @@ size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len) {
         memcpy(&((*tlv)[TLV_SIZEOF_HEADER + 1]), &be_len, sizeof(uint32_t));
 
         w_idx = TLV_SIZEOF(tlv);
-/*
-        memcpy(*tlv + w_idx, src, len);
-        w_idx += ltlv_split_value(*tlv + w_idx, len);
-*/
 
         for (int i = 0; i < nb_chunks; i++) {
                 int size = MIN(TLV_MAX_VALUE_SIZE, remaining);
-                LOGINFO("Writing chunk %d/%d (size: %d)",
-                        i+1, nb_chunks, size);
                 tlv_t false_tlv = *tlv + w_idx;
                 (*tlv)[w_idx] = TLV_LONGC;
                 tlv_set_length(&false_tlv, size);
@@ -651,8 +645,6 @@ uint32_t ltlv_split_value(char *src, uint32_t len) {
 
         for (int i = 0; i < nb_chunks; i++) {
                 uint32_t size = MIN(TLV_MAX_VALUE_SIZE, remaining);
-                LOGINFO("Writing chunk %d/%d (size: %d)",
-                        i+1, nb_chunks, size);
                 /* shift memory */
                 memmove(src + w_idx + TLV_SIZEOF_HEADER,
                         src + w_idx,
