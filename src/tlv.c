@@ -522,19 +522,21 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
         if (len > TLV_MAX_SIZE && nb_inputs > 1) {
                 nb_lhead++;
-                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
-                content_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                len -= TLV_SIZEOF_HEADER;
                 len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
+                len += TLV_SIZEOF_LONGH;
+                content_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
         }
 
         /* Same behavior with a date,
          * but cmpnd_idx move as well */
         if (len > TLV_MAX_SIZE && date) {
                 nb_lhead++;
-                len += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
+                len -= TLV_SIZEOF_HEADER;
+                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
+                len += TLV_SIZEOF_LONGH;
                 content_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
                 cmpnd_idx += TLV_SIZEOF_LONGH - TLV_SIZEOF_HEADER;
-                len += ltlv_nb_chunks(len) * TLV_SIZEOF_HEADER;
         }
 
         *tlv = safe_realloc(*tlv, sizeof(**tlv) * len);
