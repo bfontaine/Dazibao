@@ -397,7 +397,7 @@ int main(int argc, char **argv) {
         memset(&conf, 0, sizeof(conf));
 
         if (argc < 2) {
-                LOGFATAL("Usage:\n\t%s [OPTION] [FILE]", argv[0]);
+                LOGFATAL("Usage:\n\t%s [OPTION] FILE", argv[0]);
                 exit(EXIT_FAILURE);
         }
 
