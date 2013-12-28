@@ -203,7 +203,7 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
                 return TLV_TEXT;
         }
 
-        /* TODO: Check for type text. */
+        /* TODO: return (unsigned char)-1 ? */
         return TLV_TEXT;
 }
 

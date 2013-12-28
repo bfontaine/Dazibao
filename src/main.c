@@ -396,28 +396,23 @@ int cmd_dump(int argc , char **argv, char *daz) {
                 if (args > 0) {
                         flag_depth = i;
                         args--;
-                } else if ((!strcmp(argv[i], "--depth") ||
-                                        !strcmp(argv[i], "-d"))
+                } else if ((strcmp(argv[i], "--depth") == 0 ||
+                                        strcmp(argv[i], "-d") == 0)
                                 && flag_depth < 1) {
                         flag_depth = 1;
                         args = 1;
-                } else if ((!strcmp(argv[i], "--debug") ||
-                        !strcmp(argv[i], "-D")) && !flag_debug) {
+                } else if ((strcmp(argv[i], "--debug") == 0 ||
+                                        strcmp(argv[i], "-D") == 0)
+                                && !flag_debug) {
                         flag_debug = 1;
-                /* FIXME this is UGLY code and won't work if we add
-                 * more options */
+                /* this should be rewritten if we add more options */
                 } else if ((!strcmp(argv[i],"-dD") || !strcmp(argv[i],"-Dd"))
                                 && (flag_depth < 1) && !flag_debug) {
                         flag_debug = 1;
                         flag_depth = 1;
                         args = 1;
                 } else {
-                        /* TODO args[i] is not option and args
-                                or already use
-                                ERROR
-                        */
-                        fprintf(stderr, "[main|cmd_dump] arg failed:%s\n",
-                                        argv[i]);
+                        fprintf(stderr, "unrecognized option '%s'\n", argv[i]);
                         return -1;
                 }
 
