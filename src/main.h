@@ -8,40 +8,40 @@
 /** format of the help text */
 #define CLI_USAGE_FMT \
         "Usage:\n" \
-        "    %s <cmd> <option and args> <dz_pathibao>\n\n" \
+        "    %s <cmd> <option and args> <dazibao>\n\n" \
         "cmd:\n" \
-        "    create: create an empty dz_pathibao\n" \
-        "        command: create [--merge <dz_pathibao args to merge>] <dz_pathibao>" \
+        "    create: create an empty dazibao\n" \
+        "        command: create [--merge <dazibao args to merge>] <dazibao>" \
                                                                          "\n" \
         "        options:\n" \
         "            -m, --merge: (todo)\n" \
         "\n" \
         "    add: add a TLV\n" \
-        "        command: add [--type] <type args> [--dz_pathibao] <dz_pathibo>\n" \
-        "                       [--date] [--compound] <tlv args> <dz_pathibao>\n"\
+        "        command: add [--type] <type args> [--dazibao] <dz_pathibo>\n" \
+        "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
         "            --type: allow to give a type with parameters, by\n" \
-        "                    order for all args excepted to dz_pathibao option\n" \
+        "                    order for all args excepted to dazibao option\n" \
         "            --date: create a tlv dated with all args after option\n" \
         "            --compound: create a tlv compound with alla args\n" \
         "                        after option\n" \
-        "            --dz_pathibao: insert a dz_pathibao when size is respected\n" \
+        "            --dazibao: insert a dazibao when size is respected\n" \
         "                       with tlv compound\n" \
         "\n" \
         "    rm: remove a TLV\n" \
-        "        command: rm <offset> <dz_pathibao>\n" \
+        "        command: rm <offset> <dazibao>\n" \
         "\n" \
         "    dump: dump a Dazibao\n" \
-        "        command: dump [--debug ] [--depth] <depth> <dz_pathibao>\n" \
+        "        command: dump [--debug ] [--depth] <depth> <dazibao>\n" \
         "        options:\n" \
         "            -D, --depth: allow to show inside tlv\n" \
         "            -d, --debug: show tlv PAD1 and PADN\n" \
         "\n" \
-        "    compact: compact a dz_pathibao\n" \
-        "        command: compact <dz_pathibao>\n" \
+        "    compact: compact a dazibao\n" \
+        "        command: compact <dazibao>\n" \
         "\n" \
-        "    extract: extract tlv from dz_pathibao\n" \
-        "        command: extract <offset> <path futur file> <dz_pathibao>\n" \
+        "    extract: extract tlv from dazibao\n" \
+        "        command: extract <offset> <path futur file> <dazibao>\n" \
         "\n"
 
 /**
@@ -52,7 +52,7 @@
  * in the resulting argv.
  * @param compound_idx result parameter. Will be filled with the index of the
  * '--compound' argument in the resulting argv.
- * @param dz_idx result parameter. Will be filled with the dz_pathibao index name
+ * @param dz_idx result parameter. Will be filled with the dazibao index name
  * in the resulting argv.
  * @param type_idx result parameter. Will be filled with the type index in the
  * resulting argv.
@@ -68,7 +68,7 @@ int check_option_add(int argc, char **argv, int *date_idx, int *compound_idx,
  * @param argc : lenght to argv
  * @param type_args : to write a good version of type after to check
  * @param op_type : type write to command line
- * @param f_dz : flag to option dz_pathibao
+ * @param f_dz : flag to option dazibao
  * @return 0 is good or -1 to error
  **/
 int check_type_args(int argc, char *type_args, char *op_type, int f_dz);
@@ -81,7 +81,7 @@ int check_type_args(int argc, char *type_args, char *op_type, int f_dz);
  * @param argv : parameters to command line
  * @param f_d  : flag to option date
  * @param f_co : flag to option compound
- * @param f_dz : flag to option dz_pathibao
+ * @param f_dz : flag to option dazibao
  * @return 0 is good or -1 to error
  **/
 int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d);
@@ -90,22 +90,22 @@ int check_args(int argc, char **argv, int *f_dz, int *f_co, int *f_d);
  * manage to all check verification to parameters command line
  * @param argc : lenght to argv
  * @param argv : parameters to line command
- * @param dz_path : path from dz_pathibao to execute action add
+ * @param dz_path : path from dazibao to execute action add
  * @return 0 is good or -1 to error
  **/
 int cmd_add(int argc, char **argv, char *dz_path);
 
 /**
  * create all tlv to ask to command line
- * and add to dz_pathibao dz_path
+ * and add to dazibao dz_path
  * @param argc : lenght to argv
  * @param argv : parameters to command line
  * @param f_co  : flag to option date
  * @param f_dz : flag to option compound
- * @param f_d : flag to option dz_pathibao
+ * @param f_d : flag to option dazibao
  * @param f_in : flag to option - -> input
  * @param type : tab to type to args
- * @param dz_path : path to dz_pathibao to execute add
+ * @param dz_path : path to dazibao to execute add
  * @return 0 is good or -1 to error
  **/
 int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
@@ -157,7 +157,7 @@ void print_usage(char *exec);
  * make and realize command compact
  * @param dz_path
  * @param tlv
- * @param off ,is offset to tlv from dazibao
+ * @param off, is offset to tlv from dazibao
  **/
 int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off);
 
