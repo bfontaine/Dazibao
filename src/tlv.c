@@ -143,7 +143,7 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
 
                 /* first byte is C2..DF */
                 if (between(0xC2, c, 0xDF)) {
-                        if (i+1 >= len || !between(0x80, src[i+1], 0xBF)) {
+                        if (i+1 < len && !between(0x80, src[i+1], 0xBF)) {
                                 is_utf8 = 0;
                                 break;
                         }
@@ -152,14 +152,18 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
 
                 /* first byte is E0, E1..EC, ED or EE..EF */
                 if (between(0xE0, c, 0xEF)) {
-                        if (i+2 >= len || !between(0x80, src[i+2], 0xBF)) {
+                        if (i+2 < len && !between(0x80, src[i+2], 0xBF)) {
                                 is_utf8 = 0;
                                 break;
                         }
 
+                        if (i+1 >= len) {
+                                i += 2;
+                                continue;
+                        }
+
                         /* EO A0..BF 80..BF */
-                        if (c == 0xE0 && !between(0xA0,
-                                                src[i+1], 0xBF)) {
+                        if (c == 0xE0 && !between(0xA0, src[i+1], 0xBF)) {
                                 is_utf8 = 0;
                                 break;
                         }
@@ -182,11 +186,15 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
 
                 /* first byte is F0, F1..F3 or F4 */
                 if (between(0xF0, c, 0xF4)) {
-                        if (i+3 >= len
-                                || !between(0x80, src[i+2], 0xBF)
-                                || !between(0x80, src[i+3], 0xBF)) {
+                        if (   (i+2 < len && !between(0x80, src[i+2], 0xBF))
+                            || (i+3 < len && !between(0x80, src[i+3], 0xBF))) {
                                 is_utf8 = 0;
                                 break;
+                        }
+
+                        if (i+1 >= len) {
+                                i+= 3;
+                                continue;
                         }
 
                         /* first byte is F0 */
