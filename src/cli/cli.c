@@ -481,12 +481,12 @@ int cli_extract(int argc, char **argv) {
                 char *endptr = NULL;
                 long long int off = strtoll(offset[i], &endptr, 10);
                 if (endptr != NULL && *endptr != '\0') {
-                        fprintf(stderr, "Invalid argument: %s\n", offset[i]);
+                        LOGERROR("Invalid argument: %s\n", offset[i]);
                         status = -1;
                         goto CLOSE;
                 }
                 if (off == LLONG_MIN || off == LLONG_MAX) {
-                        fprintf(stderr, "Overflow: %s\n", offset[i]);
+                        LOGERROR("Overflow: %s\n", offset[i]);
                         status = -1;
                         goto CLOSE;
                 }
