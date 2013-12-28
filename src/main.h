@@ -155,9 +155,9 @@ void print_usage(char *exec);
 /**
  * choose tlv to extract , if dated return tlv inside
  * make and realize command compact
- * @param dz_path
+ * @param dz
  * @param tlv
- * @param off, is offset to tlv from dazibao
+ * @param off is offset to tlv from dazibao
  **/
 int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off);
 
