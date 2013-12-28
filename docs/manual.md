@@ -106,7 +106,7 @@ Available Options:
 * `--depth <n>`: set `<n>` as the maximum depth of the output. Default is 0.
 * `--debug`: print `PAD1`s and `PADN`s
 
-### `rm`
+#### `rm`
 
 ```
 dazicli rm <offset> [<offset> ...] <dazibao path>
@@ -114,6 +114,14 @@ dazicli rm <offset> [<offset> ...] <dazibao path>
 
 Remove a list of TLVs from a Dazibao. You need to provide an offset for each
 TLV you want to remove.
+
+#### `extract`
+
+```
+dazicli extract [<offset> ...] <dazibao path>
+```
+Extract one or more TLV in file (one file per tlv).
+If no offset is provided, dazicli will extract all TLVs in the dazibao.
 
 ## Web Server
 
