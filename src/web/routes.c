@@ -267,6 +267,7 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
 
         struct http_param **params;
         int params_count, st;
+        unsigned char type;
         tlv_t t;
 
         params = parse_form_data(&req);
@@ -309,8 +310,8 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
         }
 
         LOGTRACE("tlv_init: %d", tlv_init(&t));
-        tlv_set_type(&t, tlv_guess_type(params[0]->value,
-                                params[0]->value_len));
+        type = tlv_guess_type(params[0]->value, params[0]->value_len);
+        tlv_set_type(&t, type != (unsigned char)-1 ? type : TLV_TEXT);
 
         LOGTRACE("type: %d", tlv_get_type(&t));
 

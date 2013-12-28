@@ -107,6 +107,10 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                         inputs[i].type = tlv_guess_type(
                                 inputs[i].data,
                                 inputs[i].len);
+
+                        if (inputs[i].type == (unsigned char)-1) {
+                                inputs[i].type = TLV_TEXT;
+                        }
                 }
 
         }

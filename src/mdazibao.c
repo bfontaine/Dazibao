@@ -245,6 +245,7 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
         tlv_t t;
         char ok = 1;
         unsigned int length;
+        unsigned char type;
 
         tlv_init(&t);
         if (dz_tlv_at(dz, &t, offset) != 0) {
@@ -266,8 +267,14 @@ char dz_check_tlv_type(dz_t *dz, off_t offset) {
                 }
                 break;
         default:
-                ok = guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
-                                length) == tlv_get_type(&t);
+                type = tlv_guess_type(dz->data + offset + TLV_SIZEOF_HEADER,
+                                    length);
+
+                if (type == (unsigned char)-1) {
+                        type = TLV_TEXT;
+                }
+
+                ok = (type == tlv_get_type(&t));
         }
 
         tlv_destroy(&t);

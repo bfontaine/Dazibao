@@ -71,11 +71,6 @@ struct type_signature sigs[] =  {
  */
 static void mk_longh(tlv_t *tlv, int type, uint32_t len);
 
-/* deprecated */
-unsigned char guess_type(char *src, unsigned int len) {
-        return tlv_guess_type(src, len);
-}
-
 /**
  * Helper for tlv_guess_type. Test for a <= b <= c, using unsigned chars.
  * @param a
@@ -215,8 +210,7 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
                 return TLV_TEXT;
         }
 
-        /* TODO: return (unsigned char)-1 ? */
-        return TLV_TEXT;
+        return (unsigned char)-1;
 }
 
 void htod(unsigned int n, char *len) {
