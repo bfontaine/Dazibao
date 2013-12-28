@@ -14,64 +14,99 @@
 /* TODO document functions below */
 
 /**
- * @param tlv
- * @param argc
- * @param argv
- * @param type
- * @param date
+ * Make a tlv and store it in tlv param
+ * @param tlv TLV to set
+ * @param argc number of input(s)
+ * @param argv inputs(s)
+ * @param type types used to force type (or NULL)
+ * @param date flag determinating if we want a dated TLV or not
+ * @return 0 on success, -1 on error
  **/
 int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date);
 
 /**
- * @param argc
- * @param argv
+ * Parse arguments and make a tlv from inputs
+ * @param argc number of argument(s)
+ *        (probably should be (argc - 2) from main)
+ * @param argv argument(s)
+ *        (probably should be &argv[1] from main)
+ * @return 0 on success, -1 on error
+ * @see cli_mk_tlv
  **/
 int cli_add(int argc, char **argv);
 
 /**
- * @param dz
- * @param offset
- * @param name_mod
+ * Extract a TLV from a dazibao and write it into a file.
+ * The file name is offset + file extension.
+ * @param dz dazibao where the TLV comes from.
+ * @param offset offset of the TLV
+ * @param name_mod will be added to offset when creating file.
+ *        Usefull to avoid name collision.
+ * @return 0 on success, -1 on error
  **/
 int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod);
 
 /**
- * @param dz
- * @param tlv
- * @param offset
- * @param name_mod
+ * Extract a long TLV
+ * @param dz dazibao where the TLV comes from.
+ * @param offset offset of the TLV
+ * @param name_mod will be added to offset when creating file.
+ *        Usefull to avoid name collision.
+ * @return 0 on success, -1 on error
  **/
 int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod);
 
 /**
- * @param dz
- * @param name_mod
+ * Extract every TLV in a dazibao.
+ * dz_next_tlv(dz, ...) *MUST* return the first TLV
+ * @param dz dazibao containing TLVs
+ * @param name_mod will be added to offset when creating file.
+ *        Usefull to avoid name collision.
+ * @return 0 on success, -1 on error
  **/
 int cli_extract_all(dz_t *dz, int name_mod);
 
 /**
- * @param argc
- * @param argv
+ * Parse offsets, open dazibao, and launch extraction
+ * @param argc number of argument(s)
+ * @param argv arguments ([offset] DAZIBAO)
+ * @return 0 on success, -1 on error
  **/
 int cli_extract(int argc, char **argv);
 
 /**
- * @param dz
- * @param indent
- * @param lvl
- * @param debug
+ * Print a dazibao (or a TLV list) on stdout
+ * Helper for cli_dump_dz
+ * @param dz dazibao to print
+ * @param indent current indentation level
+ * @param lvl remaining indention level allowed
+ * @param debug flag to print or do not print pads
+ * @return 0 on success, -1 on error
+ * @see cli_dump_dz
  **/
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug);
 
 /**
- * @param argc
- * @param argv
- * @param out
+ * Parse arguments and launching dazibao printing
+ * @param argc number of argument(s)
+ * @param argv value(s) of argument(s)
+ * @see cli_print_dz
+ * @return 0 on success, -1 on error
  **/
-int cli_dump_dz(int argc, char **argv, int out);
+int cli_dump_dz(int argc, char **argv);
 
 /**
- * @param file
+ * Compact a dazibao
+ * @param file path of the dazibao to compact
  **/
 int cli_compact_dz(char *file);
+
+/**
+ * Parse arg and launch TLV deletion
+ * @param argc number of argument(s)
+ * @param argv value(s) of argument(s)
+ *        (OFFSET [OFFSET] DAZIBAO)
+ * @return 0 on success, -1 on error
+ */
+int cli_rm_tlv(int argc, char **argv);
 #endif

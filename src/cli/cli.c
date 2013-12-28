@@ -62,6 +62,7 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                 fd[i] = open(argv[i], O_RDONLY);
 
                 if (fd[i] == -1) {
+                        /* It no file exists, argv[i] is a text */
                         if (access(argv[i], F_OK) == 0) {
                                 LOGERROR("Failed opening %s", argv[i]);
                                 status = -1;
@@ -311,10 +312,6 @@ FREEBUFF:
         return status;
 }
 
-/**
- * Extract every TLV in dazibao
- * Offset *MUST* be poiting to header of first TLV
- */
 int cli_extract_all(dz_t *dz, int name_mod) {
 
         /**
@@ -365,10 +362,6 @@ DESTROY:
         return status;
 }
 
-/**
- * FIXME: Avoid name collision
- * @param name_mod modify offset used for name of file
- */
 int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
 
         tlv_t tlv;
@@ -686,7 +679,7 @@ DESTROY:
         return status;
 }
 
-int cli_dump_dz(int argc, char **argv, int out) {
+int cli_dump_dz(int argc, char **argv) {
 
         dz_t dz;
         int status = 0;
@@ -840,7 +833,7 @@ int main(int argc, char **argv) {
                         return EXIT_FAILURE;
                 }
         } else if (strcmp(cmd, "dump") == 0) {
-                if (cli_dump_dz(argc - 2, &argv[2], STDOUT_FILENO) == -1) {
+                if (cli_dump_dz(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Dazibao dumping failed.");
                         return EXIT_FAILURE;
                 }
