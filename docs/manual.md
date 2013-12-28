@@ -51,7 +51,7 @@ Available options:
 dazicli [COMMAND] [OPTIONS] [FILE] <dazibao path>
 ```
 
-Command can be one of theses:
+Command can be one of these:
 
 ##### `add`
 
@@ -89,7 +89,7 @@ Dump a whole dazibao on the standard output.
 
 Available Options:
 
-* `--depth <n>`: set `<n>` as the maximum depth of the output. Default is 0.
+* `--depth <n>`: set `<n>` as the maximum depth of the output. Default is -1 (no limit).
 * `--debug`: print `PAD1`s and `PADN`s
 
 #### `extract`
