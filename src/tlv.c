@@ -517,8 +517,7 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
          * we will need to include it in a large tlv
          * But we wont need space for compound header
          * as it will be included in LONGH value
-         * content_idx will move TLV_SIZEOF_LONGH
-         * since it will still remain a header before (TLV_LONGC) */
+         * content_idx will move TLV_SIZEOF_LONGH */
 
         if (len > TLV_MAX_SIZE && nb_inputs > 1) {
                 nb_lhead++;
@@ -596,18 +595,16 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                 int content_len = write_idx - (cmpnd_idx - TLV_SIZEOF_DATE);
                 if (content_len > TLV_MAX_VALUE_SIZE) {
                         mk_longh(tlv, TLV_DATED, content_len);
-                        memcpy(tlv_get_value_ptr(tlv)
-                                + 1 + sizeof(uint32_t),
-                                &date,
-                                sizeof(date));
+                        memcpy(*tlv + TLV_SIZEOF_LONGH, &date,
+                                TLV_SIZEOF_DATE);
                         uint32_t new_size = ltlv_split_value(
                                 *tlv + TLV_SIZEOF_LONGH,
                                 content_len);
                         write_idx = TLV_SIZEOF_LONGH + new_size;
                 } else {
-                        tlv_set_date(tlv, date);
                         tlv_set_type(tlv, TLV_DATED);
                         tlv_set_length(tlv, content_len);
+                        tlv_set_date(tlv, date);
                 }
         }
 
@@ -623,12 +620,9 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 static void mk_longh(tlv_t *tlv, int type, uint32_t len) {
         uint32_t be_len = htonl(len);
         tlv_set_type(tlv, TLV_LONGH);
-        tlv_set_length(tlv,
-                TLV_SIZEOF_TYPE + sizeof(uint32_t));
+        tlv_set_length(tlv, TLV_SIZEOF_TYPE + sizeof(uint32_t));
         *(tlv_get_value_ptr(tlv)) = type;
-        memcpy(tlv_get_value_ptr(tlv) + 1,
-                &be_len,
-                sizeof(be_len));
+        memcpy(tlv_get_value_ptr(tlv) + 1, &be_len, sizeof(be_len));
 }
 
 /**
