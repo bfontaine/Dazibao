@@ -89,7 +89,8 @@ Dump a whole dazibao on the standard output.
 
 Available Options:
 
-* `--depth <n>`: set `<n>` as the maximum depth of the output. Default is -1 (no limit).
+* `--depth <n>`: set `<n>` as the maximum depth of the output. Default is -1
+  (no limit).
 * `--debug`: print `PAD1`s and `PADN`s
 
 #### `extract`
@@ -123,6 +124,6 @@ Available options:
 
 * `-d <path>`: set the path to the dazibao (mandatory)
 * `-p <port>`: set the port used by the server (default: 3437)
-* `-v`: increase the verbosity level
+* `-v`: increase the verbosity level (by default, debugging logs are not shown)
 * `-h`: print an usage message and quit
 * `-D`: debug mode. Add PAD1s and PADNs to the output
