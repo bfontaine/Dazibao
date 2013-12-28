@@ -14,6 +14,9 @@
  * Size of a Dazibao header
  **/
 #define DAZIBAO_HEADER_SIZE 4
+
+/* FIXME why do we have two constants for the same thing here? */
+/** @see DAZIBAO_HEADER_SIZE */
 #define DZ_HEADER_SIZE 4
 
 /**
@@ -47,10 +50,21 @@ typedef struct {
 /** type of a Dazibao hash */
 typedef int hash_t;
 
+/**
+ * @param d
+ * @param off
+ **/
 int dz_set_offset(dz_t *d, off_t off);
 
+/**
+ * @param d
+ **/
 off_t dz_get_offset(dz_t *d);
 
+/**
+ * @param d
+ * @param off
+ **/
 int dz_incr_offset(dz_t *d, off_t off);
 
 /**
@@ -139,7 +153,7 @@ time_t dz_read_date_at(dz_t *d, off_t offset);
  * Check that a TLV has a good type by reading its first bytes. This is
  * especially useful with media types to verify that we're using the
  * appropriate file type. Note: some TLVs are not checked.
- * @param d pointer to the dazibao
+ * @param dz pointer to the dazibao
  * @param offset offset of the TLV
  * @return 1 if the type is ok, 0 if not
  **/
@@ -147,7 +161,7 @@ char dz_check_tlv_type(dz_t *dz, off_t offset);
 
 /**
  * Extract info from a TLV image and store it a struct.
- * @param d a pointer to the dazibao
+ * @param dz a pointer to the dazibao
  * @param offset the TLV's offset
  * @param info the struct for the TLV image infos
  * @return 0 on success
@@ -238,26 +252,35 @@ int dz_do_empty(dz_t *d, off_t start, off_t length);
  **/
 int dz_compact(dz_t *d);
 
+/**
+ * @param d
+ * @param depth
+ * @param flag_debug
+ **/
 int dz_dump_all(dz_t *d, int depth, int flag_debug);
 
 /**
  * dump information of tlv contained in a dazibao on standard output
  * with possible option depth and debug
  * @param daz_buf
+ * @param end
+ * @param depth
+ * @param indent
+ * @param flag_debug
  */
 int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent, int flag_debug);
 
 /**
  * Create TLV with using dz for tlv type compound
- * Return size of value tlv compound
- * @param path
+ * @param dz
  * @param tlv
- * @return sizeof new tlv create
+ * @return size of new tlv
  **/
 int dz2tlv(char *dz, tlv_t *tlv);
 
 /**
- * Test if a Dazibao changed using an hash.
+ * Test if a Dazibao changed using an hash. This function is really simple, the
+ * notifications server should be used to more accurate results.
  * @param dz a pointer on the dazibao
  * @param oldhash a pointer to a int containing the previous hash. If it's set
  * to 0, we'll assume that there was no previous hash. The function will
@@ -266,5 +289,18 @@ int dz2tlv(char *dz, tlv_t *tlv);
  * same or if *oldhash was 0. A negative number is returned on error.
  **/
 int dz_hash(dz_t *dz, hash_t *oldhash);
+
+
+/**
+ * TODO document this function
+ * CAREFUL: This function return a pointer to memory allocated with malloc and
+ * should be freed after use offset should be pointing just after the LONGH
+ * corresponding
+ * @param dz dazibao used
+ * @param tlv long tlv to extract
+ * @param len length of the tlv value
+ * @return pointer to buffer on success, NULL on error
+ */
+char *dz_get_ltlv_value(dz_t *dz, tlv_t *tlv, uint32_t len);
 
 #endif /* _DAZIBAO_H */

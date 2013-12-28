@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 
 /** @file
  * Set of functions used to work with TLVs
@@ -29,27 +30,37 @@
 /** code for a dated TLV */
 #define TLV_DATED    6
 
+/** code for a .tiff image TLV */
 #define TLV_TIFF   128
 
+/** code for an MP3 TLV */
 #define TLV_MP3    129
 
+/** code for an MP4 TLV */
 #define TLV_MP4    130
 
+/** code for a BMP image TLV */
 #define TLV_BMP    131
 
+/** code for a OGG sound TLV */
 #define TLV_OGG    132
 
+/** code for a MIDI sound TLV */
 #define TLV_MIDI   133
 
+/** code for a PDF TLV */
 #define TLV_PDF    134
 
+/** code for the header of a long TLV */
 #define TLV_LONGH  254
 
+/** code for the body parts of a long TLV */
 #define TLV_LONGC  253
 
 /** code for a GIF TLV (see #100) */
 #define TLV_GIF    140
 
+/** minimal length of a TLV padN value */
 #define TLV_MIN_PADN_LENGTH 2
 
 /** test that a TLV type is valid */
@@ -98,9 +109,9 @@ typedef char* tlv_t;
  * A TLV type
  **/
 struct tlv_type {
-        /* the type's code */
+        /** the type's code */
         int code;
-        /* the type's name */
+        /** the type's name */
         char *name;
 };
 
@@ -108,18 +119,19 @@ struct tlv_type {
  * A TLV type and its file signature
  **/
 struct type_signature {
-        /* TLV type */
+        /** TLV type */
         char type;
-        /* File signature */
+        /** File signature */
         char *signature;
 };
 
+/** ? */
 struct tlv_input {
-        /* value of the tlv */
+        /** value of the tlv */
         char *data;
-        /* length of data */
+        /** length of data */
         size_t len;
-        /* if type != -1, force tlv type */
+        /** if type != -1, force tlv type */
         int type;
 };
 
@@ -230,9 +242,18 @@ int tlv_mwrite(tlv_t *tlv, void *data);
  **/
 int tlv_mread(tlv_t *tlv, char *data);
 
-
+/**
+ * Dump a TLV in a string, assuming it's large enough for it
+ * @param tlv
+ * @param dst
+ **/
 void tlv_mdump(tlv_t *tlv, char *dst);
 
+/**
+ * Dump a TLV value in a string, assuming it's large enough for it
+ * @param tlv
+ * @param dst
+ **/
 void tlv_mdump_value(tlv_t *tlv, char *dst);
 
 
@@ -315,19 +336,19 @@ const char *get_tlv_type(const char *path);
 
 /**
  * Create TLV compound with using tlv board value
- * @param tlv_compound is tlv_c
+ * @param tlv_c TLV compound
  * @param value
- * @param buff_size
- * @return sizeof new tlv create
+ * @param buff_size value size
+ * @return size of new tlv create
  **/
 int tlv_create_compound(tlv_t *tlv_c, tlv_t *value, int buff_size);
 
 /**
  * Create TLV dated with using tlv board value
- * @param tlv_dated is tlv_d
- * @param value_tlv is TLV to field to tlv dated
- * @param buff_size
- * @return sizeof new tlv create
+ * @param tlv_d dated TLV
+ * @param value_tlv
+ * @param value_size
+ * @return size of the new TLV
  **/
 int tlv_create_date(tlv_t *tlv_d, tlv_t *value_tlv, int value_size);
 
@@ -350,23 +371,61 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
 
+/* TODO document functions below */
+
+/**
+ * @param tlv
+ * @param src
+ * @param type
+ * @param len
+ **/
 size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len);
 
+/**
+ * @param tlv
+ * @param dst
+ **/
 size_t ltlv_mwrite(tlv_t *tlv, char *dst);
 
+/**
+ * @param tlv
+ * @param fd
+ **/
 size_t ltlv_fwrite(tlv_t *tlv, int fd);
 
+/**
+ * @param tlv
+ **/
 uint32_t ltlv_real_data_length(tlv_t *tlv);
 
+/**
+ * @param tlv
+ **/
 int ltlv_real_data_type(tlv_t *tlv);
 
+/**
+ * @param size
+ **/
 int ltlv_nb_chunks(size_t size);
 
+/**
+ * @param tlv
+ **/
 size_t ltlv_get_total_length(tlv_t *tlv);
 
+/**
+ * @param tlv
+ * @param inputs
+ * @param nb_inputs
+ * @param date
+ **/
 int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                 time_t date);
 
+/**
+ * @param src
+ * @param len
+ **/
 uint32_t ltlv_split_value(char *src, uint32_t len);
 
 #endif

@@ -104,7 +104,7 @@ int route_get_media_tlv(dz_t *dz, struct http_request req,
 }
 
 /**
- * Route used to get the hash of the current Dazibao: /hash/<previous hash>.
+ * Route used to get the hash of the current Dazibao: /hash/\<previous hash>.
  **/
 int route_get_hash(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
@@ -216,6 +216,7 @@ int route_post_compact_dz(dz_t *dz, struct http_request req,
         return 0;
 }
 
+/**  route for new text TLVs */
 int route_post_new_tlv_text(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
         /* TODO remove this route and use the generic /tlv/add/form instead */

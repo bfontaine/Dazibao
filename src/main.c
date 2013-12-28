@@ -611,6 +611,7 @@ void print_usage(char *name) {
         printf(CLI_USAGE_FMT, name);
 }
 
+/** CLI's main function */
 int main(int argc, char **argv) {
         char *cmd, *daz, **argv_cmd;
         int argc_cmd, st = 0;

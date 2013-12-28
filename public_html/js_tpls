@@ -9,12 +9,20 @@ settings
     </ul>
 </div>
 --
-newtlv_modal
-<div class="modal hidden" id="newtlv-modal">
-    <h3>Post a file</h3>
-    <form action="#" id="newtlv-form" name="newtlv-form" enctype="multipart/form-data">
-        <input type="file" name="tlv" /><br />
-        <input type="button" value="Cancel" id="newtlv-cancel" />
-        <input type="submit" value="Post" id="newtlv-post" />
-    </form>
+modal
+<div id="modal-overlay" class="hidden overlay">
+    <div class="modal">
+    </div>
 </div>
+--
+modal_content
+    <span class="close button">×</span>
+    <h1>%{title}</h1>
+    <p>%{content}</p>
+--
+newtlv_form
+<form action="#" id="newtlv-form" name="newtlv-form" enctype="multipart/form-data">
+    <input type="file" name="tlv" /><br />
+    <input type="button" value="Cancel" id="newtlv-cancel" />
+    <input type="submit" value="Post" id="newtlv-post" />
+</form>

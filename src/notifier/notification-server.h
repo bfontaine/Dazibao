@@ -16,14 +16,26 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+/** maximum number of clients */
 #define MAX_CLIENTS 10
+
+/** 'reliable' option default */
 #define RELIABLE_DEFAULT 1
+
+/** min delay between two checks */
 #define WATCH_SLEEP_MIN 2
+
+/** default delay between two checks */
 #define WATCH_SLEEP_DEFAULT 10
+
+/** max delay between two checks */
 #define WATCH_SLEEP_MAX 60
 
+/** full server error message */
 #define NS_ERR_FULL "EServer is full\n"
-#define NS_ERR_EXIT "EServer us shutting down\n"
+
+/** exit error message */
+#define NS_ERR_EXIT "EServer is shutting down\n"
 
 /** general config of notification server */
 struct ns_config {
@@ -92,8 +104,8 @@ void *notify(void *arg);
  * @param file path of file
  * @param old_time previous recorded ctime of file (or 0 for initialization)
  * @return 0 if file did not change or on initialization
- * @return 1 if file changed
- * @return -1 on error
+ *         1 if file changed
+ *        -1 on error
  */
 int unreliable_watch(char *file, time_t *old_time);
 
@@ -103,15 +115,15 @@ int unreliable_watch(char *file, time_t *old_time);
  * @param file path of file
  * @param old_hash previous recorded hashcode of file (or 0 for initialization)
  * @return 0 if file did not change or on initialization
- * @return 1 if file changed
- * @return -1 on error
+ *         1 if file changed
+ *        -1 on error
  */
 int reliable_watch(char *file, uint32_t *old_hash);
 
 /**
  * Loop periodicly watching for file change
  * @param path file to watch
- * @return (void *)NULL on error (never return if success)
+ * @return NULL on error (never return if success)
  */
 void *watch_file(void *path);
 

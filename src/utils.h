@@ -78,14 +78,14 @@
 
 /**
  * Return the current offset in a file
- * @param fd file descriptor
+ * @param d dazibao
  * @see SET_OFFSET
  **/
 #define GET_OFFSET(d) ((d).offset)
 
 /**
  * Change the current offset in a file
- * @param fd file descriptor
+ * @param d dazibao
  * @param o new offset
  * @see GET_OFFSET
  **/

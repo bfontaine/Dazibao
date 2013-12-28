@@ -21,7 +21,9 @@
 /** maximum size of a date string */
 #define HTML_MAX_DATE_SIZE 64
 
+/** date format for HTML attributes */
 #define HTML_RFC_DATE "%FT%T"
+/** date format for HTML text */
 #define HTML_TXT_DATE "%F, %T"
 
 /** Format used for the HTML top of a dazibao */
