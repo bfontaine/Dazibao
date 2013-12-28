@@ -555,7 +555,9 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
                 goto OUT;
         }
 
-        dz_t dz_tmp = {-1, 0, len, 0, 0, buf};
+        dz_t dz_tmp = {-1, 0, len,
+                       (type == TLV_DATED ? TLV_SIZEOF_DATE : 0),
+                       0, buf};
 
         if (cli_print_dz(&dz_tmp, indent + 1, lvl - 1, debug) != 0) {
                 LOGERROR("cli_print_dz failed");
