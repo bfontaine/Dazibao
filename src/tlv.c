@@ -86,7 +86,7 @@ static inline char between(char a, char b, char c) {
 
 unsigned char tlv_guess_type(char *src, unsigned int len) {
 
-        unsigned int i, j;
+        unsigned int i;
         char is_utf8;
         const char ctrl_chars[] = "\t\n\v\r"; /* acceptable ctrl chars */
 
