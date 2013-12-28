@@ -1,50 +1,69 @@
-# ![Dazibao Logo](https://raw.github.com/bfontaine/Dazibao/master/docs/img/dazibao_logo.png?token=1826552__eyJzY29wZSI6IlJhd0Jsb2I6YmZvbnRhaW5lL0RhemliYW8vbWFzdGVyL2RvY3MvaW1nL2RhemliYW9fbG9nby5wbmciLCJleHBpcmVzIjoxMzg3NDA1NjcyfQ%3D%3D--bedd766f31b11b064da158a2976f517639529038) Dazibao - 2013
+# Dazibao - 2013
 
 A project by Baptiste Fontaine, David Galichet and Julien Sagot.
+
+TODO:
+- Mention how we did the project -> git, bug tracker, coding style, ...
+- Detail some choices, e.g. why do we have 2 CLIs or why is the http server
+  mono-threaded, and some abandonned ideas
+- Add an 'Install' section
 
 ## General notes
 
 ### Portability
 
-This project aim at being compatible with any UNIX system, conforming the norm
-POSIX-???. We did not use Linux specific functions, or provided an alternative
-if so.
+This project aims at being compatible with any UNIX-like system, conforming the
+norms C99 and POSIX. We did not use Linux specific functions, or provided an
+alternative if so.
 
-## Dazibao and TLV APIs
+## Organisation
+
+The code is divided in modules. The project's core is implemented in
+`mdazibao.[ch]` and `tlv.[ch]`. These files define an API that is then used by
+all user interfaces to avoid code duplication.
+
+### Dazibao and TLV APIs
 
 We designed these APIs as an object-oriented structure for the purpose of being
-idependant of the implementation. A programm using the Dazibao (or TLV) API
+idependant of their implementation. A programm using the Dazibao (or TLV) API
 does not have to know about the structure used, and the Dazibao API does not
-have to know how a TLV actually is represented.
+have to know how a TLV is actually represented.
 
-## User Interfaces
+### User Interfaces
 
-### Command-Line Interface
+#### Command-Line Interface
 
-### Web Server
+TODO
+
+#### Web Server
 
 We implemented a Web server to have a more user-friendly interface to a
 Dazibao. It serves it as an HTML page, and allows the user to interact with it
-using AJAX request.
+using AJAX requests.
 
-#### Features
+TLVs are represented in a reversed order to have the most recent ones at the
+top of the page.
 
-- Compact a Dazibao, remove a TLV, add a text TLV
+##### Features
+
+- Compact a Dazibao, add and remove TLVs
 - Get notifications when the Dazibao changes
 - Static files are served from a `public_html` directory
+- All user interactions are done without reloading the page, using AJAX with an
+  HTTP API.
 
-#### Limitations
+##### Limitations
 
 - The server is synchronous and mono-threaded
-- Only a subset of HTTP 1.0 is supported. We implemented only features we need
-  for this project.
-- `POST` query parameters cannot contain quotes (`"`)
-- multiple files in a `POST` request are not supported
-- `GET` query parameters are not supported
+- Only a subset of HTTP 1.0 is supported. We only implemented features we
+  needed for this project.
 
 ## Notifications
 
 ### Notification server
+
+TODO: nobody cares about 4e556-something, we should move this in /dev/nu^W an
+'History' part
 
 Until [4e5562e](4e5562e28d15ed8013407136ed62125a16d6686d), we used signals to
 notify change on file. The plan was:
