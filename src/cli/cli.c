@@ -625,15 +625,16 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                         type_str ? type_str : "unknown", len);
 
 
-                if ((type != TLV_DATED && type != TLV_COMPOUND) || lvl != 0) {
+                if ((type != TLV_DATED && type != TLV_COMPOUND) || lvl == 0) {
                         continue;
                 }
+
                 dz_t cmpnd = { -1,
                                0,
                                (off + TLV_SIZEOF_HEADER + len),
                                (off + TLV_SIZEOF_HEADER
-                                       + type == TLV_DATED ?
-                                       TLV_SIZEOF_DATE : 0),
+                                       + (type == TLV_DATED ?
+                                               TLV_SIZEOF_DATE : 0)),
                                -1,
                                dz->data};
 
