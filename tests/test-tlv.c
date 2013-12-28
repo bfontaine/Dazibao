@@ -60,7 +60,6 @@ void htod_tests(void) {
 }
 
 void dtoh_tests(void) {
-//unsigned int dtoh(char *len);
         char t_0_0_0[] = {0, 0, 0},
              t_0_0_1[] = {0, 0, 1},
              t_0_1_0[] = {0, 1, 0},
@@ -160,6 +159,63 @@ void tlv_type2str2type_tests(void) {
         free(str_TLV_DATED);
 }
 
+void tlv_guess_type_tests(void) {
+        char *ascii = "yo, this is ASCII text éèà$\n",
+             *utf8  = "\xE1\x83\x9B\xE1\x83\x98\xE1\x83\x94\xE1\x83",
+             *wrong_utf8 = "\xC2\xE1\x83\x9B\xE1\x83\x98\xE1\x83\x94\xE1\x83",
+
+             /* from /dev/urandom */
+             *random1 = "\x35\xd9\x49\x68\x33\x94\xcb\x4a",
+             *random2 = "\x23\x73\xc7\x39\x90\x84\x32\x3c",
+
+             /* the first bytes below are taken from random files on my
+              * computer */
+
+             *exec = "\xcf\xfa\xed\xfe\x07\x00\x00\x01",
+
+             *png = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a",
+             *jpg = "\xff\xd8\xff\xe0\x00\x10\x4a\x46",
+             *gif = "\x47\x49\x46\x38\x39\x61\x40\x03",
+             *tif = "\x49\x49\x2a\x00\x08\x00\x00\x00",
+             *mp3 = "\x49\x44\x33\x03\x00\x00\x00\x00",
+             *mp4_1 = "\x00\x00\x00\x14\x66\x74\x79\x70",
+             *mp4_2 = "\x00\x00\x00\x20\x66\x74\x79\x70",
+             *bmp = "\x42\x4d\xf6\xd8\x01\x00\x00\x00",
+             *ogg = "\x4f\x67\x67\x53\x00\x02\x00\x00",
+
+             *midi = "\x4d\x54\x68\x64\x00\x00\x00\x06",
+             *pdf = "\x25\x50\x44\x46\x2d\x31\x2e\x35";
+
+        int ascii_len = strlen(ascii),
+            utf8_len = strlen(utf8),
+            wrong_utf8_len = strlen(wrong_utf8),
+            random1_len = 8,
+            random2_len = 8,
+            exec_len = 8,
+
+            unknown = (unsigned char)-1;
+
+        INTTEST(tlv_guess_type(ascii, ascii_len), TLV_TEXT);
+        INTTEST(tlv_guess_type(utf8, utf8_len), TLV_TEXT);
+
+        INTTEST(tlv_guess_type(wrong_utf8, wrong_utf8_len), unknown);
+        INTTEST(tlv_guess_type(random1, random1_len), unknown);
+        INTTEST(tlv_guess_type(random2, random2_len), unknown);
+        INTTEST(tlv_guess_type(exec, exec_len), unknown);
+
+        INTTEST(tlv_guess_type(png, 8), TLV_PNG);
+        INTTEST(tlv_guess_type(jpg, 8), TLV_JPEG);
+        INTTEST(tlv_guess_type(gif, 8), TLV_GIF);
+        INTTEST(tlv_guess_type(tif, 8), TLV_TIFF);
+        INTTEST(tlv_guess_type(mp3, 8), TLV_MP3);
+        INTTEST(tlv_guess_type(mp4_1, 8), TLV_MP4);
+        INTTEST(tlv_guess_type(mp4_2, 8), TLV_MP4);
+        INTTEST(tlv_guess_type(bmp, 8), TLV_BMP);
+        INTTEST(tlv_guess_type(ogg, 8), TLV_OGG);
+        INTTEST(tlv_guess_type(midi, 8), TLV_MIDI);
+        INTTEST(tlv_guess_type(pdf, 8), TLV_PDF);
+}
+
 int main(void) {
         
         START_TESTS();
@@ -175,6 +231,7 @@ int main(void) {
         ADD_SUITE(tlv_type2str);
         ADD_SUITE(tlv_str2type);
         ADD_SUITE(tlv_type2str2type);
+        ADD_SUITE(tlv_guess_type);
 
         END_OF_TESTS();
 
