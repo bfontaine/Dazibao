@@ -489,10 +489,9 @@ int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off) {
                 return -1;
         }
 
-        switch (tlv_get_type(tlv)) {
-        case TLV_DATED: off = off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
-                        return choose_tlv_extract(dz,tlv,off);
-        default: break;
+        if (tlv_get_type(tlv) == TLV_DATED) {
+                off = off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                return choose_tlv_extract(dz,tlv,off);
         }
 
         if (dz_read_tlv(dz, tlv, off) < 0) {
@@ -584,8 +583,7 @@ int cmd_extract(int argc , char **argv, char *dz_path) {
                 return -1;
         }
 
-        data = (char*)mmap(NULL, real_size, PROT_WRITE,
-                        MAP_SHARED, fd, 0);
+        data = (char*)mmap(NULL, real_size, PROT_WRITE, MAP_SHARED, fd, 0);
 
         if (data == MAP_FAILED) {
                 fprintf(stderr, "Error while mmap ");
