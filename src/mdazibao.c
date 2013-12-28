@@ -27,18 +27,29 @@
 static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset);
 
 /**
- * Skip tlv at offset, and look for the end of an unbroken pad1/padN serie
- * starting after the skipped tlv.
+ * Wrapper for dz_pad_serie_end2
+ * to ensure retro compatibility
+ * Same as calling dz_pad_serie_end2
+ * with these parameters
+ * and skip flag = 1
+ */
+static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
+
+/**
+ * Look for the end of an unbroken pad1/padN serie
+ * starting at offset
  * @param d a pointer to the dazibao
  * @param offset
  * @param max_offset the maximum offset to check The returned offset will never
  *        be higher than this one. If this parameter is set to 0, it won't be
  *        used. This is useful when you don't care about the maximum offset.
+ * @param skip flag indicating if we have to skip a TLV before seeking.
  * @return offset of the end of this serie on success, or the offset of the
  *         next tlv if it's not followed by pad1/padNs.
  * @see dz_pad_serie_start
  */
-static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset);
+static off_t dz_pad_serie_end2(dz_t *d, off_t offset, off_t max_offset,
+                        char skip);
 
 int dz_set_offset(dz_t *d, off_t off) {
         if (off < 0 || (unsigned long)off > d->len) {
@@ -218,7 +229,6 @@ int dz_close(dz_t *d) {
         return 0;
 
 }
-
 int dz_read_tlv(dz_t *d, tlv_t *tlv, off_t offset) {
         int r = tlv_mread(tlv, d->data + offset + TLV_SIZEOF_HEADER);
 
@@ -460,6 +470,11 @@ static off_t dz_pad_serie_start(dz_t *d, off_t offset, off_t min_offset) {
 }
 
 static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
+        return dz_pad_serie_end2(d, offset, max_offset, 1);
+}
+
+static off_t dz_pad_serie_end2(dz_t *d, off_t offset, off_t max_offset,
+                        char skip) {
         off_t off_stop, off_prev;
         tlv_t buf;
 
@@ -471,8 +486,10 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         off_prev = d->offset;
         d->offset = offset;
 
-        /* skip current tlv */
-        off_stop = dz_next_tlv(d, &buf);
+        if (skip) {
+                /* skip current tlv */
+                off_stop = dz_next_tlv(d, &buf);
+        }
 
         /* look for the first tlv which is not a pad */
         while (off_stop != EOD && (off_stop = dz_next_tlv(d, &buf)) > 0
@@ -493,7 +510,6 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
         return off_stop;
 }
 
-
 int dz_rm_tlv(dz_t *d, off_t offset) {
         off_t off_start_parent = 0,
               off_end_parent = 0,
@@ -502,6 +518,7 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
               off_end,
               off_eof;
         off_t *parents = NULL;
+        tlv_t tlv;
 
         if (dz_check_tlv_at(d, offset, -1, &parents) <= 0
                         || parents[0] != offset) {
@@ -511,6 +528,8 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
 
         off_eof = d->len;
 
+        /* Why would d->len be -1?
+         * I think this check should be removed */
         if (off_eof == -1) {
                 free(parents);
                 return DZ_OFFSET_ERROR;
@@ -549,12 +568,36 @@ int dz_rm_tlv(dz_t *d, off_t offset) {
                 tlv_destroy(&t);
         }
 
-        off_start = dz_pad_serie_start(d, offset, off_start_parent);
-        if (off_start < 0) {
+        if (tlv_init(&tlv) == -1) {
                 return -1;
         }
 
-        if ((off_end = dz_pad_serie_end(d, offset, off_end_parent)) < 0) {
+        if (dz_tlv_at(d, &tlv, offset) == -1) {
+                tlv_destroy(&tlv);
+                return -1;
+        }
+
+        if (tlv_get_type(&tlv) == TLV_LONGH) {
+                if (dz_read_tlv(d, &tlv, offset) == -1) {
+                        tlv_destroy(&tlv);
+                        return -1;
+                }
+                off_end = dz_pad_serie_end2(d,
+                                        offset + ltlv_get_total_length(&tlv),
+                                        off_end_parent, 0);
+        } else {
+                off_end = dz_pad_serie_end(d, offset, off_end_parent);
+
+        }
+        tlv_destroy(&tlv);
+
+        if (off_end < 0) {
+                return -1;
+        }
+
+        off_start = dz_pad_serie_start(d, offset, off_start_parent);
+
+        if (off_start < 0) {
                 return -1;
         }
 
