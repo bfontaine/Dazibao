@@ -47,25 +47,25 @@ struct tlv_type tlv_types[] = {
 };
 
 /**
- * "Associative array" of TLV type / file signature
+ * Associations of TLV types and their file signature
  **/
 struct type_signature sigs[] =  {
-        { TLV_BMP,  "BM"                },
-        { TLV_GIF,  "GIF87a"            },
-        { TLV_GIF,  "GIF89a"            },
-        { TLV_JPEG, "\xFF\xD8\xFF"      },
-        { TLV_MIDI, "MThd"              },
-        { TLV_MP3,  "ID3"               },
-        { TLV_MP3,  "\255\251"          },
-        { TLV_MP4,  "\x00\x00\x00\x14\x66\x74\x79\x70" },
-        { TLV_MP4,  "\x00\x00\x00\x20\x66\x74\x79\x70" },
-        { TLV_MP4,  "\x33\x67\x70\x35"  },
-        { TLV_OGG,  "OggS"              },
-        { TLV_PDF,  "%PDF"              },
-        { TLV_PNG,  "\211PNG\r\n\032\n" },
-        { TLV_TEXT, "\xEF\xBB\xBF"      }, /* UTF-8 BOM */
-        { TLV_TIFF, "\x49\x49\x2A\x00"  },
-        { TLV_TIFF, "\x4D\x4D\x00\x2A"  }
+        { TLV_BMP  , "BM"                               , 2 },
+        { TLV_GIF  , "GIF87a"                           , 6 },
+        { TLV_GIF  , "GIF89a"                           , 6 },
+        { TLV_JPEG , "\xFF\xD8\xFF"                     , 3 },
+        { TLV_MIDI , "MThd"                             , 4 },
+        { TLV_MP3  , "ID3"                              , 3 },
+        { TLV_MP3  , "\255\251"                         , 2 },
+        { TLV_MP4  , "\x00\x00\x00\x14\x66\x74\x79\x70" , 8 },
+        { TLV_MP4  , "\x00\x00\x00\x20\x66\x74\x79\x70" , 8 },
+        { TLV_MP4  , "\x33\x67\x70\x35"                 , 4 },
+        { TLV_OGG  , "OggS"                             , 4 },
+        { TLV_PDF  , "%PDF"                             , 4 },
+        { TLV_PNG  , "\211PNG\r\n\032\n"                , 8 },
+        { TLV_TEXT , "\xEF\xBB\xBF"                     , 3 }, /* UTF-8 BOM */
+        { TLV_TIFF , "\x49\x49\x2A\x00"                 , 4 },
+        { TLV_TIFF , "\x4D\x4D\x00\x2A"                 , 4 }
 };
 
 /**
@@ -86,18 +86,19 @@ static inline char between(char a, char b, char c) {
 
 unsigned char tlv_guess_type(char *src, unsigned int len) {
 
-        unsigned int i;
+        unsigned int i, j;
         char is_utf8;
         const char ctrl_chars[] = "\t\n\v\r"; /* acceptable ctrl chars */
 
-        for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
-                if (len < strlen(sigs[i].signature)) {
-                        continue;
-                }
+        if (len <= 3) {
+                /* the type cannot be determined from less than 3 or 4 chars */
+                return (unsigned char)-1;
+        }
 
-                /* FIXME doesn't work when signatures contain NULL bytes */
-                if (strncmp(sigs[i].signature, src,
-                                strlen(sigs[i].signature)) == 0) {
+        for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
+                unsigned int comp_len = MIN(len, sigs[i].len);
+
+                if (memcmp(src, sigs[i].signature, comp_len) == 0) {
                         return sigs[i].type;
                 }
         }

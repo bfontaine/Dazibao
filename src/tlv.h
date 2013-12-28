@@ -120,9 +120,11 @@ struct tlv_type {
  **/
 struct type_signature {
         /** TLV type */
-        char type;
+        unsigned char type;
         /** File signature */
         char *signature;
+        /** signature length */
+        unsigned int len;
 };
 
 /** ? */
