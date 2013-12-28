@@ -518,8 +518,8 @@ CLOSE:
         return status;
 }
 
-int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
-        int len, type;
+int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
+        int len, type, status = 0;
         const char *type_str;
         char *buf;
         int buf_idx = 0;
@@ -548,6 +548,7 @@ int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         if (tlv_init(&tlv_tmp) == -1) {
                 LOGERROR("tlv_init failed");
+                status = -1;
                 goto OUT;
         }
 
@@ -555,6 +556,8 @@ int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         if (buf == NULL) {
                 ERROR("malloc", -1);
+                status = -1;
+                goto OUT;
         }
 
         off = dz_next_tlv(dz, &tlv_tmp);
@@ -572,11 +575,10 @@ int cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
         cli_print_dz(&dz_tmp, indent + 1, lvl - 1, debug);
 
         free(buf);
-
-        if (tlv_destroy(&tlv_tmp) == -1) {
-        }
 OUT:
-        return ltlv_get_total_length(tlv);
+        return status == 0 ?
+                (int64_t)ltlv_get_total_length(tlv):
+                -1;
 }
 
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
@@ -614,7 +616,12 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                         dz_set_offset(dz, off);
                         off_t next = cli_print_ltlv(
                                 dz, &tlv, indent, lvl, debug);
-                        dz_incr_offset(dz, next);
+                        if (next == -1) {
+                                LOGERROR("cli_print_ltlv failed");
+                                status = -1;
+                                goto DESTROY;
+                        }
+                        dz_set_offset(dz, off + next);
                         continue;
                 }
 
