@@ -309,9 +309,19 @@ int route_post_form_tlv(dz_t *dz, struct http_request req,
                 return 0;
         }
 
-        LOGTRACE("tlv_init: %d", tlv_init(&t));
         type = tlv_guess_type(params[0]->value, params[0]->value_len);
-        tlv_set_type(&t, type != (unsigned char)-1 ? type : TLV_TEXT);
+
+        LOGTRACE("type=%d", type);
+
+        if (type == (unsigned char)-1) {
+                LOGERROR("Unknown TLV type");
+                destroy_http_params(params, -1);
+                return HTTP_S_UNSUPP_MEDIA;
+        }
+
+        LOGTRACE("tlv_init: %d", tlv_init(&t));
+
+        tlv_set_type(&t, type);
 
         LOGTRACE("type: %d", tlv_get_type(&t));
 

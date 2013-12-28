@@ -78,8 +78,10 @@ struct http_status {
 #define HTTP_S_LENGTHREQD    411
 /** 413 HTTP status */
 #define HTTP_S_TOO_LARGE     413
-/** 415 HTTP status */
+/** 414 HTTP status */
 #define HTTP_S_URITOOLONG    414
+/** 415 HTTP status */
+#define HTTP_S_UNSUPP_MEDIA  415
 
 /* 5XX (server errors) */
 /** generic server error HTTP status */

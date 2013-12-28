@@ -27,6 +27,7 @@ static const struct http_status http_statuses[] = {
         { HTTP_S_LENGTHREQD    , "Length Required"          },
         { HTTP_S_URITOOLONG    , "Request-URI Too Long"     },
         { HTTP_S_TOO_LARGE     , "Request Entity Too Large" },
+        { HTTP_S_UNSUPP_MEDIA  , "Unsupported Media Type"   },
 
         { HTTP_S_ERR           , "Internal Server Error"    },
         { HTTP_S_NOTIMPL       , "Not Implemented"          },
