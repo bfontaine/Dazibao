@@ -475,7 +475,8 @@ static off_t dz_pad_serie_end(dz_t *d, off_t offset, off_t max_offset) {
 
 static off_t dz_pad_serie_end2(dz_t *d, off_t offset, off_t max_offset,
                         char skip) {
-        off_t off_stop, off_prev;
+        off_t off_stop = 0,
+              off_prev;
         tlv_t buf;
 
         if (max_offset > 0 && max_offset < offset) {

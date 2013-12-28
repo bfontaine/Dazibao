@@ -216,10 +216,12 @@ int route_post_compact_dz(dz_t *dz, struct http_request req,
         return 0;
 }
 
-/**  route for new text TLVs */
+/**
+ * route for new text TLVs
+ * @see route_post_form_tlv
+ **/
 int route_post_new_tlv_text(dz_t *dz, struct http_request req,
                 struct http_response *resp) {
-        /* TODO remove this route and use the generic /tlv/add/form instead */
 
         tlv_t t;
         int st;

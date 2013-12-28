@@ -15,10 +15,6 @@
  **/
 #define DAZIBAO_HEADER_SIZE 4
 
-/* FIXME why do we have two constants for the same thing here? */
-/** @see DAZIBAO_HEADER_SIZE */
-#define DZ_HEADER_SIZE 4
-
 /**
  * code used to represent "End Of Dazibao", similarly to EOF.
  **/

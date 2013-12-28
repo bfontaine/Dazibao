@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "utils.h"
 #include "mdazibao.h"
 #include "main.h"
@@ -393,28 +396,23 @@ int cmd_dump(int argc , char **argv, char *daz) {
                 if (args > 0) {
                         flag_depth = i;
                         args--;
-                } else if ((!strcmp(argv[i], "--depth") ||
-                                        !strcmp(argv[i], "-d"))
+                } else if ((strcmp(argv[i], "--depth") == 0 ||
+                                        strcmp(argv[i], "-d") == 0)
                                 && flag_depth < 1) {
                         flag_depth = 1;
                         args = 1;
-                } else if ((!strcmp(argv[i], "--debug") ||
-                        !strcmp(argv[i], "-D")) && !flag_debug) {
+                } else if ((strcmp(argv[i], "--debug") == 0 ||
+                                        strcmp(argv[i], "-D") == 0)
+                                && !flag_debug) {
                         flag_debug = 1;
-                /* FIXME this is UGLY code and won't work if we add
-                 * more options */
+                /* this should be rewritten if we add more options */
                 } else if ((!strcmp(argv[i],"-dD") || !strcmp(argv[i],"-Dd"))
                                 && (flag_depth < 1) && !flag_debug) {
                         flag_debug = 1;
                         flag_depth = 1;
                         args = 1;
                 } else {
-                        /* TODO args[i] is not option and args
-                                or already use
-                                ERROR
-                        */
-                        fprintf(stderr, "[main|cmd_dump] arg failed:%s\n",
-                                        argv[i]);
+                        fprintf(stderr, "unrecognized option '%s'\n", argv[i]);
                         return -1;
                 }
 
@@ -477,6 +475,133 @@ int cmd_compact(int argc , char **argv, char *daz) {
 
 }
 
+int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off) {
+
+        if (dz_tlv_at(dz, tlv, off) < 0) {
+                printf("error to read type and length tlv\n");
+                dz_close(dz);
+                tlv_destroy(tlv);
+                return -1;
+        }
+
+        if (tlv_get_type(tlv) == TLV_DATED) {
+                off = off + TLV_SIZEOF_HEADER + TLV_SIZEOF_DATE;
+                return choose_tlv_extract(dz,tlv,off);
+        }
+
+        if (dz_read_tlv(dz, tlv, off) < 0) {
+                printf("error to read value tlv\n");
+                dz_close(dz);
+                tlv_destroy(tlv);
+                return -1;
+        }
+        return 0;
+}
+
+int cmd_extract(int argc , char **argv, char *dz_path) {
+        dz_t dz;
+        tlv_t tlv;
+        long off;
+        int fd;
+        size_t real_size;
+        char *data;
+        char *path;
+
+        if (argc != 2) {
+                fprintf(stderr, "cmd extract : <offset> <path> <dazibao>\n");
+                return DZ_ARGS_ERROR;
+        }
+
+        /* If the offset doesn't start with a character between '0' and '9', it
+         * must be wrong.
+         */
+        if (argv[0][0] < 48 || argv[0][0] > 57) {
+                fprintf(stderr,
+                        "Usage:\n       extract <offset> <file> <dazibao>\n");
+                return DZ_ARGS_ERROR;
+        }
+
+        off = str2dec_positive(argv[0]);
+
+        if (off < DAZIBAO_HEADER_SIZE) {
+                fprintf(stderr, "wrong offset\n");
+                return DZ_OFFSET_ERROR;
+        }
+
+        if (dz_open(&dz, dz_path, O_RDWR) < 0) {
+                fprintf(stderr, "Error while opening the dazibao\n");
+                return -1;
+        }
+
+        if (dz_check_tlv_at(&dz, off, -1,NULL) <= 0) {
+                fprintf(stderr, "no such TLV\n");
+                dz_close(&dz);
+                return DZ_OFFSET_ERROR;
+        }
+
+        if (tlv_init(&tlv) < 0) {
+                printf("error to init tlv\n");
+                dz_close(&dz);
+                return -1;
+        }
+
+        if (choose_tlv_extract(&dz,&tlv,off) < 0) {
+                printf("error to init tlv\n");
+                tlv_destroy(&tlv);
+                dz_close(&dz);
+                return -1;
+        }
+
+        if (dz_close(&dz) < 0) {
+                fprintf(stderr, "Error while closing the dazibao\n");
+                tlv_destroy(&tlv);
+                return -1;
+        }
+
+        if (tlv_get_type(&tlv) == TLV_COMPOUND) {
+                real_size = (size_t)tlv_get_length(&tlv) + DAZIBAO_HEADER_SIZE;
+        } else {
+                real_size = (size_t)tlv_get_length(&tlv);
+        }
+
+        path = argv[1];
+        fd = open(path, O_CREAT | O_TRUNC | O_RDWR, 0644);
+
+        if (fd == -1) {
+                tlv_destroy(&tlv);
+                ERROR("open", -1);
+        }
+
+        if (ftruncate(fd, real_size) < 0) {
+                fprintf(stderr, "Error while ftruncate path");
+                close(fd);
+                return -1;
+        }
+
+        data = (char*)mmap(NULL, real_size, PROT_WRITE, MAP_SHARED, fd, 0);
+
+        if (data == MAP_FAILED) {
+                fprintf(stderr, "Error while mmap ");
+                close(fd);
+                tlv_destroy(&tlv);
+                return -1;
+        }
+
+        if (tlv_get_type(&tlv) == TLV_COMPOUND) {
+                data[0] = MAGIC_NUMBER;
+                memset(data + 1, 0, DAZIBAO_HEADER_SIZE - 1);
+                real_size = real_size - DAZIBAO_HEADER_SIZE;
+                memcpy(data + DAZIBAO_HEADER_SIZE,
+                        tlv_get_value_ptr(&tlv), real_size);
+        } else {
+                memcpy(data , tlv_get_value_ptr(&tlv), real_size);
+        }
+
+        tlv_destroy(&tlv);
+        close(fd);
+        return 0;
+}
+
 void print_usage(char *name) {
         printf(CLI_USAGE_FMT, name);
 }
@@ -508,7 +633,7 @@ int main(int argc, char **argv) {
                 * command */
                 argv_cmd = argv + 2;
         }
-        /* TODO factorize this code */
+
         if (!strcmp(cmd, "add")) {
                 st = cmd_add(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "rm")) {
@@ -519,7 +644,8 @@ int main(int argc, char **argv) {
                 st = cmd_create(argc_cmd, argv_cmd, daz);
         } else if (!strcmp(cmd, "compact")) {
                 st = cmd_compact(argc_cmd, argv_cmd, daz);
-        /* /factorize */
+        } else if (!strcmp(cmd, "extract")) {
+                st = cmd_extract(argc_cmd, argv_cmd, daz);
         } else {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);

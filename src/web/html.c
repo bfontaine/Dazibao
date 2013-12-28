@@ -158,8 +158,6 @@ int html_add_dated_tlv(dz_t dz, tlv_t *t, off_t *off, char **html, int
 
         time = dz_read_date_at(&dz, *off + TLV_SIZEOF_HEADER);
 
-        /* FIXME check for wrong dates */
-
         time_iso = (char*)malloc(sizeof(char)*HTML_MAX_DATE_SIZE);
         time_txt = (char*)malloc(sizeof(char)*HTML_MAX_DATE_SIZE);
 

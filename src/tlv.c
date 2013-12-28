@@ -76,9 +76,23 @@ unsigned char guess_type(char *src, unsigned int len) {
         return tlv_guess_type(src, len);
 }
 
+/**
+ * Helper for tlv_guess_type. Test for a <= b <= c, using unsigned chars.
+ * @param a
+ * @param b
+ * @param c
+ **/
+static inline char between(char a, char b, char c) {
+        return (unsigned char)a <= (unsigned char)b
+                        && (unsigned char)b <= (unsigned char)c;
+}
+
 unsigned char tlv_guess_type(char *src, unsigned int len) {
 
         unsigned int i;
+        char is_utf8;
+        const char ctrl_chars[] = "\t\n\v\r"; /* acceptable ctrl chars */
+
         for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
                 if (len < strlen(sigs[i].signature)) {
                         continue;
@@ -89,7 +103,111 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
                 }
         }
 
-        /* TODO: Check for type text. */
+        /* check for UTF8 */
+        is_utf8 = 1;
+        for (i = 0; i<len && is_utf8; i++) {
+                unsigned char c = src[i];
+
+                /* control chars */
+                if (c < 0x20) {
+                        if (strchr(ctrl_chars, c) == NULL) {
+                                is_utf8 = 0;
+                                break;
+                        }
+                        continue;
+                }
+
+                /* see www.unicode.org/versions/Unicode6.2.0/ch03.pdf
+                 * table 3-7 p.95
+                 *
+                 * Bytes: 1       2       3       4
+                 *        00..7F
+                 *        C2..DF  80..BF
+                 *        E0      A0..BF  80..BF
+                 *        E1..EC  80..BF  80..BF
+                 *        ED      80..9F  80..BF
+                 *        EE..EF  80..BF  80..BF
+                 *        F0      90..BF  80..BF  80..BF
+                 *        F1..F3  80..BF  80..BF  80..BF
+                 *        F4      80..8F  80..BF  80..BF
+                 */
+                /* 00..7F */
+                if (c <= 0x7F) {
+                        continue;
+                }
+                /* C0, C1, F4..FF */
+                if (c >= 0xF5 || c == 0xC0 || c == 0xC1) {
+                        is_utf8 = 0;
+                        break;
+                }
+
+                /* first byte is C2..DF */
+                if (between(0xC2, c, 0xDF)) {
+                        if (i+1 >= len || !between(0x80, src[i+1], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+                        i += 1;
+                }
+
+                /* first byte is E0, E1..EC, ED or EE..EF */
+                if (between(0xE0, c, 0xEF)) {
+                        if (i+2 >= len || !between(0x80, src[i+2], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        /* EO A0..BF 80..BF */
+                        if (c == 0xE0 && !between(0xA0,
+                                                src[i+1], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        /* first byte is E1..EC or EE..EF */
+                        if (between(0xE1, c, 0xEF) && c != 0xED
+                                        && !between(0x80, src[i+1], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        /* ED 90..9F 80..BF */
+                        if (c == 0xED && !between(0x90, src[i+1], 0x9F)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        i += 2;
+                }
+
+                /* first byte is F0, F1..F3 or F4 */
+                if (between(0xF0, c, 0xF4)) {
+                        if (i+3 >= len
+                                || !between(0x80, src[i+2], 0xBF)
+                                || !between(0x80, src[i+3], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        /* first byte is F0 */
+                        if (c == 0xF0 && !between(0x90, src[i+1], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        if (!between(0x80, src[i+1], 0xBF)) {
+                                is_utf8 = 0;
+                                break;
+                        }
+
+                        i += 3;
+                }
+        }
+        if (is_utf8) {
+                return TLV_TEXT;
+        }
+
+        /* TODO: return (unsigned char)-1 ? */
         return TLV_TEXT;
 }
 

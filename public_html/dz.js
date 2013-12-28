@@ -200,7 +200,11 @@ function(body) {
             var opts = { icon: '/favicon.ico' };
 
             if (!dz.notifications) {
-                return alert(title + text ? (': ' + text) : '');
+                if (text) {
+                    title += ': ' + text;
+                }
+                console.log(_f = title);
+                return alert(title);
             }
 
             if (text) {
@@ -354,7 +358,7 @@ function(body) {
 
                         dz.api.addTLV(data, function(xhr) {
                             dz.close_modal();
-                            dz.notify(xhr.status == 204
+                            dz.notify(xhr.status == 204 || xhr.status == 201
                                       ? 'file added, refresh to see it'
                                       : 'got an error while adding your file.');
                             dz.prev_hash = 0;
