@@ -66,6 +66,10 @@ struct type_signature sigs[] =  {
         { TLV_TIFF, "\077\077\000\042"  },
 };
 
+/**
+ * Helper for making long tlv
+ */
+static void mk_longh(tlv_t *tlv, int type, uint32_t len);
 
 /* deprecated */
 unsigned char guess_type(char *src, unsigned int len) {
@@ -573,23 +577,14 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
         if (nb_inputs > 1) {
                 int content_len = write_idx - content_idx;
-
+                char *false_tlv = *tlv + cmpnd_idx;
                 if (content_len > TLV_MAX_VALUE_SIZE) {
-                        uint32_t be_len = htonl(content_len);
-                        char *false_tlv = *tlv + cmpnd_idx;
-                        tlv_set_type(&false_tlv, TLV_LONGH);
-                        tlv_set_length(&false_tlv,
-                                TLV_SIZEOF_TYPE + sizeof(uint32_t));
-                        *(tlv_get_value_ptr(&false_tlv)) = TLV_COMPOUND;
-                        memcpy(tlv_get_value_ptr(&false_tlv) + 1,
-                                &be_len,
-                                sizeof(be_len));
+                        mk_longh(&false_tlv, TLV_COMPOUND, content_len);
                         uint32_t new_size = ltlv_split_value(
                                 false_tlv + TLV_SIZEOF_LONGH,
                                 content_len);
                         write_idx = content_idx + new_size;
                 } else {
-                        char *false_tlv = *tlv + cmpnd_idx;
                         tlv_set_type(&false_tlv, TLV_COMPOUND);
                         tlv_set_length(&false_tlv, content_len);
                 }
@@ -597,23 +592,18 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
         if (date != 0) {
                 int content_len = write_idx - (cmpnd_idx - TLV_SIZEOF_DATE);
+                LOGINFO("content_len:%d, cmpnd_idx:%d",
+                        content_len, cmpnd_idx);
                 if (content_len > TLV_MAX_VALUE_SIZE) {
-                        uint32_t be_len = htonl(content_len);
-                                tlv_set_type(tlv, TLV_LONGH);
-                                tlv_set_length(tlv,
-                                        TLV_SIZEOF_TYPE + sizeof(uint32_t));
-                                *tlv_get_value_ptr(tlv) = TLV_DATED;
-                                memcpy(tlv_get_value_ptr(tlv) + 1,
-                                        &be_len,
-                                        sizeof(be_len));
-                                memcpy(tlv_get_value_ptr(tlv)
-                                        + 1 + sizeof(uint32_t),
-                                        &date,
-                                        sizeof(date));
-                                uint32_t new_size = ltlv_split_value(
-                                        *tlv + TLV_SIZEOF_LONGH,
-                                        content_len);
-                                write_idx = cmpnd_idx + new_size;
+                        mk_longh(tlv, TLV_DATED, content_len);
+                        memcpy(tlv_get_value_ptr(tlv)
+                                + 1 + sizeof(uint32_t),
+                                &date,
+                                sizeof(date));
+                        uint32_t new_size = ltlv_split_value(
+                                *tlv + TLV_SIZEOF_LONGH,
+                                content_len);
+                        write_idx = cmpnd_idx + new_size;
                 } else {
                         tlv_set_date(tlv, date);
                         tlv_set_type(tlv, TLV_DATED);
@@ -623,10 +613,22 @@ int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
 
         if (write_idx != len) {
                 LOGERROR("written %d bytes, expected %d.", write_idx, len);
+                status = -1;
         }
 
         return status;
 
+}
+
+static void mk_longh(tlv_t *tlv, int type, uint32_t len) {
+        uint32_t be_len = htonl(len);
+        tlv_set_type(tlv, TLV_LONGH);
+        tlv_set_length(tlv,
+                TLV_SIZEOF_TYPE + sizeof(uint32_t));
+        *(tlv_get_value_ptr(tlv)) = type;
+        memcpy(tlv_get_value_ptr(tlv) + 1,
+                &be_len,
+                sizeof(be_len));
 }
 
 /**
