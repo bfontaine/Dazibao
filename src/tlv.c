@@ -57,7 +57,7 @@ struct type_signature sigs[] =  {
         { TLV_MIDI, "MThd"              },
         { TLV_MP3,  "ID3"               },
         { TLV_MP3,  "\255\251"          },
-        { TLV_MP4,  "\051\103\112\053"  },
+        { TLV_MP4,  "\051\103\112\053"  }, /* FIXME */
         { TLV_OGG,  "OggS"              },
         { TLV_PDF,  "%PDF"              },
         { TLV_PNG,  "\211PNG\r\n\032\n" },
@@ -92,6 +92,8 @@ unsigned char tlv_guess_type(char *src, unsigned int len) {
                 if (len < strlen(sigs[i].signature)) {
                         continue;
                 }
+
+                /* FIXME doesn't work when signatures contain NULL bytes */
                 if (strncmp(sigs[i].signature, src,
                                 strlen(sigs[i].signature)) == 0) {
                         return sigs[i].type;
