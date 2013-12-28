@@ -57,7 +57,9 @@ struct type_signature sigs[] =  {
         { TLV_MIDI, "MThd"              },
         { TLV_MP3,  "ID3"               },
         { TLV_MP3,  "\255\251"          },
-        { TLV_MP4,  "\051\103\112\053"  }, /* FIXME */
+        { TLV_MP4,  "\x00\x00\x00\x14\x66\x74\x79\x70" },
+        { TLV_MP4,  "\x00\x00\x00\x20\x66\x74\x79\x70" },
+        { TLV_MP4,  "\x33\x67\x70\x35"  },
         { TLV_OGG,  "OggS"              },
         { TLV_PDF,  "%PDF"              },
         { TLV_PNG,  "\211PNG\r\n\032\n" },
