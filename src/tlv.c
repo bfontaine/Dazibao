@@ -62,8 +62,8 @@ struct type_signature sigs[] =  {
         { TLV_PDF,  "%PDF"              },
         { TLV_PNG,  "\211PNG\r\n\032\n" },
         { TLV_TEXT, "\xEF\xBB\xBF"      }, /* UTF-8 BOM */
-        { TLV_TIFF, "\073\073\042\000"  },
-        { TLV_TIFF, "\077\077\000\042"  },
+        { TLV_TIFF, "\x49\x49\x2A\x00"  },
+        { TLV_TIFF, "\x4D\x4D\x00\x2A"  }
 };
 
 /**
