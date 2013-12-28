@@ -200,7 +200,11 @@ function(body) {
             var opts = { icon: '/favicon.ico' };
 
             if (!dz.notifications) {
-                return alert(title + text ? (': ' + text) : '');
+                if (text) {
+                    title += ': ' + text;
+                }
+                console.log(_f = title);
+                return alert(title);
             }
 
             if (text) {
