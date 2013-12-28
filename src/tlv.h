@@ -136,15 +136,10 @@ struct tlv_input {
 };
 
 /**
- * @deprecated use tlv_guess_type instead
- **/
-unsigned char guess_type(char *src, unsigned int len);
-
-/**
  * Guess type from a buffer
  * @param src data to test
  * @param len length of buffer
- * @return TLV type corresponding to the buffer
+ * @return TLV type corresponding to the buffer, or -1
  */
 unsigned char tlv_guess_type(char *src, unsigned int len);
 
