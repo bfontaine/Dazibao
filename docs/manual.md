@@ -122,3 +122,13 @@ TLV you want to remove.
 ```
 daziweb [OPTIONS]
 ```
+
+Launch a Web server (HTTP 1.0) which serves a dazibao at `localhost:3437`.
+
+Available options:
+
+* `-d <path>`: set the path to the dazibao (mandatory)
+* `-p <port>`: set the port used by the server (default: 3437)
+* `-v`: increase the verbosity level
+* `-h`: print an usage message and quit
+* `-D`: debug mode. Add PAD1s and PADNs to the output
