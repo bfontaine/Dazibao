@@ -344,10 +344,7 @@ int cli_extract_all(dz_t *dz, int name_mod) {
                 }
 
                 if (type == TLV_LONGH) {
-                        if (cli_extract_ltlv(dz,
-                                                &tlv,
-                                                off,
-                                                name_mod) != 0) {
+                        if (cli_extract_ltlv(dz, &tlv, off, name_mod) != 0) {
                                 LOGERROR("cli_extract_ltlv failed");
                                 status = -1;
                                 goto DESTROY;
