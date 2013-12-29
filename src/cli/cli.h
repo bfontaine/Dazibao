@@ -5,9 +5,6 @@
  * Main program used for the command-line interface
  **/
 
-/** format of the help text */
-#define CLI_USAGE_FMT "RTFM"
-
 #include "tlv.h"
 #include "mdazibao.h"
 

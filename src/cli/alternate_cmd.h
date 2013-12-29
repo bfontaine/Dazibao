@@ -1,5 +1,5 @@
-#ifndef _MAIN_H
-#define _MAIN_H 1
+#ifndef _ALTERNATE_CMD_H
+#define _ALTERNATE_CMD_H 1
 
 /** @file
  * Main program used for the command-line interface
@@ -10,13 +10,8 @@
         "Usage:\n" \
         "    %s <cmd> <option and args> <dazibao>\n\n" \
         "cmd:\n" \
-        "    create: create an empty dazibao\n" \
-        "        command: create [--merge <dazibao args to merge>] <dazibao>" \
-                                                                         "\n" \
-        "        options:\n" \
-        "            -m, --merge: (todo)\n" \
         "\n" \
-        "    add: add a TLV\n" \
+        "    alt-add: add a TLV\n" \
         "        command: add [--type <type args>] [--dazibao <path>]\n"\
         "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
@@ -28,20 +23,10 @@
         "            --dazibao: insert a dazibao when size is respected\n" \
         "                       with tlv compound\n" \
         "\n" \
-        "    rm: remove a TLV\n" \
-        "        command: rm <offset> <dazibao>\n" \
-        "\n" \
-        "    dump: dump a Dazibao\n" \
-        "        command: dump [--debug ] [--depth] <depth> <dazibao>\n" \
-        "        options:\n" \
-        "            -D, --depth: allow to show inside tlv\n" \
-        "            -d, --debug: show tlv PAD1 and PADN\n" \
-        "\n" \
-        "    compact: compact a dazibao\n" \
-        "        command: compact <dazibao>\n" \
-        "\n" \
-        "    extract: extract tlv from dazibao\n" \
+        "    alt-extract: extract tlv from dazibao\n" \
         "        command: extract <offset> <path futur file> <dazibao>\n" \
+        "\n" \
+        "    other: RTFM" \
         "\n"
 
 /**
@@ -110,47 +95,6 @@ int cmd_add(int argc, char **argv, char *dz_path);
  **/
 int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 char *type , char *dz_path);
-
-/**
- * @param argc arguments count
- * @param argv arguments array
- * @param dz_path
- **/
-int cmd_rm(int argc, char **argv, char *dz_path);
-
-/**
- * @param argc arguments count
- * @param argv arguments array
- * @param dz_path
- **/
-int cmd_dump(int argc, char **argv, char *dz_path);
-
-/**
- * @param dz_path
- * @param flag_debug
- * @param flag_depth
- **/
-int action_dump(char *dz_path, int flag_debug, int flag_depth);
-
-/**
- * @param argc arguments count
- * @param argv arguments array
- * @param dz_path
- **/
-int cmd_compact(int argc, char **argv, char *dz_path);
-
-/**
- * @param argc arguments count
- * @param argv arguments array
- * @param dz_path
- **/
-int cmd_create(int argc, char **argv, char *dz_path);
-
-/**
- * print the help text
- * @param exec the name of the executable
- **/
-void print_usage(char *exec);
 
 /**
  * choose tlv to extract , if dated return tlv inside

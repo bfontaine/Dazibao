@@ -20,7 +20,7 @@
 #include "mdazibao.h"
 #include "tlv.h"
 #include "utils.h"
-
+#include "alternate_cmd.h"
 
 int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
@@ -816,7 +816,7 @@ int main(int argc, char **argv) {
         }
 
         if (argc < 3) {
-                LOGERROR(CLI_USAGE_FMT);
+                LOGERROR(CLI_USAGE_FMT, argv[0]);
                 exit(EXIT_FAILURE);
         }
 
@@ -852,7 +852,17 @@ int main(int argc, char **argv) {
                         LOGERROR("Failed creating dazibao.");
                         return EXIT_FAILURE;
                 }
-        } else {
+        } else if (!strcmp(cmd, "alt-add")) {
+                if (cmd_add(argc - 2, &argv[2], argv[argc - 1]) != 0) {
+                        LOGERROR("TLV addition failed.");
+                        return EXIT_FAILURE;
+                }
+        } else if (!strcmp(argv[2], "alt-extract")) {
+                if (cmd_extract(argc - 2, &argv[2], argv[argc - 1]) != 0) {
+                        LOGERROR("Extraction failed");
+                        return EXIT_FAILURE;
+                }
+        }  else {
                 LOGERROR("%s is not a valid command.", cmd);
                 return EXIT_FAILURE;
         }
