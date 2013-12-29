@@ -9,6 +9,7 @@
 #include "tlv.h"
 #include "http.h"
 #include "html.h"
+#include "mime.h"
 
 /** @file */
 
@@ -34,6 +35,8 @@ int route_get_index(dz_t *dz, struct http_request req,
                 resp->body_len = -1;
         }
 
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                        get_mime_type_from_path("index.html"), 0);
         resp->status = HTTP_S_OK;
         return 0;
 }
@@ -98,6 +101,8 @@ int route_get_media_tlv(dz_t *dz, struct http_request req,
                 memcpy(*resp->body, tlv_get_value_ptr(&tlv), resp->body_len);
         }
 
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                        get_mime_type_from_tlv(tlv_type), 0);
         tlv_destroy(&tlv);
         resp->status = HTTP_S_OK;
         return 0;
@@ -132,6 +137,8 @@ int route_get_hash(dz_t *dz, struct http_request req,
         }
 
         resp->body_len = strlen(*resp->body);
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                        get_mime_type_from_path("hash.txt"), 0);
         resp->status = HTTP_S_OK;
 
         return 0;
@@ -210,6 +217,8 @@ int route_post_compact_dz(dz_t *dz, struct http_request req,
                 *resp->body = strdup("0"); /* easy workaround */
         }
 
+        http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
+                        get_mime_type_from_path("length.txt"), 0);
         resp->body_len = strlen(*resp->body);
         resp->status = HTTP_S_OK;
 

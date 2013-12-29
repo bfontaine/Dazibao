@@ -368,8 +368,6 @@ int tlv_create_path(char *path, tlv_t *tlv, char *type);
  **/
 int tlv_create_input(tlv_t *tlv, char *type);
 
-/* TODO document functions below */
-
 /**
  * Make a long TLV from buffer
  * @param tlv TLV which will receive new TLV

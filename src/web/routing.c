@@ -169,7 +169,7 @@ int route_request(int sock, dz_t *dz, struct http_request *req) {
                 }
 
                 /* Set the MIME type if it's not set by the route */
-                mime = get_mime_type(req->path);
+                mime = get_mime_type_from_path(req->path);
                 if (mime != NULL) {
                         http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
                                         mime, 0);
@@ -268,7 +268,7 @@ int file_response(int sock, struct http_request *req) {
         *resp->body = map;
 
         http_add_header(resp->headers, HTTP_H_CONTENT_TYPE,
-                        get_mime_type(req->path), 0);
+                        get_mime_type_from_path(req->path), 0);
 
         if (http_response2(sock, resp, 0) == -1) {
                 LOGERROR("Cannot send the file");
