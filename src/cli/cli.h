@@ -50,6 +50,7 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod);
  * Extract a long TLV
  * @param dz dazibao where the TLV comes from.
  * @param offset offset of the TLV
+ * @param tlv
  * @param name_mod will be added to offset when creating file.
  *        Usefull to avoid name collision.
  * @return 0 on success, -1 on error
