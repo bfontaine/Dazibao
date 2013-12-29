@@ -99,10 +99,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                         inputs[i].type = tlv_guess_type(
                                 inputs[i].data,
                                 inputs[i].len);
-
-                        if (inputs[i].type == (unsigned char)-1) {
-                                inputs[i].type = TLV_TEXT;
-                        }
                 }
 
         }
@@ -221,11 +217,13 @@ static int cli_write_file(char *buf, size_t len,
         /* long long int is 10 character max long
          * extension should fit in 8 characters*/
         char out_s[20];
+        const char *type_str = tlv_type2str(type);
 
         wc = snprintf(out_s, 20,
-                "%llu.%s",
+                (type_str ? "%llu.%s" : "%llu%s"),
                 offset,
-                tlv_type2str(type));
+                (type_str ? type_str : "")
+                );
 
         if (wc < 0) {
                 ERROR("snprintf", -1);
