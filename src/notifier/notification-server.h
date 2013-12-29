@@ -79,8 +79,8 @@ void ns_exit(int unused);
  * Send a message to all clients connected
  * using send_message
  * @see send_message
- * @param str
- * @param len
+ * @param str message to send
+ * @param len length of the message
  */
 void broadcast(char *str, int len);
 
