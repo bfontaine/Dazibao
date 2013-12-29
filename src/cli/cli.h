@@ -79,7 +79,8 @@ int cli_extract(int argc, char **argv);
 /**
  * Print a dazibao (or a TLV list) on stdout
  * Helper for cli_dump_dz
- * 
+ * Note that this function break dazibao type abstraction (meaning that
+ * any change in dazibao structure in API will break this function).
  * @param dz dazibao to print
  * @param indent current indentation level
  * @param lvl remaining indention level allowed
@@ -91,8 +92,6 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug);
 
 /**
  * Parse arguments and launching dazibao printing.
- * Note that this function break dazibao type abstraction (meaning that
- * any change in dazibao structure in API will break this function).
  * @param argc number of argument(s)
  * @param argv value(s) of argument(s)
  * @see cli_print_dz
