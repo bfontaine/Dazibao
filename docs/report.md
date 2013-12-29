@@ -36,7 +36,7 @@ The following extensions were implemented:
   server is able to display a Dazibao, send notifications to clients, and be
   used to add or delete TLVs.
 
-## Implementation
+## API
 
 The code is divided in modules. The project's core is implemented in
 `mdazibao.{c,h}` and `tlv.{c,h}`. These files define an API that is then used
@@ -55,15 +55,15 @@ was working, but some actions were painful to implement since `read` and
 `write` calls move the cursor in the file and we needed to save and restore
 this cursor every time. Moving to `mmap` resolved this issue.
 
-### User Interfaces
+## User Interfaces
 
-#### Command-Line Interface: dazicli
+### Command-Line Interface: dazicli
 
 Command line interface provides a more powerfull tool to handle dazibaos. For 
 instance, long TLVs support is only available in dazicli. We like to believe 
 that dazicli is a complete tool
 
-##### Features
+#### Features
 
 - Compact a dazibao
 - Add tlv from files and strings with auto-detection of TLV type
@@ -72,13 +72,13 @@ that dazicli is a complete tool
 - Extract TLVs (write value into a file)
 - dazicli is, for now, the only user interface able to handle long TLVs.
 
-##### Limitations
+#### Limitations
 
 Long TLVs handling is not as well implemented as regular TLVs, and it is for 
 instance impossible to remove a tlv inside a long tlv. You only can remove 
 the whole TLV. Nevertheless, any other command is supported.
 
-#### Web Server
+### Web Server
 
 We implemented a Web server to have a more user-friendly interface to a
 Dazibao. It serves it as an HTML page, and allows the user to interact with it
@@ -87,7 +87,7 @@ using AJAX requests.
 TLVs are represented in a reversed order to have the most recent ones at the
 top of the page.
 
-##### Features
+#### Features
 
 - Compact a Dazibao, add and remove TLVs
 - Get notifications when the Dazibao changes
@@ -95,7 +95,7 @@ top of the page.
 - All user interactions are done without reloading the page, using AJAX with an
   HTTP API.
 
-##### Limitations
+#### Limitations
 
 - Only a subset of HTTP 1.0 is supported. We only implemented features we
   needed for this project.
@@ -109,7 +109,7 @@ top of the page.
   spend too much time on such tangential features.
 - Long TLVs are not supported
 
-##### Implementation
+#### Implementation
 
 Like the rest of the project, the Web server is modular, which makes it easy to
 modify without having to change a lot of files. Want to add an HTTP status? You
