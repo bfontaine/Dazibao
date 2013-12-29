@@ -81,6 +81,14 @@ the whole TLV. Nevertheless, any other command is supported.
   such as date for DATED tlv, short extract for TEXT, dimensions for 
   images/video, tags for tagged mp3, ...
 
+#### Alternative version
+
+We tried two different command-line interfaces, but kept only one. They used a
+different interpretation of the `add` and `extract` commands, and because there
+was no better implementation, we included the `add` and `extract` commands from
+the abandonned interface in the current one, prefixed with `alt-` (see the
+manual).
+
 ### Web Server
 
 We implemented a Web server to have a more user-friendly interface to a
