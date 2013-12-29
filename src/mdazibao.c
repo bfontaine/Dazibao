@@ -332,8 +332,7 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 st = 0;
                 break;
         case TLV_JPEG:
-                /* TODO
-                 * see stackoverflow.com/a/692013/735926 */
+                /* see stackoverflow.com/a/692013/735926 */
                 st = -1;
                 break;
         case TLV_PNG:
@@ -352,7 +351,6 @@ int dz_get_tlv_img_infos(dz_t *dz, off_t offset, struct img_info *info) {
                 st = 0;
                 break;
         case TLV_TIFF:
-                /* TODO */
                 st = -1;
                 break;
         }
@@ -991,7 +989,6 @@ int dz_dump(dz_t *daz_buf, off_t end, int depth, int indent,
                                 off_t current = daz_buf->offset;
                                 daz_buf->offset = off + TLV_SIZEOF_HEADER
                                         + TLV_SIZEOF_DATE;
-                                /* TODO add a function to print a date */
                                 if (dz_dump(daz_buf, current, (depth - 1),
                                                 (indent + 1), flag_debug)) {
                                         free(ind);

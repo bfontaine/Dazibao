@@ -11,8 +11,6 @@
 #include "tlv.h"
 #include "mdazibao.h"
 
-/* TODO document functions below */
-
 /**
  * Make a tlv and store it in tlv param
  * @param tlv TLV to set

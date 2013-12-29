@@ -8,8 +8,6 @@
 /** buffer length */
 #define NC_BUFFLEN 1024
 
-/* TODO document functions below */
-
 /**
  * Check if notifier set is available
  * @return 1 on success, 0 on error or if no notifier was set
