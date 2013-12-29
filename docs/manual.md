@@ -79,11 +79,12 @@ Compact a dazibao.
 ### Dazibao printing: `dump`
 
 ```
-dazicli dump [OPTIONS] <dazibao path>
+dazicli dump [OPTIONS] <dazibao path> [<dazibao path> ...]
 ```
 
 Dump a whole dazibao on the standard output, printing offset, type and 
-length of TLV. Does not show PAD1 nor PADN byt default.
+length of TLV. Does not show PAD1 nor PADN byt default. You also can provide 
+more than one file.
 
 Available Options:
 
