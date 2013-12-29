@@ -74,9 +74,12 @@ that dazicli is a complete tool
 
 #### Limitations
 
-Long TLVs handling is not as well implemented as regular TLVs, and it is for 
+* Long TLVs handling is not as well implemented as regular TLVs, and it is for 
 instance impossible to remove a tlv inside a long tlv. You only can remove 
 the whole TLV. Nevertheless, any other command is supported.
+* Printed informations about TLV are limited, we could print more information 
+  such as date for DATED tlv, short extract for TEXT, dimensions for 
+  images/video, tags for tagged mp3, ...
 
 ### Web Server
 
