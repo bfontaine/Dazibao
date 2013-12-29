@@ -65,7 +65,7 @@ off_t dz_get_offset(dz_t *d);
  * Increment current offset of a dazibao
  * @param d dazibao
  * @param off number to add to current offset
- * @param 0 on success, -1 one error (e.g. invalid offset)
+ * @return 0 on success, -1 one error (e.g. invalid offset)
  **/
 int dz_incr_offset(dz_t *d, off_t off);
 
