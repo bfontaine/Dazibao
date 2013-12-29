@@ -24,7 +24,7 @@
 
 int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
-        int status = 0;
+        int status = -1;
         uint32_t timestamp = 0;
         struct tlv_input *inputs;
         int *fd;
@@ -34,7 +34,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                 timestamp = (uint32_t) time(NULL);
                 timestamp = htonl(timestamp);
                 if (timestamp == (uint32_t) -1) {
-                        status = -1;
                         goto OUT;
                 }
         }
@@ -43,7 +42,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
         if (fd == NULL) {
                 PERROR("malloc");
-                status = -1;
                 goto OUT;
         }
 
@@ -51,7 +49,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
         if (inputs == NULL) {
                 PERROR("malloc");
-                status = -1;
                 goto CLOSEFD;
         }
 
@@ -65,7 +62,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                         /* It no file exists, argv[i] is a text */
                         if (access(argv[i], F_OK) == 0) {
                                 LOGERROR("Failed opening %s", argv[i]);
-                                status = -1;
                                 goto CLOSEFD;
                         }
                         inputs[i].len = strlen(argv[i]);
@@ -74,12 +70,10 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                         struct stat st;
                         if (fstat(fd[i], &st) == -1) {
                                 PERROR("fstat");
-                                status = -1;
                                 goto CLOSEFD;
                         }
                         if (flock(fd[i], LOCK_SH)) {
                                 PERROR("flock");
-                                status = -1;
                                 goto CLOSEFD;
                         }
                         inputs[i].len = st.st_size;
@@ -88,7 +82,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
                         if (inputs[i].data == MAP_FAILED) {
                                 PERROR("mmap");
-                                status = -1;
                                 goto CLOSEFD;
                         }
                 }
@@ -100,7 +93,6 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
                         if (inputs[i].type == -1) {
                                 LOGERROR("Undefined type.");
-                                status = -1;
                                 goto CLOSEFD;
                         }
                 } else {
@@ -117,9 +109,11 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
 
         if (tlv_from_inputs(tlv, inputs, argc, timestamp) == -1 ) {
                 LOGERROR("tlv_from_inputs failed");
-                status = -1;
                 goto CLOSEFD;
         }
+
+        /* if no errors occured */
+        status = 0;
 
 CLOSEFD:
         for (int i = 0; i < argc; i++) {
@@ -148,7 +142,7 @@ OUT:
 
 int cli_add(int argc, char **argv) {
 
-        int status = 0;
+        int status = -1;
         dz_t dz;
         tlv_t tlv;
         char date = 0;
@@ -167,13 +161,11 @@ int cli_add(int argc, char **argv) {
 
         if (jparse_args(argc, argv, &args, sizeof(opt)/sizeof(*opt)) == -1) {
                 LOGERROR("jparse_args failed.");
-                status = -1;
                 goto OUT;
         }
 
         if (nb_inputs < 2) {
                 LOGERROR("Missing parameters (see manual).");
-                status = -1;
                 goto OUT;
         }
 
@@ -181,28 +173,27 @@ int cli_add(int argc, char **argv) {
 
         if (dz_open(&dz, file, O_RDWR) != 0) {
                 LOGERROR("Failed opening %s.", file);
-                status = -1;
                 goto OUT;
         }
 
         if (tlv_init(&tlv) == -1) {
                 LOGERROR("tlv_init failed.");
-                status = -1;
                 goto CLOSE;
         }
 
         if (cli_mk_tlv(&tlv, nb_inputs, inputs, type, date) == -1) {
                 LOGERROR("cli_mk_tlv failed.");
-                status = -1;
                 goto DESTROY;
         }
 
 
         if (dz_add_tlv(&dz, &tlv) != 0) {
                 LOGERROR("Failed adding TLV.");
-                status = -1;
                 goto DESTROY;
         }
+
+        /* If no error occurred */
+        status = 0;
 
 DESTROY:
         if (tlv_destroy(&tlv) != 0) {
@@ -226,7 +217,7 @@ static int cli_write_file(char *buf, size_t len,
 
         int wc;
         int out_fd;
-        int status = 0;
+        int status = -1;
         /* long long int is 10 character max long
          * extension should fit in 8 characters*/
         char out_s[20];
@@ -250,9 +241,11 @@ static int cli_write_file(char *buf, size_t len,
 
         if (wc != (int)len) {
                 LOGERROR("wrote %d bytes (expected %d)", wc, (int)len);
-                status = -1;
                 goto CLOSE;
         }
+
+        /* if no errors occured */
+        status = 0;
 
 CLOSE:
         close(out_fd);
@@ -268,7 +261,7 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
         char *buff;
         uint32_t write_idx = 0;
         off_t off = 0;
-        int status = 0;
+        int status = -1;
 
         if (dz_read_tlv(dz, tlv, offset) != 0) {
                 LOGERROR("dz_read_tlv failed");
@@ -288,7 +281,6 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
 
         if (buff == NULL) {
                 LOGERROR("Failed retriving long TLV value");
-                status = -1;
                 goto FREEBUFF;
         }
 
@@ -302,14 +294,15 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
                               buff};
 
                 if (cli_extract_all(&cmpnd, offset + name_mod) != 0) {
-                        status = -1;
                         goto FREEBUFF;
                 }
         } else if (cli_write_file(buff, len, offset + name_mod, type) == -1) {
                 LOGERROR("cli_write_file failed");
-                status = -1;
                 goto FREEBUFF;
         }
+
+        /* If no error occurred */
+        status = 0;
 
 FREEBUFF:
         free(buff);
@@ -319,7 +312,7 @@ FREEBUFF:
 
 int cli_extract_all(dz_t *dz, int name_mod) {
 
-        int status = 0;
+        int status = -1;
         tlv_t tlv;
         off_t off;
 
@@ -333,7 +326,6 @@ int cli_extract_all(dz_t *dz, int name_mod) {
                 int type, len;
 
                 if (off == -1) {
-                        status = -1;
                         goto DESTROY;
                 }
 
@@ -346,14 +338,17 @@ int cli_extract_all(dz_t *dz, int name_mod) {
                 if (type == TLV_LONGH) {
                         if (cli_extract_ltlv(dz, &tlv, off, name_mod) != 0) {
                                 LOGERROR("cli_extract_ltlv failed");
-                                status = -1;
                                 goto DESTROY;
                         }
                         dz_set_offset(dz, off + ltlv_get_total_length(&tlv));
                 } else if (cli_extract_tlv(dz, off, name_mod) != 0) {
                         LOGERROR("cli_extract_tlv failed");
+                        goto DESTROY;
                 }
         }
+
+        /* No error occurred */
+        status = 0;
 
 DESTROY:
         if (tlv_destroy(&tlv) != 0) {
@@ -367,13 +362,12 @@ DESTROY:
 int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
 
         tlv_t tlv;
-        int status = 0;
+        int status = -1;
         int out_fd;
         int type;
 
         if (tlv_init(&tlv) != 0) {
                 LOGERROR("Failed initializing TLV.");
-                status = -1;
                 goto OUT;
         }
 
@@ -381,7 +375,6 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
         case -1:
         case EOD:
                 LOGERROR("dz_tlv_at %d failed.", (int)offset);
-                status = -1;
                 goto DESTROY;
         };
 
@@ -402,7 +395,6 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
                                dz->data};
 
                 if (cli_extract_all(&cmpnd, offset + name_mod) != 0) {
-                        status = -1;
                         goto DESTROY;
                 }
                 break;
@@ -410,14 +402,12 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
         case TLV_LONGH:
                 if (cli_extract_ltlv(dz, &tlv, offset, name_mod) != 0) {
                         LOGERROR("cli_extract_ltlv failed");
-                        status = -1;
                         goto DESTROY;
                 }
                 break;
         default:
                 if (dz_read_tlv(dz, &tlv, offset) != 0) {
                         LOGERROR("dz_read_tlv failed");
-                        status = -1;
                         goto DESTROY;
                 }
                 if (cli_write_file(tlv_get_value_ptr(&tlv),
@@ -425,10 +415,12 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
                                         offset + name_mod,
                                         type) == -1) {
                         LOGERROR("Printing in file failed.");
-                        status = -1;
                         goto DESTROY;
                 }
         };
+
+        /* If no error occurred */
+        status = 0;
 
 DESTROY:
         if (tlv_destroy(&tlv) != 0) {
@@ -444,7 +436,7 @@ int cli_extract(int argc, char **argv) {
 
         dz_t dz;
 
-        int status = 0;
+        int status = -1;
         char value = 0;
         char **offset;
         int nb_tlv;
@@ -468,7 +460,6 @@ int cli_extract(int argc, char **argv) {
                 /* TODO: handle error */
                 if (cli_extract_all(&dz, 0) != 0) {
                         LOGERROR("cli_extract_all failed ");
-                        status = -1;
                 }
                 goto CLOSE;
         }
@@ -477,25 +468,26 @@ int cli_extract(int argc, char **argv) {
 
                 char *endptr = NULL;
                 long long int off = strtoll(offset[i], &endptr, 10);
+
                 if (endptr != NULL && *endptr != '\0') {
                         LOGERROR("Invalid argument: %s\n", offset[i]);
-                        status = -1;
                         goto CLOSE;
                 }
+
                 if (off == LLONG_MIN || off == LLONG_MAX) {
                         LOGERROR("Overflow: %s\n", offset[i]);
-                        status = -1;
                         goto CLOSE;
                 }
 
                 if (cli_extract_tlv(&dz, off, 0) == -1) {
                         LOGERROR("cli_extract failed (%d/%d tlv extracted).",
                                 i, nb_tlv);
-                        status = -1;
                         goto CLOSE;
                 }
         }
 
+        /* If no error occurred */
+        status = 0;
 
 CLOSE:
         if (dz_close(&dz) == -1) {
@@ -507,7 +499,7 @@ CLOSE:
 }
 
 int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
-        int len, type, status = 0;
+        int len, type, status = -1;
         const char *type_str;
         char *buf;
         int buf_idx = 0;
@@ -515,7 +507,6 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         if (dz_read_tlv(dz, tlv, dz_get_offset(dz)) != 0) {
                 LOGERROR("dz_read_tlv");
-                status = -1;
                 goto OUT;
         }
 
@@ -534,13 +525,13 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
                 len);
 
         if ((type != TLV_COMPOUND && type != TLV_DATED) || lvl == 0) {
+                status = 0;
                 goto OUT;
         }
 
         /* Skip header */
         if (dz_set_offset(dz, dz_get_offset(dz) + TLV_SIZEOF_LONGH) != 0) {
                 LOGERROR("dz_set_offset");
-                status = -1;
                 goto OUT;
         }
 
@@ -548,7 +539,6 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         if (buf == NULL) {
                 LOGERROR("dz_get_ltlv_value failed");
-                status = -1;
                 goto OUT;
         }
 
@@ -558,9 +548,11 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         if (cli_print_dz(&dz_tmp, indent + 1, lvl - 1, debug) != 0) {
                 LOGERROR("cli_print_dz failed");
-                status = -1;
                 goto FREEBUF;
         }
+
+        /* If no error occurred */
+        status = 0;
 
 FREEBUF:
         free(buf);
@@ -571,7 +563,7 @@ OUT:
 
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
 
-        int status = 0;
+        int status = -1;
         tlv_t tlv;
         off_t off;
 
@@ -585,7 +577,6 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
 
                 if (off == -1) {
                         LOGERROR("dz_next_tlv failed");
-                        status = -1;
                         goto DESTROY;
                 }
 
@@ -602,7 +593,6 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                                 dz, &tlv, indent, lvl, debug);
                         if (next == -1) {
                                 LOGERROR("cli_print_ltlv failed");
-                                status = -1;
                                 goto DESTROY;
                         }
                         dz_set_offset(dz, off + next);
@@ -634,10 +624,12 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
                                dz->data};
 
                 if (cli_print_dz(&cmpnd, indent + 1, lvl - 1, debug)) {
-                        status = -1;
                         goto DESTROY;
                 }
         }
+
+        /* If no error occurred */
+        status = 0;
 
 DESTROY:
         if (tlv_destroy(&tlv) != 0) {
@@ -740,7 +732,7 @@ int cli_compact_dz(int argc, char **argv) {
 
 int cli_rm_tlv(int argc, char **argv) {
         dz_t dz;
-        int status = 0;
+        int status = -1;
         char **offset;
         int nb_tlv;
         char *file;
@@ -768,22 +760,22 @@ int cli_rm_tlv(int argc, char **argv) {
 
                 if (endptr != NULL && *endptr != '\0') {
                         LOGERROR("Invalid argument: %s\n", offset[i]);
-                        status = -1;
                         goto CLOSE;
                 }
                 if (off == LLONG_MIN || off == LLONG_MAX) {
                         LOGERROR("Overflow: %s\n", offset[i]);
-                        status = -1;
                         goto CLOSE;
                 }
 
                 if (dz_rm_tlv(&dz, (off_t)off) < 0) {
                         LOGERROR("dz_rm_tlv failed (%d/%d tlv removed).",
                                 i, nb_tlv);
-                        status = -1;
                         goto CLOSE;
                 }
         }
+
+        /* If no error occurred */
+        status = 0;
 
 CLOSE:
         if (dz_close(&dz) < 0) {
