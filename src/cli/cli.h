@@ -121,5 +121,5 @@ int cli_rm_tlv(int argc, char **argv);
  * @param argv name(s) of dazibao(s)
  * @return 0 on success, -1 on error
  */
-int cli_create_dz(int argc, char **argv)
+int cli_create_dz(int argc, char **argv);
 #endif
