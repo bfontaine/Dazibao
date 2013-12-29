@@ -47,19 +47,25 @@ typedef struct {
 typedef int hash_t;
 
 /**
- * @param d
- * @param off
+ * Set the offset of a dazibao
+ * @param d dazibao to modify
+ * @param off offset to set
+ * @return 0 on success, -1 on error (e.g. invalid offset)
  **/
 int dz_set_offset(dz_t *d, off_t off);
 
 /**
- * @param d
+ * Get the current offset of a dazibao
+ * @param d dazibao
+ * @return current offset of the dazibao
  **/
 off_t dz_get_offset(dz_t *d);
 
 /**
- * @param d
- * @param off
+ * Increment current offset of a dazibao
+ * @param d dazibao
+ * @param off number to add to current offset
+ * @param 0 on success, -1 one error (e.g. invalid offset)
  **/
 int dz_incr_offset(dz_t *d, off_t off);
 
@@ -69,14 +75,18 @@ int dz_incr_offset(dz_t *d, off_t off);
 int dz_sync(dz_t *d);
 
 /**
+ * mmap a dazibao content
  * @param d the dazibao
- * @param t
+ * @param t size wanted
+ * @return 0 on success, -1 on error
  **/
 int dz_mmap_data(dz_t *d, size_t t);
 
 /**
+ * Synchronize, munmap, and mmap a dazibao content
  * @param d the dazibao
- * @param t
+ * @param t size wanted
+ * @return 0 on success, negative on error
  **/
 int dz_remap(dz_t *d, size_t t);
 
@@ -288,7 +298,7 @@ int dz_hash(dz_t *dz, hash_t *oldhash);
 
 
 /**
- * TODO document this function
+ * Get the initial value off a long tlv (i.e. join all LONGC values)
  * CAREFUL: This function return a pointer to memory allocated with malloc and
  * should be freed after use offset should be pointing just after the LONGH
  * corresponding
