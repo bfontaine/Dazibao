@@ -68,7 +68,7 @@ Available Options:
 * `--date`: if present, the TLV will be included in a dated one, using the
   current time.
 
-##### Alternative version: `al-add`
+##### Alternative version: `alt-add`
 
 An alternative from a previous version is provided:
 
@@ -80,6 +80,7 @@ The main difference is that this version allows you to add multiple TLVs at the
 same time.
 
 Available Options:
+
 * `--type <type>`: same as for `add`, but is mandatory here
 * `--date`: each TLV following this option will be included in a dated TLV with
   the current date. If `--compound` is provided, all TLVs will be included in a
@@ -87,7 +88,7 @@ Available Options:
 * `--dazibao <path>`: include the dazibao `<path>` in a compound TLV
 * `--compound`: include all TLVs in a compound
 
-`-` is also supported as a source to read on standard input.
+Use `-` as a source to read on standard input.
 
 #### Dazibao creation: `create`
 
