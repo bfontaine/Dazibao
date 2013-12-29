@@ -895,7 +895,7 @@ static int compact_helper(dz_t *d, off_t *reader, off_t *writer,
                 memmove(d->data + tlv_off + TLV_SIZEOF_TYPE,
                                 t + TLV_SIZEOF_TYPE, TLV_SIZEOF_LENGTH);
                 break;
-        case -1:
+        case -1: /* -1: it's a compound */
         case TLV_COMPOUND:
                 tlv_off = *writer;
                 if (!is_dz) {
