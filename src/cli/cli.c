@@ -652,7 +652,7 @@ DESTROY:
 
 int cli_dump_dz(int argc, char **argv) {
 
-        dz_t dz;
+
         int status = 0;
         long long int depth = -1;
         int debug = 0;
@@ -674,19 +674,32 @@ int cli_dump_dz(int argc, char **argv) {
                 return -1;
         }
 
-        if (dz_open(&dz, argv[0], O_RDONLY) != 0) {
-                LOGERROR("Failed opening %s.", argv[0]);
-                return -1;
-        }
+        for (int i = 0; i < argc; i++) {
 
-        if (cli_print_dz(&dz, 0, depth, debug) != 0) {
-                LOGERROR("cli_print_dz failed");
-                status = -1;
-        }
+                dz_t dz;
 
-        if (dz_close(&dz) == -1) {
-                LOGERROR("Failed closing dazibao.");
-                status = -1;
+                if (argc > 1) {
+                        printf("%s:\n", argv[i]);
+                }
+
+                if (dz_open(&dz, argv[i], O_RDONLY) != 0) {
+                        LOGERROR("Failed opening %s.", argv[i]);
+                        return -1;
+                }
+
+                if (cli_print_dz(&dz, 0, depth, debug) != 0) {
+                        LOGERROR("cli_print_dz failed");
+                        status = -1;
+                }
+
+                if (dz_close(&dz) == -1) {
+                        LOGERROR("Failed closing dazibao.");
+                        status = -1;
+                }
+
+                if (status == -1) {
+                        break;
+                }
         }
 
         return status;
