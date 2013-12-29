@@ -22,6 +22,12 @@ static const char *mime_types_ext[][2] = {
         { "jpeg" , "image/jpeg"               },
         { "jpg"  , "image/jpeg"               },
         { "png"  , "image/png"                },
+        { "mp3"  , "audio/mpeg"               },
+        { "mp4"  , "audio/mp4"                },
+        { "ogg"  , "audio/ogg"                },
+        { "gif"  , "image/gif"                },
+        { "tiff" , "image/tiff"               },
+        { "pdf"  , "application/pdf"          },
 
         /* other common types */
         { "css"  , "text/css; charset=utf-8"  },
@@ -29,13 +35,10 @@ static const char *mime_types_ext[][2] = {
 
         /* other types */
         { "csv"  , "text/csv"                 },
-        { "gif"  , "image/gif"                },
         { "gzip" , "application/gzip"         },
         { "json" , "application/json"         },
-        { "pdf"  , "application/pdf"          },
         { "rss"  , "application/rss+xml"      },
         { "svg"  , "image/svg+xml"            },
-        { "tiff" , "image/tiff"               },
         { "xml"  , "application/xml"          },
         { "zip"  , "application/zip"          },
 
