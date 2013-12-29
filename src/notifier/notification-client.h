@@ -8,8 +8,6 @@
 /** buffer length */
 #define NC_BUFFLEN 1024
 
-/* TODO document functions below */
-
 /**
  * Check if notifier set is available
  * @return 1 on success, 0 on error or if no notifier was set
@@ -27,7 +25,7 @@ void print_notification(char *title, char *msg);
  * Use notifier if enabled, print notification on stdin in any case
  * @param title title of message
  * @param msg body of message
- * @param return 0 on success, and -1 if notifier call failed
+ * @return 0 on success, and -1 if notifier call failed
  **/
 int notify(char *title, char *msg);
 
@@ -43,7 +41,7 @@ int read_notifications(char *buf, int len);
  * Loop reading incoming messages from a socket and using
  * read_notification to process them
  * @param fd socket from where to read
- * @param only return on error (-1)
+ * @return only return on error (-1)
  **/
 int receive_notifications(int fd);
 
