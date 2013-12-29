@@ -1,5 +1,9 @@
 #include "hash.h"
 
+/** @file
+ * These functions come from external sources, see hash.h.
+ **/
+
 uint32_t SuperFastHash (const char * data, size_t len) {
 
         uint32_t hash = len, tmp;

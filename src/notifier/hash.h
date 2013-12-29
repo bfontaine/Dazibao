@@ -24,7 +24,7 @@
 uint32_t SuperFastHash (const char * data, size_t len);
 
 /**
- * Grab on a random conversation about hash on stackoveflow.com
+ * Grabed from a random conversation about hashes on stackoveflow.com
  * Slower than SuperFastHash, seems reliable.
  * @param buf data you want to hash
  * @param buflength length of data
