@@ -15,11 +15,11 @@
 #endif
 
 /**
- * Imported from http://www.azillionmonkeys.com/qed/hash.html
+ * Imported from www.azillionmonkeys.com/qed/hash.html
  * Seems to be fast AND reliable on large file.
  * @param data data you want to hash
  * @param len length of data
- * @return hashcode for data, 0 if data is NULL 
+ * @return hashcode for data, 0 if data is NULL
  */
 uint32_t SuperFastHash (const char * data, size_t len);
 
