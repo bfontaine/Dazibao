@@ -53,7 +53,7 @@ int check_option_add(int argc, char **argv, int *date_idx, int *compound_idx,
 }
 
 int check_type_args(int argc, char *type_args, char *op_type, int f_dz) {
-        char * delim = ",\0";
+        char * delim = ",";
         char *tmp = strtok(op_type, delim);
         int i = 0;
         while (tmp != NULL) {
