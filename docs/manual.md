@@ -68,10 +68,19 @@ Available Options:
 * `--date`: if present, the TLV will be included in a dated one, using the
   current time.
 
+### Dazibao create: `create`
+
+```
+dazicli create <dazibao path> [<dazibao path> ...]
+```
+
+Create dazibao(s).
+
+
 ### Dazibao compaction: `compact`
 
 ```
-dazicli compact <dazibao path>
+dazicli compact <dazibao path> 
 ```
 
 Compact a dazibao.
