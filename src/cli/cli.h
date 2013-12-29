@@ -12,7 +12,7 @@
 #include "mdazibao.h"
 
 /**
- * Make a tlv and store it in tlv param
+ * Make a tlv and store it in tlv passed as argument
  * @param tlv TLV to set
  * @param argc number of input(s)
  * @param argv inputs(s)
