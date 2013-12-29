@@ -11,30 +11,39 @@
 /* TODO document functions below */
 
 /**
- * ?
+ * Check if notifier set is available
+ * @return 1 on success, 0 on error or if no notifier was set
  **/
 int check_notifier(void);
 
 /**
- * @param title
- * @param msg
+ * Print a notification on stdout
+ * @param title title of message
+ * @param msg body of message
  **/
 void print_notification(char *title, char *msg);
 
 /**
- * @param title
- * @param msg
+ * Use notifier if enabled, print notification on stdin in any case
+ * @param title title of message
+ * @param msg body of message
+ * @param return 0 on success, and -1 if notifier call failed
  **/
 int notify(char *title, char *msg);
 
 /**
- * @param buf
- * @param len
+ * Parse a buffer and process every notification it contains
+ * @param buf buffer
+ * @param len length of buffer
+ * @return number of byte remaining not read in buff, or -1 on error
  **/
 int read_notifications(char *buf, int len);
 
 /**
- * @param fd
+ * Loop reading incoming messages from a socket and using
+ * read_notification to process them
+ * @param fd socket from where to read
+ * @param only return on error (-1)
  **/
 int receive_notifications(int fd);
 
