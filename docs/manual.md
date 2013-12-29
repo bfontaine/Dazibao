@@ -56,11 +56,12 @@ Command can be one of these:
 ##### `add`
 
 ```
-dazicli add [OPTIONS] [FILES] <dazibao path>
+dazicli add [OPTIONS] [FILES or TEXT] <dazibao path>
 ```
 
-Produce a tlv with a list of TLV and add it to a dazibao.  
-If more than one TLV is provided, they will be merged into a compound TLV.
+Produce a tlv with a list of inputs and add it to a dazibao.  
+If an input is not a file, it will be included in a text TLV.
+If more than one input is provided, they will be merged into a compound TLV.
 
 Available Options:
 

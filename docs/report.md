@@ -24,12 +24,14 @@ alternative if so.
 The following extensions were implemented:
 
 * Additional TLV types: a few media types were added, such as MP3, MP4, PDF,
-  BMP and GIF. We also added a special type called "long TLV" which is used to
-  store files largers than the maximum size of a TLV. These long TLVs are
-  implemented using a TLV header which contains their length and type, followed
-  by some "body" TLVs containing their value.
+  BMP and GIF.
+* Special TLV type called "long TLV" which is used to store files largers than
+  the maximum size of a TLV. These long TLVs are implemented using a TLV 
+  header which contains a type and a length (defined on 4 bytes), followed 
+  by some "body" TLVs containing their value. We just have to "join" them to 
+  get original data.
 * Notifications: Our implementation is able to watch some dazibaos and notify a
-  set of clients when they change
+  set of clients when they change.
 * Web server: We implemented a command-line interface _and_ a Web server. The
   server is able to display a Dazibao, send notifications to clients, and be
   used to add or delete TLVs.
@@ -55,9 +57,26 @@ this cursor every time. Moving to `mmap` resolved this issue.
 
 ### User Interfaces
 
-#### Command-Line Interface
+#### Command-Line Interface: dazicli
 
-TODO
+Command line interface provides a more powerfull tool to handle dazibaos. For 
+instance, long TLVs support is only available in dazicli. We like to believe 
+that dazicli is a complete tool
+
+##### Features
+
+- Compact a dazibao
+- Add tlv from files and strings with auto-detection of TLV type
+  (recording a date if wanted, using a compound if need)
+- Remove TLVs using offsets. You can also remove a part of a compound only.
+- Extract TLVs (write value into a file)
+- dazicli is, for now, the only user interface able to handle long TLVs.
+
+##### Limitations
+
+Long TLVs handling is not as well implemented as regular TLVs, and it is for 
+instance impossible to remove a tlv inside a long tlv. You only can remove 
+the whole TLV. Nevertheless, any other command is supported.
 
 #### Web Server
 
@@ -121,9 +140,6 @@ Some special routes are used by AJAX calls only and don't use HTML.
 
 ### Notification server
 
-TODO: nobody cares about 4e556-something, we should move this in /dev/nu^W an
-'History' part
-
 Until [4e5562e](4e5562e28d15ed8013407136ed62125a16d6686d), we used signals to
 notify change on file. The plan was:
 * one process per file
@@ -145,14 +161,34 @@ The bad side:
 * This issue could have been resolved with real-time signals, but we would
   loose the broadcasting ability of "normal" signals.
 
-#### Known issues
+#### Known issues / Limitations
 
-* As default file watching is based on `ctime` of files, it can notify false
-  modification, or miss some of them. This choice have been made to save
-  ressources avoiding file parsing. Not a real issue since you can enable the
-  reliable mode with `--reliable` option.
+* As default file watching was based on `ctime` of files, it could notify
+  false modification, or miss some of them. To prevent these problem, we 
+  added another watching method, hashing file to be reliable. Since the 
+  first method save time and ressources we kept it and could be turned on 
+  with `--reliable 0` option.
+* Notification server use several threads to watch file and notify clients. 
+  As signal SIGPIPE is supposed to be received often (every time a client 
+  disconnects), it is ignored, but it is the only signal caught. It means 
+  that receiving a signal asking for termination (SIGINT is caugth to free 
+  ressources before exiting), the server will crash.
+  We should set a signal handler to prevent it from happening.
+* Number of client able to connect simultaneously has to be determined by user 
+  when starting the server.
 
 ### Notification client
+
+Notification client is based on `notification-stupide.c`.
+
+#### Differences with `notification-stupide`
+
+* UNIX compatible (`notification-stupide` does not compile on mac OS X)
+* Can receive multiple notifications in one read (`notification-stupide` does 
+  not loop, and does not notify all files).
+* Can use a desktop notification service (as `notify-send` on ubuntu, but 
+  compatible with any application, see manual for configuration)
+* Handle error message received from server (message starting with E)
 
 #### Known issues
 
