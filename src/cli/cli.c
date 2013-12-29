@@ -94,7 +94,7 @@ int cli_mk_tlv(tlv_t *tlv, int argc, char **argv, char *type, char date) {
                 }
 
                 if (type != NULL) {
-                        char *str = i == 0 ? type : NULL;
+                        char *str = (i == 0 ? type : NULL);
                         char *tok = strtok(str, delim);
                         inputs[i].type = tlv_str2type(tok);
 
@@ -297,7 +297,7 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod) {
                 dz_t cmpnd = {-1,
                               0,
                               len,
-                              type == TLV_DATED ? TLV_SIZEOF_DATE : 0,
+                              (type == TLV_DATED ? TLV_SIZEOF_DATE : 0),
                               -1,
                               buff};
 
@@ -319,10 +319,6 @@ FREEBUFF:
 
 int cli_extract_all(dz_t *dz, int name_mod) {
 
-        /**
-         * FIXME: This function breaks
-         * abstraction of dazibao type
-         */
         int status = 0;
         tlv_t tlv;
         off_t off;
@@ -403,8 +399,8 @@ int cli_extract_tlv(dz_t *dz, off_t offset, int name_mod) {
                                (offset + TLV_SIZEOF_HEADER
                                        + len),
                                (offset + TLV_SIZEOF_HEADER
-                                       + type == TLV_DATED ?
-                                       TLV_SIZEOF_DATE : 0),
+                                       + (type == TLV_DATED ?
+                                               TLV_SIZEOF_DATE : 0)),
                                -1,
                                dz->data};
 
@@ -537,7 +533,7 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 
         printf(" @[%10li]: %8s (%d bytes)\n",
                 (long)dz_get_offset(dz),
-                type_str != NULL ? type_str : "unknown",
+                (type_str != NULL ? type_str : "unknown"),
                 len);
 
         if ((type != TLV_COMPOUND && type != TLV_DATED) || lvl == 0) {
@@ -572,16 +568,12 @@ int64_t cli_print_ltlv(dz_t *dz, tlv_t *tlv, int indent, int lvl, int debug) {
 FREEBUF:
         free(buf);
 OUT:
-        return status == 0 ?
-                (int64_t)ltlv_get_total_length(tlv) : -1;
+        return (status == 0 ?
+                (int64_t)ltlv_get_total_length(tlv) : -1);
 }
 
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
 
-        /**
-         * FIXME: This function breaks
-         * abstraction of dazibao type
-         */
         int status = 0;
         tlv_t tlv;
         off_t off;
@@ -628,7 +620,7 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug) {
 
                 type_str = tlv_type2str(type);
                 printf(" @[%10li]: %8s (%d bytes)\n", (unsigned long)off,
-                        type_str ? type_str : "unknown", len);
+                        (type_str ? type_str : "unknown"), len);
 
 
                 if ((type != TLV_DATED && type != TLV_COMPOUND) || lvl == 0) {
