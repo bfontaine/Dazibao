@@ -29,7 +29,7 @@ const char *GIF_SIGNATURE = "GIF";
 struct tlv_type tlv_types[] = {
         { TLV_PAD1     , "pad1"     },
         { TLV_PADN     , "padN"     },
-        { TLV_TEXT     , "text"     },
+        { TLV_TEXT     , "txt"      },
         { TLV_PNG      , "png"      },
         { TLV_JPEG     , "jpg"      },
         { TLV_COMPOUND , "compound" },
