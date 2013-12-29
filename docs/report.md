@@ -159,7 +159,10 @@ The bad side:
 * If a signal is sent more than one time before entering handler, only one
   signal will be delivered.
 * This issue could have been resolved with real-time signals, but we would
-  loose the broadcasting ability of "normal" signals.
+  loose the broadcasting ability of "standard" signals.
+
+We finally moved to pthread to avoid complication in process communication, 
+simplify memory sharing, and save ressources.
 
 #### Known issues / Limitations
 
@@ -172,20 +175,21 @@ The bad side:
   As signal SIGPIPE is supposed to be received often (every time a client 
   disconnects), it is ignored, but it is the only signal caught. It means 
   that receiving a signal asking for termination (SIGINT is caugth to free 
-  ressources before exiting), the server will crash.
-  We should set a signal handler to prevent it from happening.
+  ressources before exiting), the server should crash.
+  We should set a signal handler up to prevent it from happening.
 * Number of client able to connect simultaneously has to be determined by user 
   when starting the server.
 
 ### Notification client
 
-Notification client is based on `notification-stupide.c`.
+Notification client is based on `notification-stupide.c`, which has been 
+slightly improved.
 
-#### Differences with `notification-stupide`
+#### Improvement over `notification-stupide`
 
 * UNIX compatible (`notification-stupide` does not compile on mac OS X)
 * Can receive multiple notifications in one read (`notification-stupide` does 
-  not loop, and does not notify all files).
+  not loop, and does not notify all files but only once per read).
 * Can use a desktop notification service (as `notify-send` on ubuntu, but 
   compatible with any application, see manual for configuration)
 * Handle error message received from server (message starting with E)
@@ -193,6 +197,5 @@ Notification client is based on `notification-stupide.c`.
 #### Known issues
 
 * Notifications longer than 1024 will not be read
-
 * System call (notifier command length + message length + title length) to
   notify user longer than 2048 will not work properly.
