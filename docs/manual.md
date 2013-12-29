@@ -74,16 +74,15 @@ Available Options:
 dazicli create <dazibao path> [<dazibao path> ...]
 ```
 
-Create dazibao(s).
-
+Create one or more empty dazibao(s).
 
 ### Dazibao compaction: `compact`
 
 ```
-dazicli compact <dazibao path> 
+dazicli compact <dazibao path> [<dazibao path> ...]
 ```
 
-Compact a dazibao.
+Compact one or more dazibao(s).
 
 ### Dazibao printing: `dump`
 

@@ -100,10 +100,12 @@ int cli_print_dz(dz_t *dz, int indent, int lvl, int debug);
 int cli_dump_dz(int argc, char **argv);
 
 /**
- * Compact a dazibao
- * @param file path of the dazibao to compact
+ * Compact dazibao(s)
+ * @param argc number of dazibao(s)
+ * @param argv name(s) of dazibao(s)
+ * @return 0 on success, -1 on error
  **/
-int cli_compact_dz(char *file);
+int cli_compact_dz(int argc, char **argv);
 
 /**
  * Parse arg and launch TLV deletion
