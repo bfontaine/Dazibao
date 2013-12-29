@@ -832,11 +832,6 @@ int main(int argc, char **argv) {
                         LOGERROR("TLV extraction failed.");
                         return EXIT_FAILURE;
                 }
-        } else if (!strcmp(cmd, "extract_multi")) {
-                if (cmd_add(argc - 3, &argv[2], argv[argc - 1]) != 0) {
-                        LOGERROR("TLV addition failed.");
-                        return EXIT_FAILURE;
-                }
         } else if (strcmp(cmd, "dump") == 0) {
                 if (cli_dump_dz(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Dazibao dumping failed.");

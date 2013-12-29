@@ -70,7 +70,7 @@ endif
 
 all: check $(TARGETS)
 
-$(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(DCUTILS)
+$(DAZICLI): $(DCSRC)/cli.o $(DCSRC)/alternate_cmd.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(DCUTILS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(NSERVER): $(NSRC)/$(NSERVER).o $(NSRC)/notification-server.o $(NSUTILS)

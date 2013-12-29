@@ -97,12 +97,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
                 char *type , char *dz_path);
 
 /**
- * print the help text
- * @param exec the name of the executable
- **/
-void print_usage(char *exec);
-
-/**
  * choose tlv to extract , if dated return tlv inside
  * make and realize command compact
  * @param dz
