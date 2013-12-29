@@ -30,12 +30,11 @@ NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/hash.o
 NCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 DCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 
-TARGET=dazibao
 NSERVER=notification-server
 NCLIENT=notification-client
 WSERVER=daziweb
 DAZICLI=dazicli
-TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
+TARGETS=$(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
 TESTS=$(TSRC)/utils.test \
       $(TSRC)/logging.test \
@@ -70,9 +69,6 @@ endif
 .PHONY: clean cleantmp check checkwhattodo doc tests
 
 all: check $(TARGETS)
-
-$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(UTILS)
-	$(CC) -o $@ $^ $(CFLAGS)
 
 $(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(DCUTILS)
 	$(CC) -o $@ $^ $(CFLAGS)
