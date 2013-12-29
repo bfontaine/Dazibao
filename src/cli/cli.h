@@ -113,4 +113,13 @@ int cli_compact_dz(char *file);
  * @return 0 on success, -1 on error
  */
 int cli_rm_tlv(int argc, char **argv);
+
+
+/**
+ * Create empty dazibao
+ * @param argc number of dazibao(s)
+ * @param argv name(s) of dazibao(s)
+ * @return 0 on success, -1 on error
+ */
+int cli_create_dz(int argc, char **argv)
 #endif

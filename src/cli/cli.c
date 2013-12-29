@@ -782,6 +782,27 @@ OUT:
         return status;
 }
 
+int cli_create_dz(int argc, char **argv) {
+
+        for (int i = 0; i < argc; i++) {
+
+                dz_t dz;
+
+                if (dz_create(&dz, argv[i]) != 0) {
+                        LOGERROR("dz_create failed");
+                        return -1;
+                }
+
+                if (dz_close(&dz) < 0) {
+                        LOGERROR("dz_close failed");
+                        return -1;
+                }
+
+        }
+
+        return 0;
+}
+
 int main(int argc, char **argv) {
 
         char *cmd;
@@ -820,6 +841,11 @@ int main(int argc, char **argv) {
         } else if (strcmp(cmd, "rm") == 0) {
                 if (cli_rm_tlv(argc - 2, &argv[2]) == -1) {
                         LOGERROR("Failed removing TLV.");
+                        return EXIT_FAILURE;
+                }
+        } else if (strcmp(cmd, "create") == 0) {
+                if (cli_create_dz(argc - 2, &argv[2]) == -1) {
+                        LOGERROR("Failed creating dazibao.");
                         return EXIT_FAILURE;
                 }
         } else {
