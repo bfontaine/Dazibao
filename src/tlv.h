@@ -240,14 +240,14 @@ int tlv_mwrite(tlv_t *tlv, void *data);
 int tlv_mread(tlv_t *tlv, char *data);
 
 /**
- * Dump a TLV in a string, assuming it's large enough for it
+ * Dump a TLV in a buffer, assuming it's large enough for it
  * @param tlv
  * @param dst
  **/
 void tlv_mdump(tlv_t *tlv, char *dst);
 
 /**
- * Dump a TLV value in a string, assuming it's large enough for it
+ * Dump a TLV value in a buffer, assuming it's large enough for it
  * @param tlv
  * @param dst
  **/
@@ -371,57 +371,68 @@ int tlv_create_input(tlv_t *tlv, char *type);
 /* TODO document functions below */
 
 /**
- * @param tlv
- * @param src
- * @param type
- * @param len
+ * Make a long TLV from buffer
+ * @param tlv TLV which will receive new TLV
+ * @param src data to set as a value
+ * @param type type of the TLV
+ * @param len length of data
  **/
 size_t ltlv_mk_tlv(tlv_t *tlv, char *src, int type, int len);
 
 /**
+ * Write a long TLV in a buffer
  * @param tlv
  * @param dst
  **/
 size_t ltlv_mwrite(tlv_t *tlv, char *dst);
 
 /**
+ * Write a long TLV on a file
  * @param tlv
  * @param fd
  **/
 size_t ltlv_fwrite(tlv_t *tlv, int fd);
 
 /**
- * @param tlv
+ * @param tlv LONGH containing informations
+ * @return length of real value
  **/
 uint32_t ltlv_real_data_length(tlv_t *tlv);
 
 /**
  * @param tlv
+ * @return type of the long tlv content
  **/
 int ltlv_real_data_type(tlv_t *tlv);
 
 /**
- * @param size
+ * @param size size of the buffer
+ * @return number of LONGC needed to store a buffer
  **/
 int ltlv_nb_chunks(size_t size);
 
 /**
  * @param tlv
+ * @return total length occupied by tlv
+ *         size of data + LONGH + headers
  **/
 size_t ltlv_get_total_length(tlv_t *tlv);
 
 /**
  * @param tlv
- * @param inputs
- * @param nb_inputs
- * @param date
+ * @param inputs inputs array
+ * @param nb_inputs nb of element in array
+ * @param date date to set (0 if no date)
  **/
 int tlv_from_inputs(tlv_t *tlv, struct tlv_input *inputs, int nb_inputs,
                 time_t date);
 
 /**
- * @param src
- * @param len
+ * Split a buffer in LONGCs.
+ * Buffer *MUST* be large enough to allow header additions.
+ * @param src data
+ * @param len length of data
+ * @return new length (including size of headers)
  **/
 uint32_t ltlv_split_value(char *src, uint32_t len);
 
