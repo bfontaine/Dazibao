@@ -1,10 +1,8 @@
 # Dazibao - User manual
 
-## Notifications
+## Notifications server
 
-### Notifications server
-
-#### Usage
+### Usage
 
 ```
 notification-server [OPTIONS] FILE
@@ -24,9 +22,9 @@ Available options:
 * `--wtimemax <n>`: set the maximum waiting time between two file checks, in
   seconds. Default is 30.
 
-### Notifications client
+## Notifications client
 
-#### Usage
+### Usage
 
 ```
 notification-client [OPTIONS]
@@ -41,11 +39,9 @@ Available options:
   `terminal-notifier` is installed, one can use the following command:
   `"terminal-notifier -title '%s' -message '%s'"`.
 
-## Command line interface
+## Dazicli (DAZIbao Command Line Interface)
 
-### Dazicli
-
-#### Usage
+### Usage
 
 ```
 dazicli [COMMAND] [OPTIONS] [FILE] <dazibao path>
@@ -53,7 +49,7 @@ dazicli [COMMAND] [OPTIONS] [FILE] <dazibao path>
 
 Command can be one of these:
 
-##### `add`
+#### TLV addition: `add`
 
 ```
 dazicli add [OPTIONS] [FILES or TEXT] <dazibao path>
@@ -72,7 +68,7 @@ Available Options:
 * `--date`: if present, the TLV will be included in a dated one, using the
   current time.
 
-### `compact`
+### Dazibao compaction: `compact`
 
 ```
 dazicli compact <dazibao path>
@@ -80,13 +76,14 @@ dazicli compact <dazibao path>
 
 Compact a dazibao.
 
-#### `dump`
+### Dazibao printing: `dump`
 
 ```
 dazicli dump [OPTIONS] <dazibao path>
 ```
 
-Dump a whole dazibao on the standard output.
+Dump a whole dazibao on the standard output, printing offset, type and 
+length of TLV. Does not show PAD1 nor PADN byt default.
 
 Available Options:
 
@@ -94,15 +91,20 @@ Available Options:
   (no limit).
 * `--debug`: print `PAD1`s and `PADN`s
 
-#### `extract`
+### TLV extraction: `extract`
 
 ```
 dazicli extract [<offset> ...] <dazibao path>
 ```
-Extract one or more TLV in file (one file per tlv).
-If no offset is provided, dazicli will extract all TLVs in the dazibao.
 
-#### `rm`
+Extract one or more TLV in file (one file per tlv).
+If no offset is provided, dazicli will extract all TLVs in the dazibao. 
+If offset of a DATED, COMPOUND, or LONGH TLV is provided, will extract all 
+its content.
+
+*WARNING:* providing a wrong offset will result in unspecified behavior.
+
+### `rm`
 
 ```
 dazicli rm <offset> [<offset> ...] <dazibao path>
