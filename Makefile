@@ -91,6 +91,7 @@ $(WEBSRC)/request.o: $(WEBSRC)/http.o
 $(WEBSRC)/routes.o: $(SRC)/mdazibao.o $(SRC)/tlv.o $(WEBSRC)/http.o \
 			$(WEBSRC)/html.o
 $(WEBSRC)/routing.o: $(WEBSRC)/http.o $(WEBSRC)/mime.o
+$(WEBSRC)/mime.o: $(SRC)/tlv.o
 $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 
 %.o: %.c %.h
