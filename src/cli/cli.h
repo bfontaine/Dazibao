@@ -58,7 +58,9 @@ int cli_extract_ltlv(dz_t *dz, tlv_t *tlv, int offset, int name_mod);
 
 /**
  * Extract every TLV in a dazibao.
- * dz_next_tlv(dz, ...) *MUST* return the first TLV
+ * dz_next_tlv(dz, ...) *MUST* return the first TLV.
+ * Note that this function break dazibao type abstraction (meaning that
+ * any change in dazibao structure in API will break this function).
  * @param dz dazibao containing TLVs
  * @param name_mod will be added to offset when creating file.
  *        Usefull to avoid name collision.
@@ -77,6 +79,7 @@ int cli_extract(int argc, char **argv);
 /**
  * Print a dazibao (or a TLV list) on stdout
  * Helper for cli_dump_dz
+ * 
  * @param dz dazibao to print
  * @param indent current indentation level
  * @param lvl remaining indention level allowed
@@ -87,7 +90,9 @@ int cli_extract(int argc, char **argv);
 int cli_print_dz(dz_t *dz, int indent, int lvl, int debug);
 
 /**
- * Parse arguments and launching dazibao printing
+ * Parse arguments and launching dazibao printing.
+ * Note that this function break dazibao type abstraction (meaning that
+ * any change in dazibao structure in API will break this function).
  * @param argc number of argument(s)
  * @param argv value(s) of argument(s)
  * @see cli_print_dz
