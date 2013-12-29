@@ -14,9 +14,21 @@
                         +(uint32_t)(((const uint8_t *)(d))[0]) )
 #endif
 
-/*
-uint32_t qhashmurmur3_32(const void *data, size_t nbytes);
-*/
+/**
+ * Imported from http://www.azillionmonkeys.com/qed/hash.html
+ * Seems to be fast AND reliable on large file.
+ * @param data data you want to hash
+ * @param len length of data
+ * @return hashcode for data, 0 if data is NULL 
+ */
 uint32_t SuperFastHash (const char * data, size_t len);
+
+/**
+ * Grab on a random conversation about hash on stackoveflow.com
+ * Slower than SuperFastHash, seems reliable.
+ * @param buf data you want to hash
+ * @param buflength length of data
+ * @return hascode for buf
+ */
 uint32_t adler32(const void *buf, size_t buflength);
 #endif
