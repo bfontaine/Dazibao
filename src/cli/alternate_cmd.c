@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include "utils.h"
 #include "mdazibao.h"
-#include "main.h"
+#include "alternate_cmd.h"
 
 /** @file */
 
@@ -313,168 +313,6 @@ int action_add(int argc, char **argv, int f_co, int f_dz, int f_d, int f_in,
         return 0;
 }
 
-int cmd_rm(int argc, char **argv, char *daz) {
-        dz_t daz_buf;
-        long off;
-
-        if (argc != 1) {
-                fprintf(stderr, "expected offset\n");
-                return DZ_ARGS_ERROR;
-        }
-
-        /* If the offset doesn't start with a character between '0' and '9', it
-         * must be wrong. The user probably used 'rm <dz> <offset>' instead of
-         * 'rm <offset> <dz>'.
-         */
-        if (argv[argc - 1][0] < 48 || argv[argc - 1][0] > 57) {
-                fprintf(stderr, "Usage:\n    rm <offset> <dazibao>\n");
-                return DZ_ARGS_ERROR;
-        }
-
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                fprintf(stderr, "Error while opening the dazibao\n");
-                return -1;
-        }
-
-        off = str2dec_positive(argv[argc - 1]);
-
-        if (off < DAZIBAO_HEADER_SIZE) {
-                fprintf(stderr, "wrong offset\n");
-                return DZ_OFFSET_ERROR;
-        }
-
-        if (dz_check_tlv_at(&daz_buf, off, -1,NULL) <= 0) {
-                fprintf(stderr, "no such TLV\n");
-                dz_close(&daz_buf);
-                return DZ_OFFSET_ERROR;
-        }
-
-        if (dz_rm_tlv(&daz_buf, (off_t)off)) {
-                fprintf(stderr, "rm failed\n");
-                dz_close(&daz_buf);
-                return -1;
-        }
-
-        if (dz_close(&daz_buf) < 0) {
-                fprintf(stderr, "Error while closing the dazibao\n");
-                return -1;
-        }
-
-        return 0;
-}
-
-int action_dump(char *daz, int flag_debug, int flag_depth) {
-        dz_t daz_buf;
-        if (dz_open(&daz_buf, daz, O_RDONLY) < 0) {
-                fprintf(stderr, "open dazibao failed\n");
-                return -1;
-        }
-
-        if (dz_dump(&daz_buf, EOD, flag_depth, 0, flag_debug)) {
-                fprintf(stderr, "dump failed\n");
-                dz_close(&daz_buf);
-                return -1;
-        }
-
-        if (dz_close(&daz_buf) < 0) {
-                fprintf(stderr, "Error while closing the dazibao\n");
-                return -1;
-        }
-
-        return 0;
-}
-
-int cmd_dump(int argc , char **argv, char *daz) {
-        char flag_debug = 0,
-             flag_depth = 0;
-        int args = 0;
-        if (argc >= 4) {
-                fprintf(stderr, "too many arguments with dump");
-                return DZ_ARGS_ERROR;
-        }
-        for (int i = 0; i < argc; i++) {
-                if (args > 0) {
-                        flag_depth = i;
-                        args--;
-                } else if ((strcmp(argv[i], "--depth") == 0 ||
-                                        strcmp(argv[i], "-d") == 0)
-                                && flag_depth < 1) {
-                        flag_depth = 1;
-                        args = 1;
-                } else if ((strcmp(argv[i], "--debug") == 0 ||
-                                        strcmp(argv[i], "-D") == 0)
-                                && !flag_debug) {
-                        flag_debug = 1;
-                /* this should be rewritten if we add more options */
-                } else if ((!strcmp(argv[i],"-dD") || !strcmp(argv[i],"-Dd"))
-                                && (flag_depth < 1) && !flag_debug) {
-                        flag_debug = 1;
-                        flag_depth = 1;
-                        args = 1;
-                } else {
-                        fprintf(stderr, "unrecognized option '%s'\n", argv[i]);
-                        return -1;
-                }
-
-        }
-        if (flag_depth > 0) {
-                flag_depth = str2dec_positive(argv[(unsigned char)flag_depth]);
-                if (flag_depth < 0) {
-                        fprintf(stderr, "unrecognized depth\n");
-                        return DZ_ARGS_ERROR;
-                }
-        }
-
-        return action_dump(daz, flag_debug, flag_depth);
-}
-
-int cmd_create(int argc, char **argv, char *daz) {
-        dz_t daz_buf;
-        if (argc > 0) {
-                fprintf(stderr, "'create' doesn't take options\n");
-                return DZ_ARGS_ERROR;
-        }
-
-        if (dz_create(&daz_buf, daz) != 0) {
-                fprintf(stderr, "error during dazibao creation\n");
-                return -1;
-        }
-
-        if (dz_close(&daz_buf) < 0) {
-                fprintf(stderr, "Error while closing the dazibao\n");
-                return -1;
-        }
-
-        return 0;
-}
-int cmd_compact(int argc , char **argv, char *daz) {
-        dz_t daz_buf;
-        int saved;
-        if (argc > 0) {
-                fprintf(stderr, "'compact' doesn't take any option\n");
-                return DZ_ARGS_ERROR;
-        }
-
-        if (dz_open(&daz_buf, daz, O_RDWR) < 0) {
-                return -1;
-        }
-
-        saved = dz_compact(&daz_buf);
-
-        if (saved < 0) {
-                return -1;
-        }
-
-        if (dz_close(&daz_buf) < 0) {
-                fprintf(stderr, "Error while closing the dazibao\n");
-                return -1;
-        }
-
-        printf("%d bytes saved.\n", saved);
-        return 0;
-
-}
-
 int choose_tlv_extract(dz_t *dz, tlv_t *tlv, long off) {
 
         if (dz_tlv_at(dz, tlv, off) < 0) {
@@ -606,7 +444,6 @@ void print_usage(char *name) {
         printf(CLI_USAGE_FMT, name);
 }
 
-/** CLI's main function */
 int main(int argc, char **argv) {
         char *cmd, *daz, **argv_cmd;
         int argc_cmd, st = 0;
