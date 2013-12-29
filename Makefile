@@ -17,8 +17,8 @@ CC=gcc
 CFLAGS=-g3 -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
 ifneq ($(OS),Darwin)
-	# OS X has POSIX threads in libc
-	CFLAGS+= -pthread
+# OS X has POSIX threads in libc
+CFLAGS+= -pthread
 endif
 
 DOXYGEN=doxygen
@@ -30,12 +30,11 @@ NSUTILS=$(SRC)/logging.o $(SRC)/utils.o $(NSRC)/hash.o
 NCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 DCUTILS=$(SRC)/logging.o $(SRC)/utils.o
 
-TARGET=dazibao
 NSERVER=notification-server
 NCLIENT=notification-client
 WSERVER=daziweb
 DAZICLI=dazicli
-TARGETS=$(TARGET) $(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
+TARGETS=$(NSERVER) $(NCLIENT) $(WSERVER) $(DAZICLI)
 
 TESTS=$(TSRC)/utils.test \
       $(TSRC)/logging.test \
@@ -57,17 +56,19 @@ ifdef STRICT
 CFLAGS+= -Wstrict-prototypes -Werror -O2
 endif
 
+CPPCHECK_VER:=$(shell cppcheck --version 2>/dev/null)
+ifdef CPPCHECK_VER
 CPPCHECK=cppcheck \
 	--enable=warning,style \
 	--language=c -q
+else
+CPPCHECK=\#
+endif
 
 .DEFAULT: all
 .PHONY: clean cleantmp check checkwhattodo doc tests
 
 all: check $(TARGETS)
-
-$(TARGET): $(SRC)/main.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(UTILS)
-	$(CC) -o $@ $^ $(CFLAGS)
 
 $(DAZICLI): $(DCSRC)/cli.o $(SRC)/mdazibao.o $(SRC)/tlv.o $(DCUTILS)
 	$(CC) -o $@ $^ $(CFLAGS)
@@ -97,11 +98,13 @@ $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+# find's -delete option is not supported on Nivose
+
 cleantmp:
-	find . -name "*~" -delete
+	find . -name "*~" -exec rm {} \;
 
 clean: cleantmp
-	find . -name "*.o" -delete
+	find . -name "*.o" -exec rm {} \;
 
 cleanall: clean
 	rm -f $(TARGETS) $(TESTS)

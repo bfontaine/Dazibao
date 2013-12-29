@@ -68,7 +68,28 @@ Available Options:
 * `--date`: if present, the TLV will be included in a dated one, using the
   current time.
 
-### Dazibao create: `create`
+##### Alternative version: `al-add`
+
+An alternative from a previous version is provided:
+
+```
+dazicli alt-add [OPTIONS] [FILES] <dazibao path>
+```
+
+The main difference is that this version allows you to add multiple TLVs at the
+same time.
+
+Available Options:
+* `--type <type>`: same as for `add`, but is mandatory here
+* `--date`: each TLV following this option will be included in a dated TLV with
+  the current date. If `--compound` is provided, all TLVs will be included in a
+  big compound, that be included in a dated one.
+* `--dazibao <path>`: include the dazibao `<path>` in a compound TLV
+* `--compound`: include all TLVs in a compound
+
+`-` is also supported as a source to read on standard input.
+
+#### Dazibao creation: `create`
 
 ```
 dazicli create <dazibao path> [<dazibao path> ...]
@@ -76,7 +97,7 @@ dazicli create <dazibao path> [<dazibao path> ...]
 
 Create one or more empty dazibao(s).
 
-### Dazibao compaction: `compact`
+#### Dazibao compaction: `compact`
 
 ```
 dazicli compact <dazibao path> [<dazibao path> ...]
@@ -84,7 +105,7 @@ dazicli compact <dazibao path> [<dazibao path> ...]
 
 Compact one or more dazibao(s).
 
-### Dazibao printing: `dump`
+#### Dazibao printing: `dump`
 
 ```
 dazicli dump [OPTIONS] <dazibao path> [<dazibao path> ...]
@@ -100,7 +121,7 @@ Available Options:
   (no limit).
 * `--debug`: print `PAD1`s and `PADN`s
 
-### TLV extraction: `extract`
+#### TLV extraction: `extract`
 
 ```
 dazicli extract [<offset> ...] <dazibao path>
@@ -113,7 +134,16 @@ its content.
 
 *WARNING:* providing a wrong offset will result in unspecified behavior.
 
-### `rm`
+##### Alternative version: `alt-extract`
+
+```
+dazicli alt-extract <offset> <output path> <dazibao path>
+```
+
+Extract TLV at offset `<offset>` from a dazibao in `<dazibao path>` and dump
+its value in `<output path>`.
+
+### TLV deletion: `rm`
 
 ```
 dazicli rm <offset> [<offset> ...] <dazibao path>
