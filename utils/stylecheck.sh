@@ -5,7 +5,7 @@ T=$(mktemp dzbXXX)
 function _check() {
     # usage:
     #   _check <regex> <text>
-    grep -EIn "$1" \
+    egrep -n "$1" \
             src/*.c src/*.h \
             src/web/*.c src/web/*.h \
             src/cli/*.c src/cli/*.h \

@@ -17,8 +17,8 @@ CC=gcc
 CFLAGS=-g3 -Wall -Wextra -Wundef -Wpointer-arith -std=gnu99 -I$(SRC)
 
 ifneq ($(OS),Darwin)
-	# OS X has POSIX threads in libc
-	CFLAGS+= -pthread
+# OS X has POSIX threads in libc
+CFLAGS+= -pthread
 endif
 
 DOXYGEN=doxygen
@@ -57,9 +57,14 @@ ifdef STRICT
 CFLAGS+= -Wstrict-prototypes -Werror -O2
 endif
 
+CPPCHECK_VER:=$(shell cppcheck --version 2>/dev/null)
+ifdef CPPCHECK_VER
 CPPCHECK=cppcheck \
 	--enable=warning,style \
 	--language=c -q
+else
+CPPCHECK=\#
+endif
 
 .DEFAULT: all
 .PHONY: clean cleantmp check checkwhattodo doc tests
@@ -97,11 +102,13 @@ $(WEBSRC)/%.o: $(WEBSRC)/%.c $(WEBSRC)/%.h $(SRC)/utils.o $(WUTILS)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+# find's -delete option is not supported on Nivose
+
 cleantmp:
-	find . -name "*~" -delete
+	find . -name "*~" -exec rm {} \;
 
 clean: cleantmp
-	find . -name "*.o" -delete
+	find . -name "*.o" -exec rm {} \;
 
 cleanall: clean
 	rm -f $(TARGETS) $(TESTS)
