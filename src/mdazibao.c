@@ -64,7 +64,7 @@ off_t dz_get_offset(dz_t *d) {
 }
 
 int dz_incr_offset(dz_t *d, off_t off) {
-        if (off < 0 || (unsigned long)off > d->len) {
+        if (off < 0 || d->offset + (unsigned long)off > d->len) {
                 return -1;
         }
         d->offset += off;
