@@ -17,7 +17,7 @@
         "            -m, --merge: (todo)\n" \
         "\n" \
         "    add: add a TLV\n" \
-        "        command: add [--type] <type args> [--dazibao] <dz_pathibo>\n"\
+        "        command: add [--type <type args>] [--dazibao <path>]\n"\
         "                       [--date] [--compound] <tlv args> <dazibao>\n"\
         "        options:\n" \
         "            --type: allow to give a type with parameters, by\n" \
